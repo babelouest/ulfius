@@ -163,7 +163,7 @@ The request variable is defined as:
  * map_header:    map containing the header variables
  * map_cookie:    map containing the cookie variables
  * map_post_body: map containing the post body variables (if available)
- * json_body:     struct json_t * object containing the json body (if available)
+ * json_body:     json_t * object containing the json body (if available)
  * json_error:    true if the json body was not parsed by jansson (if available)
  * 
  */
@@ -175,7 +175,7 @@ struct _u_request {
 	struct _u_map *      map_header;
 	struct _u_map *      map_cookie;
 	struct _u_map *      map_post_body;
-	struct json_t *      json_body;
+	json_t *             json_body;
 	int                  json_error;
 };
 ```
@@ -191,7 +191,7 @@ The response variable is defined as:
  * map_header:  map containing the header variables
  * map_cookie:  map containing the cookie variables
  * string_body: a string containing the raw body response
- * json_body:   a struct json_t * object containing the json response
+ * json_body:   a json_t * object containing the json response
  * 
  */
 struct _u_response {
@@ -199,7 +199,7 @@ struct _u_response {
 	struct _u_map * map_header;
 	struct _u_map * map_cookie;
 	char *          string_body;
-	struct json_t * json_body;
+	json_t *        json_body;
 };
 ```
 

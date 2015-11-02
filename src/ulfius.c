@@ -100,7 +100,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
   struct _u_response* response = NULL;
   
   // Response variables
-  struct MHD_Response * mhd_response;
+  struct MHD_Response * mhd_response = NULL;
 	
 	// Prepare for POST or PUT input data
 	// Initialize the input maps

@@ -91,31 +91,6 @@ struct _u_instance {
 
 /**
  * 
- * Structure of an endpoint
- * 
- * Contains all informations needed for an endpoint
- * http_method:       http verb (GET, POST, PUT, etc.) in upper case
- * url_format:        string used to define the endpoint format
- *                    separate words with /
- *                    to define a variable in the url, prefix it with @ or :
- *                    example: /test/resource/:name/elements
- *                    on an url_format that ends with /*, the rest of the url will not be tested
- * user_data:         a pointer to a data or a structure that will be available in the callback function
- * callback_function: a pointer to a function that will be executed each time the endpoint is called
- *                    you must declare the function as described.
- * 
- */
-struct _u_endpoint {
-  char * http_method;
-  char * url_format;
-  void * user_data;
-  int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
-														struct _u_response * response,     // Output parameters (set by the user)
-														void * user_data);
-};
-
-/**
- * 
  * Structure of request parameters
  * 
  * Contains request data
@@ -126,7 +101,7 @@ struct _u_endpoint {
  * map_header:    map containing the header variables
  * map_cookie:    map containing the cookie variables
  * map_post_body: map containing the post body variables (if available)
- * json_body:     struct json_t * object containing the json body (if available)
+ * json_body:     json_t * object containing the json body (if available)
  * json_error:    true if the json body was not parsed by jansson (if available)
  * 
  */
@@ -138,7 +113,7 @@ struct _u_request {
 	struct _u_map *      map_header;
 	struct _u_map *      map_cookie;
 	struct _u_map *      map_post_body;
-	struct json_t *      json_body;
+	json_t *             json_body;
 	int                  json_error;
 };
 
@@ -151,7 +126,7 @@ struct _u_request {
  * map_header:  map containing the header variables
  * map_cookie:  map containing the cookie variables
  * string_body: a string containing the raw body response
- * json_body:   a struct json_t * object containing the json response
+ * json_body:   a json_t * object containing the json response
  * 
  */
 struct _u_response {
@@ -159,7 +134,32 @@ struct _u_response {
 	struct _u_map * map_header;
 	struct _u_map * map_cookie;
 	char *          string_body;
-	struct json_t * json_body;
+	json_t *        json_body;
+};
+
+/**
+ * 
+ * Structure of an endpoint
+ * 
+ * Contains all informations needed for an endpoint
+ * http_method:       http verb (GET, POST, PUT, etc.) in upper case
+ * url_format:        string used to define the endpoint format
+ *                    separate words with /
+ *                    to define a variable in the url, prefix it with @ or :
+ *                    example: /test/resource/:name/elements
+ *                    on an url_format that ends with '*', the rest of the url will not be tested
+ * user_data:         a pointer to a data or a structure that will be available in the callback function
+ * callback_function: a pointer to a function that will be executed each time the endpoint is called
+ *                    you must declare the function as described.
+ * 
+ */
+struct _u_endpoint {
+  char * http_method;
+  char * url_format;
+  void * user_data;
+  int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
+														struct _u_response * response,     // Output parameters (set by the user)
+														void * user_data);
 };
 
 /**
