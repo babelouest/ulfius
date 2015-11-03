@@ -37,6 +37,8 @@ Include file `ulfius.h` in your source file:
 #include <ulfius.h>
 ```
 
+On your linker command, add ulfius as a dependency library, e.g. `-lulfius` for gcc.
+
 ## API functions
 
 ### Initialization
