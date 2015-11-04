@@ -89,9 +89,9 @@ int ulfius_init_framework(struct _u_instance * u_instance, struct _u_endpoint * 
  * so it must run the callback function one time, after everything is set up
  */
 int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection,
-                                const char * url, const char * method,
-                                const char * version, const char * upload_data,
-                                size_t * upload_data_size, void ** con_cls) {
+				const char * url, const char * method,
+				const char * version, const char * upload_data,
+				size_t * upload_data_size, void ** con_cls) {
 	struct _u_endpoint * endpoint_list = (struct _u_endpoint *)cls, * current_endpoint;
 	struct connection_info_struct * con_info_post = NULL;
   struct connection_info_struct * con_info = * con_cls;
@@ -199,6 +199,8 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
 		response->map_cookie = u_map_copy(con_info->request->map_cookie);
 		response->string_body = NULL;
 		response->json_body = NULL;
+		response->binary_body = NULL;
+		response->binary_body_length = 0;
 		
 		if (current_endpoint != NULL) {
 			// Endpoint found, run callback function with the input parameters filled
@@ -206,7 +208,12 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
 			
 			callback_ret = current_endpoint->callback_function(con_info->request, response, current_endpoint->user_data);
 
+			// Set the response code to 200 OK if the user did not (or forgot to) set one
+			if (response->status == 0) {
+				response->status = 200;
+			}
 			if (!callback_ret && response->json_body != NULL) {
+				// The user sent a json response
 				if (response->string_body != NULL) {
 					free(response->string_body);
 				}
@@ -214,19 +221,22 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
 				mhd_response = MHD_create_response_from_buffer (strlen (response->string_body), (void *) response->string_body, MHD_RESPMEM_MUST_FREE );
 				MHD_add_response_header (mhd_response, ULFIUS_HTTP_HEADER_CONTENT, ULFIUS_HTTP_ENCODING_JSON);
 				json_decref(response->json_body);
+			} else if (!callback_ret && response->binary_body != NULL && response->binary_body_length > 0) {
+				// The user sent a binary response
+				mhd_response = MHD_create_response_from_buffer (response->binary_body_length, response->binary_body, MHD_RESPMEM_MUST_FREE );
+				response->binary_body = NULL;
 			} else if (!callback_ret) {
+				// The user sent a string response
+				if (response->string_body == NULL) {
+					response->string_body = strdup("");
+				}
 				mhd_response = MHD_create_response_from_buffer (strlen (response->string_body), (void *) response->string_body, MHD_RESPMEM_MUST_FREE );
-                        } else if (response->status == 0 || (response->string_body == NULL && response->json_body == NULL)) {
+			} else if (response->string_body == NULL && response->json_body == NULL && response->binary_body == NULL) {
 				// No valid response parameters, sending error 500
 				response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
-				if (response->string_body != NULL) {
-					free(response->string_body);
-				}
-				if (response->json_body != NULL) {
-					free(response->json_body);
-				}
 				response->string_body = strdup(ULFIUS_HTTP_ERROR_BODY);
 			} else {
+				// callback return value different than 0, sending error 500
 				if (response->string_body != NULL) {
 					free(response->string_body);
 				}
@@ -252,6 +262,9 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
 		}
 		
 		// Free Response parameters
+		if (response->binary_body != NULL) {
+			free(response->binary_body);
+		}
 		u_map_clean(response->map_header);
 		response->map_header = NULL;
 		u_map_clean(response->map_cookie);
@@ -270,9 +283,9 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
  * Parse the POST data
  */
 int iterate_post_data (void *coninfo_cls, enum MHD_ValueKind kind, const char *key,
-              const char *filename, const char *content_type,
-              const char *transfer_encoding, const char *data, uint64_t off,
-              size_t size) {
+	      const char *filename, const char *content_type,
+	      const char *transfer_encoding, const char *data, uint64_t off,
+	      size_t size) {
 	struct connection_info_struct *con_info = coninfo_cls;
 	u_map_put((struct _u_map *)con_info->request->map_post_body, key, data);
   return MHD_YES;
@@ -282,13 +295,13 @@ int iterate_post_data (void *coninfo_cls, enum MHD_ValueKind kind, const char *k
  * Mark the request completed so ulfius can keep going
  */
 void request_completed (void *cls, struct MHD_Connection *connection,
-                   void **con_cls, enum MHD_RequestTerminationCode toe) {
+		   void **con_cls, enum MHD_RequestTerminationCode toe) {
   struct connection_info_struct *con_info = *con_cls;
   if (NULL == con_info) {
     return;
   }
   // Request parameters
-	if (con_info->request->json_body) {
+	if (con_info->request->json_body != NULL) {
 		json_decref(con_info->request->json_body);
   }
   if (NULL != con_info && con_info->has_post_processor) {

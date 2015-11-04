@@ -122,11 +122,13 @@ struct _u_request {
  * Structure of response parameters
  * 
  * Contains response data that must be set by the user
- * status:      HTTP status code (200, 404, 500, etc)
- * map_header:  map containing the header variables
- * map_cookie:  map containing the cookie variables
- * string_body: a string containing the raw body response
- * json_body:   a json_t * object containing the json response
+ * status:             HTTP status code (200, 404, 500, etc)
+ * map_header:         map containing the header variables
+ * map_cookie:         map containing the cookie variables
+ * string_body:        a char * containing the raw body response
+ * json_body:          a json_t * object containing the json response
+ * binary_body:        a void * containing a binary content
+ * binary_body_length: the length of the binary_body
  * 
  */
 struct _u_response {
@@ -135,6 +137,8 @@ struct _u_response {
 	struct _u_map * map_cookie;
 	char *          string_body;
 	json_t *        json_body;
+	void *          binary_body;
+	unsigned int    binary_body_length;
 };
 
 /**
