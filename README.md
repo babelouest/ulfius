@@ -181,6 +181,7 @@ struct _u_request {
 	int                  json_error;
 };
 ```
+
 The response variable is defined as:
 
 ```c
@@ -189,11 +190,13 @@ The response variable is defined as:
  * Structure of response parameters
  * 
  * Contains response data that must be set by the user
- * status:      HTTP status code (200, 404, 500, etc)
- * map_header:  map containing the header variables
- * map_cookie:  map containing the cookie variables
- * string_body: a string containing the raw body response
- * json_body:   a json_t * object containing the json response
+ * status:             HTTP status code (200, 404, 500, etc)
+ * map_header:         map containing the header variables
+ * map_cookie:         map containing the cookie variables
+ * string_body:        a char * containing the raw body response
+ * json_body:          a json_t * object containing the json response
+ * binary_body:        a void * containing a binary content
+ * binary_body_length: the length of the binary_body
  * 
  */
 struct _u_response {
@@ -202,18 +205,22 @@ struct _u_response {
 	struct _u_map * map_cookie;
 	char *          string_body;
 	json_t *        json_body;
+	void *          binary_body;
+	unsigned int    binary_body_length;
 };
 ```
 
 In the response variable set by the framework to the callback function, the structure is empty, except for the map_cookie which is set to the same key/values as the request `map_cookie`.
 
-The user must set the `status` code and the `string_body` or the `json_body` before the return statement, otherwise the framework will send an error 500 response. If a `string_body` is set, the `json_body` won't be tested. So to return a `json_body` object, you must leave `string_body` with a `NULL` value.
+The user must set the `string_body` or the `json_body` or the `binary_body` before the return statement, otherwise the framework will send an error 500 response. If a `string_body` is set, the `json_body` or the `binary_body` won't be tested. So to return a `json_body` object, you must leave `string_body` with a `NULL` value. Likewise, if a `json_body` is set, the `binary_body` won't be tested. Finally, if a `binary_body` is set, its length must be set to `binary_body_length`.
 
 You can find the jansson api documentation at the following address: [Jansson documentation](https://jansson.readthedocs.org/).
 
 The callback function return value is 0 on success. If the return value is other than 0, an error 500 response will be sent to the client.
 
-The Ulfius framework will automatically free the variables referenced by the request and responses structures, so you must use dynamically allocated values.
+### Important!
+
+The Ulfius framework will automatically free the variables referenced by the request and responses structures, so you must use dynamically allocated values for the response pointers.
 
 ### Cookie management
 
