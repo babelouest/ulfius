@@ -1,5 +1,5 @@
 #
-# Sheep counter program
+# Example program
 #
 # Makefile used to build the software
 #
@@ -18,23 +18,23 @@ CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS)
 ULFIUS_LOCATION=../../src
 LIBS=-lc -lulfius -ljansson -L$(ULFIUS_LOCATION)
 
-all: sheep_counter
+all: simple_example
 
 clean:
-	rm -f *.o sheep_counter
+	rm -f *.o simple_example
 
 debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
-debug: sheep_counter
+debug: simple_example
 
-ulfius.so:
+libulfius.so:
 	cd $(ULFIUS_LOCATION) && $(MAKE) debug
 
-sheep_counter.o: sheep_counter.c ulfius.so
-	$(CC) $(CFLAGS) sheep_counter.c -DDEBUG -g -O0
+simple_example.o: simple_example.c
+	$(CC) $(CFLAGS) simple_example.c -DDEBUG -g -O0
 
-sheep_counter: sheep_counter.o
-	$(CC) -o sheep_counter sheep_counter.o $(LIBS)
+simple_example: libulfius.so simple_example.o
+	$(CC) -o simple_example simple_example.o $(LIBS)
 
-test: sheep_counter
-	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./sheep_counter
+test: simple_example
+	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./simple_example

@@ -29,8 +29,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include <microhttpd.h>
 #include <jansson.h>
+#include <curl/curl.h>
 
 #define ULFIUS_URL_SEPARATOR       "/"
 #define ULFIUS_HTTP_ENCODING_JSON  "application/json"
@@ -50,6 +52,8 @@
 
 #define ULFIUS_POSTBUFFERSIZE 1024
 
+#define ULFIUS_VERSION 0.9.1
+
 /*************
  * Structures
  *************/
@@ -68,8 +72,23 @@ struct _u_map_value {
  * the structure containing the umap
  */
 struct _u_map {
-	int nb_values;
-	struct _u_map_value * value_list;
+  int nb_values;
+  struct _u_map_value * value_list;
+};
+
+/**
+ * struct _u_cookie
+ * the structure containing the response cookie parameters
+ */
+struct _u_cookie {
+  char * key;
+  char * value;
+  char * expires;
+  uint max_age;
+  char * domain;
+  char * path;
+  int secure;
+  int http_only;
 };
 
 /**
@@ -94,27 +113,29 @@ struct _u_instance {
  * Structure of request parameters
  * 
  * Contains request data
- * http_verb:     http method (GET, POST, PUT, DELETE, etc.)
- * http_url:      url used to call this callback function
- * client_ip:     IP address of the client
- * map_url:       map containing the url variables, both from the route and the ?key=value variables
- * map_header:    map containing the header variables
- * map_cookie:    map containing the cookie variables
- * map_post_body: map containing the post body variables (if available)
- * json_body:     json_t * object containing the json body (if available)
- * json_error:    true if the json body was not parsed by jansson (if available)
+ * http_verb:      http method (GET, POST, PUT, DELETE, etc.)
+ * http_url:       url used to call this callback function
+ * client_address: IP address of the client
+ * map_url:        map containing the url variables, both from the route and the ?key=value variables
+ * map_header:     map containing the header variables
+ * map_cookie:     map containing the cookie variables
+ * map_post_body:  map containing the post body variables (if available)
+ * json_body:      json_t * object containing the json body (if available)
+ * json_error:     true if the json body was not parsed by jansson (if available)
  * 
  */
 struct _u_request {
-	char *               http_verb;
-	char *               http_url;
-	struct sockaddr_in * client_ip;
-	struct _u_map *      map_url;
-	struct _u_map *      map_header;
-	struct _u_map *      map_cookie;
-	struct _u_map *      map_post_body;
-	json_t *             json_body;
-	int                  json_error;
+  char *               http_verb;
+  char *               http_url;
+  struct sockaddr *    client_address;
+  struct _u_map *      map_url;
+  struct _u_map *      map_header;
+  struct _u_map *      map_cookie;
+  struct _u_map *      map_post_body;
+  json_t *             json_body;
+  int                  json_error;
+  void *               binary_body;
+  int                  binary_body_length;
 };
 
 /**
@@ -123,8 +144,10 @@ struct _u_request {
  * 
  * Contains response data that must be set by the user
  * status:             HTTP status code (200, 404, 500, etc)
+ * protocol:           HTTP Protocol sent
  * map_header:         map containing the header variables
- * map_cookie:         map containing the cookie variables
+ * nb_cookies:         number of cookies sent
+ * map_cookie:         array of cookies sent
  * string_body:        a char * containing the raw body response
  * json_body:          a json_t * object containing the json response
  * binary_body:        a void * containing a binary content
@@ -132,13 +155,15 @@ struct _u_request {
  * 
  */
 struct _u_response {
-	int             status;
-	struct _u_map * map_header;
-	struct _u_map * map_cookie;
-	char *          string_body;
-	json_t *        json_body;
-	void *          binary_body;
-	unsigned int    binary_body_length;
+  long               status;
+  char             * protocol;
+  struct _u_map    * map_header;
+  unsigned int       nb_cookies;
+  struct _u_cookie * map_cookie;
+  char             * string_body;
+  json_t           * json_body;
+  void             * binary_body;
+  unsigned int       binary_body_length;
 };
 
 /**
@@ -152,18 +177,18 @@ struct _u_response {
  *                    to define a variable in the url, prefix it with @ or :
  *                    example: /test/resource/:name/elements
  *                    on an url_format that ends with '*', the rest of the url will not be tested
- * user_data:         a pointer to a data or a structure that will be available in the callback function
  * callback_function: a pointer to a function that will be executed each time the endpoint is called
  *                    you must declare the function as described.
+ * user_data:         a pointer to a data or a structure that will be available in the callback function
  * 
  */
 struct _u_endpoint {
   char * http_method;
   char * url_format;
-  void * user_data;
   int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
-														struct _u_response * response,     // Output parameters (set by the user)
-														void * user_data);
+                            struct _u_response * response,     // Output parameters (set by the user)
+                            void * user_data);
+  void * user_data;
 };
 
 /**
@@ -192,11 +217,72 @@ struct connection_info_struct {
 int ulfius_init_framework(struct _u_instance * u_instance, struct _u_endpoint * endpoint_list);
 
 /**
- * ulfius_add_cookie
+ * ulfius_stop_framework
+ * 
+ * Stop the webservice
+ * u_instance:    pointer to a struct _u_instance that describe its port and bind address
+ */
+int ulfius_stop_framework(struct _u_instance * u_instance);
+
+/**
+ * ulfius_add_cookie_to_header
  * add a cookie to the cookie map
  */
-int ulfius_add_cookie(struct _u_map * response_map_cookie, const char * key, const char * value, const char * expires, const uint max_age, 
-											const char * domain, const char * path, const int secure, const int http_only);
+int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const uint max_age, 
+                      const char * domain, const char * path, const int secure, const int http_only);
+
+/**
+ * ulfius_send_request
+ * Send a HTTP request and store the result into a _u_response
+ * return true if everything went fine, false otherwise
+ */
+int ulfius_request_http(const struct _u_request * request, struct _u_response * response);
+
+/**
+ * ulfius_init_request
+ * Initialize a request structure by allocating inner elements
+ * return true if everything went fine, false otherwise
+ */
+int ulfius_init_request(struct _u_request * request);
+
+/**
+ * ulfius_init_response
+ * Initialize a response structure by allocating inner elements
+ * return true if everything went fine, false otherwise
+ */
+int ulfius_init_response(struct _u_response * response);
+
+/**
+ * ulfius_clean_request
+ * clean the specified request's inner elements
+ * user must free the parent pointer if needed after clean
+ * or use ulfius_clean_request_full
+ * return true if no error
+ */
+int ulfius_clean_request(struct _u_request * request);
+
+/**
+ * ulfius_clean_request_full
+ * clean the specified request and all its elements
+ * return true if no error
+ */
+int ulfius_clean_request_full(struct _u_request * request);
+
+/**
+ * ulfius_clean_response
+ * clean the specified response's inner elements
+ * user must free the parent pointer if needed after clean
+ * or use ulfius_clean_response_full
+ * return true if no error
+ */
+int ulfius_clean_response(struct _u_response * response);
+
+/**
+ * ulfius_clean_response_full
+ * clean the specified response and all its elements
+ * return true if no error
+ */
+int ulfius_clean_response_full(struct _u_response * response);
 
 /**
  * umap declarations
@@ -214,6 +300,12 @@ void u_map_init(struct _u_map * map);
 
 /**
  * free the struct _u_map and its components
+ * return true if no error
+ */
+int u_map_clean_full(struct _u_map * u_map);
+
+/**
+ * free the struct _u_map's inner components
  * return true if no error
  */
 int u_map_clean(struct _u_map * u_map);
@@ -296,6 +388,12 @@ char * u_map_get_case(const struct _u_map * u_map, const char * key);
  */
 struct _u_map * u_map_copy(const struct _u_map * source);
 
+/**
+ * Return the number of key/values pair in the specified struct _u_map
+ * Return -1 on error
+ */
+int u_map_count(const struct _u_map * source);
+
 /**********************************
  * Internal functions declarations
  **********************************/
@@ -359,20 +457,60 @@ int url_format_match(const char ** splitted_url, const char ** splitted_url_form
  * fills map with the keys/values defined in the url that are described in the endpoint format url
  * return true if no error
  */
-int parse_url(const char * url, struct _u_endpoint * endpoint, struct _u_map * map);
+int parse_url(const char * url, const struct _u_endpoint * endpoint, struct _u_map * map);
 
 /**
  * set_response_header
  * adds headers defined in the response_map_header to the response
  * return true if no error
  */
-int set_response_header(struct MHD_Response * response, struct _u_map * response_map_header);
+int set_response_header(struct MHD_Response * response, const struct _u_map * response_map_header);
 
 /**
  * set_response_cookie
  * adds cookies defined in the response_map_cookie
  * return true if no error
  */
-int set_response_cookie(struct MHD_Response * response, struct _u_map * response_map_cookie);
+int set_response_cookie(struct MHD_Response * mhd_response, const struct _u_response * response);
+
+/**
+ * Add a cookie in the cookie map as defined in the RFC 6265
+ */
+char * get_cookie_header(const struct _u_cookie * cookie);
+
+/**
+ * ulfius_clean_cookie
+ * clean the cookie's elements
+ */
+int ulfius_clean_cookie(struct _u_cookie * cookie);
+
+/**
+ * Copy the cookie source elements into dest elements
+ */
+int ulfius_copy_cookie(struct _u_cookie * dest, const struct _u_cookie * source);
+
+/**
+ * ulfius_copy_response
+ * Copy the source response elements into the des response
+ */
+int ulfius_copy_response(struct _u_response * dest, const struct _u_response * source);
+
+/**
+ * create a new request based on the source elements
+ * return value must be free'd
+ */
+struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
+
+/**
+ * create a new response based on the source elements
+ * return value must be free'd
+ */
+struct _u_response * ulfius_duplicate_response(const struct _u_response * response);
+
+/**
+ * u_strdup
+ * a modified strdup function that don't crash when source is NULL, instead return NULL
+ */
+char * u_strdup(const char * source);
 
 #endif // __ULFIUS_H__

@@ -83,19 +83,19 @@ The `struct _u_endpoint` is defined as:
  *                    separate words with /
  *                    to define a variable in the url, prefix it with @ or :
  *                    example: /test/resource/:name/elements
- *                    on an url_format that ends with /*, the rest of the url will not be tested
- * user_data:         a pointer to a data or a structure that will be available in the callback function
+ *                    on an url_format that ends with '*', the rest of the url will not be tested
  * callback_function: a pointer to a function that will be executed each time the endpoint is called
  *                    you must declare the function as described.
+ * user_data:         a pointer to a data or a structure that will be available in the callback function
  * 
  */
 struct _u_endpoint {
   char * http_method;
   char * url_format;
-  void * user_data;
   int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
-       struct _u_response * response,     // Output parameters (set by the user)
-       void * user_data);
+                            struct _u_response * response,     // Output parameters (set by the user)
+                            void * user_data);
+  void * user_data;
 };
 ```
 
@@ -105,22 +105,23 @@ for example, you can declare an endpoint list like this:
 
 ```c
   struct _u_endpoint endpoint_list[] = {
-    {"GET", "/test", NULL, &callback_get_test},
-    {"POST", "/test", NULL, &callback_post_test},
-    {"GET", "/test/:foo", "user data 1", &callback_all_test_foo},
-    {"POST", "/test/:foo", "user data 2", &callback_all_test_foo},
-    {"PUT", "/test/:foo", "user data 3", &callback_all_test_foo},
-    {"DELETE", "/test/:foo", "user data 4", &callback_all_test_foo},
-    {"GET", "/json/test", NULL, &callback_get_jsontest},
-    {"GET", "/cookie/test/:lang/:extra", NULL, &callback_get_cookietest},
+    {"GET", "/test", &callback_get_test, NULL},
+    {"POST", "/test", &callback_post_test, NULL},
+    {"GET", "/test/:foo", &callback_all_test_foo, "user data 1"},
+    {"POST", "/test/:foo", &callback_all_test_foo, "user data 2"},
+    {"PUT", "/test/:foo", &callback_all_test_foo, "user data 3"},
+    {"DELETE", "/test/:foo", &callback_all_test_foo, "user data 4"},
+    {"GET", "/json/test", &callback_get_jsontest, NULL},
+    {"GET", "/cookie/test/:lang/:extra", &callback_get_cookietest, NULL},
     {NULL, NULL, NULL, NULL}
   };
 ```
 
 Please note that each time a call is made to the webservice, endpoints will be tested in the same order. On the first matching endpoint, the other ones won't be tested. So be careful on your endpoints declaration order.
 
-The starting point function is ulfius_init_framework, here is its declaration:
+### Start and stop webservice
 
+The starting point function is ulfius_init_framework:
 
 ```c
 /**
@@ -138,14 +139,26 @@ int ulfius_init_framework(struct _u_instance * u_instance, struct _u_endpoint * 
 
 In your program where you want to start the web server, simply execute the function `ulfius_init_framework(struct _u_instance * u_instance, struct _u_endpoint * endpoint_list);` with the previously declared `instance` and `endpoint_list`. You can reuse the same callback function as much as you want for different endpoints. On success, this function returns `true`, otherwise `false`.
 
+To stop the webservice, call the following function:
+
+```c
+/**
+ * ulfius_stop_framework
+ * 
+ * Stop the webservice
+ * u_instance:    pointer to a struct _u_instance that describe its port and bind address
+ */
+int ulfius_stop_framework(struct _u_instance * u_instance);
+```
+
 ### Callback function
 
 A callback function must have the following declaration:
 
 ```c
 int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
-     struct _u_response * response,     // Output parameters (set by the user)
-     void * user_data);
+													struct _u_response * response,     // Output parameters (set by the user)
+													void * user_data);
 ```
 
 In the callback function definition, the variables `request` and `response` will be set by the framework, and the `user_data` variable will be assigned to the user_data defined in your endpoint list definition.
@@ -170,15 +183,17 @@ The request variable is defined as:
  * 
  */
 struct _u_request {
-	char *               http_verb;
-	char *               http_url;
-	struct sockaddr_in * client_ip;
-	struct _u_map *      map_url;
-	struct _u_map *      map_header;
-	struct _u_map *      map_cookie;
-	struct _u_map *      map_post_body;
-	json_t *             json_body;
-	int                  json_error;
+  char *               http_verb;
+  char *               http_url;
+  struct sockaddr_in * client_ip;
+  struct _u_map *      map_url;
+  struct _u_map *      map_header;
+  struct _u_map *      map_cookie;
+  struct _u_map *      map_post_body;
+  json_t *             json_body;
+  int                  json_error;
+  void *               binary_body;
+  int                  binary_body_length;
 };
 ```
 
@@ -191,8 +206,10 @@ The response variable is defined as:
  * 
  * Contains response data that must be set by the user
  * status:             HTTP status code (200, 404, 500, etc)
+ * protocol:           HTTP Protocol sent
  * map_header:         map containing the header variables
- * map_cookie:         map containing the cookie variables
+ * nb_cookies:         number of cookies sent
+ * map_cookie:         array of cookies sent
  * string_body:        a char * containing the raw body response
  * json_body:          a json_t * object containing the json response
  * binary_body:        a void * containing a binary content
@@ -200,13 +217,15 @@ The response variable is defined as:
  * 
  */
 struct _u_response {
-	int             status;
-	struct _u_map * map_header;
-	struct _u_map * map_cookie;
-	char *          string_body;
-	json_t *        json_body;
-	void *          binary_body;
-	unsigned int    binary_body_length;
+  long               status;
+  char             * protocol;
+  struct _u_map    * map_header;
+  unsigned int       nb_cookies;
+  struct _u_cookie * map_cookie;
+  char             * string_body;
+  json_t           * json_body;
+  void             * binary_body;
+  unsigned int       binary_body_length;
 };
 ```
 
@@ -224,16 +243,15 @@ The Ulfius framework will automatically free the variables referenced by the req
 
 ### Cookie management
 
-The map_cookie structure will contain a set of key/values to set the cookies. You can use the function `ulfius_add_cookie` in your callback function to facilitate cookies management. This function is defined as:
+The map_cookie structure will contain a set of key/values to set the cookies. You can use the function `ulfius_add_cookie_to_response` in your callback function to facilitate cookies management. This function is defined as:
 
 ```c
-
 /**
- * ulfius_add_cookie
+ * ulfius_add_cookie_to_header
  * add a cookie to the cookie map
  */
-int ulfius_add_cookie(struct _u_map * response_map_cookie, const char * key, const char * value, const char * expires, const uint max_age, 
-											const char * domain, const char * path, const int secure, const int http_only);
+int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const uint max_age, 
+                      const char * domain, const char * path, const int secure, const int http_only);
 ```
 
 ### u_map API
@@ -331,9 +349,15 @@ char * u_map_get_case(const struct _u_map * u_map, const char * key);
  * returned value must be freed after use
  */
 struct _u_map * u_map_copy(const struct _u_map * source);
+
+/**
+ * Return the number of key/values pair in the specified struct _u_map
+ * Return -1 on error
+ */
+int u_map_count(const struct _u_map * source);
 ```
 
 ### Example source code
 
-See `example/example.c` for more detailed sample source codes.
+See `example` folder for detailed sample source codes.
 

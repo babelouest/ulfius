@@ -70,10 +70,10 @@ int main (int argc, char **argv) {
   // The last endpoint will be called for every GET call and will serve the static files
   // The last line is mandatory to mark the end of the array
   struct _u_endpoint endpoint_list[] = {
-    {"POST", "/sheep", &nb_sheep, &callback_sheep_counter_start},
-    {"PUT", "/sheep", &nb_sheep, &callback_sheep_counter_add},
-    {"DELETE", "/sheep", &nb_sheep, &callback_sheep_counter_reset},
-    {"GET", "*", &mime_types, &callback_static_file},
+    {"POST", "/sheep", &callback_sheep_counter_start, &nb_sheep},
+    {"PUT", "/sheep", &callback_sheep_counter_add, &nb_sheep},
+    {"DELETE", "/sheep", &callback_sheep_counter_reset, &nb_sheep},
+    {"GET", "*", &callback_static_file, &mime_types},
     {NULL, NULL, NULL, NULL}
   };
   
@@ -93,7 +93,7 @@ int main (int argc, char **argv) {
   u_map_clean(&mime_types);
   
   printf("End framework\n");
-	return 0;
+	return !ulfius_stop_framework(&instance);
 }
 
 /**
@@ -192,11 +192,11 @@ int callback_static_file (const struct _u_request * request, struct _u_response 
       free(content_type);
       response->status = 200;
     } else {
-      response->string_body = strdup("");
+      response->string_body = u_strdup("");
       response->status = 404;
     }
   } else {
-    response->string_body = strdup("");
+    response->string_body = u_strdup("");
     response->status = 404;
   }
   free(file_path);

@@ -3,7 +3,7 @@
 #
 # Makefile used to build the software
 #
-# Copyright 2014-2015 Nicolas Mora <mail@babelouest.org>
+# Copyright 2015 Nicolas Mora <mail@babelouest.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License
@@ -18,23 +18,23 @@ CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS)
 ULFIUS_LOCATION=../../src
 LIBS=-lc -lulfius -ljansson -L$(ULFIUS_LOCATION)
 
-all: example
+all: proxy
 
 clean:
-	rm -f *.o example
+	rm -f *.o proxy
 
 debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
-debug: example
+debug: proxy
 
-ulfius.so:
+libulfius.so:
 	cd $(ULFIUS_LOCATION) && $(MAKE) debug
 
-example.o: example.c ulfius.so
-	$(CC) $(CFLAGS) example.c -DDEBUG -g -O0
+proxy.o: proxy.c
+	$(CC) $(CFLAGS) proxy.c -DDEBUG -g -O0
 
-example: example.o
-	$(CC) -o example example.o $(LIBS)
+proxy: libulfius.so proxy.o
+	$(CC) -o proxy proxy.o $(LIBS)
 
-test: example
-	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./example
+test: proxy
+	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./proxy

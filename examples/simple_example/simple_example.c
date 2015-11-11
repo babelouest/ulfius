@@ -13,6 +13,9 @@
 
 #include <string.h>
 #include <jansson.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "../../src/ulfius.h"
 
@@ -53,6 +56,7 @@ char * print_map(const struct _u_map * map) {
 				}
 			} else {
 				to_return = malloc((strlen(line) + 1)*sizeof(char));
+        to_return[0] = 0;
 			}
 			strcat(to_return, line);
 			free(line);
@@ -69,14 +73,14 @@ int main (int argc, char **argv) {
   // Endpoint list declaration
   // The last line is mandatory to mark the end of the array
   struct _u_endpoint endpoint_list[] = {
-    {"GET", "/test", NULL, &callback_get_test},
-    {"POST", "/test", NULL, &callback_post_test},
-    {"GET", "/test/:foo", "user data 1", &callback_all_test_foo},
-    {"POST", "/test/:foo", "user data 2", &callback_all_test_foo},
-    {"PUT", "/test/:foo", "user data 3", &callback_all_test_foo},
-    {"DELETE", "/test/:foo", "user data 4", &callback_all_test_foo},
-    {"GET", "/json/test", NULL, &callback_get_jsontest},
-    {"GET", "/cookie/test/:lang/:extra", NULL, &callback_get_cookietest},
+    {"GET", "/test", &callback_get_test, NULL},
+    {"POST", "/test", &callback_post_test, NULL},
+    {"GET", "/test/:foo", &callback_all_test_foo, "user data 1"},
+    {"POST", "/test/:foo", &callback_all_test_foo, "user data 2"},
+    {"PUT", "/test/:foo", &callback_all_test_foo, "user data 3"},
+    {"DELETE", "/test/:foo", &callback_all_test_foo, "user data 4"},
+    {"PUT", "/json/test", &callback_get_jsontest, NULL},
+    {"GET", "/cookie/test/:lang/:extra", &callback_get_cookietest, NULL},
     {NULL, NULL, NULL, NULL}
   };
   
@@ -93,7 +97,7 @@ int main (int argc, char **argv) {
   getchar();
   
   printf("End framework\n");
-	return 0;
+	return !ulfius_stop_framework(&instance);
 }
 
 /**
@@ -126,11 +130,11 @@ int callback_all_test_foo (const struct _u_request * request, struct _u_response
   char * url_params = print_map(request->map_url), * headers = print_map(request->map_header), * cookies = print_map(request->map_cookie), 
 				* post_params = print_map(request->map_post_body), * json_params = json_dumps(request->json_body, JSON_INDENT(2));
   int len;
-  len = snprintf(NULL, 0, "Hello World!\n\n  method is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n  json body parameters are \n%s\n\n  user data is %s\n\n",
-																	request->http_verb, request->http_url, url_params, cookies, headers, post_params, json_params, (char *)user_data);
+  len = snprintf(NULL, 0, "Hello World!\n\n  method is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n  json body parameters are \n%s\n\n  user data is %s\n\nclient address is %s\n\n",
+																	request->http_verb, request->http_url, url_params, cookies, headers, post_params, json_params, (char *)user_data, inet_ntoa(((struct sockaddr_in *)request->client_address)->sin_addr));
   response->string_body = malloc((len+1)*sizeof(char));
-  snprintf(response->string_body, (len+1), "Hello World!\n\n  method is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n  json body parameters are \n%s\n\n  user data is %s\n\n",
-																	request->http_verb, request->http_url, url_params, cookies, headers, post_params, json_params, (char *)user_data);
+  snprintf(response->string_body, (len+1), "Hello World!\n\n  method is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n  json body parameters are \n%s\n\n  user data is %s\n\nclient address is %s\n\n",
+																	request->http_verb, request->http_url, url_params, cookies, headers, post_params, json_params, (char *)user_data, inet_ntoa(((struct sockaddr_in *)request->client_address)->sin_addr));
   response->status = 200;
   
   free(url_params);
@@ -149,6 +153,11 @@ int callback_get_jsontest (const struct _u_request * request, struct _u_response
   json_object_set_new(response->json_body, "message", json_string("Hello World!"));
   json_object_set_new(response->json_body, "method", json_string(request->http_verb));
   json_object_set_new(response->json_body, "url", json_string(request->http_url));
+  if (!request->json_error) {
+    json_object_set(response->json_body, "request", request->json_body);
+  } else {
+    json_object_set_new(response->json_body, "request", json_string("Error parsing request"));
+  }
   response->status = 200;
   return 0;
 }
@@ -169,9 +178,9 @@ int callback_get_cookietest (const struct _u_request * request, struct _u_respon
 		i_counter++;
 	}
 	snprintf(new_counter, 7, "%d", i_counter);
-	u_map_put(response->map_cookie, "lang", lang);
-	u_map_put(response->map_cookie, "extra", extra);
-	u_map_put(response->map_cookie, "counter", new_counter);
+  ulfius_add_cookie_to_response(response, "lang", lang, NULL, 0, NULL, NULL, 0, 0);
+	ulfius_add_cookie_to_response(response, "extra", extra, NULL, 0, NULL, NULL, 0, 0);
+	ulfius_add_cookie_to_response(response, "counter", new_counter, NULL, 0, NULL, NULL, 0, 0);
 	response->string_body = strdup("Cookies set");
 	
 	free(lang);
