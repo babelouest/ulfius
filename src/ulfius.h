@@ -115,6 +115,7 @@ struct _u_instance {
  * Contains request data
  * http_verb:      http method (GET, POST, PUT, DELETE, etc.)
  * http_url:       url used to call this callback function
+ * full_uri:       full uri used by the client to call the webservice
  * client_address: IP address of the client
  * map_url:        map containing the url variables, both from the route and the ?key=value variables
  * map_header:     map containing the header variables
@@ -127,6 +128,7 @@ struct _u_instance {
 struct _u_request {
   char *               http_verb;
   char *               http_url;
+  char *               full_uri;
   struct sockaddr *    client_address;
   struct _u_map *      map_url;
   struct _u_map *      map_header;
@@ -197,6 +199,7 @@ struct _u_endpoint {
 struct connection_info_struct {
   struct MHD_PostProcessor * post_processor;
   int                        has_post_processor;
+  int                        callback_first_iteration;
   struct _u_request *        request;
 };
 

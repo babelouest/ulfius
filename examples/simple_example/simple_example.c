@@ -130,11 +130,11 @@ int callback_all_test_foo (const struct _u_request * request, struct _u_response
   char * url_params = print_map(request->map_url), * headers = print_map(request->map_header), * cookies = print_map(request->map_cookie), 
 				* post_params = print_map(request->map_post_body), * json_params = json_dumps(request->json_body, JSON_INDENT(2));
   int len;
-  len = snprintf(NULL, 0, "Hello World!\n\n  method is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n  json body parameters are \n%s\n\n  user data is %s\n\nclient address is %s\n\n",
-																	request->http_verb, request->http_url, url_params, cookies, headers, post_params, json_params, (char *)user_data, inet_ntoa(((struct sockaddr_in *)request->client_address)->sin_addr));
+  len = snprintf(NULL, 0, "Hello World!\n\n  method is %s\n  url is %s\n\n  full uri is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n  json body parameters are \n%s\n\n  user data is %s\n\nclient address is %s\n\n",
+																	request->http_verb, request->http_url, request->full_uri, url_params, cookies, headers, post_params, json_params, (char *)user_data, inet_ntoa(((struct sockaddr_in *)request->client_address)->sin_addr));
   response->string_body = malloc((len+1)*sizeof(char));
-  snprintf(response->string_body, (len+1), "Hello World!\n\n  method is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n  json body parameters are \n%s\n\n  user data is %s\n\nclient address is %s\n\n",
-																	request->http_verb, request->http_url, url_params, cookies, headers, post_params, json_params, (char *)user_data, inet_ntoa(((struct sockaddr_in *)request->client_address)->sin_addr));
+  snprintf(response->string_body, (len+1), "Hello World!\n\n  method is %s\n  url is %s\n\n  full uri is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n  json body parameters are \n%s\n\n  user data is %s\n\nclient address is %s\n\n",
+																	request->http_verb, request->http_url, request->full_uri, url_params, cookies, headers, post_params, json_params, (char *)user_data, inet_ntoa(((struct sockaddr_in *)request->client_address)->sin_addr));
   response->status = 200;
   
   free(url_params);

@@ -51,22 +51,22 @@ int set_response_header(struct MHD_Response * response, const struct _u_map * re
  * Set the response cookies defined by the user
  */
 int set_response_cookie(struct MHD_Response * mhd_response, const struct _u_response * response) {
-	int i, ret;
-	char * header;
-	if (mhd_response != NULL && response != NULL) {
-		for (i=0; i<response->nb_cookies; i++) {
-			header = get_cookie_header(&response->map_cookie[i]);
-			ret = MHD_add_response_header (mhd_response, MHD_HTTP_HEADER_SET_COOKIE, header);
-			free(header);
+  int i, ret;
+  char * header;
+  if (mhd_response != NULL && response != NULL) {
+    for (i=0; i<response->nb_cookies; i++) {
+      header = get_cookie_header(&response->map_cookie[i]);
+      ret = MHD_add_response_header (mhd_response, MHD_HTTP_HEADER_SET_COOKIE, header);
+      free(header);
       if (ret == MHD_NO) {
         i = -1;
         break;
       }
-		}
-		return response->nb_cookies;
-	} else {
-		return -1;
-	}
+    }
+    return response->nb_cookies;
+  } else {
+    return -1;
+  }
 }
 
 int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const uint max_age, 
@@ -189,39 +189,39 @@ char * get_cookie_header(const struct _u_cookie * cookie) {
  * clean the cookie's elements
  */
 int ulfius_clean_cookie(struct _u_cookie * cookie) {
-	if (cookie != NULL) {
-		free(cookie->key);
-		cookie->key = NULL;
-		free(cookie->value);
-		cookie->value = NULL;
-		free(cookie->expires);
-		cookie->expires = NULL;
-		free(cookie->domain);
-		cookie->domain = NULL;
-		free(cookie->path);
-		cookie->path = NULL;
-		return 1;
-	} else {
-		return 0;
-	}
+  if (cookie != NULL) {
+    free(cookie->key);
+    cookie->key = NULL;
+    free(cookie->value);
+    cookie->value = NULL;
+    free(cookie->expires);
+    cookie->expires = NULL;
+    free(cookie->domain);
+    cookie->domain = NULL;
+    free(cookie->path);
+    cookie->path = NULL;
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
 /**
  * Copy the source's cookie elements into dest
  */
 int ulfius_copy_cookie(struct _u_cookie * dest, const struct _u_cookie * source) {
-	if (source != NULL && dest != NULL) {
-		dest->key = u_strdup(source->key);
-		dest->value = u_strdup(source->value);
-		dest->expires = u_strdup(source->expires);
-		dest->max_age = source->max_age;
-		dest->domain = u_strdup(source->domain);
-		dest->path = u_strdup(source->path);
-		dest->secure = source->secure;
-		dest->http_only = source->http_only;
-		return 1;
-	}
-	return 0;
+  if (source != NULL && dest != NULL) {
+    dest->key = u_strdup(source->key);
+    dest->value = u_strdup(source->value);
+    dest->expires = u_strdup(source->expires);
+    dest->max_age = source->max_age;
+    dest->domain = u_strdup(source->domain);
+    dest->path = u_strdup(source->path);
+    dest->secure = source->secure;
+    dest->http_only = source->http_only;
+    return 1;
+  }
+  return 0;
 }
 
 /**
@@ -230,21 +230,21 @@ int ulfius_copy_cookie(struct _u_cookie * dest, const struct _u_cookie * source)
  * user must free the parent pointer if needed after clean
  */
 int ulfius_clean_response(struct _u_response * response) {
-	int i;
+  int i;
   if (response != NULL) {
     free(response->protocol);
     response->protocol = NULL;
     u_map_clean_full(response->map_header);
     response->map_header = NULL;
     for (i=0; i<response->nb_cookies; i++) {
-			ulfius_clean_cookie(&response->map_cookie[i]);
-		}
+      ulfius_clean_cookie(&response->map_cookie[i]);
+    }
     free(response->map_cookie);
     response->map_cookie = NULL;
     free(response->string_body);
     response->string_body = NULL;
-		json_decref(response->json_body);
-		response->json_body = NULL;
+    json_decref(response->json_body);
+    response->json_body = NULL;
     free(response->binary_body);
     response->binary_body = NULL;
     return 1;
@@ -273,7 +273,7 @@ int ulfius_clean_response_full(struct _u_response * response) {
  */
 int ulfius_init_response(struct _u_response * response) {
   if (response != NULL) {
-		response->status = 0;
+    response->status = 0;
     response->map_header = malloc(sizeof(struct _u_map));
     u_map_init(response->map_header);
     response->map_cookie = NULL;
@@ -294,34 +294,34 @@ int ulfius_init_response(struct _u_response * response) {
  * return value must be free'd
  */
 struct _u_response * ulfius_duplicate_response(const struct _u_response * response) {
-	struct _u_response * new_response = NULL;
-	int i;
-	if (response != NULL) {
-		new_response = malloc(sizeof(struct _u_response));
-		ulfius_init_response(new_response);
-		new_response->status = response->status;
-		new_response->protocol = u_strdup(response->protocol);
-		u_map_clean_full(new_response->map_header);
-		new_response->map_header = u_map_copy(response->map_header);
-		new_response->nb_cookies = response->nb_cookies;
-		if (response->nb_cookies > 0) {
-			new_response->map_cookie = malloc(response->nb_cookies*sizeof(struct _u_cookie));
-			for (i=0; i<response->nb_cookies; i++) {
-				ulfius_copy_cookie(&new_response->map_cookie[i], &response->map_cookie[i]);
-			}
-		} else {
-			new_response->map_cookie = NULL;
-		}
-		new_response->string_body = u_strdup(response->string_body);
-		new_response->json_body = (response->json_body==NULL?NULL:json_copy(response->json_body));
-		
-		if (response->binary_body != NULL && response->binary_body_length > 0) {
-			new_response->binary_body = malloc(response->binary_body_length);
-			new_response->binary_body_length = response->binary_body_length;
-			memcpy(new_response->binary_body, response->binary_body, response->binary_body_length);
-		}
-	}
-	return new_response;
+  struct _u_response * new_response = NULL;
+  int i;
+  if (response != NULL) {
+    new_response = malloc(sizeof(struct _u_response));
+    ulfius_init_response(new_response);
+    new_response->status = response->status;
+    new_response->protocol = u_strdup(response->protocol);
+    u_map_clean_full(new_response->map_header);
+    new_response->map_header = u_map_copy(response->map_header);
+    new_response->nb_cookies = response->nb_cookies;
+    if (response->nb_cookies > 0) {
+      new_response->map_cookie = malloc(response->nb_cookies*sizeof(struct _u_cookie));
+      for (i=0; i<response->nb_cookies; i++) {
+        ulfius_copy_cookie(&new_response->map_cookie[i], &response->map_cookie[i]);
+      }
+    } else {
+      new_response->map_cookie = NULL;
+    }
+    new_response->string_body = u_strdup(response->string_body);
+    new_response->json_body = (response->json_body==NULL?NULL:json_copy(response->json_body));
+    
+    if (response->binary_body != NULL && response->binary_body_length > 0) {
+      new_response->binary_body = malloc(response->binary_body_length);
+      new_response->binary_body_length = response->binary_body_length;
+      memcpy(new_response->binary_body, response->binary_body, response->binary_body_length);
+    }
+  }
+  return new_response;
 }
 
 /**
@@ -329,31 +329,31 @@ struct _u_response * ulfius_duplicate_response(const struct _u_response * respon
  * Copy the source response elements into the des response
  */
 int ulfius_copy_response(struct _u_response * dest, const struct _u_response * source) {
-	int i;
-	if (dest != NULL && source != NULL) {
-		dest->status = source->status;
-		dest->protocol = u_strdup(source->protocol);
-		u_map_clean_full(dest->map_header);
-		dest->map_header = u_map_copy(source->map_header);
-		dest->nb_cookies = source->nb_cookies;
-		if (source->nb_cookies > 0) {
-			dest->map_cookie = malloc(source->nb_cookies*sizeof(struct _u_cookie));
-			for (i=0; i<source->nb_cookies; i++) {
-				ulfius_copy_cookie(&dest->map_cookie[i], &source->map_cookie[i]);
-			}
-		} else {
-			dest->map_cookie = NULL;
-		}
-		dest->string_body = u_strdup(source->string_body);
-		dest->json_body = (source->json_body==NULL?NULL:json_copy(source->json_body));
-		
-		if (source->binary_body != NULL && source->binary_body_length > 0) {
-			dest->binary_body = malloc(source->binary_body_length);
-			dest->binary_body_length = source->binary_body_length;
-			memcpy(dest->binary_body, source->binary_body, source->binary_body_length);
-		}
-		return 1;
-	} else {
-		return 0;
-	}
+  int i;
+  if (dest != NULL && source != NULL) {
+    dest->status = source->status;
+    dest->protocol = u_strdup(source->protocol);
+    u_map_clean_full(dest->map_header);
+    dest->map_header = u_map_copy(source->map_header);
+    dest->nb_cookies = source->nb_cookies;
+    if (source->nb_cookies > 0) {
+      dest->map_cookie = malloc(source->nb_cookies*sizeof(struct _u_cookie));
+      for (i=0; i<source->nb_cookies; i++) {
+        ulfius_copy_cookie(&dest->map_cookie[i], &source->map_cookie[i]);
+      }
+    } else {
+      dest->map_cookie = NULL;
+    }
+    dest->string_body = u_strdup(source->string_body);
+    dest->json_body = (source->json_body==NULL?NULL:json_copy(source->json_body));
+    
+    if (source->binary_body != NULL && source->binary_body_length > 0) {
+      dest->binary_body = malloc(source->binary_body_length);
+      dest->binary_body_length = source->binary_body_length;
+      memcpy(dest->binary_body, source->binary_body, source->binary_body_length);
+    }
+    return 1;
+  } else {
+    return 0;
+  }
 }

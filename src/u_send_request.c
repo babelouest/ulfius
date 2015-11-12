@@ -102,7 +102,7 @@ int ulfius_request_http(const struct _u_request * request, struct _u_response * 
 
   if (request != NULL) {
     copy_request = ulfius_duplicate_request(request);
-		curl_handle = curl_easy_init();
+    curl_handle = curl_easy_init();
     body body_data;
     body_data.size = 0;
     body_data.data = NULL;

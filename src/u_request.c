@@ -145,6 +145,7 @@ int ulfius_init_request(struct _u_request * request) {
     u_map_init(request->map_post_body);
     request->http_verb = NULL;
     request->http_url = NULL;
+    request->full_uri = NULL;
     request->client_address = NULL;
     request->json_body = NULL;
     request->json_error = 0;
@@ -169,6 +170,8 @@ int ulfius_clean_request(struct _u_request * request) {
     request->http_verb = NULL;
     free(request->http_url);
     request->http_url = NULL;
+    free(request->full_uri);
+    request->full_uri = NULL;
     free(request->client_address);
     request->client_address = NULL;
     u_map_clean_full(request->map_url);
@@ -208,31 +211,31 @@ int ulfius_clean_request_full(struct _u_request * request) {
  * return value must be free'd
  */
 struct _u_request * ulfius_duplicate_request(const struct _u_request * request) {
-	struct _u_request * new_request = NULL;
-	if (request != NULL) {
-		new_request = malloc(sizeof(struct _u_request));
-		ulfius_init_request(new_request);
-		new_request->http_verb = u_strdup(request->http_verb);
-		new_request->http_url = u_strdup(request->http_url);
-		if (request->client_address != NULL) {
-			new_request->client_address = malloc(sizeof(struct sockaddr));
-			memcpy(new_request->client_address, request->client_address, sizeof(struct sockaddr));
-		}
-		u_map_clean_full(new_request->map_url);
-		new_request->map_url = u_map_copy(request->map_url);
-		u_map_clean_full(new_request->map_header);
-		new_request->map_header = u_map_copy(request->map_header);
-		u_map_clean_full(new_request->map_cookie);
-		new_request->map_cookie = u_map_copy(request->map_cookie);
-		u_map_clean_full(new_request->map_post_body);
-		new_request->map_post_body = u_map_copy(request->map_post_body);
-		new_request->json_body = json_copy(request->json_body);
-		new_request->json_error = request->json_error;
-		if (request->binary_body != NULL && request->binary_body_length > 0) {
-			new_request->binary_body = malloc(request->binary_body_length);
-			memcpy(new_request->binary_body, request->binary_body, request->binary_body_length);
-		}
-		new_request->binary_body_length = request->binary_body_length;
-	}
-	return new_request;
+  struct _u_request * new_request = NULL;
+  if (request != NULL) {
+    new_request = malloc(sizeof(struct _u_request));
+    ulfius_init_request(new_request);
+    new_request->http_verb = u_strdup(request->http_verb);
+    new_request->http_url = u_strdup(request->http_url);
+    if (request->client_address != NULL) {
+      new_request->client_address = malloc(sizeof(struct sockaddr));
+      memcpy(new_request->client_address, request->client_address, sizeof(struct sockaddr));
+    }
+    u_map_clean_full(new_request->map_url);
+    new_request->map_url = u_map_copy(request->map_url);
+    u_map_clean_full(new_request->map_header);
+    new_request->map_header = u_map_copy(request->map_header);
+    u_map_clean_full(new_request->map_cookie);
+    new_request->map_cookie = u_map_copy(request->map_cookie);
+    u_map_clean_full(new_request->map_post_body);
+    new_request->map_post_body = u_map_copy(request->map_post_body);
+    new_request->json_body = json_copy(request->json_body);
+    new_request->json_error = request->json_error;
+    if (request->binary_body != NULL && request->binary_body_length > 0) {
+      new_request->binary_body = malloc(request->binary_body_length);
+      memcpy(new_request->binary_body, request->binary_body, request->binary_body_length);
+    }
+    new_request->binary_body_length = request->binary_body_length;
+  }
+  return new_request;
 }

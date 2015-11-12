@@ -63,6 +63,21 @@ int validate_endpoint_list(const struct _u_endpoint * endpoint_list) {
   }
 }
 
+void * ulfius_uri_logger (void * cls, const char * uri) {
+  struct connection_info_struct * con_info = malloc (sizeof (struct connection_info_struct));
+  if (con_info != NULL) {
+    con_info->callback_first_iteration = 1;
+    con_info->request = malloc(sizeof(struct _u_request));
+    
+    if (NULL == con_info->request || !ulfius_init_request(con_info->request)) {
+      free(con_info);
+      con_info = NULL;
+    }
+    con_info->request->full_uri = u_strdup(uri);
+  }
+  return con_info;
+}
+
 /**
  * Initialize the framework environment and start the instance
  */
@@ -75,6 +90,7 @@ int ulfius_init_framework(struct _u_instance * u_instance, struct _u_endpoint * 
           u_instance->port, NULL, NULL, &ulfius_webservice_dispatcher, (void *)endpoint_list, 
           MHD_OPTION_NOTIFY_COMPLETED, request_completed, NULL,
           MHD_OPTION_SOCK_ADDR, u_instance->bind_address,
+          MHD_OPTION_URI_LOG_CALLBACK, ulfius_uri_logger, NULL,
           MHD_OPTION_END);
     
     return (u_instance->mhd_daemon != NULL);
@@ -93,7 +109,6 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
   const char * version, const char * upload_data,
   size_t * upload_data_size, void ** con_cls) {
   struct _u_endpoint * endpoint_list = (struct _u_endpoint *)cls, * current_endpoint;
-  struct connection_info_struct * con_info_post = NULL;
   struct connection_info_struct * con_info = * con_cls;
   int mhd_ret = MHD_NO, callback_ret = ULFIUS_CALLBACK_RESPONSE_ERROR;
   char * content_type;
@@ -108,42 +123,37 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
   
   // Prepare for POST or PUT input data
   // Initialize the input maps
-  if (NULL == *con_cls) {
-		so_client = MHD_get_connection_info (connection, MHD_CONNECTION_INFO_CLIENT_ADDRESS)->client_addr;
-    con_info_post = malloc (sizeof (struct connection_info_struct));
-    if (NULL == con_info_post) {
-      return MHD_NO;
-    }
-    con_info_post->has_post_processor = 0;
-    con_info_post->request = malloc(sizeof(struct _u_request));
+  if (con_info == NULL) {
+    return MHD_NO;
+  }
+  
+  if (con_info->callback_first_iteration) {
+    con_info->callback_first_iteration = 0;
+    so_client = MHD_get_connection_info (connection, MHD_CONNECTION_INFO_CLIENT_ADDRESS)->client_addr;
+    con_info->has_post_processor = 0;
     
-    if (NULL == con_info_post->request || !ulfius_init_request(con_info_post->request)) {
-      return MHD_NO;
-    }
-    
-    con_info_post->request->http_verb = u_strdup(method);
-    con_info_post->request->http_url  = u_strdup(url);
-    con_info_post->request->client_address = malloc(sizeof(struct sockaddr));
-    memcpy(con_info_post->request->client_address, so_client, sizeof(struct sockaddr));
-    MHD_get_connection_values (connection, MHD_HEADER_KIND, ulfius_fill_map, con_info_post->request->map_header);
-    MHD_get_connection_values (connection, MHD_GET_ARGUMENT_KIND, ulfius_fill_map, con_info_post->request->map_url);
-    MHD_get_connection_values (connection, MHD_COOKIE_KIND, ulfius_fill_map, con_info_post->request->map_cookie);
-    content_type = u_map_get_case(con_info_post->request->map_header, "content-type");
+    con_info->request->http_verb = u_strdup(method);
+    con_info->request->http_url  = u_strdup(url);
+    con_info->request->client_address = malloc(sizeof(struct sockaddr));
+    memcpy(con_info->request->client_address, so_client, sizeof(struct sockaddr));
+    MHD_get_connection_values (connection, MHD_HEADER_KIND, ulfius_fill_map, con_info->request->map_header);
+    MHD_get_connection_values (connection, MHD_GET_ARGUMENT_KIND, ulfius_fill_map, con_info->request->map_url);
+    MHD_get_connection_values (connection, MHD_COOKIE_KIND, ulfius_fill_map, con_info->request->map_cookie);
+    content_type = u_map_get_case(con_info->request->map_header, "content-type");
     
     // Set POST Processor if content-type is properly set
     if (content_type != NULL && (0 == strncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) || 
         0 == strncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA)))) {
-      con_info_post->has_post_processor = 1;
-      con_info_post->post_processor = MHD_create_post_processor (connection, ULFIUS_POSTBUFFERSIZE, iterate_post_data, (void *) con_info_post);
-      if (NULL == con_info_post->post_processor) {
-				ulfius_clean_request_full(con_info_post->request);
-				con_info_post->request = NULL;
+      con_info->has_post_processor = 1;
+      con_info->post_processor = MHD_create_post_processor (connection, ULFIUS_POSTBUFFERSIZE, iterate_post_data, (void *) con_info);
+      if (NULL == con_info->post_processor) {
+        ulfius_clean_request_full(con_info->request);
+        con_info->request = NULL;
         return MHD_NO;
       }
     }
     free(content_type);
     content_type = NULL;
-    *con_cls = (void *) con_info_post;
     return MHD_YES;
   }
   
@@ -200,9 +210,9 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
         if (response->string_body == NULL) {
           response_buffer = u_strdup("");
         } else {
-					response_buffer = u_strdup(response->string_body);
-					response_buffer_len = strlen(response_buffer);
-				}
+          response_buffer = u_strdup(response->string_body);
+          response_buffer_len = strlen(response_buffer);
+        }
       } else if (response->string_body == NULL && response->json_body == NULL && response->binary_body == NULL) {
         // No valid response parameters, sending error 500
         response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
@@ -243,9 +253,9 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
  * Parse the POST data
  */
 int iterate_post_data (void *coninfo_cls, enum MHD_ValueKind kind, const char *key,
-											const char *filename, const char *content_type,
-											const char *transfer_encoding, const char *data, uint64_t off,
-											size_t size) {
+                      const char *filename, const char *content_type,
+                      const char *transfer_encoding, const char *data, uint64_t off,
+                      size_t size) {
   struct connection_info_struct *con_info = coninfo_cls;
   u_map_put((struct _u_map *)con_info->request->map_post_body, key, data);
   return MHD_YES;
@@ -255,7 +265,7 @@ int iterate_post_data (void *coninfo_cls, enum MHD_ValueKind kind, const char *k
  * Mark the request completed so ulfius can keep going
  */
 void request_completed (void *cls, struct MHD_Connection *connection,
-												void **con_cls, enum MHD_RequestTerminationCode toe) {
+                        void **con_cls, enum MHD_RequestTerminationCode toe) {
   struct connection_info_struct *con_info = *con_cls;
   if (NULL == con_info) {
     return;
@@ -290,5 +300,5 @@ int ulfius_stop_framework(struct _u_instance * u_instance) {
  * a modified strdup function that don't crash when source is NULL, instead return NULL
  */
 char * u_strdup(const char * source) {
-	return (source==NULL?NULL:strdup(source));
+  return (source==NULL?NULL:strdup(source));
 }
