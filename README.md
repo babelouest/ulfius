@@ -2,7 +2,7 @@
 
 Web Framework for REST Applications in C.
 
-Based on [GNU Libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/) for the web server backend and [Jansson](http://www.digip.org/jansson/) for the json manipulation library.
+Based on [GNU Libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/) for the web server backend and [Jansson](http://www.digip.org/jansson/) for the json manipulation library and [Libcurl](http://curl.haxx.se/libcurl/) for the send http request API.
 
 Used to facilitate creation of web applications in C programs with a small memory footprint, like in embedded systems applications.
 
@@ -11,7 +11,7 @@ Used to facilitate creation of web applications in C programs with a small memor
 To install the dependencies, for Debian based distributions (Debian, Ubuntu, Raspbian, etc.), run as root:
 
 ```shell
-# apt-get install libmicrohttpd libmicrohttpd-dev libjansson libjansson-dev
+# apt-get install libmicrohttpd libmicrohttpd-dev libjansson libjansson-dev libcurl4 libcurl4-gnutls-dev
 ```
 
 # Installation
@@ -171,21 +171,21 @@ The request variable is defined as:
  * Structure of request parameters
  * 
  * Contains request data
- * http_verb:     http method (GET, POST, PUT, DELETE, etc.)
- * http_url:      url used to call this callback function
- * client_ip:     IP address of the client
- * map_url:       map containing the url variables, both from the route and the ?key=value variables
- * map_header:    map containing the header variables
- * map_cookie:    map containing the cookie variables
- * map_post_body: map containing the post body variables (if available)
- * json_body:     json_t * object containing the json body (if available)
- * json_error:    true if the json body was not parsed by jansson (if available)
+ * http_verb:      http method (GET, POST, PUT, DELETE, etc.)
+ * http_url:       url used to call this callback function or full url to call when used in a ulfius_request_http
+ * client_address: IP address of the client
+ * map_url:        map containing the url variables, both from the route and the ?key=value variables
+ * map_header:     map containing the header variables
+ * map_cookie:     map containing the cookie variables
+ * map_post_body:  map containing the post body variables (if available)
+ * json_body:      json_t * object containing the json body (if available)
+ * json_error:     true if the json body was not parsed by jansson (if available)
  * 
  */
 struct _u_request {
   char *               http_verb;
   char *               http_url;
-  struct sockaddr_in * client_ip;
+  struct sockaddr *    client_address;
   struct _u_map *      map_url;
   struct _u_map *      map_header;
   struct _u_map *      map_cookie;
@@ -237,7 +237,86 @@ You can find the jansson api documentation at the following address: [Jansson do
 
 The callback function return value is 0 on success. If the return value is other than 0, an error 500 response will be sent to the client.
 
-### Important!
+In addition with manipulating the raw parameters of the structures, you can use the _u_request and _u_response structures by using specific functions designed to facilitate their use and memory management:
+
+```c
+/**
+ * ulfius_init_request
+ * Initialize a request structure by allocating inner elements
+ * return true if everything went fine, false otherwise
+ */
+int ulfius_init_request(struct _u_request * request);
+
+/**
+ * ulfius_clean_request
+ * clean the specified request's inner elements
+ * user must free the parent pointer if needed after clean
+ * or use ulfius_clean_request_full
+ * return true if no error
+ */
+int ulfius_clean_request(struct _u_request * request);
+
+/**
+ * ulfius_clean_request_full
+ * clean the specified request and all its elements
+ * return true if no error
+ */
+int ulfius_clean_request_full(struct _u_request * request);
+
+/**
+ * ulfius_init_response
+ * Initialize a response structure by allocating inner elements
+ * return true if everything went fine, false otherwise
+ */
+int ulfius_init_response(struct _u_response * response);
+
+/**
+ * ulfius_clean_response
+ * clean the specified response's inner elements
+ * user must free the parent pointer if needed after clean
+ * or use ulfius_clean_response_full
+ * return true if no error
+ */
+int ulfius_clean_response(struct _u_response * response);
+
+/**
+ * ulfius_clean_response_full
+ * clean the specified response and all its elements
+ * return true if no error
+ */
+int ulfius_clean_response_full(struct _u_response * response);
+
+/**
+ * ulfius_copy_response
+ * Copy the source response elements into the des response
+ */
+int ulfius_copy_response(struct _u_response * dest, const struct _u_response * source);
+
+/**
+ * ulfius_clean_cookie
+ * clean the cookie's elements
+ */
+int ulfius_clean_cookie(struct _u_cookie * cookie);
+
+/**
+ * Copy the cookie source elements into dest elements
+ */
+int ulfius_copy_cookie(struct _u_cookie * dest, const struct _u_cookie * source);
+
+/**
+ * create a new request based on the source elements
+ * return value must be free'd
+ */
+struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
+
+/**
+ * create a new response based on the source elements
+ * return value must be free'd
+ */
+struct _u_response * ulfius_duplicate_response(const struct _u_response * response);
+```
+
+### Memory management
 
 The Ulfius framework will automatically free the variables referenced by the request and responses structures, so you must use dynamically allocated values for the response pointers.
 
@@ -355,6 +434,28 @@ struct _u_map * u_map_copy(const struct _u_map * source);
  * Return -1 on error
  */
 int u_map_count(const struct _u_map * source);
+```
+### Send request API
+
+The function `int ulfius_request_http(const struct _u_request * request, struct _u_response * response)` is based on libcul.
+
+It allows to send an http request with the parameters specified by the `_u_request` structure. Use the parameter `_u_request.http_url` to specify the distant url to call.
+
+You can fill the maps in the `_u_request` structure with parameters, they will be used to build the request. Note that if you fill `_u_request.map_post_body` with parameters, the content-type `application/x-www-form-urlencoded` will be use to encode the data.
+
+The response parameters is stored into the `_u_response` structure. If you specify NULL for the response structure, the http call will still be made but no response details will be specified.
+
+Return 1 on success, 0 otherwise.
+
+This function is defined as:
+
+```c
+/**
+ * ulfius_send_request
+ * Send a HTTP request and store the result into a _u_response
+ * return true if everything went fine, false otherwise
+ */
+int ulfius_request_http(const struct _u_request * request, struct _u_response * response);
 ```
 
 ### Example source code
