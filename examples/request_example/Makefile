@@ -18,23 +18,26 @@ CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS)
 ULFIUS_LOCATION=../../src
 LIBS=-lc -lulfius -ljansson -L$(ULFIUS_LOCATION)
 
-all: send_requests
+all: client server
 
 clean:
-	rm -f *.o send_requests
+	rm -f *.o client server
 
 debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
-debug: send_requests
+debug: client server
 
-libulfius.so: $(ULFIUS_LOCATION)/libulfius.so
+libulfius.so:
 	cd $(ULFIUS_LOCATION) && $(MAKE) debug
 
-send_requests.o: send_requests.c libulfius.so
-	$(CC) $(CFLAGS) send_requests.c -DDEBUG -g -O0
+client.o: client.c libulfius.so
+	$(CC) $(CFLAGS) client.c -DDEBUG -g -O0
 
-send_requests: send_requests.o
-	$(CC) -o send_requests send_requests.o $(LIBS)
+client: client.o
+	$(CC) -o client client.o $(LIBS)
 
-test: send_requests
-	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./send_requests
+server.o: server.c libulfius.so
+	$(CC) $(CFLAGS) server.c -DDEBUG -g -O0
+
+server: server.o
+	$(CC) -o server server.o $(LIBS)
