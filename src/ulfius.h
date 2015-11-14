@@ -52,7 +52,7 @@
 
 #define ULFIUS_POSTBUFFERSIZE 1024
 
-#define ULFIUS_VERSION 0.9.1
+#define ULFIUS_VERSION 0.9.2
 
 /*************
  * Structures
@@ -114,8 +114,7 @@ struct _u_instance {
  * 
  * Contains request data
  * http_verb:      http method (GET, POST, PUT, DELETE, etc.)
- * http_url:       url used to call this callback function
- * full_uri:       full uri used by the client to call the webservice
+ * http_url:       url used to call this callback function or full url to call when used in a ulfius_request_http
  * client_address: IP address of the client
  * map_url:        map containing the url variables, both from the route and the ?key=value variables
  * map_header:     map containing the header variables
@@ -128,7 +127,6 @@ struct _u_instance {
 struct _u_request {
   char *               http_verb;
   char *               http_url;
-  char *               full_uri;
   struct sockaddr *    client_address;
   struct _u_map *      map_url;
   struct _u_map *      map_header;
@@ -249,13 +247,6 @@ int ulfius_request_http(const struct _u_request * request, struct _u_response * 
 int ulfius_init_request(struct _u_request * request);
 
 /**
- * ulfius_init_response
- * Initialize a response structure by allocating inner elements
- * return true if everything went fine, false otherwise
- */
-int ulfius_init_response(struct _u_response * response);
-
-/**
  * ulfius_clean_request
  * clean the specified request's inner elements
  * user must free the parent pointer if needed after clean
@@ -272,6 +263,13 @@ int ulfius_clean_request(struct _u_request * request);
 int ulfius_clean_request_full(struct _u_request * request);
 
 /**
+ * ulfius_init_response
+ * Initialize a response structure by allocating inner elements
+ * return true if everything went fine, false otherwise
+ */
+int ulfius_init_response(struct _u_response * response);
+
+/**
  * ulfius_clean_response
  * clean the specified response's inner elements
  * user must free the parent pointer if needed after clean
@@ -286,6 +284,35 @@ int ulfius_clean_response(struct _u_response * response);
  * return true if no error
  */
 int ulfius_clean_response_full(struct _u_response * response);
+
+/**
+ * ulfius_copy_response
+ * Copy the source response elements into the des response
+ */
+int ulfius_copy_response(struct _u_response * dest, const struct _u_response * source);
+
+/**
+ * ulfius_clean_cookie
+ * clean the cookie's elements
+ */
+int ulfius_clean_cookie(struct _u_cookie * cookie);
+
+/**
+ * Copy the cookie source elements into dest elements
+ */
+int ulfius_copy_cookie(struct _u_cookie * dest, const struct _u_cookie * source);
+
+/**
+ * create a new request based on the source elements
+ * return value must be free'd
+ */
+struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
+
+/**
+ * create a new response based on the source elements
+ * return value must be free'd
+ */
+struct _u_response * ulfius_duplicate_response(const struct _u_response * response);
 
 /**
  * umap declarations
@@ -480,35 +507,6 @@ int set_response_cookie(struct MHD_Response * mhd_response, const struct _u_resp
  * Add a cookie in the cookie map as defined in the RFC 6265
  */
 char * get_cookie_header(const struct _u_cookie * cookie);
-
-/**
- * ulfius_clean_cookie
- * clean the cookie's elements
- */
-int ulfius_clean_cookie(struct _u_cookie * cookie);
-
-/**
- * Copy the cookie source elements into dest elements
- */
-int ulfius_copy_cookie(struct _u_cookie * dest, const struct _u_cookie * source);
-
-/**
- * ulfius_copy_response
- * Copy the source response elements into the des response
- */
-int ulfius_copy_response(struct _u_response * dest, const struct _u_response * source);
-
-/**
- * create a new request based on the source elements
- * return value must be free'd
- */
-struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
-
-/**
- * create a new response based on the source elements
- * return value must be free'd
- */
-struct _u_response * ulfius_duplicate_response(const struct _u_response * response);
 
 /**
  * u_strdup

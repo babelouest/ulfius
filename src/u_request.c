@@ -145,7 +145,6 @@ int ulfius_init_request(struct _u_request * request) {
     u_map_init(request->map_post_body);
     request->http_verb = NULL;
     request->http_url = NULL;
-    request->full_uri = NULL;
     request->client_address = NULL;
     request->json_body = NULL;
     request->json_error = 0;
@@ -170,8 +169,6 @@ int ulfius_clean_request(struct _u_request * request) {
     request->http_verb = NULL;
     free(request->http_url);
     request->http_url = NULL;
-    free(request->full_uri);
-    request->full_uri = NULL;
     free(request->client_address);
     request->client_address = NULL;
     u_map_clean_full(request->map_url);

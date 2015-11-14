@@ -22,7 +22,7 @@ CC=gcc
 CFLAGS=-c -fPIC -Wall -D_REENTRANT $(ADDITIONALFLAGS)
 LIBS=-lc -lmicrohttpd -ljansson -lcurl
 OUTPUT=libulfius.so
-VERSION=0.9.0
+VERSION=0.9.2
 PREFIX=/usr/local
 
 all: release

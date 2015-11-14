@@ -25,11 +25,18 @@
 
 #include "ulfius.h"
 
+/**
+ * Internal structure used to store temporarly the response body
+ */
 typedef struct _body {
   char * data;
   size_t size;
 } body;
- 
+
+/**
+ * write_body
+ * Internal function used to write the body response into a _body structure
+ */
 size_t write_body(void * contents, size_t size, size_t nmemb, void * user_data) {
   size_t realsize = size * nmemb;
   body * body_data = (body *) user_data;
@@ -46,7 +53,11 @@ size_t write_body(void * contents, size_t size, size_t nmemb, void * user_data) 
   return realsize;
 }
 
-char *trimwhitespace(char *str) {
+/**
+ * trim_whitespace
+ * Return the string without its beginning and ending whitespaces
+ */
+char * trim_whitespace(char *str) {
   char *end;
 
   // Trim leading space
@@ -65,6 +76,11 @@ char *trimwhitespace(char *str) {
   return str;
 }
 
+/**
+ * write_header
+ * Write the header value into the response map_header structure
+ * return the size_t of the header written
+ */
 static size_t write_header(void * buffer, size_t size, size_t nitems, void * user_data) {
   /* received header is nitems * size long in 'buffer' NOT ZERO TERMINATED */
   /* 'userdata' is set with CURLOPT_WRITEDATA */
@@ -75,12 +91,12 @@ static size_t write_header(void * buffer, size_t size, size_t nitems, void * use
   if (strchr(header, ':') != NULL) {
     if (response->map_header != NULL) {
       // Expecting a header (key: value)
-      key = trimwhitespace(strtok_r(header, ":", &saveptr));
-      value = trimwhitespace(strtok_r(NULL, ":", &saveptr));
+      key = trim_whitespace(strtok_r(header, ":", &saveptr));
+      value = trim_whitespace(strtok_r(NULL, ":", &saveptr));
       
       u_map_put(response->map_header, key, value);
     }
-  } else if (strlen(trimwhitespace(header)) > 0) {
+  } else if (strlen(trim_whitespace(header)) > 0) {
     // Expecting the HTTP/x.x header
     response->protocol = u_strdup(header);
   }
@@ -91,12 +107,13 @@ static size_t write_header(void * buffer, size_t size, size_t nitems, void * use
 /**
  * ulfius_send_request
  * Send a HTTP request and return the result into a _u_response
+ * return 1 on send success, 0 otherwise
  */
 int ulfius_request_http(const struct _u_request * request, struct _u_response * response) {
   CURLcode res;
   CURL * curl_handle = NULL;
   struct curl_slist * header_list = NULL;
-  char ** keys = NULL, * value, * cookie, * header;
+  char ** keys = NULL, * value, * key_esc, * value_esc, * cookie, * header, * param;
   int i, len;
   struct _u_request * copy_request = NULL;
 
@@ -107,7 +124,76 @@ int ulfius_request_http(const struct _u_request * request, struct _u_response * 
     body_data.size = 0;
     body_data.data = NULL;
 
-    if (copy_request->map_header != NULL) {
+    if (copy_request->map_url != NULL && u_map_count(copy_request->map_url) > 0) {
+      keys = u_map_enum_keys(copy_request->map_url);
+      for (i=0; keys[i] != NULL; i++) {
+        value = u_map_get(copy_request->map_url, keys[i]);
+        key_esc = curl_easy_escape(curl_handle, keys[i], 0);
+        value_esc = curl_easy_escape(curl_handle, value, 0);
+        len = snprintf(NULL, 0, "%s=%s", key_esc, value_esc);
+        param = malloc((len + 1)*sizeof(char));
+        snprintf(param, (len + 1), "%s=%s", key_esc, value_esc);
+        if (i==0) {
+          copy_request->http_url = realloc(copy_request->http_url, strlen(copy_request->http_url) + strlen(param) + 2);
+          if (strchr(copy_request->http_url, '?') != NULL) {
+            strcat(copy_request->http_url, "&");
+          } else {
+            strcat(copy_request->http_url, "?");
+          }
+          strcat(copy_request->http_url, param);
+        } else {
+          copy_request->http_url = realloc(copy_request->http_url, strlen(copy_request->http_url) + strlen(param) + 2);
+          strcat(copy_request->http_url, "&");
+          strcat(copy_request->http_url, param);
+        }
+        free(value);
+        free(param);
+        curl_free(key_esc);
+        curl_free(value_esc);
+      }
+      u_map_clean_enum(keys);
+    }
+
+    if (copy_request->json_body != NULL) {
+      free(copy_request->binary_body);
+      copy_request->binary_body = json_dumps(copy_request->json_body, JSON_COMPACT);
+      copy_request->binary_body_length = strlen(copy_request->binary_body);
+      u_map_put(copy_request->map_header, ULFIUS_HTTP_HEADER_CONTENT, ULFIUS_HTTP_ENCODING_JSON);
+    } else if (u_map_count(copy_request->map_post_body) > 0) {
+      free(copy_request->binary_body);
+      keys = u_map_enum_keys(copy_request->map_post_body);
+      for (i=0; keys[i] != NULL; i++) {
+        value = u_map_get(copy_request->map_post_body, keys[i]);
+        key_esc = curl_easy_escape(curl_handle, keys[i], 0);
+        value_esc = curl_easy_escape(curl_handle, value, 0);
+        len = snprintf(NULL, 0, "%s=%s", key_esc, value_esc);
+        param = malloc((len + 1)*sizeof(char));
+        snprintf(param, (len + 1), "%s=%s", key_esc, value_esc);
+        if (i==0) {
+          copy_request->http_url = realloc(copy_request->http_url, strlen(copy_request->http_url) + strlen(param) + 1);
+          strcat(copy_request->http_url, param);
+        } else {
+          copy_request->http_url = realloc(copy_request->http_url, strlen(copy_request->http_url) + strlen(param) + 1);
+          strcat(copy_request->http_url, param);
+        }
+        if (i == 0) {
+          copy_request->binary_body = malloc(strlen(param) + 1);
+        } else {
+          copy_request->binary_body = realloc(copy_request->binary_body, strlen(copy_request->binary_body) + strlen(param) + 2);
+          strcat(copy_request->binary_body, "&");
+        }
+        strcat(copy_request->binary_body, param);
+        free(value);
+        free(param);
+        curl_free(key_esc);
+        curl_free(value_esc);
+      }
+      u_map_clean_enum(keys);
+      curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, copy_request->binary_body);
+      u_map_put(copy_request->map_header, ULFIUS_HTTP_HEADER_CONTENT, MHD_HTTP_POST_ENCODING_FORM_URLENCODED);
+    }
+
+    if (copy_request->map_header != NULL && u_map_count(copy_request->map_header) > 0) {
       keys = u_map_enum_keys(copy_request->map_header);
       for (i=0; keys[i] != NULL; i++) {
         value = u_map_get(copy_request->map_header, keys[i]);
@@ -121,7 +207,7 @@ int ulfius_request_http(const struct _u_request * request, struct _u_response * 
       u_map_clean_enum(keys);
     }
 
-    if (copy_request->map_cookie != NULL) {
+    if (copy_request->map_cookie != NULL && u_map_count(copy_request->map_cookie) > 0) {
       keys = u_map_enum_keys(copy_request->map_cookie);
       for (i=0; keys[i] != NULL; i++) {
         value = u_map_get(copy_request->map_cookie, keys[i]);
@@ -134,18 +220,7 @@ int ulfius_request_http(const struct _u_request * request, struct _u_response * 
       }
       u_map_clean_enum(keys);
     }
-
-    if (copy_request->json_body != NULL) {
-      free(copy_request->binary_body);
-      copy_request->binary_body = json_dumps(copy_request->json_body, JSON_COMPACT);
-      copy_request->binary_body_length = strlen(copy_request->binary_body);
-      len = snprintf(NULL, 0, "%s:%s", ULFIUS_HTTP_HEADER_CONTENT, ULFIUS_HTTP_ENCODING_JSON);
-      header = malloc((len + 1)*sizeof(char));
-      snprintf(header, (len + 1), "%s:%s", ULFIUS_HTTP_HEADER_CONTENT, ULFIUS_HTTP_ENCODING_JSON);
-      header_list = curl_slist_append(header_list, header);
-      free(header);
-    }
-
+    
     // Request parameters
     curl_easy_setopt(curl_handle, CURLOPT_URL, copy_request->http_url);
     curl_easy_setopt(curl_handle, CURLOPT_CUSTOMREQUEST, copy_request->http_verb);

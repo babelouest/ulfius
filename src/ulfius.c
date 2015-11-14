@@ -73,7 +73,7 @@ void * ulfius_uri_logger (void * cls, const char * uri) {
       free(con_info);
       con_info = NULL;
     }
-    con_info->request->full_uri = u_strdup(uri);
+    con_info->request->http_url = u_strdup(uri);
   }
   return con_info;
 }
@@ -133,7 +133,6 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
     con_info->has_post_processor = 0;
     
     con_info->request->http_verb = u_strdup(method);
-    con_info->request->http_url  = u_strdup(url);
     con_info->request->client_address = malloc(sizeof(struct sockaddr));
     memcpy(con_info->request->client_address, so_client, sizeof(struct sockaddr));
     MHD_get_connection_values (connection, MHD_HEADER_KIND, ulfius_fill_map, con_info->request->map_header);
