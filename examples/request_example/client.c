@@ -93,53 +93,53 @@ int main (int argc, char **argv) {
   printf("Press <enter> to run get test\n");
   getchar();
   ulfius_init_response(&response);
-  ulfius_request_http(&req_list[0], &response);
+  ulfius_send_http_request(&req_list[0], &response);
   print_response(&response);
   ulfius_clean_response(&response);
   
   printf("Press <enter> to run get test with no interest on the response\n");
   getchar();
-  printf("Request sent, result is %d\n", ulfius_request_http(&req_list[0], NULL));
+  printf("Request sent, result is %d\n", ulfius_send_http_request(&req_list[0], NULL));
   
   printf("Press <enter> to run delete test\n");
   getchar();
   ulfius_init_response(&response);
-  ulfius_request_http(&req_list[1], &response);
+  ulfius_send_http_request(&req_list[1], &response);
   print_response(&response);
   ulfius_clean_response(&response);
   
   printf("Press <enter> to run post parameters test\n");
   getchar();
   ulfius_init_response(&response);
-  ulfius_request_http(&req_list[2], &response);
+  ulfius_send_http_request(&req_list[2], &response);
   print_response(&response);
   ulfius_clean_response(&response);
   
   printf("Press <enter> to run post plain test\n");
   getchar();
   ulfius_init_response(&response);
-  ulfius_request_http(&req_list[3], &response);
+  ulfius_send_http_request(&req_list[3], &response);
   print_response(&response);
   ulfius_clean_response(&response);
   
   printf("Press <enter> to run post json test\n");
   getchar();
   ulfius_init_response(&response);
-  ulfius_request_http(&req_list[4], &response);
+  ulfius_send_http_request(&req_list[4], &response);
   print_response(&response);
   ulfius_clean_response(&response);
   
   printf("Press <enter> to run put plain test\n");
   getchar();
   ulfius_init_response(&response);
-  ulfius_request_http(&req_list[5], &response);
+  ulfius_send_http_request(&req_list[5], &response);
   print_response(&response);
   ulfius_clean_response(&response);
   
   printf("Press <enter> to run put json test\n");
   getchar();
   ulfius_init_response(&response);
-  ulfius_request_http(&req_list[6], &response);
+  ulfius_send_http_request(&req_list[6], &response);
   print_response(&response);
   ulfius_clean_response(&response);
   

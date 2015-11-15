@@ -52,7 +52,13 @@
 
 #define ULFIUS_POSTBUFFERSIZE 1024
 
-#define ULFIUS_VERSION 0.9.2
+#define ULFIUS_OK            0
+#define ULFIUS_ERROR_MEMORY  1
+#define ULFIUS_ERROR_LIBMHD  2
+#define ULFIUS_ERROR_LIBCURL 3
+#define ULFIUS_ERROR_JANSSON 4
+
+#define ULFIUS_VERSION 0.9.5
 
 /*************
  * Structures
@@ -113,8 +119,8 @@ struct _u_instance {
  * Structure of request parameters
  * 
  * Contains request data
- * http_verb:      http method (GET, POST, PUT, DELETE, etc.)
- * http_url:       url used to call this callback function or full url to call when used in a ulfius_request_http
+ * http_verb:      http method (GET, POST, PUT, DELETE, etc.), use '*' to match all http methods
+ * http_url:       url used to call this callback function or full url to call when used in a ulfius_send_http_request
  * client_address: IP address of the client
  * map_url:        map containing the url variables, both from the route and the ?key=value variables
  * map_header:     map containing the header variables
@@ -214,6 +220,7 @@ struct connection_info_struct {
  * endpoint_list: array of struct _u_endpoint that will describe endpoints used for the application
  *                the array MUST have an empty struct _u_endpoint at the end of it
  *                {NULL, NULL, NULL, NULL}
+ * return true on success, false otherwise
  */
 int ulfius_init_framework(struct _u_instance * u_instance, struct _u_endpoint * endpoint_list);
 
@@ -222,27 +229,29 @@ int ulfius_init_framework(struct _u_instance * u_instance, struct _u_endpoint * 
  * 
  * Stop the webservice
  * u_instance:    pointer to a struct _u_instance that describe its port and bind address
+ * return true on success, false otherwise
  */
 int ulfius_stop_framework(struct _u_instance * u_instance);
 
 /**
  * ulfius_add_cookie_to_header
  * add a cookie to the cookie map
+ * return true on success, false otherwise
  */
 int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const uint max_age, 
                       const char * domain, const char * path, const int secure, const int http_only);
 
 /**
- * ulfius_send_request
+ * ulfius_send_http_request
  * Send a HTTP request and store the result into a _u_response
- * return true if everything went fine, false otherwise
+ * return true on success, false otherwise
  */
-int ulfius_request_http(const struct _u_request * request, struct _u_response * response);
+int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response);
 
 /**
  * ulfius_init_request
  * Initialize a request structure by allocating inner elements
- * return true if everything went fine, false otherwise
+ * return true on success, false otherwise
  */
 int ulfius_init_request(struct _u_request * request);
 
@@ -251,21 +260,21 @@ int ulfius_init_request(struct _u_request * request);
  * clean the specified request's inner elements
  * user must free the parent pointer if needed after clean
  * or use ulfius_clean_request_full
- * return true if no error
+ * return true on success, false otherwise
  */
 int ulfius_clean_request(struct _u_request * request);
 
 /**
  * ulfius_clean_request_full
  * clean the specified request and all its elements
- * return true if no error
+ * return true on success, false otherwise
  */
 int ulfius_clean_request_full(struct _u_request * request);
 
 /**
  * ulfius_init_response
  * Initialize a response structure by allocating inner elements
- * return true if everything went fine, false otherwise
+ * return true on success, false otherwise
  */
 int ulfius_init_response(struct _u_response * response);
 
@@ -274,37 +283,40 @@ int ulfius_init_response(struct _u_response * response);
  * clean the specified response's inner elements
  * user must free the parent pointer if needed after clean
  * or use ulfius_clean_response_full
- * return true if no error
+ * return true on success, false otherwise
  */
 int ulfius_clean_response(struct _u_response * response);
 
 /**
  * ulfius_clean_response_full
  * clean the specified response and all its elements
- * return true if no error
+ * return true on success, false otherwise
  */
 int ulfius_clean_response_full(struct _u_response * response);
 
 /**
  * ulfius_copy_response
  * Copy the source response elements into the des response
+ * return true on success, false otherwise
  */
 int ulfius_copy_response(struct _u_response * dest, const struct _u_response * source);
 
 /**
  * ulfius_clean_cookie
  * clean the cookie's elements
+ * return true on success, false otherwise
  */
 int ulfius_clean_cookie(struct _u_cookie * cookie);
 
 /**
  * Copy the cookie source elements into dest elements
+ * return true on success, false otherwise
  */
 int ulfius_copy_cookie(struct _u_cookie * dest, const struct _u_cookie * source);
 
 /**
  * create a new request based on the source elements
- * return value must be free'd
+ * returned value must be free'd
  */
 struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
 
@@ -325,24 +337,25 @@ struct _u_response * ulfius_duplicate_response(const struct _u_response * respon
 /**
  * initialize a struct _u_map
  * this function MUST be called after a declaration or allocation
+ * return true on success, false otherwise
  */
-void u_map_init(struct _u_map * map);
+int u_map_init(struct _u_map * map);
 
 /**
  * free the struct _u_map and its components
- * return true if no error
+ * return true on success, false otherwise
  */
 int u_map_clean_full(struct _u_map * u_map);
 
 /**
  * free the struct _u_map's inner components
- * return true if no error
+ * return true on success, false otherwise
  */
 int u_map_clean(struct _u_map * u_map);
 
 /**
  * free an enum return by functions u_map_enum_keys or u_map_enum_values
- * return true if no error
+ * return true on success, false otherwise
  */
 int u_map_clean_enum(char ** array);
 
@@ -377,7 +390,7 @@ int u_map_has_value(const struct _u_map * u_map, const char * value);
 /**
  * add the specified key/value pair into the specified u_map
  * if the u_map already contains a pair with the same key, replace the value
- * return true if no error
+ * return true on success, false otherwise
  */
 int u_map_put(struct _u_map * u_map, const char * key, const char * value);
 
@@ -385,7 +398,7 @@ int u_map_put(struct _u_map * u_map, const char * key, const char * value);
  * get the value corresponding to the specified key in the u_map
  * return NULL if no match found
  * search is case sensitive
- * returned value must be freed after use
+ * returned value must be free'd after use
  */
 char * u_map_get(const struct _u_map * u_map, const const char * key);
 
@@ -407,14 +420,14 @@ int u_map_has_value_case(const struct _u_map * u_map, const char * value);
  * get the value corresponding to the specified key in the u_map
  * return NULL if no match found
  * search is case insensitive
- * returned value must be freed after use
+ * returned value must be free'd after use
  */
 char * u_map_get_case(const struct _u_map * u_map, const char * key);
 
 /**
  * Create an exact copy of the specified struct _u_map
  * return a reference to the copy, NULL otherwise
- * returned value must be freed after use
+ * returned value must be free'd after use
  */
 struct _u_map * u_map_copy(const struct _u_map * source);
 
@@ -430,38 +443,42 @@ int u_map_count(const struct _u_map * source);
 
 /**
  * validate_instance
- * return true if u_instance has valid parameters
+ * return true if u_instance has valid parameters, false otherwise
  */
 int validate_instance(const struct _u_instance * u_instance);
 
 /**
  * validate_endpoint_list
- * return true if endpoint_list has valid parameters
+ * return true if endpoint_list has valid parameters, false otherwise
  */
 int validate_endpoint_list(const struct _u_endpoint * endpoint_list);
 
 /**
  * ulfius_webservice_dispatcher
  * function executed by libmicrohttpd every time an HTTP call is made
+ * return MHD_NO on error
  */
 int ulfius_webservice_dispatcher (void *cls, struct MHD_Connection *connection,
-                              const char *url, const char *method,
-                              const char *version, const char *upload_data,
-                              size_t *upload_data_size, void **con_cls);
+                                  const char *url, const char *method,
+                                  const char *version, const char *upload_data,
+                                  size_t *upload_data_size, void **con_cls);
 /**
  * iterate_post_data
  * function used to iterate post parameters
+ * return MHD_NO on error
  */
 int iterate_post_data (void *coninfo_cls, enum MHD_ValueKind kind, const char *key,
-              const char *filename, const char *content_type,
-              const char *transfer_encoding, const char *data, uint64_t off,
-              size_t size);
+                      const char *filename, const char *content_type,
+                      const char *transfer_encoding, const char *data, uint64_t off,
+                      size_t size);
+
 /**
  * request_completed
  * function used to clean data allocated after a web call is complete
  */
 void request_completed (void *cls, struct MHD_Connection *connection,
-                   void **con_cls, enum MHD_RequestTerminationCode toe);
+                        void **con_cls, enum MHD_RequestTerminationCode toe);
+
 /**
  * split_url
  * return an array of char based on the url words
@@ -492,25 +509,27 @@ int parse_url(const char * url, const struct _u_endpoint * endpoint, struct _u_m
 /**
  * set_response_header
  * adds headers defined in the response_map_header to the response
- * return true if no error
+ * return true on success, false otherwise
  */
 int set_response_header(struct MHD_Response * response, const struct _u_map * response_map_header);
 
 /**
  * set_response_cookie
  * adds cookies defined in the response_map_cookie
- * return true if no error
+ * return true on success, false otherwise
  */
 int set_response_cookie(struct MHD_Response * mhd_response, const struct _u_response * response);
 
 /**
  * Add a cookie in the cookie map as defined in the RFC 6265
+ * Returned value must be free'd after use
  */
 char * get_cookie_header(const struct _u_cookie * cookie);
 
 /**
  * u_strdup
  * a modified strdup function that don't crash when source is NULL, instead return NULL
+ * Returned value must be free'd after use
  */
 char * u_strdup(const char * source);
 

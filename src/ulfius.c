@@ -29,15 +29,18 @@
  * Fill a map with the key/values specified
  */
 static int ulfius_fill_map(void *cls, enum MHD_ValueKind kind, const char *key, const char *value) {
-  u_map_put(((struct _u_map *)cls), key, value);
-  return MHD_YES;
+  if (u_map_put(((struct _u_map *)cls), key, value)) {
+    return MHD_YES;
+  } else {
+    return MHD_NO;
+  }
 }
 
 /**
  * validate_instance
  * return true if u_instance has valid parameters
  */
-int validate_instance(const struct _u_instance * u_instance){
+int validate_instance(const struct _u_instance * u_instance) {
   return (u_instance != NULL && u_instance->port > 0 && u_instance->port < 65536);
 }
 
@@ -68,10 +71,15 @@ void * ulfius_uri_logger (void * cls, const char * uri) {
   if (con_info != NULL) {
     con_info->callback_first_iteration = 1;
     con_info->request = malloc(sizeof(struct _u_request));
+    if (con_info->request == NULL) {
+      free(con_info);
+      return NULL;
+    }
     
     if (NULL == con_info->request || !ulfius_init_request(con_info->request)) {
       free(con_info);
       con_info = NULL;
+      return NULL;
     }
     con_info->request->http_url = u_strdup(uri);
   }
@@ -79,7 +87,15 @@ void * ulfius_uri_logger (void * cls, const char * uri) {
 }
 
 /**
- * Initialize the framework environment and start the instance
+ * ulfius_init_framework
+ * Initializes the framework and run the webservice based on the parameters given
+ * return truze if no error
+ * 
+ * u_instance:    pointer to a struct _u_instance that describe its port and bind address
+ * endpoint_list: array of struct _u_endpoint that will describe endpoints used for the application
+ *                the array MUST have an empty struct _u_endpoint at the end of it
+ *                {NULL, NULL, NULL, NULL}
+ * return true on success, false otherwise
  */
 int ulfius_init_framework(struct _u_instance * u_instance, struct _u_endpoint * endpoint_list) {
   
@@ -100,9 +116,9 @@ int ulfius_init_framework(struct _u_instance * u_instance, struct _u_endpoint * 
 }
 
 /**
- * Redirect the http call to the proper function
- * This function is called multiple times (at least 2)
- * so it must run the callback function one time, after everything is set up
+ * ulfius_webservice_dispatcher
+ * function executed by libmicrohttpd every time an HTTP call is made
+ * return MHD_NO on error
  */
 int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection,
   const char * url, const char * method,
@@ -134,6 +150,9 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
     
     con_info->request->http_verb = u_strdup(method);
     con_info->request->client_address = malloc(sizeof(struct sockaddr));
+    if (con_info->request->client_address == NULL) {
+      return MHD_NO;
+    }
     memcpy(con_info->request->client_address, so_client, sizeof(struct sockaddr));
     MHD_get_connection_values (connection, MHD_HEADER_KIND, ulfius_fill_map, con_info->request->map_header);
     MHD_get_connection_values (connection, MHD_GET_ARGUMENT_KIND, ulfius_fill_map, con_info->request->map_url);
@@ -182,7 +201,13 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
     current_endpoint = endpoint_match(method, url, endpoint_list);
     
     response = malloc(sizeof(struct _u_response));
-    ulfius_init_response(response);
+    if (response == NULL) {
+      return MHD_NO;
+    }
+    if (!ulfius_init_response(response)) {
+      free(response);
+      return MHD_NO;
+    }
     
     if (current_endpoint != NULL) {
       // Endpoint found, run callback function with the input parameters filled
@@ -196,14 +221,28 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
       }
       if (!callback_ret && response->json_body != NULL) {
         // The user sent a json response
-        u_map_put(response->map_header, ULFIUS_HTTP_HEADER_CONTENT, ULFIUS_HTTP_ENCODING_JSON);
-        response_buffer = (void*) json_dumps(response->json_body, JSON_COMPACT);
-        response_buffer_len = strlen ((char*)response_buffer);
+        if (u_map_put(response->map_header, ULFIUS_HTTP_HEADER_CONTENT, ULFIUS_HTTP_ENCODING_JSON)) {
+          response_buffer = (void*) json_dumps(response->json_body, JSON_COMPACT);
+          if (response_buffer == NULL) {
+            response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
+            response->string_body = u_strdup(ULFIUS_HTTP_ERROR_BODY);
+          } else {
+            response_buffer_len = strlen ((char*)response_buffer);
+          }
+        } else {
+          response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
+          response->string_body = u_strdup(ULFIUS_HTTP_ERROR_BODY);
+        }
       } else if (!callback_ret && response->binary_body != NULL && response->binary_body_length > 0) {
         // The user sent a binary response
         response_buffer = malloc(response->binary_body_length);
-        memcpy(response_buffer, response->binary_body, response->binary_body_length);
-        response_buffer_len = response->binary_body_length;
+        if (response_buffer == NULL) {
+          response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
+          response->string_body = u_strdup(ULFIUS_HTTP_ERROR_BODY);
+        } else {
+          memcpy(response_buffer, response->binary_body, response->binary_body_length);
+          response_buffer_len = response->binary_body_length;
+        }
       } else if (!callback_ret) {
         // The user sent a string response
         if (response->string_body == NULL) {
@@ -225,8 +264,10 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
       mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
       
       if (!callback_ret) {
-        set_response_header(mhd_response, response->map_header);
-        set_response_cookie(mhd_response, response);
+        if (set_response_header(mhd_response, response->map_header) == -1 || set_response_cookie(mhd_response, response) == -1) {
+          response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
+          response->string_body = u_strdup(ULFIUS_HTTP_ERROR_BODY);
+        }
       }
       
       mhd_ret = MHD_queue_response (connection, response->status, mhd_response);
@@ -249,19 +290,25 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
 }
 
 /**
- * Parse the POST data
+ * iterate_post_data
+ * function used to iterate post parameters
+ * return MHD_NO on error
  */
 int iterate_post_data (void *coninfo_cls, enum MHD_ValueKind kind, const char *key,
                       const char *filename, const char *content_type,
                       const char *transfer_encoding, const char *data, uint64_t off,
                       size_t size) {
   struct connection_info_struct *con_info = coninfo_cls;
-  u_map_put((struct _u_map *)con_info->request->map_post_body, key, data);
-  return MHD_YES;
+  if (u_map_put((struct _u_map *)con_info->request->map_post_body, key, data)) {
+    return MHD_YES;
+  } else {
+    return MHD_NO;
+  }
 }
 
 /**
- * Mark the request completed so ulfius can keep going
+ * request_completed
+ * function used to clean data allocated after a web call is complete
  */
 void request_completed (void *cls, struct MHD_Connection *connection,
                         void **con_cls, enum MHD_RequestTerminationCode toe) {
@@ -284,6 +331,7 @@ void request_completed (void *cls, struct MHD_Connection *connection,
  * 
  * Stop the webservice
  * u_instance:    pointer to a struct _u_instance that describe its port and bind address
+ * return true on success, false otherwise
  */
 int ulfius_stop_framework(struct _u_instance * u_instance) {
   if (u_instance != NULL && u_instance->mhd_daemon != NULL) {
@@ -297,6 +345,7 @@ int ulfius_stop_framework(struct _u_instance * u_instance) {
 /**
  * u_strdup
  * a modified strdup function that don't crash when source is NULL, instead return NULL
+ * Returned value must be free'd after use
  */
 char * u_strdup(const char * source) {
   return (source==NULL?NULL:strdup(source));

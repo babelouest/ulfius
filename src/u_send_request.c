@@ -82,8 +82,6 @@ char * trim_whitespace(char *str) {
  * return the size_t of the header written
  */
 static size_t write_header(void * buffer, size_t size, size_t nitems, void * user_data) {
-  /* received header is nitems * size long in 'buffer' NOT ZERO TERMINATED */
-  /* 'userdata' is set with CURLOPT_WRITEDATA */
   
   struct _u_response * response = (struct _u_response *) user_data;
   char * header = (char *)buffer, * key, * value, * saveptr;
@@ -98,18 +96,24 @@ static size_t write_header(void * buffer, size_t size, size_t nitems, void * use
     }
   } else if (strlen(trim_whitespace(header)) > 0) {
     // Expecting the HTTP/x.x header
+    if (response->protocol != NULL) {
+      free(response->protocol);
+    }
     response->protocol = u_strdup(header);
+    if (response->protocol == NULL) {
+      return 0;
+    }
   }
   
   return nitems * size;
 }
 
 /**
- * ulfius_send_request
- * Send a HTTP request and return the result into a _u_response
- * return 1 on send success, 0 otherwise
+ * ulfius_send_http_request
+ * Send a HTTP request and store the result into a _u_response
+ * return true on success, false otherwise
  */
-int ulfius_request_http(const struct _u_request * request, struct _u_response * response) {
+int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response) {
   CURLcode res;
   CURL * curl_handle = NULL;
   struct curl_slist * header_list = NULL;
@@ -124,141 +128,380 @@ int ulfius_request_http(const struct _u_request * request, struct _u_response * 
     body_data.size = 0;
     body_data.data = NULL;
 
-    if (copy_request->map_url != NULL && u_map_count(copy_request->map_url) > 0) {
-      keys = u_map_enum_keys(copy_request->map_url);
-      for (i=0; keys[i] != NULL; i++) {
-        value = u_map_get(copy_request->map_url, keys[i]);
-        key_esc = curl_easy_escape(curl_handle, keys[i], 0);
-        value_esc = curl_easy_escape(curl_handle, value, 0);
-        len = snprintf(NULL, 0, "%s=%s", key_esc, value_esc);
-        param = malloc((len + 1)*sizeof(char));
-        snprintf(param, (len + 1), "%s=%s", key_esc, value_esc);
-        if (i==0) {
-          copy_request->http_url = realloc(copy_request->http_url, strlen(copy_request->http_url) + strlen(param) + 2);
-          if (strchr(copy_request->http_url, '?') != NULL) {
-            strcat(copy_request->http_url, "&");
-          } else {
-            strcat(copy_request->http_url, "?");
+    if (copy_request != NULL) {
+      if (copy_request->map_header == NULL) {
+        copy_request->map_header = malloc(sizeof(struct _u_map));
+        if (copy_request->map_header == NULL) {
+          ulfius_clean_request_full(copy_request);
+          curl_slist_free_all(header_list);
+          curl_easy_cleanup(curl_handle);
+          return 0;
+        }
+        u_map_init(copy_request->map_header);
+      }
+      if (copy_request->map_url != NULL && u_map_count(copy_request->map_url) > 0) {
+        keys = u_map_enum_keys(copy_request->map_url);
+        for (i=0; keys != NULL && keys[i] != NULL; i++) {
+          value = u_map_get(copy_request->map_url, keys[i]);
+          if (value == NULL) {
+            u_map_clean_enum(keys);
+            ulfius_clean_request_full(copy_request);
+            curl_slist_free_all(header_list);
+            curl_easy_cleanup(curl_handle);
+            return 0;
           }
-          strcat(copy_request->http_url, param);
-        } else {
-          copy_request->http_url = realloc(copy_request->http_url, strlen(copy_request->http_url) + strlen(param) + 2);
-          strcat(copy_request->http_url, "&");
-          strcat(copy_request->http_url, param);
+          key_esc = curl_easy_escape(curl_handle, keys[i], 0);
+          value_esc = curl_easy_escape(curl_handle, value, 0);
+          if (key_esc == NULL || value_esc == NULL) {
+            free(value);
+            u_map_clean_enum(keys);
+            curl_free(key_esc);
+            curl_free(value_esc);
+            ulfius_clean_request_full(copy_request);
+            curl_slist_free_all(header_list);
+            curl_easy_cleanup(curl_handle);
+            return 0;
+          }
+          len = snprintf(NULL, 0, "%s=%s", key_esc, value_esc);
+          param = malloc((len + 1)*sizeof(char));
+          if (param == NULL) {
+            free(value);
+            curl_free(key_esc);
+            curl_free(value_esc);
+            u_map_clean_enum(keys);
+            ulfius_clean_request_full(copy_request);
+            curl_slist_free_all(header_list);
+            curl_easy_cleanup(curl_handle);
+            return 0;
+          }
+          snprintf(param, (len + 1), "%s=%s", key_esc, value_esc);
+          if (i==0) {
+            copy_request->http_url = realloc(copy_request->http_url, strlen(copy_request->http_url) + strlen(param) + 2);
+            if (copy_request->http_url == NULL) {
+              free(value);
+              free(param);
+              curl_free(key_esc);
+              curl_free(value_esc);
+              u_map_clean_enum(keys);
+              ulfius_clean_request_full(copy_request);
+              curl_slist_free_all(header_list);
+              curl_easy_cleanup(curl_handle);
+              return 0;
+            }
+            if (strchr(copy_request->http_url, '?') != NULL) {
+              strcat(copy_request->http_url, "&");
+            } else {
+              strcat(copy_request->http_url, "?");
+            }
+            strcat(copy_request->http_url, param);
+          } else {
+            copy_request->http_url = realloc(copy_request->http_url, strlen(copy_request->http_url) + strlen(param) + 2);
+            if (copy_request->http_url == NULL) {
+              free(value);
+              free(param);
+              curl_free(key_esc);
+              curl_free(value_esc);
+              u_map_clean_enum(keys);
+              ulfius_clean_request_full(copy_request);
+              curl_slist_free_all(header_list);
+              curl_easy_cleanup(curl_handle);
+              return 0;
+            }
+            strcat(copy_request->http_url, "&");
+            strcat(copy_request->http_url, param);
+          }
+          free(value);
+          free(param);
+          curl_free(key_esc);
+          curl_free(value_esc);
         }
-        free(value);
-        free(param);
-        curl_free(key_esc);
-        curl_free(value_esc);
+        u_map_clean_enum(keys);
       }
-      u_map_clean_enum(keys);
-    }
 
-    if (copy_request->json_body != NULL) {
-      free(copy_request->binary_body);
-      copy_request->binary_body = json_dumps(copy_request->json_body, JSON_COMPACT);
-      copy_request->binary_body_length = strlen(copy_request->binary_body);
-      u_map_put(copy_request->map_header, ULFIUS_HTTP_HEADER_CONTENT, ULFIUS_HTTP_ENCODING_JSON);
-    } else if (u_map_count(copy_request->map_post_body) > 0) {
-      free(copy_request->binary_body);
-      keys = u_map_enum_keys(copy_request->map_post_body);
-      for (i=0; keys[i] != NULL; i++) {
-        value = u_map_get(copy_request->map_post_body, keys[i]);
-        key_esc = curl_easy_escape(curl_handle, keys[i], 0);
-        value_esc = curl_easy_escape(curl_handle, value, 0);
-        len = snprintf(NULL, 0, "%s=%s", key_esc, value_esc);
-        param = malloc((len + 1)*sizeof(char));
-        snprintf(param, (len + 1), "%s=%s", key_esc, value_esc);
-        if (i==0) {
-          copy_request->http_url = realloc(copy_request->http_url, strlen(copy_request->http_url) + strlen(param) + 1);
-          strcat(copy_request->http_url, param);
+      if (copy_request->json_body != NULL) {
+        free(copy_request->binary_body);
+        copy_request->binary_body = json_dumps(copy_request->json_body, JSON_COMPACT);
+        if (copy_request->binary_body == NULL) {
+          ulfius_clean_request_full(copy_request);
+          curl_slist_free_all(header_list);
+          curl_easy_cleanup(curl_handle);
+          return 0;
         } else {
-          copy_request->http_url = realloc(copy_request->http_url, strlen(copy_request->http_url) + strlen(param) + 1);
-          strcat(copy_request->http_url, param);
+          copy_request->binary_body_length = strlen(copy_request->binary_body);
+          if (!u_map_put(copy_request->map_header, ULFIUS_HTTP_HEADER_CONTENT, ULFIUS_HTTP_ENCODING_JSON)) {
+            ulfius_clean_request_full(copy_request);
+            curl_slist_free_all(header_list);
+            curl_easy_cleanup(curl_handle);
+            return 0;
+          }
         }
-        if (i == 0) {
-          copy_request->binary_body = malloc(strlen(param) + 1);
-        } else {
-          copy_request->binary_body = realloc(copy_request->binary_body, strlen(copy_request->binary_body) + strlen(param) + 2);
-          strcat(copy_request->binary_body, "&");
+      } else if (u_map_count(copy_request->map_post_body) > 0) {
+        free(copy_request->binary_body);
+        keys = u_map_enum_keys(copy_request->map_post_body);
+        for (i=0; keys != NULL && keys[i] != NULL; i++) {
+          value = u_map_get(copy_request->map_post_body, keys[i]);
+          if (value == NULL) {
+            u_map_clean_enum(keys);
+            ulfius_clean_request_full(copy_request);
+            curl_slist_free_all(header_list);
+            curl_easy_cleanup(curl_handle);
+            return 0;
+          }
+          key_esc = curl_easy_escape(curl_handle, keys[i], 0);
+          value_esc = curl_easy_escape(curl_handle, value, 0);
+          if (key_esc == NULL || value_esc == NULL) {
+            free(value);
+            curl_free(key_esc);
+            curl_free(value_esc);
+            u_map_clean_enum(keys);
+            ulfius_clean_request_full(copy_request);
+            curl_slist_free_all(header_list);
+            curl_easy_cleanup(curl_handle);
+            return 0;
+          }
+          len = snprintf(NULL, 0, "%s=%s", key_esc, value_esc);
+          param = malloc((len + 1)*sizeof(char));
+          if (param == NULL) {
+            free(value);
+            curl_free(key_esc);
+            curl_free(value_esc);
+            u_map_clean_enum(keys);
+            ulfius_clean_request_full(copy_request);
+            curl_slist_free_all(header_list);
+            curl_easy_cleanup(curl_handle);
+            return 0;
+          }
+          snprintf(param, (len + 1), "%s=%s", key_esc, value_esc);
+          if (i==0) {
+            copy_request->http_url = realloc(copy_request->http_url, strlen(copy_request->http_url) + strlen(param) + 1);
+            if (copy_request->http_url == NULL) {
+              free(value);
+              free(param);
+              curl_free(key_esc);
+              curl_free(value_esc);
+              u_map_clean_enum(keys);
+              ulfius_clean_request_full(copy_request);
+              curl_slist_free_all(header_list);
+              curl_easy_cleanup(curl_handle);
+              return 0;
+            }
+            strcat(copy_request->http_url, param);
+          } else {
+            copy_request->http_url = realloc(copy_request->http_url, strlen(copy_request->http_url) + strlen(param) + 1);
+            if (copy_request->http_url == NULL) {
+              free(value);
+              free(param);
+              curl_free(key_esc);
+              curl_free(value_esc);
+              u_map_clean_enum(keys);
+              ulfius_clean_request_full(copy_request);
+              curl_slist_free_all(header_list);
+              curl_easy_cleanup(curl_handle);
+              return 0;
+            }
+            strcat(copy_request->http_url, param);
+          }
+          if (i == 0) {
+            copy_request->binary_body = malloc(strlen(param) + 1);
+            if (copy_request->binary_body == NULL) {
+              free(value);
+              free(param);
+              curl_free(key_esc);
+              curl_free(value_esc);
+              u_map_clean_enum(keys);
+              ulfius_clean_request_full(copy_request);
+              curl_slist_free_all(header_list);
+              curl_easy_cleanup(curl_handle);
+              return 0;
+            }
+          } else {
+            copy_request->binary_body = realloc(copy_request->binary_body, strlen(copy_request->binary_body) + strlen(param) + 2);
+            if (copy_request->binary_body == NULL) {
+              free(value);
+              free(param);
+              curl_free(key_esc);
+              curl_free(value_esc);
+              u_map_clean_enum(keys);
+              ulfius_clean_request_full(copy_request);
+              curl_slist_free_all(header_list);
+              curl_easy_cleanup(curl_handle);
+              return 0;
+            }
+            strcat(copy_request->binary_body, "&");
+          }
+          strcat(copy_request->binary_body, param);
+          free(value);
+          free(param);
+          curl_free(key_esc);
+          curl_free(value_esc);
         }
-        strcat(copy_request->binary_body, param);
-        free(value);
-        free(param);
-        curl_free(key_esc);
-        curl_free(value_esc);
+        u_map_clean_enum(keys);
+        if (curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, copy_request->binary_body) != CURLE_OK) {
+          ulfius_clean_request_full(copy_request);
+          curl_slist_free_all(header_list);
+          curl_easy_cleanup(curl_handle);
+          return 0;
+        }
+        if (!u_map_put(copy_request->map_header, ULFIUS_HTTP_HEADER_CONTENT, MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) {
+          ulfius_clean_request_full(copy_request);
+          curl_slist_free_all(header_list);
+          curl_easy_cleanup(curl_handle);
+          return 0;
+        }
       }
-      u_map_clean_enum(keys);
-      curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, copy_request->binary_body);
-      u_map_put(copy_request->map_header, ULFIUS_HTTP_HEADER_CONTENT, MHD_HTTP_POST_ENCODING_FORM_URLENCODED);
-    }
 
-    if (copy_request->map_header != NULL && u_map_count(copy_request->map_header) > 0) {
-      keys = u_map_enum_keys(copy_request->map_header);
-      for (i=0; keys[i] != NULL; i++) {
-        value = u_map_get(copy_request->map_header, keys[i]);
-        len = snprintf(NULL, 0, "%s:%s", keys[i], value);
-        header = malloc((len + 1)*sizeof(char));
-        snprintf(header, (len + 1), "%s:%s", keys[i], value);
-        header_list = curl_slist_append(header_list, header);
-        free(value);
-        free(header);
+      if (copy_request->map_header != NULL && u_map_count(copy_request->map_header) > 0) {
+        keys = u_map_enum_keys(copy_request->map_header);
+        for (i=0; keys != NULL && keys[i] != NULL; i++) {
+          value = u_map_get(copy_request->map_header, keys[i]);
+          if (value == NULL) {
+            u_map_clean_enum(keys);
+            ulfius_clean_request_full(copy_request);
+            curl_slist_free_all(header_list);
+            curl_easy_cleanup(curl_handle);
+            return 0;
+          }
+          len = snprintf(NULL, 0, "%s:%s", keys[i], value);
+          header = malloc((len + 1)*sizeof(char));
+          if (header == NULL) {
+            free(value);
+            u_map_clean_enum(keys);
+            ulfius_clean_request_full(copy_request);
+            curl_slist_free_all(header_list);
+            curl_easy_cleanup(curl_handle);
+            return 0;
+          }
+          snprintf(header, (len + 1), "%s:%s", keys[i], value);
+          header_list = curl_slist_append(header_list, header);
+          if (header_list == NULL) {
+            free(value);
+            free(header);
+            u_map_clean_enum(keys);
+            ulfius_clean_request_full(copy_request);
+            curl_slist_free_all(header_list);
+            curl_easy_cleanup(curl_handle);
+            return 0;
+          }
+          free(value);
+          free(header);
+        }
+        u_map_clean_enum(keys);
       }
-      u_map_clean_enum(keys);
-    }
 
-    if (copy_request->map_cookie != NULL && u_map_count(copy_request->map_cookie) > 0) {
-      keys = u_map_enum_keys(copy_request->map_cookie);
-      for (i=0; keys[i] != NULL; i++) {
-        value = u_map_get(copy_request->map_cookie, keys[i]);
-        len = snprintf(NULL, 0, "%s=%s", keys[i], value);
-        cookie = malloc((len + 1)*sizeof(char));
-        snprintf(cookie, (len + 1), "%s=%s", keys[i], value);
-        curl_easy_setopt(curl_handle, CURLOPT_COOKIE, cookie);
-        free(value);
-        free(cookie);
+      if (copy_request->map_cookie != NULL && u_map_count(copy_request->map_cookie) > 0) {
+        keys = u_map_enum_keys(copy_request->map_cookie);
+        for (i=0; keys != NULL && keys[i] != NULL; i++) {
+          value = u_map_get(copy_request->map_cookie, keys[i]);
+          if (value == NULL) {
+            u_map_clean_enum(keys);
+            ulfius_clean_request_full(copy_request);
+            curl_slist_free_all(header_list);
+            curl_easy_cleanup(curl_handle);
+            return 0;
+          }
+          len = snprintf(NULL, 0, "%s=%s", keys[i], value);
+          cookie = malloc((len + 1)*sizeof(char));
+          if (cookie == NULL) {
+            free(value);
+            u_map_clean_enum(keys);
+            ulfius_clean_request_full(copy_request);
+            curl_slist_free_all(header_list);
+            curl_easy_cleanup(curl_handle);
+            return 0;
+          }
+          snprintf(cookie, (len + 1), "%s=%s", keys[i], value);
+          if (curl_easy_setopt(curl_handle, CURLOPT_COOKIE, cookie) != CURLE_OK) {
+            free(value);
+            free(cookie);
+            u_map_clean_enum(keys);
+            ulfius_clean_request_full(copy_request);
+            curl_slist_free_all(header_list);
+            curl_easy_cleanup(curl_handle);
+            return 0;
+          }
+          free(value);
+          free(cookie);
+        }
+        u_map_clean_enum(keys);
       }
-      u_map_clean_enum(keys);
-    }
-    
-    // Request parameters
-    curl_easy_setopt(curl_handle, CURLOPT_URL, copy_request->http_url);
-    curl_easy_setopt(curl_handle, CURLOPT_CUSTOMREQUEST, copy_request->http_verb);
-    curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, header_list);
-    curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_body);
-    curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &body_data);
-    
-    // Response parameters
-    // TODO: handle Set-Cookie headers
-    if (response != NULL) {
-      if (response->map_header != NULL) {
-        curl_easy_setopt(curl_handle, CURLOPT_HEADERFUNCTION, write_header);
-        curl_easy_setopt(curl_handle, CURLOPT_WRITEHEADER, response);
+      
+      // Request parameters
+      if (curl_easy_setopt(curl_handle, CURLOPT_URL, copy_request->http_url) != CURLE_OK ||
+          curl_easy_setopt(curl_handle, CURLOPT_CUSTOMREQUEST, copy_request->http_verb) != CURLE_OK ||
+          curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, header_list) != CURLE_OK ||
+          curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_body) != CURLE_OK ||
+          curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &body_data) != CURLE_OK) {
+        ulfius_clean_request_full(copy_request);
+        curl_slist_free_all(header_list);
+        curl_easy_cleanup(curl_handle);
+        return 0;
       }
-    }
+      
+      // Response parameters
+      if (response != NULL) {
+        if (response->map_header != NULL) {
+          if (curl_easy_setopt(curl_handle, CURLOPT_HEADERFUNCTION, write_header) != CURLE_OK ||
+              curl_easy_setopt(curl_handle, CURLOPT_WRITEHEADER, response) != CURLE_OK) {
+            ulfius_clean_request_full(copy_request);
+            curl_slist_free_all(header_list);
+            curl_easy_cleanup(curl_handle);
+            return 0;
+          }
+        }
+      }
 
-    if (copy_request->binary_body != NULL) {
-      curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, copy_request->binary_body);
-      if (copy_request->binary_body_length > 0) {
-        curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDSIZE, copy_request->binary_body_length);
+      if (copy_request->binary_body != NULL) {
+        if (curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, copy_request->binary_body) != CURLE_OK) {
+          ulfius_clean_request_full(copy_request);
+          curl_slist_free_all(header_list);
+          curl_easy_cleanup(curl_handle);
+          return 0;
+        }
+        if (copy_request->binary_body_length > 0) {
+          if (curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDSIZE, copy_request->binary_body_length) != CURLE_OK) {
+            ulfius_clean_request_full(copy_request);
+            curl_slist_free_all(header_list);
+            curl_easy_cleanup(curl_handle);
+            return 0;
+          }
+        }
       }
-    }
 
-    curl_easy_setopt(curl_handle, CURLOPT_NOSIGNAL, 1);
-    res = curl_easy_perform(curl_handle);
-    if(res == CURLE_OK && response != NULL) {
-      curl_easy_getinfo (curl_handle, CURLINFO_RESPONSE_CODE, &response->status);
-      response->string_body = u_strdup(body_data.data);
-      response->binary_body = malloc(body_data.size);
-      memcpy(response->binary_body, body_data.data, body_data.size);
-      response->binary_body_length = body_data.size;
+      if (curl_easy_setopt(curl_handle, CURLOPT_NOSIGNAL, 1) != CURLE_OK) {
+        curl_slist_free_all(header_list);
+        curl_easy_cleanup(curl_handle);
+        ulfius_clean_request_full(copy_request);
+        return 0;
+      }
+      res = curl_easy_perform(curl_handle);
+      if(res == CURLE_OK && response != NULL) {
+        if (curl_easy_getinfo (curl_handle, CURLINFO_RESPONSE_CODE, &response->status) != CURLE_OK) {
+          ulfius_clean_request_full(copy_request);
+          free(body_data.data);
+          curl_slist_free_all(header_list);
+          curl_easy_cleanup(curl_handle);
+          ulfius_clean_request_full(copy_request);
+          return 0;
+        }
+        response->string_body = u_strdup(body_data.data);
+        response->binary_body = malloc(body_data.size);
+        if (response->binary_body == NULL) {
+          free(body_data.data);
+          curl_slist_free_all(header_list);
+          curl_easy_cleanup(curl_handle);
+          ulfius_clean_request_full(copy_request);
+          return 0;
+        }
+        memcpy(response->binary_body, body_data.data, body_data.size);
+        response->binary_body_length = body_data.size;
+      }
+      free(body_data.data);
+      curl_slist_free_all(header_list);
+      curl_easy_cleanup(curl_handle);
+      ulfius_clean_request_full(copy_request);
+      
+      return (res == CURLE_OK);
     }
-    free(body_data.data);
-    curl_slist_free_all(header_list);
-    curl_easy_cleanup(curl_handle);
-    ulfius_clean_request_full(copy_request);
-    
-    return (res == CURLE_OK);
   }
   return 0;
 }

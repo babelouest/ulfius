@@ -30,17 +30,20 @@
 /**
  * initialize a struct _u_map
  * this function MUST be called after a declaration or allocation
+ * return true on success, false otherwise
  */
-void u_map_init(struct _u_map * map) {
+int u_map_init(struct _u_map * map) {
   if (map != NULL) {
     map->nb_values = 0;
     map->value_list = NULL;
+    return 1;
   }
+  return 0;
 }
 
 /**
  * free the struct _u_map's inner components
- * return true if no error
+ * return true on success, false otherwise
  */
 int u_map_clean(struct _u_map * u_map) {
   int i;
@@ -61,7 +64,7 @@ int u_map_clean(struct _u_map * u_map) {
 
 /**
  * free the struct _u_map and its components
- * return true if no error
+ * return true on success, false otherwise
  */
 int u_map_clean_full(struct _u_map * u_map) {
   if (u_map_clean(u_map)) {
@@ -74,7 +77,7 @@ int u_map_clean_full(struct _u_map * u_map) {
 
 /**
  * free an enum return by functions u_map_enum_keys or u_map_enum_values
- * return true if no error
+ * return true on success, false otherwise
  */
 int u_map_clean_enum(char ** array) {
   int i;
@@ -141,7 +144,7 @@ int u_map_has_key(const struct _u_map * u_map, const char * key) {
   int has_key = 0, i;
   if (u_map != NULL && key != NULL) {
     char ** key_list = u_map_enum_keys(u_map);
-    for (i=0; key_list[i] != NULL; i++) {
+    for (i=0; key_list != NULL && key_list[i] != NULL; i++) {
       if (0 == strcmp(key_list[i], key)) {
         has_key = 1;
       }
@@ -163,7 +166,7 @@ int u_map_has_value(const struct _u_map * u_map, const char * value) {
   int has_value = 0, i;
   if (u_map != NULL && value != NULL) {
     char ** value_list = u_map_enum_values(u_map);
-    for (i=0; value_list[i] != NULL; i++) {
+    for (i=0; value_list != NULL && value_list[i] != NULL; i++) {
       if (0 == strcmp(value_list[i], value)) {
         has_value = 1;
       }
@@ -179,7 +182,7 @@ int u_map_has_value(const struct _u_map * u_map, const char * value) {
 /**
  * add the specified key/value pair into the specified u_map
  * if the u_map already contains a pair with the same key, replace the value
- * return true if no error
+ * return true on success, false otherwise
  */
 int u_map_put(struct _u_map * u_map, const char * key, const char * value) {
   int found = 0, i;
@@ -210,7 +213,7 @@ int u_map_put(struct _u_map * u_map, const char * key, const char * value) {
  * get the value corresponding to the specified key in the u_map
  * return NULL if no match found
  * search is case sensitive
- * returned value must be freed after use
+ * returned value must be free'd after use
  */
 char * u_map_get(const struct _u_map * u_map, const char * key) {
   int i;
@@ -235,7 +238,7 @@ int u_map_has_key_case(const struct _u_map * u_map, const char * key) {
   int has_key = 0, i;
   if (u_map != NULL && key != NULL) {
     char ** key_list = u_map_enum_keys(u_map);
-    for (i=0; key_list[i] != NULL; i++) {
+    for (i=0; key_list != NULL && key_list[i] != NULL; i++) {
       if (0 == strcasecmp(key_list[i], key)) {
         has_key = 1;
       }
@@ -257,7 +260,7 @@ int u_map_has_value_case(const struct _u_map * u_map, const char * value) {
   int has_value = 0, i;
   if (u_map != NULL && value != NULL) {
     char ** value_list = u_map_enum_values(u_map);
-    for (i=0; value_list[i] != NULL; i++) {
+    for (i=0; value_list != NULL && value_list[i] != NULL; i++) {
       if (0 == strcasecmp(value_list[i], value)) {
         has_value = 1;
       }
@@ -274,7 +277,7 @@ int u_map_has_value_case(const struct _u_map * u_map, const char * value) {
  * get the value corresponding to the specified key in the u_map
  * return NULL if no match found
  * search is case insensitive
- * returned value must be freed after use
+ * returned value must be free'd after use
  */
 char * u_map_get_case(const struct _u_map * u_map, const char * key) {
   int i;
@@ -293,7 +296,7 @@ char * u_map_get_case(const struct _u_map * u_map, const char * key) {
 /**
  * Create an exact copy of the specified struct _u_map
  * return a reference to the copy, NULL otherwise
- * returned value must be freed after use
+ * returned value must be free'd after use
  */
 struct _u_map * u_map_copy(const struct _u_map * source) {
   struct _u_map * copy = NULL;
@@ -301,11 +304,18 @@ struct _u_map * u_map_copy(const struct _u_map * source) {
   int i;
   if (source != NULL) {
     copy = malloc(sizeof(struct _u_map));
+    if (copy == NULL) {
+      return NULL;
+    }
     u_map_init(copy);
     keys = u_map_enum_keys(source);
-    for (i=0; keys[i] != NULL; i++) {
+    for (i=0; keys != NULL && keys[i] != NULL; i++) {
       value = u_map_get(source, keys[i]);
-      u_map_put(copy, keys[i], value);
+      if (value == NULL || !u_map_put(copy, keys[i], value)) {
+        free(value);
+        u_map_clean_enum(keys);
+        return NULL;
+      }
       free(value);
     }
     u_map_clean_enum(keys);

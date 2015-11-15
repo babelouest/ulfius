@@ -32,30 +32,37 @@ char ** split_url(const char * url) {
   char * saveptr=NULL, * cur_word=NULL, ** to_return = malloc(sizeof(char*)), * url_cpy = NULL, * url_cpy_addr = NULL;
   int counter = 1;
   
-  *to_return = NULL;
-  if (url != NULL) {
-    url_cpy = url_cpy_addr = u_strdup(url);
-    if (to_return != NULL) {
-      to_return[0] = NULL;
-      cur_word = strtok_r( url_cpy, ULFIUS_URL_SEPARATOR, &saveptr );
-      while (cur_word != NULL) {
-        if (0 != strcmp("", cur_word) && cur_word[0] != '?') {
-          to_return = realloc(to_return, (counter+1)*sizeof(char*));
-          to_return[counter-1] = u_strdup(cur_word);
-          to_return[counter] = NULL;
-          counter++;
+  if (to_return != NULL) {
+    *to_return = NULL;
+    if (url != NULL) {
+      url_cpy = url_cpy_addr = u_strdup(url);
+      if (to_return != NULL) {
+        to_return[0] = NULL;
+        cur_word = strtok_r( url_cpy, ULFIUS_URL_SEPARATOR, &saveptr );
+        while (cur_word != NULL) {
+          if (0 != strcmp("", cur_word) && cur_word[0] != '?') {
+            to_return = realloc(to_return, (counter+1)*sizeof(char*));
+            if (to_return == NULL) {
+              break;
+            }
+            to_return[counter-1] = u_strdup(cur_word);
+            to_return[counter] = NULL;
+            counter++;
+          }
+          cur_word = strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr );
         }
-        cur_word = strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr );
       }
+      free(url_cpy_addr);
+      url_cpy_addr = NULL;
     }
-    free(url_cpy_addr);
-    url_cpy_addr = NULL;
   }
   return to_return;
 }
 
 /**
- * Look in all endpoints if one matches the call specified by verb and url
+ * endpoint_match
+ * return the endpoint matching the url called with the proper http method
+ * return NULL if no endpoint is found
  */
 struct _u_endpoint * endpoint_match(const char * method, const char * url, struct _u_endpoint * endpoint_list) {
   char ** splitted_url, ** splitted_url_format;
@@ -64,10 +71,10 @@ struct _u_endpoint * endpoint_match(const char * method, const char * url, struc
   
   if (method != NULL && url != NULL && endpoint_list != NULL) {
     splitted_url = split_url(url);
-    for (i=0; (endpoint_list[i].http_method != NULL && endpoint_list[i].url_format != NULL); i++) {
-      if (0 == strcmp(endpoint_list[i].http_method, method)) {
+    for (i=0; (splitted_url != NULL && endpoint_list[i].http_method != NULL && endpoint_list[i].url_format != NULL); i++) {
+      if (0 == strcmp(endpoint_list[i].http_method, method) || endpoint_list[i].http_method[0] == '*') {
         splitted_url_format = split_url(endpoint_list[i].url_format);
-        if (url_format_match((const char **)splitted_url, (const char **)splitted_url_format)) {
+        if (splitted_url_format != NULL && url_format_match((const char **)splitted_url, (const char **)splitted_url_format)) {
           endpoint = (endpoint_list + i);
         }
         u_map_clean_enum(splitted_url_format);
@@ -81,9 +88,9 @@ struct _u_endpoint * endpoint_match(const char * method, const char * url, struc
 }
 
 /**
- * Compare the current url to the specified url_format
- * return 1 if it's a match, otherwise 0
- * Match means that url is contained in url_format
+ * url_format_match
+ * return true if splitted_url matches splitted_url_format
+ * false otherwise
  */
 int url_format_match(const char ** splitted_url, const char ** splitted_url_format) {
   int i;
@@ -100,7 +107,9 @@ int url_format_match(const char ** splitted_url, const char ** splitted_url_form
 }
 
 /**
- * Fill a map with url parameters using the format url
+ * parse_url
+ * fills map with the keys/values defined in the url that are described in the endpoint format url
+ * return true if no error
  */
 int parse_url(const char * url, const struct _u_endpoint * endpoint, struct _u_map * map) {
   char * saveptr = NULL, * cur_word = NULL, * url_cpy = NULL, * url_cpy_addr = NULL;
@@ -114,7 +123,11 @@ int parse_url(const char * url, const struct _u_endpoint * endpoint, struct _u_m
     cur_word_format = strtok_r( url_format_cpy, ULFIUS_URL_SEPARATOR, &saveptr_format );
     while (cur_word_format != NULL && cur_word != NULL) {
       if (cur_word_format[0] == ':' || cur_word_format[0] == '@') {
-        u_map_put(map, cur_word_format+1, cur_word);
+        if (!u_map_put(map, cur_word_format+1, cur_word)) {
+          url_cpy_addr = NULL;
+          url_format_cpy_addr = NULL;
+          return ret;
+        }
       }
       cur_word = strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr );
       cur_word_format = strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr_format );
@@ -122,8 +135,8 @@ int parse_url(const char * url, const struct _u_endpoint * endpoint, struct _u_m
     ret = 1;
   }
   free(url_cpy_addr);
-  url_cpy_addr = NULL;
   free(url_format_cpy_addr);
+  url_cpy_addr = NULL;
   url_format_cpy_addr = NULL;
   return ret;
 }
@@ -131,17 +144,17 @@ int parse_url(const char * url, const struct _u_endpoint * endpoint, struct _u_m
 /**
  * ulfius_init_request
  * Initialize a request structure by allocating inner elements
- * return true if everything went fine, false otherwise
+ * return true on success, false otherwise
  */
 int ulfius_init_request(struct _u_request * request) {
   if (request != NULL) {
     request->map_url = malloc(sizeof(struct _u_map));
-    u_map_init(request->map_url);
     request->map_header = malloc(sizeof(struct _u_map));
-    u_map_init(request->map_header);
     request->map_cookie = malloc(sizeof(struct _u_map));
-    u_map_init(request->map_cookie);
     request->map_post_body = malloc(sizeof(struct _u_map));
+    u_map_init(request->map_url);
+    u_map_init(request->map_header);
+    u_map_init(request->map_cookie);
     u_map_init(request->map_post_body);
     request->http_verb = NULL;
     request->http_url = NULL;
@@ -150,6 +163,11 @@ int ulfius_init_request(struct _u_request * request) {
     request->json_error = 0;
     request->binary_body = NULL;
     request->binary_body_length = 0;
+    if (request->map_post_body == NULL || request->map_cookie == NULL || 
+        request->map_url == NULL || request->map_header == NULL) {
+      ulfius_clean_request(request);
+      return 0;
+    }
     return 1;
   } else {
     return 0;
@@ -161,27 +179,27 @@ int ulfius_init_request(struct _u_request * request) {
  * clean the specified request's inner elements
  * user must free the parent pointer if needed after clean
  * or use ulfius_clean_request_full
- * return true if no error
+ * return true on success, false otherwise
  */
 int ulfius_clean_request(struct _u_request * request) {
   if (request != NULL) {
     free(request->http_verb);
-    request->http_verb = NULL;
     free(request->http_url);
-    request->http_url = NULL;
     free(request->client_address);
-    request->client_address = NULL;
     u_map_clean_full(request->map_url);
-    request->map_url = NULL;
     u_map_clean_full(request->map_header);
-    request->map_header = NULL;
     u_map_clean_full(request->map_cookie);
-    request->map_cookie = NULL;
     u_map_clean_full(request->map_post_body);
-    request->map_post_body = NULL;
-    json_decref(request->json_body);
-    request->json_body = NULL;
     free(request->binary_body);
+    json_decref(request->json_body);
+    request->http_verb = NULL;
+    request->http_url = NULL;
+    request->client_address = NULL;
+    request->map_url = NULL;
+    request->map_header = NULL;
+    request->map_cookie = NULL;
+    request->map_post_body = NULL;
+    request->json_body = NULL;
     request->binary_body = NULL;
     return 1;
   } else {
@@ -192,7 +210,7 @@ int ulfius_clean_request(struct _u_request * request) {
 /**
  * ulfius_clean_request_full
  * clean the specified request and all its elements
- * return true if no error
+ * return true on success, false otherwise
  */
 int ulfius_clean_request_full(struct _u_request * request) {
   if (ulfius_clean_request(request)) {
@@ -205,34 +223,57 @@ int ulfius_clean_request_full(struct _u_request * request) {
 
 /**
  * create a new request based on the source elements
- * return value must be free'd
+ * returned value must be free'd
  */
 struct _u_request * ulfius_duplicate_request(const struct _u_request * request) {
   struct _u_request * new_request = NULL;
   if (request != NULL) {
     new_request = malloc(sizeof(struct _u_request));
-    ulfius_init_request(new_request);
-    new_request->http_verb = u_strdup(request->http_verb);
-    new_request->http_url = u_strdup(request->http_url);
-    if (request->client_address != NULL) {
-      new_request->client_address = malloc(sizeof(struct sockaddr));
-      memcpy(new_request->client_address, request->client_address, sizeof(struct sockaddr));
+    if (new_request == NULL) {
+      return NULL;
     }
-    u_map_clean_full(new_request->map_url);
-    new_request->map_url = u_map_copy(request->map_url);
-    u_map_clean_full(new_request->map_header);
-    new_request->map_header = u_map_copy(request->map_header);
-    u_map_clean_full(new_request->map_cookie);
-    new_request->map_cookie = u_map_copy(request->map_cookie);
-    u_map_clean_full(new_request->map_post_body);
-    new_request->map_post_body = u_map_copy(request->map_post_body);
-    new_request->json_body = json_copy(request->json_body);
-    new_request->json_error = request->json_error;
-    if (request->binary_body != NULL && request->binary_body_length > 0) {
-      new_request->binary_body = malloc(request->binary_body_length);
-      memcpy(new_request->binary_body, request->binary_body, request->binary_body_length);
+    if (ulfius_init_request(new_request)) {
+      new_request->http_verb = u_strdup(request->http_verb);
+      new_request->http_url = u_strdup(request->http_url);
+      if (request->client_address != NULL) {
+        new_request->client_address = malloc(sizeof(struct sockaddr));
+        if (new_request->client_address == NULL) {
+        ulfius_clean_request_full(new_request);
+        return NULL;
+      }
+        memcpy(new_request->client_address, request->client_address, sizeof(struct sockaddr));
+      }
+      u_map_clean_full(new_request->map_url);
+      u_map_clean_full(new_request->map_header);
+      u_map_clean_full(new_request->map_cookie);
+      u_map_clean_full(new_request->map_post_body);
+      new_request->map_url = u_map_copy(request->map_url);
+      new_request->map_header = u_map_copy(request->map_header);
+      new_request->map_cookie = u_map_copy(request->map_cookie);
+      new_request->map_post_body = u_map_copy(request->map_post_body);
+      new_request->json_body = json_copy(request->json_body);
+      new_request->json_error = request->json_error;
+      if ((new_request->map_url == NULL && request->map_url != NULL) || 
+          (new_request->map_header == NULL && request->map_header != NULL) || 
+          (new_request->map_cookie == NULL && request->map_cookie != NULL) || 
+          (new_request->map_post_body == NULL && request->map_post_body != NULL) || 
+          (new_request->json_body == NULL && request->json_body != NULL)) {
+        ulfius_clean_request_full(new_request);
+        return NULL;
+      }
+      if (request->binary_body != NULL && request->binary_body_length > 0) {
+        new_request->binary_body = malloc(request->binary_body_length);
+        if (new_request->binary_body == NULL) {
+          ulfius_clean_request_full(new_request);
+          return NULL;
+        }
+        memcpy(new_request->binary_body, request->binary_body, request->binary_body_length);
+      }
+      new_request->binary_body_length = request->binary_body_length;
+    } else {
+      free(new_request);
+      new_request = NULL;
     }
-    new_request->binary_body_length = request->binary_body_length;
   }
   return new_request;
 }
