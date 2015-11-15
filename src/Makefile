@@ -22,7 +22,7 @@ CC=gcc
 CFLAGS=-c -fPIC -Wall -D_REENTRANT $(ADDITIONALFLAGS)
 LIBS=-lc -lmicrohttpd -ljansson -lcurl
 OUTPUT=libulfius.so
-VERSION=0.9.5
+VERSION=0.9.6
 PREFIX=/usr/local
 
 all: release
@@ -53,7 +53,7 @@ clean:
 	rm -f $(PREFIX)/include/ulfius.h
 
 install: all
-	cp $(OUTPUT).1.0.1 $(PREFIX)/lib
+	cp $(OUTPUT).$(VERSION) $(PREFIX)/lib
 	cp ulfius.h $(PREFIX)/include
 	ldconfig
 
