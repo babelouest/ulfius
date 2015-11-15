@@ -83,17 +83,21 @@ int main (int argc, char **argv) {
   instance.bind_address = NULL;
   
   // Start the framework
-  ulfius_init_framework(&instance, endpoint_list);
-  printf("Start sheep counter on port %d\n", instance.port);
-  
-  // Wait for the user to press <enter> on the console to quit the application
-  getchar();
+  if (ulfius_init_framework(&instance, endpoint_list) == U_OK) {
+    printf("Start sheep counter on port %d\n", instance.port);
+    
+    // Wait for the user to press <enter> on the console to quit the application
+    getchar();
+  } else {
+    printf("Error starting framework\n");
+  }
+
   
   // Clean the mime map
   u_map_clean(&mime_types);
   
   printf("End framework\n");
-	return !ulfius_stop_framework(&instance);
+	return ulfius_stop_framework(&instance);
 }
 
 /**
@@ -119,7 +123,7 @@ int callback_sheep_counter_start (const struct _u_request * request, struct _u_r
   json_object_set_new(response->json_body, "nbsheep", json_integer(* nb_sheep));
   response->status = 200;
   json_decref(json_nb_sheep);
-  return 0;
+  return U_OK;
 }
 
 /**
@@ -138,7 +142,7 @@ int callback_sheep_counter_reset (const struct _u_request * request, struct _u_r
   json_object_set_new(response->json_body, "nbsheep", json_integer(0));
   response->status = 200;
   
-  return 0;
+  return U_OK;
 }
 
 /**
@@ -158,7 +162,7 @@ int callback_sheep_counter_add (const struct _u_request * request, struct _u_res
   json_object_set_new(response->json_body, "nbsheep", json_integer(*nb_sheep));
   response->status = 200;
   
-  return 0;
+  return U_OK;
 }
 
 /**
@@ -200,5 +204,5 @@ int callback_static_file (const struct _u_request * request, struct _u_response 
     response->status = 404;
   }
   free(file_path);
-  return 0;
+  return U_OK;
 }

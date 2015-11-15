@@ -30,20 +30,21 @@
 /**
  * initialize a struct _u_map
  * this function MUST be called after a declaration or allocation
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int u_map_init(struct _u_map * map) {
   if (map != NULL) {
     map->nb_values = 0;
     map->value_list = NULL;
-    return 1;
+    return U_OK;
+  } else {
+    return U_ERROR_PARAMS;
   }
-  return 0;
 }
 
 /**
  * free the struct _u_map's inner components
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int u_map_clean(struct _u_map * u_map) {
   int i;
@@ -56,28 +57,28 @@ int u_map_clean(struct _u_map * u_map) {
     }
     free(u_map->value_list);
     u_map->value_list = NULL;
-    return 1;
+    return U_OK;
   } else {
-    return 0;
+    return U_ERROR_PARAMS;
   }
 }
 
 /**
  * free the struct _u_map and its components
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int u_map_clean_full(struct _u_map * u_map) {
-  if (u_map_clean(u_map)) {
+  if (u_map_clean(u_map) == U_OK) {
     free(u_map);
-    return 1;
+    return U_OK;
   } else {
-    return 0;
+    return U_ERROR_PARAMS;
   }
 }
 
 /**
  * free an enum return by functions u_map_enum_keys or u_map_enum_values
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int u_map_clean_enum(char ** array) {
   int i;
@@ -87,9 +88,9 @@ int u_map_clean_enum(char ** array) {
       array[i] = NULL;
     }
     free(array);
-    return 1;
+    return U_OK;
   } else {
-    return 0;
+    return U_ERROR_PARAMS;
   }
 }
 
@@ -182,7 +183,7 @@ int u_map_has_value(const struct _u_map * u_map, const char * value) {
 /**
  * add the specified key/value pair into the specified u_map
  * if the u_map already contains a pair with the same key, replace the value
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int u_map_put(struct _u_map * u_map, const char * key, const char * value) {
   int found = 0, i;
@@ -197,15 +198,15 @@ int u_map_put(struct _u_map * u_map, const char * key, const char * value) {
     if (!found) {
       u_map->value_list = realloc(u_map->value_list, (u_map->nb_values+1)*sizeof(struct _u_map_value));
       if (u_map->value_list == NULL) {
-        return 0;
+        return U_ERROR_MEMORY;
       }
       u_map->value_list[u_map->nb_values].key = u_strdup(key);
       u_map->value_list[u_map->nb_values].value = u_strdup(value);
       u_map->nb_values++;
     }
-    return 1;
+    return U_OK;
   } else {
-    return 0;
+    return U_ERROR_PARAMS;
   }
 }
 
@@ -307,11 +308,14 @@ struct _u_map * u_map_copy(const struct _u_map * source) {
     if (copy == NULL) {
       return NULL;
     }
-    u_map_init(copy);
+    if (u_map_init(copy) != U_OK) {
+      free(copy);
+      return NULL;
+    }
     keys = u_map_enum_keys(source);
     for (i=0; keys != NULL && keys[i] != NULL; i++) {
       value = u_map_get(source, keys[i]);
-      if (value == NULL || !u_map_put(copy, keys[i], value)) {
+      if (value == NULL || u_map_put(copy, keys[i], value) != U_OK) {
         free(value);
         u_map_clean_enum(keys);
         return NULL;

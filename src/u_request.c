@@ -109,12 +109,11 @@ int url_format_match(const char ** splitted_url, const char ** splitted_url_form
 /**
  * parse_url
  * fills map with the keys/values defined in the url that are described in the endpoint format url
- * return true if no error
+ * return U_OK on success
  */
 int parse_url(const char * url, const struct _u_endpoint * endpoint, struct _u_map * map) {
   char * saveptr = NULL, * cur_word = NULL, * url_cpy = NULL, * url_cpy_addr = NULL;
   char * saveptr_format = NULL, * cur_word_format = NULL, * url_format_cpy = NULL, * url_format_cpy_addr = NULL;
-  int ret = 0;
 
   if (map != NULL && endpoint != NULL) {
     url_cpy = url_cpy_addr = u_strdup(url);
@@ -123,28 +122,29 @@ int parse_url(const char * url, const struct _u_endpoint * endpoint, struct _u_m
     cur_word_format = strtok_r( url_format_cpy, ULFIUS_URL_SEPARATOR, &saveptr_format );
     while (cur_word_format != NULL && cur_word != NULL) {
       if (cur_word_format[0] == ':' || cur_word_format[0] == '@') {
-        if (!u_map_put(map, cur_word_format+1, cur_word)) {
+        if (u_map_put(map, cur_word_format+1, cur_word) != U_OK) {
           url_cpy_addr = NULL;
           url_format_cpy_addr = NULL;
-          return ret;
+          return U_ERROR_MEMORY;
         }
       }
       cur_word = strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr );
       cur_word_format = strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr_format );
     }
-    ret = 1;
+    free(url_cpy_addr);
+    free(url_format_cpy_addr);
+    url_cpy_addr = NULL;
+    url_format_cpy_addr = NULL;
+    return U_OK;
+  } else {
+    return U_ERROR_PARAMS;
   }
-  free(url_cpy_addr);
-  free(url_format_cpy_addr);
-  url_cpy_addr = NULL;
-  url_format_cpy_addr = NULL;
-  return ret;
 }
 
 /**
  * ulfius_init_request
  * Initialize a request structure by allocating inner elements
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int ulfius_init_request(struct _u_request * request) {
   if (request != NULL) {
@@ -152,6 +152,11 @@ int ulfius_init_request(struct _u_request * request) {
     request->map_header = malloc(sizeof(struct _u_map));
     request->map_cookie = malloc(sizeof(struct _u_map));
     request->map_post_body = malloc(sizeof(struct _u_map));
+    if (request->map_post_body == NULL || request->map_cookie == NULL || 
+        request->map_url == NULL || request->map_header == NULL) {
+      ulfius_clean_request(request);
+      return U_ERROR_MEMORY;
+    }
     u_map_init(request->map_url);
     u_map_init(request->map_header);
     u_map_init(request->map_cookie);
@@ -163,14 +168,9 @@ int ulfius_init_request(struct _u_request * request) {
     request->json_error = 0;
     request->binary_body = NULL;
     request->binary_body_length = 0;
-    if (request->map_post_body == NULL || request->map_cookie == NULL || 
-        request->map_url == NULL || request->map_header == NULL) {
-      ulfius_clean_request(request);
-      return 0;
-    }
-    return 1;
+    return U_OK;
   } else {
-    return 0;
+    return U_ERROR_PARAMS;
   }
 }
 
@@ -179,7 +179,7 @@ int ulfius_init_request(struct _u_request * request) {
  * clean the specified request's inner elements
  * user must free the parent pointer if needed after clean
  * or use ulfius_clean_request_full
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int ulfius_clean_request(struct _u_request * request) {
   if (request != NULL) {
@@ -201,23 +201,23 @@ int ulfius_clean_request(struct _u_request * request) {
     request->map_post_body = NULL;
     request->json_body = NULL;
     request->binary_body = NULL;
-    return 1;
+    return U_OK;
   } else {
-    return 0;
+    return U_ERROR_PARAMS;
   }
 }
 
 /**
  * ulfius_clean_request_full
  * clean the specified request and all its elements
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int ulfius_clean_request_full(struct _u_request * request) {
-  if (ulfius_clean_request(request)) {
+  if (ulfius_clean_request(request) == U_OK) {
     free(request);
-    return 1;
+    return U_OK;
   } else {
-    return 0;
+    return U_ERROR_PARAMS;
   }
 }
 
@@ -232,7 +232,7 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request) 
     if (new_request == NULL) {
       return NULL;
     }
-    if (ulfius_init_request(new_request)) {
+    if (ulfius_init_request(new_request) == U_OK) {
       new_request->http_verb = u_strdup(request->http_verb);
       new_request->http_url = u_strdup(request->http_url);
       if (request->client_address != NULL) {

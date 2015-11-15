@@ -57,8 +57,8 @@ int callback (const struct _u_request * request, struct _u_response * response, 
         * post_params = print_map(request->map_post_body), * json_params = json_dumps(request->json_body, JSON_INDENT(2));
   response->string_body = u_strdup("ok");
   response->status = 200;
-  printf("Method is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n  json body parameters are \n%s\n\n  user data is %s\n\n",
-                                  request->http_verb, request->http_url, url_params, cookies, headers, post_params, json_params, (char *)user_data);
+  printf("Method is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n  json body parameters are \n%s\n\n  raw body is \n%s\n\n  user data is %s\n\n",
+                                  request->http_verb, request->http_url, url_params, cookies, headers, post_params, json_params, (char*)request->binary_body, (char *)user_data);
   
   ulfius_add_cookie_to_response(response, "cook", "ie", NULL, 5000, NULL, NULL, 0, 0);
   free(url_params);
@@ -66,7 +66,7 @@ int callback (const struct _u_request * request, struct _u_response * response, 
   free(cookies);
   free(post_params);
   free(json_params);
-  return 0;
+  return U_OK;
 }
 
 int main (int argc, char **argv) {
@@ -85,12 +85,16 @@ int main (int argc, char **argv) {
   instance.bind_address = NULL;
 
   // Start the framework
-  ulfius_init_framework(&instance, endpoint_list);
-  printf("Start framework on port %d\n", instance.port);
-  
-  // Wait for the user to press <enter> on the console to quit the application
-  printf("Press <enter> to quit server\n");
-  getchar();
+  if (ulfius_init_framework(&instance, endpoint_list) == U_OK) {
+    printf("Start framework on port %d\n", instance.port);
+    
+    // Wait for the user to press <enter> on the console to quit the application
+    printf("Press <enter> to quit server\n");
+    getchar();
+  } else {
+    printf("Error starting framework\n");
+  }
+
   printf("End framework\n");
-  return !ulfius_stop_framework(&instance);
+  return ulfius_stop_framework(&instance);
 }

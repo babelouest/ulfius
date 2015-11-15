@@ -52,11 +52,11 @@
 
 #define ULFIUS_POSTBUFFERSIZE 1024
 
-#define ULFIUS_OK            0
-#define ULFIUS_ERROR_MEMORY  1
-#define ULFIUS_ERROR_LIBMHD  2
-#define ULFIUS_ERROR_LIBCURL 3
-#define ULFIUS_ERROR_JANSSON 4
+#define U_OK            0 // No error
+#define U_ERROR_MEMORY  1 // Error in memory allocation
+#define U_ERROR_PARAMS  2 // Error in input parameters
+#define U_ERROR_LIBMHD  3 // Error in libmicrohttpd execution
+#define U_ERROR_LIBCURL 4 // Error in libcurl execution
 
 #define ULFIUS_VERSION 0.9.5
 
@@ -220,7 +220,7 @@ struct connection_info_struct {
  * endpoint_list: array of struct _u_endpoint that will describe endpoints used for the application
  *                the array MUST have an empty struct _u_endpoint at the end of it
  *                {NULL, NULL, NULL, NULL}
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int ulfius_init_framework(struct _u_instance * u_instance, struct _u_endpoint * endpoint_list);
 
@@ -229,14 +229,14 @@ int ulfius_init_framework(struct _u_instance * u_instance, struct _u_endpoint * 
  * 
  * Stop the webservice
  * u_instance:    pointer to a struct _u_instance that describe its port and bind address
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int ulfius_stop_framework(struct _u_instance * u_instance);
 
 /**
  * ulfius_add_cookie_to_header
  * add a cookie to the cookie map
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const uint max_age, 
                       const char * domain, const char * path, const int secure, const int http_only);
@@ -244,14 +244,14 @@ int ulfius_add_cookie_to_response(struct _u_response * response, const char * ke
 /**
  * ulfius_send_http_request
  * Send a HTTP request and store the result into a _u_response
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response);
 
 /**
  * ulfius_init_request
  * Initialize a request structure by allocating inner elements
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int ulfius_init_request(struct _u_request * request);
 
@@ -260,21 +260,21 @@ int ulfius_init_request(struct _u_request * request);
  * clean the specified request's inner elements
  * user must free the parent pointer if needed after clean
  * or use ulfius_clean_request_full
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int ulfius_clean_request(struct _u_request * request);
 
 /**
  * ulfius_clean_request_full
  * clean the specified request and all its elements
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int ulfius_clean_request_full(struct _u_request * request);
 
 /**
  * ulfius_init_response
  * Initialize a response structure by allocating inner elements
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int ulfius_init_response(struct _u_response * response);
 
@@ -283,34 +283,34 @@ int ulfius_init_response(struct _u_response * response);
  * clean the specified response's inner elements
  * user must free the parent pointer if needed after clean
  * or use ulfius_clean_response_full
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int ulfius_clean_response(struct _u_response * response);
 
 /**
  * ulfius_clean_response_full
  * clean the specified response and all its elements
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int ulfius_clean_response_full(struct _u_response * response);
 
 /**
  * ulfius_copy_response
  * Copy the source response elements into the des response
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int ulfius_copy_response(struct _u_response * dest, const struct _u_response * source);
 
 /**
  * ulfius_clean_cookie
  * clean the cookie's elements
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int ulfius_clean_cookie(struct _u_cookie * cookie);
 
 /**
  * Copy the cookie source elements into dest elements
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int ulfius_copy_cookie(struct _u_cookie * dest, const struct _u_cookie * source);
 
@@ -337,25 +337,25 @@ struct _u_response * ulfius_duplicate_response(const struct _u_response * respon
 /**
  * initialize a struct _u_map
  * this function MUST be called after a declaration or allocation
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int u_map_init(struct _u_map * map);
 
 /**
- * free the struct _u_map and its components
- * return true on success, false otherwise
- */
-int u_map_clean_full(struct _u_map * u_map);
-
-/**
  * free the struct _u_map's inner components
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int u_map_clean(struct _u_map * u_map);
 
 /**
+ * free the struct _u_map and its components
+ * return U_OK on success
+ */
+int u_map_clean_full(struct _u_map * u_map);
+
+/**
  * free an enum return by functions u_map_enum_keys or u_map_enum_values
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int u_map_clean_enum(char ** array);
 
@@ -390,7 +390,7 @@ int u_map_has_value(const struct _u_map * u_map, const char * value);
 /**
  * add the specified key/value pair into the specified u_map
  * if the u_map already contains a pair with the same key, replace the value
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int u_map_put(struct _u_map * u_map, const char * key, const char * value);
 
@@ -502,21 +502,21 @@ int url_format_match(const char ** splitted_url, const char ** splitted_url_form
 /**
  * parse_url
  * fills map with the keys/values defined in the url that are described in the endpoint format url
- * return true if no error
+ * return U_OK on success
  */
 int parse_url(const char * url, const struct _u_endpoint * endpoint, struct _u_map * map);
 
 /**
  * set_response_header
  * adds headers defined in the response_map_header to the response
- * return true on success, false otherwise
+ * return the number of added headers, -1 on error
  */
 int set_response_header(struct MHD_Response * response, const struct _u_map * response_map_header);
 
 /**
  * set_response_cookie
  * adds cookies defined in the response_map_cookie
- * return true on success, false otherwise
+ * return the number of added headers, -1 on error
  */
 int set_response_cookie(struct MHD_Response * mhd_response, const struct _u_response * response);
 

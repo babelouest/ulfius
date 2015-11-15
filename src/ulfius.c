@@ -29,7 +29,7 @@
  * Fill a map with the key/values specified
  */
 static int ulfius_fill_map(void *cls, enum MHD_ValueKind kind, const char *key, const char *value) {
-  if (u_map_put(((struct _u_map *)cls), key, value)) {
+  if (u_map_put(((struct _u_map *)cls), key, value) == U_OK) {
     return MHD_YES;
   } else {
     return MHD_NO;
@@ -76,9 +76,9 @@ void * ulfius_uri_logger (void * cls, const char * uri) {
       return NULL;
     }
     
-    if (NULL == con_info->request || !ulfius_init_request(con_info->request)) {
+    if (NULL == con_info->request || ulfius_init_request(con_info->request) != U_OK) {
+      ulfius_clean_request_full(con_info->request);
       free(con_info);
-      con_info = NULL;
       return NULL;
     }
     con_info->request->http_url = u_strdup(uri);
@@ -95,7 +95,7 @@ void * ulfius_uri_logger (void * cls, const char * uri) {
  * endpoint_list: array of struct _u_endpoint that will describe endpoints used for the application
  *                the array MUST have an empty struct _u_endpoint at the end of it
  *                {NULL, NULL, NULL, NULL}
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int ulfius_init_framework(struct _u_instance * u_instance, struct _u_endpoint * endpoint_list) {
   
@@ -109,9 +109,13 @@ int ulfius_init_framework(struct _u_instance * u_instance, struct _u_endpoint * 
           MHD_OPTION_URI_LOG_CALLBACK, ulfius_uri_logger, NULL,
           MHD_OPTION_END);
     
-    return (u_instance->mhd_daemon != NULL);
+    if (u_instance->mhd_daemon == NULL) {
+      return U_ERROR_LIBMHD;
+    } else {
+      return U_OK;
+    }
   } else {
-    return 0;
+    return U_ERROR_PARAMS;
   }
 }
 
@@ -204,14 +208,17 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
     if (response == NULL) {
       return MHD_NO;
     }
-    if (!ulfius_init_response(response)) {
+    if (ulfius_init_response(response) != U_OK) {
       free(response);
       return MHD_NO;
     }
     
     if (current_endpoint != NULL) {
       // Endpoint found, run callback function with the input parameters filled
-      parse_url(url, current_endpoint, con_info->request->map_url);
+      if (parse_url(url, current_endpoint, con_info->request->map_url) != U_OK) {
+        free(response);
+        return MHD_NO;
+      }
       
       callback_ret = current_endpoint->callback_function(con_info->request, response, current_endpoint->user_data);
 
@@ -219,9 +226,9 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
       if (response->status == 0) {
         response->status = 200;
       }
-      if (!callback_ret && response->json_body != NULL) {
+      if (callback_ret == U_OK && response->json_body != NULL) {
         // The user sent a json response
-        if (u_map_put(response->map_header, ULFIUS_HTTP_HEADER_CONTENT, ULFIUS_HTTP_ENCODING_JSON)) {
+        if (u_map_put(response->map_header, ULFIUS_HTTP_HEADER_CONTENT, ULFIUS_HTTP_ENCODING_JSON) == U_OK) {
           response_buffer = (void*) json_dumps(response->json_body, JSON_COMPACT);
           if (response_buffer == NULL) {
             response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
@@ -231,9 +238,10 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
           }
         } else {
           response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
-          response->string_body = u_strdup(ULFIUS_HTTP_ERROR_BODY);
+          response_buffer = u_strdup(ULFIUS_HTTP_ERROR_BODY);
+          response_buffer_len = strlen (ULFIUS_HTTP_ERROR_BODY);
         }
-      } else if (!callback_ret && response->binary_body != NULL && response->binary_body_length > 0) {
+      } else if (callback_ret == U_OK && response->binary_body != NULL && response->binary_body_length > 0) {
         // The user sent a binary response
         response_buffer = malloc(response->binary_body_length);
         if (response_buffer == NULL) {
@@ -243,7 +251,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
           memcpy(response_buffer, response->binary_body, response->binary_body_length);
           response_buffer_len = response->binary_body_length;
         }
-      } else if (!callback_ret) {
+      } else if (callback_ret == U_OK) {
         // The user sent a string response
         if (response->string_body == NULL) {
           response_buffer = u_strdup("");
@@ -263,7 +271,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
       }
       mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
       
-      if (!callback_ret) {
+      if (callback_ret == U_OK) {
         if (set_response_header(mhd_response, response->map_header) == -1 || set_response_cookie(mhd_response, response) == -1) {
           response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
           response->string_body = u_strdup(ULFIUS_HTTP_ERROR_BODY);
@@ -284,7 +292,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
     // Free Response parameters
     ulfius_clean_response_full(response);
     response = NULL;
-
+    
     return mhd_ret;
   }
 }
@@ -299,7 +307,7 @@ int iterate_post_data (void *coninfo_cls, enum MHD_ValueKind kind, const char *k
                       const char *transfer_encoding, const char *data, uint64_t off,
                       size_t size) {
   struct connection_info_struct *con_info = coninfo_cls;
-  if (u_map_put((struct _u_map *)con_info->request->map_post_body, key, data)) {
+  if (u_map_put((struct _u_map *)con_info->request->map_post_body, key, data) == U_OK) {
     return MHD_YES;
   } else {
     return MHD_NO;
@@ -331,14 +339,14 @@ void request_completed (void *cls, struct MHD_Connection *connection,
  * 
  * Stop the webservice
  * u_instance:    pointer to a struct _u_instance that describe its port and bind address
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int ulfius_stop_framework(struct _u_instance * u_instance) {
   if (u_instance != NULL && u_instance->mhd_daemon != NULL) {
     MHD_stop_daemon (u_instance->mhd_daemon);
-    return 1;
+    return U_OK;
   } else {
-    return 0;
+    return U_ERROR_PARAMS;
   }
 }
 

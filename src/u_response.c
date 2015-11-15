@@ -28,7 +28,7 @@
 /**
  * set_response_header
  * adds headers defined in the response_map_header to the response
- * return true on success, false otherwise
+ * return the number of added headers, -1 on error
  */
 int set_response_header(struct MHD_Response * response, const struct _u_map * response_map_header) {
   char ** header_keys = u_map_enum_keys(response_map_header);
@@ -56,7 +56,7 @@ int set_response_header(struct MHD_Response * response, const struct _u_map * re
 /**
  * set_response_cookie
  * adds cookies defined in the response_map_cookie
- * return true on success, false otherwise
+ * return the number of added headers, -1 on error
  */
 int set_response_cookie(struct MHD_Response * mhd_response, const struct _u_response * response) {
   int i, ret;
@@ -76,7 +76,7 @@ int set_response_cookie(struct MHD_Response * mhd_response, const struct _u_resp
         break;
       }
     }
-    return response->nb_cookies;
+    return i;
   } else {
     return -1;
   }
@@ -85,7 +85,7 @@ int set_response_cookie(struct MHD_Response * mhd_response, const struct _u_resp
 /**
  * ulfius_add_cookie_to_header
  * add a cookie to the cookie map
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const uint max_age, 
                                   const char * domain, const char * path, const int secure, const int http_only) {
@@ -101,12 +101,19 @@ int ulfius_add_cookie_to_response(struct _u_response * response, const char * ke
         free(response->map_cookie[i].path);
         response->map_cookie[i].value = u_strdup(value);
         response->map_cookie[i].expires = u_strdup(expires);
-        response->map_cookie[i].max_age = max_age;
         response->map_cookie[i].domain = u_strdup(domain);
         response->map_cookie[i].path = u_strdup(path);
+        response->map_cookie[i].max_age = max_age;
         response->map_cookie[i].secure = secure;
         response->map_cookie[i].http_only = http_only;
-        return 1;
+        if ((value != NULL && response->map_cookie[i].value == NULL) ||
+            (expires != NULL && response->map_cookie[i].expires == NULL) ||
+            (domain != NULL && response->map_cookie[i].domain == NULL) ||
+            (path != NULL && response->map_cookie[i].path == NULL)) {
+          return U_ERROR_MEMORY;
+        } else {
+          return U_OK;
+        }
       }
     }
     
@@ -114,12 +121,12 @@ int ulfius_add_cookie_to_response(struct _u_response * response, const char * ke
     if (response->nb_cookies == 0) {
       response->map_cookie = malloc(sizeof(struct _u_cookie));
       if (response->map_cookie == NULL) {
-        return 0;
+        return U_ERROR_MEMORY;
       }
     } else {
       response->map_cookie = realloc(response->map_cookie, (response->nb_cookies + 1) * sizeof(struct _u_cookie));
       if (response->map_cookie == NULL) {
-        return 0;
+        return U_ERROR_MEMORY;
       }
     }
     response->map_cookie[response->nb_cookies].key = u_strdup(key);
@@ -131,9 +138,9 @@ int ulfius_add_cookie_to_response(struct _u_response * response, const char * ke
     response->map_cookie[response->nb_cookies].secure = secure;
     response->map_cookie[response->nb_cookies].http_only = http_only;
     response->nb_cookies++;
-    return 1;
+    return U_OK;
   } else {
-    return 0;
+    return U_ERROR_PARAMS;
   }
 }
 
@@ -262,7 +269,7 @@ char * get_cookie_header(const struct _u_cookie * cookie) {
 /**
  * ulfius_clean_cookie
  * clean the cookie's elements
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int ulfius_clean_cookie(struct _u_cookie * cookie) {
   if (cookie != NULL) {
@@ -276,15 +283,15 @@ int ulfius_clean_cookie(struct _u_cookie * cookie) {
     cookie->expires = NULL;
     cookie->domain = NULL;
     cookie->path = NULL;
-    return 1;
+    return U_OK;
   } else {
-    return 0;
+    return U_ERROR_PARAMS;
   }
 }
 
 /**
  * Copy the cookie source elements into dest elements
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int ulfius_copy_cookie(struct _u_cookie * dest, const struct _u_cookie * source) {
   if (source != NULL && dest != NULL) {
@@ -296,9 +303,9 @@ int ulfius_copy_cookie(struct _u_cookie * dest, const struct _u_cookie * source)
     dest->path = u_strdup(source->path);
     dest->secure = source->secure;
     dest->http_only = source->http_only;
-    return 1;
+    return U_OK;
   }
-  return 0;
+  return U_ERROR_PARAMS;
 }
 
 /**
@@ -306,7 +313,7 @@ int ulfius_copy_cookie(struct _u_cookie * dest, const struct _u_cookie * source)
  * clean the specified response's inner elements
  * user must free the parent pointer if needed after clean
  * or use ulfius_clean_response_full
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int ulfius_clean_response(struct _u_response * response) {
   int i;
@@ -326,39 +333,41 @@ int ulfius_clean_response(struct _u_response * response) {
     response->string_body = NULL;
     response->json_body = NULL;
     response->binary_body = NULL;
-    return 1;
+    return U_OK;
   } else {
-    return 0;
+    return U_ERROR_PARAMS;
   }
 }
 
 /**
  * ulfius_clean_response_full
  * clean the specified response and all its elements
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int ulfius_clean_response_full(struct _u_response * response) {
-  if (ulfius_clean_response(response)) {
+  if (ulfius_clean_response(response) == U_OK) {
     free(response);
-    return 1;
+    return U_OK;
   } else {
-    return 0;
+    return U_ERROR_PARAMS;
   }
 }
 
 /**
  * ulfius_init_response
  * Initialize a response structure by allocating inner elements
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int ulfius_init_response(struct _u_response * response) {
   if (response != NULL) {
     response->status = 0;
     response->map_header = malloc(sizeof(struct _u_map));
     if (response->map_header == NULL) {
-      return 0;
+      return U_ERROR_MEMORY;
     }
-    u_map_init(response->map_header);
+    if (u_map_init(response->map_header) != U_OK) {
+      return U_ERROR_PARAMS;
+    }
     response->map_cookie = NULL;
     response->nb_cookies = 0;
     response->protocol = NULL;
@@ -366,9 +375,9 @@ int ulfius_init_response(struct _u_response * response) {
     response->json_body = NULL;
     response->binary_body = NULL;
     response->binary_body_length = 0;
-    return 1;
+    return U_OK;
   } else {
-    return 0;
+    return U_ERROR_PARAMS;
   }
 }
 
@@ -422,7 +431,7 @@ struct _u_response * ulfius_duplicate_response(const struct _u_response * respon
 /**
  * ulfius_copy_response
  * Copy the source response elements into the des response
- * return true on success, false otherwise
+ * return U_OK on success
  */
 int ulfius_copy_response(struct _u_response * dest, const struct _u_response * source) {
   int i;
@@ -432,13 +441,13 @@ int ulfius_copy_response(struct _u_response * dest, const struct _u_response * s
     u_map_clean_full(dest->map_header);
     dest->map_header = u_map_copy(source->map_header);
     if (dest->map_header == NULL) {
-      return 0;
+      return U_ERROR_MEMORY;
     }
     dest->nb_cookies = source->nb_cookies;
     if (source->nb_cookies > 0) {
       dest->map_cookie = malloc(source->nb_cookies*sizeof(struct _u_cookie));
       if (dest->map_cookie == NULL) {
-        return 0;
+        return U_ERROR_MEMORY;
       }
       for (i=0; i<source->nb_cookies; i++) {
         ulfius_copy_cookie(&dest->map_cookie[i], &source->map_cookie[i]);
@@ -452,13 +461,13 @@ int ulfius_copy_response(struct _u_response * dest, const struct _u_response * s
     if (source->binary_body != NULL && source->binary_body_length > 0) {
       dest->binary_body = malloc(source->binary_body_length);
       if (dest->binary_body == NULL) {
-        return 0;
+        return U_ERROR_MEMORY;
       }
       dest->binary_body_length = source->binary_body_length;
       memcpy(dest->binary_body, source->binary_body, source->binary_body_length);
     }
-    return 1;
+    return U_OK;
   } else {
-    return 0;
+    return U_ERROR_PARAMS;
   }
 }

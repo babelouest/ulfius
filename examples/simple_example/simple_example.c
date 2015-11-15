@@ -90,14 +90,16 @@ int main (int argc, char **argv) {
   instance.bind_address = NULL;
   
   // Start the framework
-  ulfius_init_framework(&instance, endpoint_list);
-  printf("Start framework on port %d\n", instance.port);
-  
-  // Wait for the user to press <enter> on the console to quit the application
-  getchar();
-  
+  if (ulfius_init_framework(&instance, endpoint_list) == U_OK) {
+    printf("Start framework on port %d\n", instance.port);
+    
+    // Wait for the user to press <enter> on the console to quit the application
+    getchar();
+  } else {
+    printf("Error starting framework\n");
+  }
   printf("End framework\n");
-	return !ulfius_stop_framework(&instance);
+	return ulfius_stop_framework(&instance);
 }
 
 /**
@@ -106,7 +108,7 @@ int main (int argc, char **argv) {
 int callback_get_test (const struct _u_request * request, struct _u_response * response, void * user_data) {
   response->string_body = strdup("Hello World!");
   response->status = 200;
-  return 0;
+  return U_OK;
 }
 
 /**
@@ -120,7 +122,7 @@ int callback_post_test (const struct _u_request * request, struct _u_response * 
   snprintf(response->string_body, (len+1), "Hello World!\n%s", post_params);
   free(post_params);
   response->status = 200;
-  return 0;
+  return U_OK;
 }
 
 /**
@@ -142,7 +144,7 @@ int callback_all_test_foo (const struct _u_request * request, struct _u_response
   free(cookies);
   free(post_params);
   free(json_params);
-  return 0;
+  return U_OK;
 }
 
 /**
@@ -159,7 +161,7 @@ int callback_get_jsontest (const struct _u_request * request, struct _u_response
     json_object_set_new(response->json_body, "request", json_string("Error parsing request"));
   }
   response->status = 200;
-  return 0;
+  return U_OK;
 }
 
 /**
@@ -187,5 +189,5 @@ int callback_get_cookietest (const struct _u_request * request, struct _u_respon
 	free(extra);
 	free(counter);
 	
-	return 0;
+	return U_OK;
 }

@@ -2,7 +2,7 @@
 
 Web Framework for REST Applications in C.
 
-Based on [GNU Libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/) for the web server backend and [Jansson](http://www.digip.org/jansson/) for the json manipulation library and [Libcurl](http://curl.haxx.se/libcurl/) for the send http request API.
+Based on [GNU Libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/) for the web server backend, [Jansson](http://www.digip.org/jansson/) for the json manipulation library, and [Libcurl](http://curl.haxx.se/libcurl/) for the send http request API.
 
 Used to facilitate creation of web applications in C programs with a small memory footprint, like in embedded systems applications.
 
@@ -39,7 +39,18 @@ Include file `ulfius.h` in your source file:
 
 On your linker command, add ulfius as a dependency library, e.g. `-lulfius` for gcc.
 
-## API functions
+## API Documentation
+
+### Return values
+
+When specified, some functions return `U_OK` on success, and other values otherwise. `U_OK` is 0, other values are non-0 values. The defined errors list is the following:
+```c
+#define U_OK            0 // No error
+#define U_ERROR_MEMORY  1 // Error in memory allocation
+#define U_ERROR_PARAMS  2 // Error in input parameters
+#define U_ERROR_LIBMHD  3 // Error in libmicrohttpd execution
+#define U_ERROR_LIBCURL 4 // Error in libcurl execution
+```
 
 ### Initialization
 
@@ -99,7 +110,7 @@ struct _u_endpoint {
 };
 ```
 
-Your `struct _u_endpoint` array MUST end with an empty `struct _u_endpoint`.
+Your `struct _u_endpoint` array **MUST** end with an empty `struct _u_endpoint`.
 
 for example, you can declare an endpoint list like this:
 
@@ -133,6 +144,7 @@ The starting point function is ulfius_init_framework:
  * endpoint_list: array of struct _u_endpoint that will describe endpoints used for the application
  *                the array MUST have an empty struct _u_endpoint at the end of it
  *                {NULL, NULL, NULL, NULL}
+ * return U_OK on success
  */
 int ulfius_init_framework(struct _u_instance * u_instance, struct _u_endpoint * endpoint_list);
 ```
@@ -147,6 +159,7 @@ To stop the webservice, call the following function:
  * 
  * Stop the webservice
  * u_instance:    pointer to a struct _u_instance that describe its port and bind address
+ * return U_OK on success
  */
 int ulfius_stop_framework(struct _u_instance * u_instance);
 ```
@@ -229,13 +242,13 @@ struct _u_response {
 };
 ```
 
-In the response variable set by the framework to the callback function, the structure is empty, except for the map_cookie which is set to the same key/values as the request `map_cookie`.
+In the response variable set by the framework to the callback function, the structure is empty, except for the map_cookie which is set to the same key/values as the request element `map_cookie`.
 
 The user must set the `string_body` or the `json_body` or the `binary_body` before the return statement, otherwise the framework will send an error 500 response. If a `string_body` is set, the `json_body` or the `binary_body` won't be tested. So to return a `json_body` object, you must leave `string_body` with a `NULL` value. Likewise, if a `json_body` is set, the `binary_body` won't be tested. Finally, if a `binary_body` is set, its length must be set to `binary_body_length`.
 
-You can find the jansson api documentation at the following address: [Jansson documentation](https://jansson.readthedocs.org/).
+You can find the `jansson` api documentation at the following address: [Jansson documentation](https://jansson.readthedocs.org/).
 
-The callback function return value is 0 on success. If the return value is other than 0, an error 500 response will be sent to the client.
+The callback function return value is U_OK on success. If the return value is other than U_OK, an error 500 response will be sent to the client.
 
 In addition with manipulating the raw parameters of the structures, you can use the _u_request and _u_response structures by using specific functions designed to facilitate their use and memory management:
 
@@ -243,7 +256,7 @@ In addition with manipulating the raw parameters of the structures, you can use 
 /**
  * ulfius_init_request
  * Initialize a request structure by allocating inner elements
- * return true if everything went fine, false otherwise
+ * return U_OK on success
  */
 int ulfius_init_request(struct _u_request * request);
 
@@ -252,21 +265,21 @@ int ulfius_init_request(struct _u_request * request);
  * clean the specified request's inner elements
  * user must free the parent pointer if needed after clean
  * or use ulfius_clean_request_full
- * return true if no error
+ * return U_OK on success
  */
 int ulfius_clean_request(struct _u_request * request);
 
 /**
  * ulfius_clean_request_full
  * clean the specified request and all its elements
- * return true if no error
+ * return U_OK on success
  */
 int ulfius_clean_request_full(struct _u_request * request);
 
 /**
  * ulfius_init_response
  * Initialize a response structure by allocating inner elements
- * return true if everything went fine, false otherwise
+ * return U_OK on success
  */
 int ulfius_init_response(struct _u_response * response);
 
@@ -275,37 +288,40 @@ int ulfius_init_response(struct _u_response * response);
  * clean the specified response's inner elements
  * user must free the parent pointer if needed after clean
  * or use ulfius_clean_response_full
- * return true if no error
+ * return U_OK on success
  */
 int ulfius_clean_response(struct _u_response * response);
 
 /**
  * ulfius_clean_response_full
  * clean the specified response and all its elements
- * return true if no error
+ * return U_OK on success
  */
 int ulfius_clean_response_full(struct _u_response * response);
 
 /**
  * ulfius_copy_response
  * Copy the source response elements into the des response
+ * return U_OK on success
  */
 int ulfius_copy_response(struct _u_response * dest, const struct _u_response * source);
 
 /**
  * ulfius_clean_cookie
  * clean the cookie's elements
+ * return U_OK on success
  */
 int ulfius_clean_cookie(struct _u_cookie * cookie);
 
 /**
  * Copy the cookie source elements into dest elements
+ * return U_OK on success
  */
 int ulfius_copy_cookie(struct _u_cookie * dest, const struct _u_cookie * source);
 
 /**
  * create a new request based on the source elements
- * return value must be free'd
+ * returned value must be free'd
  */
 struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
 
@@ -328,32 +344,39 @@ The map_cookie structure will contain a set of key/values to set the cookies. Yo
 /**
  * ulfius_add_cookie_to_header
  * add a cookie to the cookie map
+ * return U_OK on success
  */
 int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const uint max_age, 
                       const char * domain, const char * path, const int secure, const int http_only);
 ```
 
-### u_map API
+### struct _u_map API
 
 The `struct _u_map` is a simple key/value mapping API. The available functions to use this structure are:
 
 ```c
-
 /**
  * initialize a struct _u_map
  * this function MUST be called after a declaration or allocation
+ * return U_OK on success
  */
-void u_map_init(struct _u_map * map);
+int u_map_init(struct _u_map * map);
 
 /**
- * free the struct _u_map and its components
- * return true if no error
+ * free the struct _u_map's inner components
+ * return U_OK on success
  */
 int u_map_clean(struct _u_map * u_map);
 
 /**
+ * free the struct _u_map and its components
+ * return U_OK on success
+ */
+int u_map_clean_full(struct _u_map * u_map);
+
+/**
  * free an enum return by functions u_map_enum_keys or u_map_enum_values
- * return true if no error
+ * return U_OK on success
  */
 int u_map_clean_enum(char ** array);
 
@@ -388,7 +411,7 @@ int u_map_has_value(const struct _u_map * u_map, const char * value);
 /**
  * add the specified key/value pair into the specified u_map
  * if the u_map already contains a pair with the same key, replace the value
- * return true if no error
+ * return U_OK on success
  */
 int u_map_put(struct _u_map * u_map, const char * key, const char * value);
 
@@ -396,7 +419,7 @@ int u_map_put(struct _u_map * u_map, const char * key, const char * value);
  * get the value corresponding to the specified key in the u_map
  * return NULL if no match found
  * search is case sensitive
- * returned value must be freed after use
+ * returned value must be free'd after use
  */
 char * u_map_get(const struct _u_map * u_map, const const char * key);
 
@@ -418,14 +441,14 @@ int u_map_has_value_case(const struct _u_map * u_map, const char * value);
  * get the value corresponding to the specified key in the u_map
  * return NULL if no match found
  * search is case insensitive
- * returned value must be freed after use
+ * returned value must be free'd after use
  */
 char * u_map_get_case(const struct _u_map * u_map, const char * key);
 
 /**
  * Create an exact copy of the specified struct _u_map
  * return a reference to the copy, NULL otherwise
- * returned value must be freed after use
+ * returned value must be free'd after use
  */
 struct _u_map * u_map_copy(const struct _u_map * source);
 
@@ -435,9 +458,10 @@ struct _u_map * u_map_copy(const struct _u_map * source);
  */
 int u_map_count(const struct _u_map * source);
 ```
+
 ### Send request API
 
-The function `int ulfius_request_http(const struct _u_request * request, struct _u_response * response)` is based on libcul.
+The function `int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response)` is based on `libcul` api.
 
 It allows to send an http request with the parameters specified by the `_u_request` structure. Use the parameter `_u_request.http_url` to specify the distant url to call.
 
@@ -445,20 +469,19 @@ You can fill the maps in the `_u_request` structure with parameters, they will b
 
 The response parameters is stored into the `_u_response` structure. If you specify NULL for the response structure, the http call will still be made but no response details will be specified.
 
-Return 1 on success, 0 otherwise.
+Return value is U_OK on success.
 
 This function is defined as:
 
 ```c
 /**
- * ulfius_send_request
+ * ulfius_send_http_request
  * Send a HTTP request and store the result into a _u_response
- * return true if everything went fine, false otherwise
+ * return U_OK on success
  */
-int ulfius_request_http(const struct _u_request * request, struct _u_response * response);
+int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response);
 ```
 
 ### Example source code
 
 See `example` folder for detailed sample source codes.
-

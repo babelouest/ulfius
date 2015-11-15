@@ -104,43 +104,49 @@ int main (int argc, char **argv) {
   printf("Press <enter> to run delete test\n");
   getchar();
   ulfius_init_response(&response);
-  ulfius_send_http_request(&req_list[1], &response);
-  print_response(&response);
+  if (ulfius_send_http_request(&req_list[1], &response) == U_OK) {
+    print_response(&response);
+  }
   ulfius_clean_response(&response);
   
   printf("Press <enter> to run post parameters test\n");
   getchar();
   ulfius_init_response(&response);
-  ulfius_send_http_request(&req_list[2], &response);
-  print_response(&response);
+  if (ulfius_send_http_request(&req_list[2], &response) == U_OK) {
+    print_response(&response);
+  }
   ulfius_clean_response(&response);
   
   printf("Press <enter> to run post plain test\n");
   getchar();
   ulfius_init_response(&response);
-  ulfius_send_http_request(&req_list[3], &response);
-  print_response(&response);
+  if (ulfius_send_http_request(&req_list[3], &response) == U_OK) {
+    print_response(&response);
+  }
   ulfius_clean_response(&response);
   
   printf("Press <enter> to run post json test\n");
   getchar();
   ulfius_init_response(&response);
-  ulfius_send_http_request(&req_list[4], &response);
-  print_response(&response);
+  if (ulfius_send_http_request(&req_list[4], &response) == U_OK) {
+    print_response(&response);
+  }
   ulfius_clean_response(&response);
   
   printf("Press <enter> to run put plain test\n");
   getchar();
   ulfius_init_response(&response);
-  ulfius_send_http_request(&req_list[5], &response);
-  print_response(&response);
+  if (ulfius_send_http_request(&req_list[5], &response) == U_OK) {
+    print_response(&response);
+  }
   ulfius_clean_response(&response);
   
   printf("Press <enter> to run put json test\n");
   getchar();
   ulfius_init_response(&response);
-  ulfius_send_http_request(&req_list[6], &response);
-  print_response(&response);
+  if (ulfius_send_http_request(&req_list[6], &response) == U_OK) {
+    print_response(&response);
+  }
   ulfius_clean_response(&response);
   
   // Wait for the user to press <enter> on the console to quit the application
