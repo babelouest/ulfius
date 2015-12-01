@@ -48,14 +48,16 @@ u_send_request.o: ulfius.h u_send_request.c
 
 clean:
 	rm -f *.o *.so $(OUTPUT) $(OUTPUT).$(VERSION)
-	rm -f $(PREFIX)/lib/$(OUTPUT)
-	rm -f $(PREFIX)/lib/$(OUTPUT).$(VERSION)
-	rm -f $(PREFIX)/include/ulfius.h
 
 install: all
 	cp $(OUTPUT).$(VERSION) $(PREFIX)/lib
 	cp ulfius.h $(PREFIX)/include
 	ldconfig
+
+uninstall:
+	rm -f $(PREFIX)/lib/$(OUTPUT)
+	rm -f $(PREFIX)/lib/$(OUTPUT).$(VERSION)
+	rm -f $(PREFIX)/include/ulfius.h
 
 debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
