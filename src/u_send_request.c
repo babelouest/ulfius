@@ -515,6 +515,9 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
   return U_ERROR_PARAMS;
 }
 
+/**
+ * ulfius_send_smtp_email body fill function and structures
+ */
 #define MAIL_DATE    0
 #define MAIL_TO      1
 #define MAIL_FROM    2
@@ -613,7 +616,7 @@ static size_t smtp_payload_source(void * ptr, size_t size, size_t nmemb, void * 
  * return U_OK on success
  */
 int ulfius_send_smtp_email(const char * host, const int port, const int use_tls, const int verify_certificate, const char * user, const char * password, const char * from, const char * to, const char * cc, const char * bcc, const char * subject, const char * mail_body) {
-  CURL *curl;
+  CURL * curl_handle;
   CURLcode res = CURLE_OK;
   char * smtp_url;
   int len, cur_port;
@@ -623,8 +626,8 @@ int ulfius_send_smtp_email(const char * host, const int port, const int use_tls,
   
   if (host != NULL && from != NULL && to != NULL && mail_body != NULL) {
     
-    curl = curl_easy_init();
-    if (curl != NULL) {
+    curl_handle = curl_easy_init();
+    if (curl_handle != NULL) {
       if (port == 0 && !use_tls) {
         cur_port = 25;
       } else if (port == 0 && use_tls) {
@@ -636,23 +639,23 @@ int ulfius_send_smtp_email(const char * host, const int port, const int use_tls,
         return U_ERROR_MEMORY;
       }
       snprintf(smtp_url, (len+1), "smtp%s://%s:%d", use_tls?"s":"", host, cur_port);
-      curl_easy_setopt(curl, CURLOPT_URL, smtp_url);
+      curl_easy_setopt(curl_handle, CURLOPT_URL, smtp_url);
       
       if (use_tls) {
-        curl_easy_setopt(curl, CURLOPT_USE_SSL, (long)CURLUSESSL_ALL);
+        curl_easy_setopt(curl_handle, CURLOPT_USE_SSL, (long)CURLUSESSL_ALL);
       }
       
       if (use_tls && !verify_certificate) {
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+        curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 0L);
+        curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYHOST, 0L);
       }
       
       if (user != NULL && password != NULL) {
-        curl_easy_setopt(curl, CURLOPT_USERNAME, user);
-        curl_easy_setopt(curl, CURLOPT_PASSWORD, password);
+        curl_easy_setopt(curl_handle, CURLOPT_USERNAME, user);
+        curl_easy_setopt(curl_handle, CURLOPT_PASSWORD, password);
       }
       
-      curl_easy_setopt(curl, CURLOPT_MAIL_FROM, from);
+      curl_easy_setopt(curl_handle, CURLOPT_MAIL_FROM, from);
       
       recipients = curl_slist_append(recipients, to);
       if (cc != NULL) {
@@ -661,7 +664,7 @@ int ulfius_send_smtp_email(const char * host, const int port, const int use_tls,
       if (bcc != NULL) {
         recipients = curl_slist_append(recipients, bcc);
       }
-      curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recipients);
+      curl_easy_setopt(curl_handle, CURLOPT_MAIL_RCPT, recipients);
       
       upload_ctx.lines_read = 0;
       upload_ctx.to = (char*)to;
@@ -669,15 +672,13 @@ int ulfius_send_smtp_email(const char * host, const int port, const int use_tls,
       upload_ctx.cc = (char*)cc;
       upload_ctx.subject = (char*)subject;
       upload_ctx.data = (char*)mail_body;
-      curl_easy_setopt(curl, CURLOPT_READFUNCTION, smtp_payload_source);
-      curl_easy_setopt(curl, CURLOPT_READDATA, &upload_ctx);
-      curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
+      curl_easy_setopt(curl_handle, CURLOPT_READFUNCTION, smtp_payload_source);
+      curl_easy_setopt(curl_handle, CURLOPT_READDATA, &upload_ctx);
+      curl_easy_setopt(curl_handle, CURLOPT_UPLOAD, 1L);
       
-      curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-      
-      res = curl_easy_perform(curl);
+      res = curl_easy_perform(curl_handle);
       curl_slist_free_all(recipients);
-      curl_easy_cleanup(curl);
+      curl_easy_cleanup(curl_handle);
       free(smtp_url);
       
       if (res != CURLE_OK) {
