@@ -72,10 +72,12 @@ struct _u_endpoint * endpoint_match(const char * method, const char * url, struc
   if (method != NULL && url != NULL && endpoint_list != NULL) {
     splitted_url = split_url(url);
     for (i=0; (splitted_url != NULL && endpoint_list[i].http_method != NULL && endpoint_list[i].url_format != NULL); i++) {
-      if (0 == strcmp(endpoint_list[i].http_method, method) || endpoint_list[i].http_method[0] == '*') {
+      if (0 == strcasecmp(endpoint_list[i].http_method, method) || endpoint_list[i].http_method[0] == '*') {
         splitted_url_format = split_url(endpoint_list[i].url_format);
         if (splitted_url_format != NULL && url_format_match((const char **)splitted_url, (const char **)splitted_url_format)) {
           endpoint = (endpoint_list + i);
+          u_map_clean_enum(splitted_url_format);
+          break;
         }
         u_map_clean_enum(splitted_url_format);
         splitted_url_format = NULL;

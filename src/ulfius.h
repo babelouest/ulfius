@@ -327,6 +327,12 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
 struct _u_response * ulfius_duplicate_response(const struct _u_response * response);
 
 /**
+ * Send an email using the specified parameters
+ * return U_OK on success
+ */
+int ulfius_send_smtp_email(const char * host, const int port, const int use_tls, const int verify_certificate, const char * user, const char * password, const char * from, const char * to, const char * cc, const char * bcc, const char * subject, const char * mail_body);
+
+/**
  * umap declarations
  * umap is a simple map structure that handles sets of key/value maps
  * 

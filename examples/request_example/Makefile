@@ -18,14 +18,14 @@ CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS)
 ULFIUS_LOCATION=../../src
 LIBS=-lc -lulfius -ljansson -L$(ULFIUS_LOCATION)
 
-all: client server
+all: client server mail
 
 clean:
-	rm -f *.o client server
+	rm -f *.o client server mail
 
 debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
-debug: client server
+debug: client server mail
 
 libulfius.so:
 	cd $(ULFIUS_LOCATION) && $(MAKE) debug
@@ -41,3 +41,9 @@ server.o: server.c libulfius.so
 
 server: server.o
 	$(CC) -o server server.o $(LIBS)
+
+mail.o: mail.c libulfius.so
+	$(CC) $(CFLAGS) mail.c -DDEBUG -g -O0
+
+mail: mail.o
+	$(CC) -o mail mail.o $(LIBS)
