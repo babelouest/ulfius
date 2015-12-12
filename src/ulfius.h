@@ -58,7 +58,7 @@
 #define U_ERROR_LIBMHD  3 // Error in libmicrohttpd execution
 #define U_ERROR_LIBCURL 4 // Error in libcurl execution
 
-#define ULFIUS_VERSION 0.9.6
+#define ULFIUS_VERSION 0.9.7
 
 /*************
  * Structures

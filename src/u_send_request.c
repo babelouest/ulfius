@@ -537,7 +537,7 @@ struct upload_status {
 static size_t smtp_payload_source(void * ptr, size_t size, size_t nmemb, void * userp) {
   struct upload_status *upload_ctx = (struct upload_status *)userp;
   char * data = NULL;
-  size_t len;
+  size_t len = 0;
 
   if ((size == 0) || (nmemb == 0) || ((size*nmemb) < 1)) {
     return 0;
@@ -632,6 +632,8 @@ int ulfius_send_smtp_email(const char * host, const int port, const int use_tls,
         cur_port = 25;
       } else if (port == 0 && use_tls) {
         cur_port = 587;
+      } else {
+        cur_port = port;
       }
       len = snprintf(NULL, 0, "smtp%s://%s:%d", use_tls?"s":"", host, cur_port);
       smtp_url = malloc((len+1)*sizeof(char));
