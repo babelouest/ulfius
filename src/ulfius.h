@@ -327,10 +327,33 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
 struct _u_response * ulfius_duplicate_response(const struct _u_response * response);
 
 /**
- * Send an email using the specified parameters
+ * Send an email
+ * host: smtp server host name
+ * port: tcp port number (optional, 0 for default)
+ * use_tls: true if the connection is tls secured
+ * verify_certificate: true if you want to disable the certificate verification on a tls server
+ * user: connection user name (optional, NULL: no user name)
+ * password: connection password (optional, NULL: no password)
+ * from: from address (mandatory)
+ * to: to recipient address (mandatory)
+ * cc: cc recipient address (optional, NULL: no cc)
+ * bcc: bcc recipient address (optional, NULL: no bcc)
+ * subject: email subject (mandatory)
+ * mail_body: email body (mandatory)
  * return U_OK on success
  */
-int ulfius_send_smtp_email(const char * host, const int port, const int use_tls, const int verify_certificate, const char * user, const char * password, const char * from, const char * to, const char * cc, const char * bcc, const char * subject, const char * mail_body);
+int ulfius_send_smtp_email(const char * host, 
+                            const int port, 
+                            const int use_tls, 
+                            const int verify_certificate, 
+                            const char * user, 
+                            const char * password, 
+                            const char * from, 
+                            const char * to, 
+                            const char * cc, 
+                            const char * bcc, 
+                            const char * subject, 
+                            const char * mail_body);
 
 /**
  * umap declarations

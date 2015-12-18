@@ -4,15 +4,67 @@ Web Framework for REST Applications in C.
 
 Based on [GNU Libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/) for the web server backend, [Jansson](http://www.digip.org/jansson/) for the json manipulation library, and [Libcurl](http://curl.haxx.se/libcurl/) for the send http request API.
 
-Used to facilitate creation of web applications in C programs with a small memory footprint, like in embedded systems applications.
+Used to facilitate creation of web applications in C programs with a small memory footprint, like embedded systems applications.
+
+## Hello World! example application
+
+The source code of a hello world using Ulfius could be the following:
+
+```c
+#include <ulfius.h>
+
+#define PORT 8080
+
+/**
+ * Callback function for the web application on /helloworld url call
+ */
+int callback_hello_world (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  response->string_body = strdup("Hello World!");
+  response->status = 200;
+  return U_OK;
+}
+
+/**
+ * main function
+ */
+int main(void) {
+  // Endpoint list declaration
+  // The last line is mandatory to mark the end of the array
+  struct _u_endpoint endpoint_list[] = {
+    {"GET", "/helloworld", &callback_get_test, NULL},
+    {NULL, NULL, NULL, NULL}
+  };
+  
+  // Set the framework port number
+  struct _u_instance instance;
+  instance.port = PORT;
+  instance.bind_address = NULL;
+  
+  // Start the framework
+  if (ulfius_init_framework(&instance, endpoint_list) == U_OK) {
+    printf("Start framework on port %d\n", instance.port);
+    // Wait for the user to press <enter> on the console to quit the application
+    getchar();
+  } else {
+    printf("Error starting framework\n");
+  }
+  
+  printf("End framework\n");
+  return ulfius_stop_framework(&instance);
+}
+```
 
 # Prerequisites
 
 To install the dependencies, for Debian based distributions (Debian, Ubuntu, Raspbian, etc.), run as root:
 
 ```shell
-# apt-get install libmicrohttpd libmicrohttpd-dev libjansson libjansson-dev libcurl4 libcurl4-gnutls-dev
+# apt-get install libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev
 ```
+
+## Note
+
+I suggest libcurl4-gnutls-dev for the example, but any `libcurl*-dev` library should be sufficent, depending on your needs and configuration.
 
 # Installation
 
@@ -132,6 +184,8 @@ Please note that each time a call is made to the webservice, endpoints will be t
 
 ### Start and stop webservice
 
+#### Start webservice
+
 The starting point function is ulfius_init_framework:
 
 ```c
@@ -151,6 +205,8 @@ int ulfius_init_framework(struct _u_instance * u_instance, struct _u_endpoint * 
 
 In your program where you want to start the web server, simply execute the function `ulfius_init_framework(struct _u_instance * u_instance, struct _u_endpoint * endpoint_list);` with the previously declared `instance` and `endpoint_list`. You can reuse the same callback function as much as you want for different endpoints. On success, this function returns `true`, otherwise `false`.
 
+#### Stop webservice
+
 To stop the webservice, call the following function:
 
 ```c
@@ -166,7 +222,7 @@ int ulfius_stop_framework(struct _u_instance * u_instance);
 
 ### Callback function
 
-A callback function must have the following declaration:
+The callback function is the function called when a user calls an endpoint managed by your webservice (as defined in your `struct _u_endpoint` list). A callback function must have the following declaration:
 
 ```c
 int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
@@ -248,9 +304,9 @@ The user must set the `string_body` or the `json_body` or the `binary_body` befo
 
 You can find the `jansson` api documentation at the following address: [Jansson documentation](https://jansson.readthedocs.org/).
 
-The callback function return value is U_OK on success. If the return value is other than U_OK, an error 500 response will be sent to the client.
+The callback function return value is `U_OK` on success. If the return value is other than `U_OK`, an error 500 response will be sent to the client.
 
-In addition with manipulating the raw parameters of the structures, you can use the _u_request and _u_response structures by using specific functions designed to facilitate their use and memory management:
+In addition with manipulating the raw parameters of the structures, you can use the `_u_request` and `_u_response` structures by using specific functions designed to facilitate their use and memory management:
 
 ```c
 /**
@@ -467,7 +523,7 @@ It allows to send an http request with the parameters specified by the `_u_reque
 
 You can fill the maps in the `_u_request` structure with parameters, they will be used to build the request. Note that if you fill `_u_request.map_post_body` with parameters, the content-type `application/x-www-form-urlencoded` will be use to encode the data.
 
-The response parameters is stored into the `_u_response` structure. If you specify NULL for the response structure, the http call will still be made but no response details will be specified.
+The response parameters is stored into the `_u_response` structure. If you specify NULL for the response structure, the http call will still be made but no response details will be returned.
 
 Return value is U_OK on success.
 
@@ -482,6 +538,46 @@ This function is defined as:
 int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response);
 ```
 
+### Send smtp API
+
+The function `ulfius_send_smtp_email` is used to send emails using a smtp server. It is based on `libcurl` API.
+
+It's used to send emails (without attached files) via a smtp server.
+
+This function is defined as:
+
+```c
+/**
+ * Send an email
+ * host: smtp server host name
+ * port: tcp port number (optional, 0 for default)
+ * use_tls: true if the connection is tls secured
+ * verify_certificate: true if you want to disable the certificate verification on a tls server
+ * user: connection user name (optional, NULL: no user name)
+ * password: connection password (optional, NULL: no password)
+ * from: from address (mandatory)
+ * to: to recipient address (mandatory)
+ * cc: cc recipient address (optional, NULL: no cc)
+ * bcc: bcc recipient address (optional, NULL: no bcc)
+ * subject: email subject (mandatory)
+ * mail_body: email body (mandatory)
+ * return U_OK on success
+ */
+int ulfius_send_smtp_email(const char * host, 
+                            const int port, 
+                            const int use_tls, 
+                            const int verify_certificate, 
+                            const char * user, 
+                            const char * password, 
+                            const char * from, 
+                            const char * to, 
+                            const char * cc, 
+                            const char * bcc, 
+                            const char * subject, 
+                            const char * mail_body);
+```
+
 ### Example source code
 
 See `example` folder for detailed sample source codes.
+
