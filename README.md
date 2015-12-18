@@ -226,8 +226,8 @@ The callback function is the function called when a user calls an endpoint manag
 
 ```c
 int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
-													struct _u_response * response,     // Output parameters (set by the user)
-													void * user_data);
+                          struct _u_response * response,     // Output parameters (set by the user)
+                          void * user_data);
 ```
 
 In the callback function definition, the variables `request` and `response` will be set by the framework, and the `user_data` variable will be assigned to the user_data defined in your endpoint list definition.
@@ -403,7 +403,7 @@ The map_cookie structure will contain a set of key/values to set the cookies. Yo
  * return U_OK on success
  */
 int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const uint max_age, 
-                      const char * domain, const char * path, const int secure, const int http_only);
+                                  const char * domain, const char * path, const int secure, const int http_only);
 ```
 
 ### struct _u_map API
@@ -564,17 +564,17 @@ This function is defined as:
  * return U_OK on success
  */
 int ulfius_send_smtp_email(const char * host, 
-                            const int port, 
-                            const int use_tls, 
-                            const int verify_certificate, 
-                            const char * user, 
-                            const char * password, 
-                            const char * from, 
-                            const char * to, 
-                            const char * cc, 
-                            const char * bcc, 
-                            const char * subject, 
-                            const char * mail_body);
+                           const int port, 
+                           const int use_tls, 
+                           const int verify_certificate, 
+                           const char * user, 
+                           const char * password, 
+                           const char * from, 
+                           const char * to, 
+                           const char * cc, 
+                           const char * bcc, 
+                           const char * subject, 
+                           const char * mail_body);
 ```
 
 ### Example source code
