@@ -19,14 +19,16 @@ SIMPLE_EXAMPLE_LOCATION=./examples/simple_example
 SHEEP_COUNTER_LOCATION=./examples/sheep_counter
 PROXY_EXAMPLE_LOCATION=./examples/proxy_example
 REQUEST_EXAMPLE_LOCATION=./examples/request_example
+TEST_U_MAP_LOCATION=./examples/test_u_map
 
-all: libulfius.so simple_example sheep_counter proxy_example request_example
+all: libulfius.so simple_example sheep_counter proxy_example request_example test_u_map
 
 debug:
 	cd $(SIMPLE_EXAMPLE_LOCATION) && $(MAKE) debug
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) debug
 	cd $(PROXY_EXAMPLE_LOCATION) && $(MAKE) debug
 	cd $(REQUEST_EXAMPLE_LOCATION) && $(MAKE) debug
+	cd $(TEST_U_MAP_LOCATION) && $(MAKE) debug
 
 clean:
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) clean
@@ -34,6 +36,7 @@ clean:
 	cd $(SHEEP_COUNTER_LOCATION) && $(MAKE) clean
 	cd $(PROXY_EXAMPLE_LOCATION) && $(MAKE) clean
 	cd $(REQUEST_EXAMPLE_LOCATION) && $(MAKE) clean
+	cd $(TEST_U_MAP_LOCATION) && $(MAKE) clean
 
 libulfius.so:
 	cd $(SIMPLE_EXAMPLE_LOCATION) && $(MAKE)
@@ -49,3 +52,6 @@ proxy_example:
 
 request_example:
 	cd $(REQUEST_EXAMPLE_LOCATION) && $(MAKE)
+
+test_u_map:
+	cd $(TEST_U_MAP_LOCATION) && $(MAKE)
