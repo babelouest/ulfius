@@ -31,24 +31,21 @@
  * return the number of added headers, -1 on error
  */
 int set_response_header(struct MHD_Response * response, const struct _u_map * response_map_header) {
-  char ** header_keys = u_map_enum_keys(response_map_header);
-  char * header_value;
+  const char ** header_keys = u_map_enum_keys(response_map_header);
+  const char * header_value;
   int i = -1, ret;
   if (header_keys != NULL && response != NULL && response_map_header != NULL) {
     for (i=0; header_keys != NULL && header_keys[i] != NULL; i++) {
       header_value = u_map_get(response_map_header, header_keys[i]);
       if (header_value == NULL) {
-        u_map_clean_enum(header_keys);
         return -1;
       }
       ret = MHD_add_response_header (response, header_keys[i], header_value);
-      free(header_value);
       if (ret == MHD_NO) {
         i = -1;
         break;
       }
     }
-    u_map_clean_enum(header_keys);
   }
   return i;
 }

@@ -17,21 +17,21 @@
 #include "../../src/ulfius.h"
 
 #define PORT 7778
+#define PREFIX "/curl"
 
 /**
  * decode a u_map into a string
  */
 char * print_map(const struct _u_map * map) {
-  char * line, * to_return = NULL, **keys, * value;
+  char * line, * to_return = NULL;
+  const char **keys;
   int len, i;
   if (map != NULL) {
     keys = u_map_enum_keys(map);
     for (i=0; keys[i] != NULL; i++) {
-      value = u_map_get(map, keys[i]);
-      len = snprintf(NULL, 0, "key is %s, value is %s\n", keys[i], value);
+      len = snprintf(NULL, 0, "key is %s, value is %s\n", keys[i], u_map_get(map, keys[i]));
       line = malloc((len+1)*sizeof(char));
-      snprintf(line, (len+1), "key is %s, value is %s\n", keys[i], value);
-      free(value);
+      snprintf(line, (len+1), "key is %s, value is %s\n", keys[i], u_map_get(map, keys[i]));
       if (to_return != NULL) {
         len = strlen(to_return) + strlen(line) + 1;
         to_return = realloc(to_return, (len+1)*sizeof(char));
@@ -42,7 +42,6 @@ char * print_map(const struct _u_map * map) {
       strcat(to_return, line);
       free(line);
     }
-    u_map_clean_enum(keys);
     return to_return;
   } else {
     return NULL;
@@ -57,7 +56,7 @@ int callback (const struct _u_request * request, struct _u_response * response, 
         * post_params = print_map(request->map_post_body), * json_params = json_dumps(request->json_body, JSON_INDENT(2));
   response->string_body = u_strdup("ok");
   response->status = 200;
-  printf("Method is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n  json body parameters are \n%s\n\n  raw body is \n%s\n\n  user data is %s\n\n",
+  printf("######################################################\n###################### Callback ######################\n######################################################\n\nMethod is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n  json body parameters are \n%s\n\n  raw body is \n%s\n\n  user data is %s\n\n",
                                   request->http_verb, request->http_url, url_params, cookies, headers, post_params, json_params, (char*)request->binary_body, (char *)user_data);
   
   ulfius_add_cookie_to_response(response, "cook", "ie", NULL, 5000, NULL, NULL, 0, 0);
@@ -72,10 +71,7 @@ int callback (const struct _u_request * request, struct _u_response * response, 
 int main (int argc, char **argv) {
   
   struct _u_endpoint endpoint_list[] = {
-    {"GET", "/curl/*", &callback, NULL},
-    {"DELETE", "/curl/*", &callback, NULL},
-    {"POST", "/curl/*", &callback, NULL},
-    {"PUT", "/curl/*", &callback, NULL},
+    {"*", PREFIX, "/*", &callback, NULL},
     {NULL, NULL, NULL, NULL}
   };
   

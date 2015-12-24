@@ -26,6 +26,28 @@
 #include "ulfius.h"
 
 /**
+ * Implementation of sprintf that return a malloc'd char *  with the string construction
+ * because life is too short to use 3 lines instead of 1
+ * but don't forget to free the returned value after use!
+ */
+char * msprintf(const char * message, ...) {
+  va_list argp, argp_cpy;
+  size_t out_len = 0;
+  char * out = NULL;
+  va_start(argp, message);
+  va_copy(argp_cpy, argp);
+  out_len = vsnprintf(NULL, 0, message, argp);
+  out = malloc(out_len+sizeof(char));
+  if (out == NULL) {
+    return NULL;
+  }
+  vsnprintf(out, (out_len+sizeof(char)), message, argp_cpy);
+  va_end(argp);
+  va_end(argp_cpy);
+  return out;
+}
+
+/**
  * Internal structure used to store temporarly the response body
  */
 typedef struct _body {
@@ -117,11 +139,13 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
   CURLcode res;
   CURL * curl_handle = NULL;
   struct curl_slist * header_list = NULL;
-  char ** keys = NULL, * value, * key_esc, * value_esc, * cookie, * header, * param;
-  int i, len;
+  char * key_esc, * value_esc, * cookie, * header, * param, * fp = "?", * np = "&";
+  const char * value, ** keys;
+  int i, has_params = 0, len;
   struct _u_request * copy_request = NULL;
 
   if (request != NULL) {
+    // Duplicate the request and work on it
     copy_request = ulfius_duplicate_request(request);
     curl_handle = curl_easy_init();
     body body_data;
@@ -129,6 +153,7 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
     body_data.data = NULL;
 
     if (copy_request != NULL) {
+      // Append header values
       if (copy_request->map_header == NULL) {
         copy_request->map_header = malloc(sizeof(struct _u_map));
         if (copy_request->map_header == NULL) {
@@ -144,22 +169,18 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
           return U_ERROR_MEMORY;
         }
       }
+      
+      has_params = (strchr(copy_request->http_url, '?') != NULL);
       if (copy_request->map_url != NULL && u_map_count(copy_request->map_url) > 0) {
+        // Append url parameters
         keys = u_map_enum_keys(copy_request->map_url);
+        
+        // Append parameters from map_url
         for (i=0; keys != NULL && keys[i] != NULL; i++) {
           value = u_map_get(copy_request->map_url, keys[i]);
-          if (value == NULL) {
-            u_map_clean_enum(keys);
-            ulfius_clean_request_full(copy_request);
-            curl_slist_free_all(header_list);
-            curl_easy_cleanup(curl_handle);
-            return U_ERROR_MEMORY;
-          }
           key_esc = curl_easy_escape(curl_handle, keys[i], 0);
           value_esc = curl_easy_escape(curl_handle, value, 0);
           if (key_esc == NULL || value_esc == NULL) {
-            free(value);
-            u_map_clean_enum(keys);
             curl_free(key_esc);
             curl_free(value_esc);
             ulfius_clean_request_full(copy_request);
@@ -167,63 +188,51 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
             curl_easy_cleanup(curl_handle);
             return U_ERROR_MEMORY;
           }
-          len = snprintf(NULL, 0, "%s=%s", key_esc, value_esc);
-          param = malloc((len + 1)*sizeof(char));
+          param = msprintf("%s=%s", key_esc, value_esc);
           if (param == NULL) {
-            free(value);
             curl_free(key_esc);
             curl_free(value_esc);
-            u_map_clean_enum(keys);
             ulfius_clean_request_full(copy_request);
             curl_slist_free_all(header_list);
             curl_easy_cleanup(curl_handle);
             return U_ERROR_MEMORY;
           }
-          snprintf(param, (len + 1), "%s=%s", key_esc, value_esc);
-          if (i==0) {
+          if (has_params == 0) {
             copy_request->http_url = realloc(copy_request->http_url, strlen(copy_request->http_url) + strlen(param) + 2);
             if (copy_request->http_url == NULL) {
-              free(value);
               free(param);
               curl_free(key_esc);
               curl_free(value_esc);
-              u_map_clean_enum(keys);
               ulfius_clean_request_full(copy_request);
               curl_slist_free_all(header_list);
               curl_easy_cleanup(curl_handle);
               return U_ERROR_MEMORY;
             }
-            if (strchr(copy_request->http_url, '?') != NULL) {
-              strcat(copy_request->http_url, "&");
-            } else {
-              strcat(copy_request->http_url, "?");
-            }
+            strcat(copy_request->http_url, fp);
             strcat(copy_request->http_url, param);
+            has_params = 1;
           } else {
             copy_request->http_url = realloc(copy_request->http_url, strlen(copy_request->http_url) + strlen(param) + 2);
             if (copy_request->http_url == NULL) {
-              free(value);
               free(param);
               curl_free(key_esc);
               curl_free(value_esc);
-              u_map_clean_enum(keys);
               ulfius_clean_request_full(copy_request);
               curl_slist_free_all(header_list);
               curl_easy_cleanup(curl_handle);
               return U_ERROR_MEMORY;
             }
-            strcat(copy_request->http_url, "&");
+            strcat(copy_request->http_url, np);
             strcat(copy_request->http_url, param);
           }
-          free(value);
           free(param);
           curl_free(key_esc);
           curl_free(value_esc);
         }
-        u_map_clean_enum(keys);
       }
 
       if (copy_request->json_body != NULL) {
+        // Append json body parameter
         free(copy_request->binary_body);
         copy_request->binary_body = json_dumps(copy_request->json_body, JSON_COMPACT);
         if (copy_request->binary_body == NULL) {
@@ -241,12 +250,12 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
           }
         }
       } else if (u_map_count(copy_request->map_post_body) > 0) {
-        free(copy_request->binary_body);
+        // Append MHD_HTTP_POST_ENCODING_FORM_URLENCODED post parameters
         keys = u_map_enum_keys(copy_request->map_post_body);
         for (i=0; keys != NULL && keys[i] != NULL; i++) {
+          // Build parameter
           value = u_map_get(copy_request->map_post_body, keys[i]);
           if (value == NULL) {
-            u_map_clean_enum(keys);
             ulfius_clean_request_full(copy_request);
             curl_slist_free_all(header_list);
             curl_easy_cleanup(curl_handle);
@@ -255,98 +264,69 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
           key_esc = curl_easy_escape(curl_handle, keys[i], 0);
           value_esc = curl_easy_escape(curl_handle, value, 0);
           if (key_esc == NULL || value_esc == NULL) {
-            free(value);
             curl_free(key_esc);
             curl_free(value_esc);
-            u_map_clean_enum(keys);
             ulfius_clean_request_full(copy_request);
             curl_slist_free_all(header_list);
             curl_easy_cleanup(curl_handle);
             return U_ERROR_MEMORY;
           }
-          len = snprintf(NULL, 0, "%s=%s", key_esc, value_esc);
-          param = malloc((len + 1)*sizeof(char));
+          param = msprintf("%s=%s", key_esc, value_esc);
           if (param == NULL) {
-            free(value);
             curl_free(key_esc);
             curl_free(value_esc);
-            u_map_clean_enum(keys);
             ulfius_clean_request_full(copy_request);
             curl_slist_free_all(header_list);
             curl_easy_cleanup(curl_handle);
             return U_ERROR_MEMORY;
           }
-          snprintf(param, (len + 1), "%s=%s", key_esc, value_esc);
-          if (i==0) {
-            copy_request->http_url = realloc(copy_request->http_url, strlen(copy_request->http_url) + strlen(param) + 1);
-            if (copy_request->http_url == NULL) {
-              free(value);
-              free(param);
-              curl_free(key_esc);
-              curl_free(value_esc);
-              u_map_clean_enum(keys);
-              ulfius_clean_request_full(copy_request);
-              curl_slist_free_all(header_list);
-              curl_easy_cleanup(curl_handle);
-              return U_ERROR_MEMORY;
-            }
-            strcat(copy_request->http_url, param);
-          } else {
-            copy_request->http_url = realloc(copy_request->http_url, strlen(copy_request->http_url) + strlen(param) + 1);
-            if (copy_request->http_url == NULL) {
-              free(value);
-              free(param);
-              curl_free(key_esc);
-              curl_free(value_esc);
-              u_map_clean_enum(keys);
-              ulfius_clean_request_full(copy_request);
-              curl_slist_free_all(header_list);
-              curl_easy_cleanup(curl_handle);
-              return U_ERROR_MEMORY;
-            }
-            strcat(copy_request->http_url, param);
-          }
-          if (i == 0) {
-            copy_request->binary_body = malloc(strlen(param) + 1);
+          
+          // Append parameter to body
+          if (copy_request->binary_body_length == 0) {
+            len = strlen(param) + sizeof(char);
+            copy_request->binary_body = malloc(len);
             if (copy_request->binary_body == NULL) {
-              free(value);
               free(param);
               curl_free(key_esc);
               curl_free(value_esc);
-              u_map_clean_enum(keys);
               ulfius_clean_request_full(copy_request);
               curl_slist_free_all(header_list);
               curl_easy_cleanup(curl_handle);
               return U_ERROR_MEMORY;
             }
+            strcpy(copy_request->binary_body, "");
+            strcat(copy_request->binary_body, param);
+            copy_request->binary_body_length = len;
           } else {
-            copy_request->binary_body = realloc(copy_request->binary_body, strlen(copy_request->binary_body) + strlen(param) + 2);
+            len = (copy_request->binary_body_length + strlen(param) + sizeof(char));
+            copy_request->binary_body = realloc(copy_request->binary_body, len);
             if (copy_request->binary_body == NULL) {
-              free(value);
               free(param);
               curl_free(key_esc);
               curl_free(value_esc);
-              u_map_clean_enum(keys);
               ulfius_clean_request_full(copy_request);
               curl_slist_free_all(header_list);
               curl_easy_cleanup(curl_handle);
               return U_ERROR_MEMORY;
             }
-            strcat(copy_request->binary_body, "&");
+            memcpy(copy_request->binary_body + copy_request->binary_body_length, np, 1);
+            memcpy(copy_request->binary_body + copy_request->binary_body_length + 1, param, strlen(param));
+            copy_request->binary_body_length = len;
           }
-          strcat(copy_request->binary_body, param);
-          free(value);
+          
           free(param);
           curl_free(key_esc);
           curl_free(value_esc);
         }
-        u_map_clean_enum(keys);
+        
         if (curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, copy_request->binary_body) != CURLE_OK) {
           ulfius_clean_request_full(copy_request);
           curl_slist_free_all(header_list);
           curl_easy_cleanup(curl_handle);
+          y_log_message(Y_LOG_LEVEL_ERROR, "Error setting POST fields");
           return U_ERROR_LIBCURL;
         }
+        
         if (u_map_put(copy_request->map_header, ULFIUS_HTTP_HEADER_CONTENT, MHD_HTTP_POST_ENCODING_FORM_URLENCODED) != U_OK) {
           ulfius_clean_request_full(copy_request);
           curl_slist_free_all(header_list);
@@ -356,78 +336,62 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
       }
 
       if (copy_request->map_header != NULL && u_map_count(copy_request->map_header) > 0) {
+        // Append map headers
         keys = u_map_enum_keys(copy_request->map_header);
         for (i=0; keys != NULL && keys[i] != NULL; i++) {
           value = u_map_get(copy_request->map_header, keys[i]);
           if (value == NULL) {
-            u_map_clean_enum(keys);
             ulfius_clean_request_full(copy_request);
             curl_slist_free_all(header_list);
             curl_easy_cleanup(curl_handle);
             return U_ERROR_MEMORY;
           }
-          len = snprintf(NULL, 0, "%s:%s", keys[i], value);
-          header = malloc((len + 1)*sizeof(char));
+          header = msprintf("%s:%s", keys[i], value);
           if (header == NULL) {
-            free(value);
-            u_map_clean_enum(keys);
             ulfius_clean_request_full(copy_request);
             curl_slist_free_all(header_list);
             curl_easy_cleanup(curl_handle);
             return U_ERROR_MEMORY;
           }
-          snprintf(header, (len + 1), "%s:%s", keys[i], value);
           header_list = curl_slist_append(header_list, header);
           if (header_list == NULL) {
-            free(value);
             free(header);
-            u_map_clean_enum(keys);
             ulfius_clean_request_full(copy_request);
             curl_slist_free_all(header_list);
             curl_easy_cleanup(curl_handle);
             return U_ERROR_MEMORY;
           }
-          free(value);
           free(header);
         }
-        u_map_clean_enum(keys);
       }
 
       if (copy_request->map_cookie != NULL && u_map_count(copy_request->map_cookie) > 0) {
+        // Append cookies
         keys = u_map_enum_keys(copy_request->map_cookie);
         for (i=0; keys != NULL && keys[i] != NULL; i++) {
           value = u_map_get(copy_request->map_cookie, keys[i]);
           if (value == NULL) {
-            u_map_clean_enum(keys);
             ulfius_clean_request_full(copy_request);
             curl_slist_free_all(header_list);
             curl_easy_cleanup(curl_handle);
             return U_ERROR_MEMORY;
           }
-          len = snprintf(NULL, 0, "%s=%s", keys[i], value);
-          cookie = malloc((len + 1)*sizeof(char));
+          cookie = msprintf(NULL, 0, "%s=%s", keys[i], value);
           if (cookie == NULL) {
-            free(value);
-            u_map_clean_enum(keys);
             ulfius_clean_request_full(copy_request);
             curl_slist_free_all(header_list);
             curl_easy_cleanup(curl_handle);
             return U_ERROR_MEMORY;
           }
-          snprintf(cookie, (len + 1), "%s=%s", keys[i], value);
           if (curl_easy_setopt(curl_handle, CURLOPT_COOKIE, cookie) != CURLE_OK) {
-            free(value);
             free(cookie);
-            u_map_clean_enum(keys);
             ulfius_clean_request_full(copy_request);
             curl_slist_free_all(header_list);
             curl_easy_cleanup(curl_handle);
             return U_ERROR_MEMORY;
           }
-          free(value);
           free(cookie);
         }
-        u_map_clean_enum(keys);
       }
       
       // Request parameters
@@ -450,6 +414,7 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
             ulfius_clean_request_full(copy_request);
             curl_slist_free_all(header_list);
             curl_easy_cleanup(curl_handle);
+            y_log_message(Y_LOG_LEVEL_ERROR, "Error setting headers");
             return U_ERROR_LIBCURL;
           }
         }
@@ -460,6 +425,7 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
           ulfius_clean_request_full(copy_request);
           curl_slist_free_all(header_list);
           curl_easy_cleanup(curl_handle);
+          y_log_message(Y_LOG_LEVEL_ERROR, "Error setting POST fields");
           return U_ERROR_LIBCURL;
         }
         if (copy_request->binary_body_length > 0) {
@@ -467,6 +433,7 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
             ulfius_clean_request_full(copy_request);
             curl_slist_free_all(header_list);
             curl_easy_cleanup(curl_handle);
+            y_log_message(Y_LOG_LEVEL_ERROR, "Error setting POST fields");
             return U_ERROR_LIBCURL;
           }
         }
@@ -476,6 +443,7 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
         curl_slist_free_all(header_list);
         curl_easy_cleanup(curl_handle);
         ulfius_clean_request_full(copy_request);
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error setting libcurl CURLOPT_NOSIGNAL");
         return U_ERROR_LIBCURL;
       }
       res = curl_easy_perform(curl_handle);
@@ -486,6 +454,7 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
           curl_slist_free_all(header_list);
           curl_easy_cleanup(curl_handle);
           ulfius_clean_request_full(copy_request);
+          y_log_message(Y_LOG_LEVEL_ERROR, "Error executing http request, libcurl error: %d, error message %s", res, curl_easy_strerror(res));
           return U_ERROR_LIBCURL;
         }
         response->string_body = u_strdup(body_data.data);
@@ -554,44 +523,29 @@ static size_t smtp_payload_source(void * ptr, size_t size, size_t nmemb, void * 
       len = strlen(data);
     }
   } else if (upload_ctx->lines_read == MAIL_TO) {
-    len = snprintf(NULL, 0, "To: %s\r\n", upload_ctx->to);
-    data = malloc((len+1)*sizeof(char));
+    data = msprintf("To: %s\r\n", upload_ctx->to);
     if (data == NULL) {
       return 0;
-    } else {
-      snprintf(data, (len+1), "To: %s\r\n", upload_ctx->to);
     }
   } else if (upload_ctx->lines_read == MAIL_FROM) {
-    len = snprintf(NULL, 0, "From: %s\r\n", upload_ctx->from);
-    data = malloc((len+1)*sizeof(char));
+    data = msprintf("From: %s\r\n", upload_ctx->from);
     if (data == NULL) {
       return 0;
-    } else {
-      snprintf(data, (len+1), "From: %s\r\n", upload_ctx->from);
     }
   } else if (upload_ctx->lines_read == MAIL_CC && upload_ctx->cc) {
-    len = snprintf(NULL, 0, "Cc: %s\r\n", upload_ctx->cc);
-    data = malloc((len+1)*sizeof(char));
+    data = msprintf("Cc: %s\r\n", upload_ctx->cc);
     if (data == NULL) {
       return 0;
-    } else {
-      snprintf(data, (len+1), "Cc: %s\r\n", upload_ctx->cc);
     }
   } else if (upload_ctx->lines_read == MAIL_SUBJECT) {
-    len = snprintf(NULL, 0, "Subject: %s\r\n", upload_ctx->subject);
-    data = malloc((len+1)*sizeof(char));
+    data = msprintf("Subject: %s\r\n", upload_ctx->subject);
     if (data == NULL) {
       return 0;
-    } else {
-      snprintf(data, (len+1), "Subject: %s\r\n\r\n", upload_ctx->subject);
     }
   } else if (upload_ctx->lines_read == MAIL_DATA) {
-    len = snprintf(NULL, 0, "%s\r\n", upload_ctx->data);
-    data = malloc((len+1)*sizeof(char));
+    data = msprintf("%s\r\n", upload_ctx->data);
     if (data == NULL) {
       return 0;
-    } else {
-      snprintf(data, (len+1), "%s\r\n", upload_ctx->data);
     }
   }
  
@@ -608,6 +562,7 @@ static size_t smtp_payload_source(void * ptr, size_t size, size_t nmemb, void * 
     return len;
   }
  
+  y_log_message(Y_LOG_LEVEL_ERROR, "Error setting mail payload");
   return 0;
 }
 
@@ -642,7 +597,7 @@ int ulfius_send_smtp_email(const char * host,
   CURL * curl_handle;
   CURLcode res = CURLE_OK;
   char * smtp_url;
-  int len, cur_port;
+  int cur_port;
   struct curl_slist * recipients = NULL;
   struct upload_status upload_ctx;
  
@@ -658,12 +613,10 @@ int ulfius_send_smtp_email(const char * host,
       } else {
         cur_port = port;
       }
-      len = snprintf(NULL, 0, "smtp%s://%s:%d", use_tls?"s":"", host, cur_port);
-      smtp_url = malloc((len+1)*sizeof(char));
+      smtp_url = msprintf("smtp%s://%s:%d", use_tls?"s":"", host, cur_port);
       if (smtp_url == NULL) {
         return U_ERROR_MEMORY;
       }
-      snprintf(smtp_url, (len+1), "smtp%s://%s:%d", use_tls?"s":"", host, cur_port);
       curl_easy_setopt(curl_handle, CURLOPT_URL, smtp_url);
       
       if (use_tls) {
@@ -707,11 +660,13 @@ int ulfius_send_smtp_email(const char * host,
       free(smtp_url);
       
       if (res != CURLE_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error sending smtp message, libcurl error: %d, error message %s", res, curl_easy_strerror(res));
         return U_ERROR_LIBCURL;
       } else {
         return U_OK;
       }
     } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error executing curl_easy_init");
       return U_ERROR_LIBCURL;
     }
   } else {

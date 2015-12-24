@@ -33,6 +33,7 @@
 #include <microhttpd.h>
 #include <jansson.h>
 #include <curl/curl.h>
+#include <yder.h>
 
 #define ULFIUS_URL_SEPARATOR       "/"
 #define ULFIUS_HTTP_ENCODING_JSON  "application/json"
@@ -52,34 +53,26 @@
 
 #define ULFIUS_POSTBUFFERSIZE 1024
 
-#define U_OK            0 // No error
-#define U_ERROR_MEMORY  1 // Error in memory allocation
-#define U_ERROR_PARAMS  2 // Error in input parameters
-#define U_ERROR_LIBMHD  3 // Error in libmicrohttpd execution
-#define U_ERROR_LIBCURL 4 // Error in libcurl execution
+#define U_OK              0 // No error
+#define U_ERROR_MEMORY    1 // Error in memory allocation
+#define U_ERROR_PARAMS    2 // Error in input parameters
+#define U_ERROR_LIBMHD    3 // Error in libmicrohttpd execution
+#define U_ERROR_LIBCURL   4 // Error in libcurl execution
+#define U_ERROR_NOT_FOUND 5 // Something was not found
 
-#define ULFIUS_VERSION 0.9.7
+#define ULFIUS_VERSION 0.9.8
 
 /*************
  * Structures
  *************/
 
 /**
- * struct _u_map_value
- * a simple pair of key/value
- */
-struct _u_map_value {
-  char * key;
-  char * value;
-};
-
-/**
  * struct _u_map
- * the structure containing the umap
  */
 struct _u_map {
   int nb_values;
-  struct _u_map_value * value_list;
+  char ** keys;
+  char ** values;
 };
 
 /**
@@ -119,15 +112,18 @@ struct _u_instance {
  * Structure of request parameters
  * 
  * Contains request data
- * http_verb:      http method (GET, POST, PUT, DELETE, etc.), use '*' to match all http methods
- * http_url:       url used to call this callback function or full url to call when used in a ulfius_send_http_request
- * client_address: IP address of the client
- * map_url:        map containing the url variables, both from the route and the ?key=value variables
- * map_header:     map containing the header variables
- * map_cookie:     map containing the cookie variables
- * map_post_body:  map containing the post body variables (if available)
- * json_body:      json_t * object containing the json body (if available)
- * json_error:     true if the json body was not parsed by jansson (if available)
+ * http_verb:          http method (GET, POST, PUT, DELETE, etc.), use '*' to match all http methods
+ * http_url:           url used to call this callback function or full url to call when used in a ulfius_send_http_request
+ * client_address:     IP address of the client
+ * map_url:            map containing the url variables, both from the route and the ?key=value variables
+ * map_header:         map containing the header variables
+ * map_cookie:         map containing the cookie variables
+ * map_post_body:      map containing the post body variables (if available)
+ * json_body:          json_t * object containing the json body (if available)
+ * json_error:            stack allocated json_error_t if json body was not parsed (if available)
+ * json_has_error:     true if the json body was not parsed by jansson (if available)
+ * binary_body:        pointer to raw body
+ * binary_body_length: length of raw body
  * 
  */
 struct _u_request {
@@ -139,9 +135,10 @@ struct _u_request {
   struct _u_map *      map_cookie;
   struct _u_map *      map_post_body;
   json_t *             json_body;
-  int                  json_error;
+  json_error_t *       json_error;
+  int                  json_has_error;
   void *               binary_body;
-  int                  binary_body_length;
+  size_t               binary_body_length;
 };
 
 /**
@@ -156,7 +153,7 @@ struct _u_request {
  * map_cookie:         array of cookies sent
  * string_body:        a char * containing the raw body response
  * json_body:          a json_t * object containing the json response
- * binary_body:        a void * containing a binary content
+ * binary_body:        a void * containing a raw binary content
  * binary_body_length: the length of the binary_body
  * 
  */
@@ -178,6 +175,7 @@ struct _u_response {
  * 
  * Contains all informations needed for an endpoint
  * http_method:       http verb (GET, POST, PUT, etc.) in upper case
+ * url_prefix:        prefix for the url (optional)
  * url_format:        string used to define the endpoint format
  *                    separate words with /
  *                    to define a variable in the url, prefix it with @ or :
@@ -190,6 +188,7 @@ struct _u_response {
  */
 struct _u_endpoint {
   char * http_method;
+  char * url_prefix;
   char * url_format;
   int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
                             struct _u_response * response,     // Output parameters (set by the user)
@@ -219,7 +218,7 @@ struct connection_info_struct {
  * u_instance:    pointer to a struct _u_instance that describe its port and bind address
  * endpoint_list: array of struct _u_endpoint that will describe endpoints used for the application
  *                the array MUST have an empty struct _u_endpoint at the end of it
- *                {NULL, NULL, NULL, NULL}
+ *                {NULL, NULL, NULL, NULL, NULL}
  * return U_OK on success
  */
 int ulfius_init_framework(struct _u_instance * u_instance, struct _u_endpoint * endpoint_list);
@@ -316,13 +315,13 @@ int ulfius_copy_cookie(struct _u_cookie * dest, const struct _u_cookie * source)
 
 /**
  * create a new request based on the source elements
- * returned value must be free'd
+ * returned value must be cleaned after use
  */
 struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
 
 /**
  * create a new response based on the source elements
- * return value must be free'd
+ * return value must be cleaned after use
  */
 struct _u_response * ulfius_duplicate_response(const struct _u_response * response);
 
@@ -391,16 +390,14 @@ int u_map_clean_enum(char ** array);
 /**
  * returns an array containing all the keys in the struct _u_map
  * return an array of char * ending with a NULL element
- * use u_map_clean_enum(char ** array) to clean a returned array
  */
-char ** u_map_enum_keys(const struct _u_map * u_map);
+const char ** u_map_enum_keys(const struct _u_map * u_map);
 
 /**
  * returns an array containing all the values in the struct _u_map
  * return an array of char * ending with a NULL element
- * use u_map_clean_enum(char ** array) to clean a returned array
  */
-char ** u_map_enum_values(const struct _u_map * u_map);
+const char ** u_map_enum_values(const struct _u_map * u_map);
 
 /**
  * return true if the sprcified u_map contains the specified key
@@ -417,21 +414,6 @@ int u_map_has_key(const struct _u_map * u_map, const char * key);
 int u_map_has_value(const struct _u_map * u_map, const char * value);
 
 /**
- * add the specified key/value pair into the specified u_map
- * if the u_map already contains a pair with the same key, replace the value
- * return U_OK on success
- */
-int u_map_put(struct _u_map * u_map, const char * key, const char * value);
-
-/**
- * get the value corresponding to the specified key in the u_map
- * return NULL if no match found
- * search is case sensitive
- * returned value must be free'd after use
- */
-char * u_map_get(const struct _u_map * u_map, const const char * key);
-
-/**
  * return true if the sprcified u_map contains the specified key
  * false otherwise
  * search is case insensitive
@@ -446,12 +428,55 @@ int u_map_has_key_case(const struct _u_map * u_map, const char * key);
 int u_map_has_value_case(const struct _u_map * u_map, const char * value);
 
 /**
+ * add the specified key/value pair into the specified u_map
+ * if the u_map already contains a pair with the same key, replace the value
+ * return U_OK on success
+ */
+int u_map_put(struct _u_map * u_map, const char * key, const char * value);
+
+/**
+ * get the value corresponding to the specified key in the u_map
+ * return NULL if no match found
+ * search is case sensitive
+ */
+const char * u_map_get(const struct _u_map * u_map, const const char * key);
+
+/**
  * get the value corresponding to the specified key in the u_map
  * return NULL if no match found
  * search is case insensitive
- * returned value must be free'd after use
  */
-char * u_map_get_case(const struct _u_map * u_map, const char * key);
+const char * u_map_get_case(const struct _u_map * u_map, const char * key);
+
+/**
+ * remove an pair key/value that has the specified key
+ * return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
+ */
+int u_map_remove_from_key(struct _u_map * u_map, const char * key);
+
+/**
+ * remove all pairs key/value that has the specified key (case insensitive search)
+ * return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
+ */
+int u_map_remove_from_key_case(struct _u_map * u_map, const char * key);
+
+/**
+ * remove all pairs key/value that has the specified value
+ * return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
+ */
+int u_map_remove_from_value(struct _u_map * u_map, const char * key);
+
+/**
+ * remove all pairs key/value that has the specified value (case insensitive search)
+ * return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
+ */
+int u_map_remove_from_value_case(struct _u_map * u_map, const char * key);
+
+/**
+ * remove the pair key/value at the specified index
+ * return U_OK on success, U_NOT_FOUND if index is out of bound, error otherwise
+ */
+int u_map_remove_at(struct _u_map * u_map, const int index);
 
 /**
  * Create an exact copy of the specified struct _u_map
@@ -511,8 +536,9 @@ void request_completed (void *cls, struct MHD_Connection *connection,
 /**
  * split_url
  * return an array of char based on the url words
+ * returned value must be free'd after use
  */
-char ** split_url(const char * url);
+char ** split_url(const char * prefix, const char * url);
 
 /**
  * endpoint_match

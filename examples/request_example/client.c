@@ -22,16 +22,15 @@
  * decode a u_map into a string
  */
 char * print_map(const struct _u_map * map) {
-  char * line, * to_return = NULL, **keys, * value;
+  char * line, * to_return = NULL;
+  const char **keys;
   int len, i;
   if (map != NULL) {
     keys = u_map_enum_keys(map);
     for (i=0; keys[i] != NULL; i++) {
-      value = u_map_get(map, keys[i]);
-      len = snprintf(NULL, 0, "key is %s, value is %s\n", keys[i], value);
+      len = snprintf(NULL, 0, "key is %s, value is %s\n", keys[i], u_map_get(map, keys[i]));
       line = malloc((len+1)*sizeof(char));
-      snprintf(line, (len+1), "key is %s, value is %s\n", keys[i], value);
-      free(value);
+      snprintf(line, (len+1), "key is %s, value is %s\n", keys[i], u_map_get(map, keys[i]));
       if (to_return != NULL) {
         len = strlen(to_return) + strlen(line) + 1;
         to_return = realloc(to_return, (len+1)*sizeof(char));
@@ -42,7 +41,6 @@ char * print_map(const struct _u_map * map) {
       strcat(to_return, line);
       free(line);
     }
-    u_map_clean_enum(keys);
     return to_return;
   } else {
     return NULL;
@@ -61,10 +59,11 @@ void print_response(struct _u_response * response) {
 
 int main (int argc, char **argv) {
   
-  struct _u_map headers, url_params, post_params;
+  struct _u_map headers, url_params, post_params, req_headers;
   char * string_body = "param1=one&param2=two";
   json_t * json_body = json_object();
   struct _u_response response;
+  int res;
   
   u_map_init(&headers);
   
@@ -77,24 +76,32 @@ int main (int argc, char **argv) {
   u_map_put(&post_params, "fourth_test", "four");
   u_map_put(&post_params, "extreme_test", "Here ! are %9_ some $ ö\\)]= special châraçters");
   
+  u_map_init(&req_headers);
+  u_map_put(&req_headers, "Content-Type", MHD_HTTP_POST_ENCODING_FORM_URLENCODED);
+  
   json_object_set_new(json_body, "param1", json_string("one"));
   json_object_set_new(json_body, "param2", json_string("two"));
   
   struct _u_request req_list[] = {
-    {"GET", SERVER_URL_PREFIX "/get/", NULL, &url_params, NULL, NULL, NULL, NULL, 0, NULL, 0},
-    {"DELETE", SERVER_URL_PREFIX "/delete/", NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0},
-    {"POST", SERVER_URL_PREFIX "/post/param/", NULL, NULL, NULL, NULL, &post_params, NULL, 0, string_body, 0},
-    {"POST", SERVER_URL_PREFIX "/post/plain/", NULL, NULL, NULL, NULL, NULL, NULL, 0, string_body, 0},
-    {"POST", SERVER_URL_PREFIX "/post/json/", NULL, NULL, NULL, NULL, NULL, json_body, 0, NULL, 0},
-    {"PUT", SERVER_URL_PREFIX "/put/plain", NULL, NULL, NULL, NULL, NULL, NULL, 0, string_body, 0},
-    {"PUT", SERVER_URL_PREFIX "/put/json", NULL, NULL, NULL, NULL, NULL, json_body, 0, NULL, 0}
+    {"GET", SERVER_URL_PREFIX "/get/", NULL, &url_params, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0},                                   // Parameters in url
+    {"DELETE", SERVER_URL_PREFIX "/delete/", NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0},                                    // No parameters
+    {"POST", SERVER_URL_PREFIX "/post/param/", NULL, NULL, NULL, NULL, &post_params, NULL, NULL, 0, string_body, strlen(string_body)}, // Parameters in post_map and string_body
+    {"POST", SERVER_URL_PREFIX "/post/plain/", NULL, NULL, &req_headers, NULL, NULL, NULL, NULL, 0, string_body, strlen(string_body)}, // Paremeters in string body, header MHD_HTTP_POST_ENCODING_FORM_URLENCODED
+    {"POST", SERVER_URL_PREFIX "/post/json/", NULL, NULL, NULL, NULL, NULL, json_body, NULL, 0, NULL, 0},                              // Parameters in json_body
+    {"PUT", SERVER_URL_PREFIX "/put/plain", NULL, NULL, &req_headers, NULL, NULL, NULL, NULL, 0, string_body, strlen(string_body)},    // Paremeters in string body, header MHD_HTTP_POST_ENCODING_FORM_URLENCODED
+    {"PUT", SERVER_URL_PREFIX "/put/json", NULL, NULL, NULL, NULL, NULL, json_body, NULL, 0, NULL, 0},                                 // Parameters in json_body
+    {"POST", SERVER_URL_PREFIX "/post/param/", NULL, NULL, NULL, NULL, &post_params, NULL, NULL, 0, NULL, 0}                           // Parameters in post_map
   };
   
   printf("Press <enter> to run get test\n");
   getchar();
   ulfius_init_response(&response);
-  ulfius_send_http_request(&req_list[0], &response);
-  print_response(&response);
+  res = ulfius_send_http_request(&req_list[0], &response);
+  if (res == U_OK) {
+    print_response(&response);
+  } else {
+    printf("Error in http request: %d\n", res);
+  }
   ulfius_clean_response(&response);
   
   printf("Press <enter> to run get test with no interest on the response\n");
@@ -104,48 +111,77 @@ int main (int argc, char **argv) {
   printf("Press <enter> to run delete test\n");
   getchar();
   ulfius_init_response(&response);
-  if (ulfius_send_http_request(&req_list[1], &response) == U_OK) {
+  res = ulfius_send_http_request(&req_list[1], &response);
+  if (res == U_OK) {
     print_response(&response);
+  } else {
+    printf("Error in http request: %d\n", res);
   }
   ulfius_clean_response(&response);
   
   printf("Press <enter> to run post parameters test\n");
   getchar();
   ulfius_init_response(&response);
-  if (ulfius_send_http_request(&req_list[2], &response) == U_OK) {
+  res = ulfius_send_http_request(&req_list[2], &response);
+  if (res == U_OK) {
     print_response(&response);
+  } else {
+    printf("Error in http request: %d\n", res);
   }
   ulfius_clean_response(&response);
   
   printf("Press <enter> to run post plain test\n");
   getchar();
   ulfius_init_response(&response);
-  if (ulfius_send_http_request(&req_list[3], &response) == U_OK) {
+  res = ulfius_send_http_request(&req_list[3], &response);
+  if (res == U_OK) {
     print_response(&response);
+  } else {
+    printf("Error in http request: %d\n", res);
   }
   ulfius_clean_response(&response);
   
   printf("Press <enter> to run post json test\n");
   getchar();
   ulfius_init_response(&response);
-  if (ulfius_send_http_request(&req_list[4], &response) == U_OK) {
+  res = ulfius_send_http_request(&req_list[4], &response);
+  if (res == U_OK) {
     print_response(&response);
+  } else {
+    printf("Error in http request: %d\n", res);
   }
   ulfius_clean_response(&response);
   
   printf("Press <enter> to run put plain test\n");
   getchar();
   ulfius_init_response(&response);
-  if (ulfius_send_http_request(&req_list[5], &response) == U_OK) {
+  res = ulfius_send_http_request(&req_list[5], &response);
+  if (res == U_OK) {
     print_response(&response);
+  } else {
+    printf("Error in http request: %d\n", res);
   }
   ulfius_clean_response(&response);
   
   printf("Press <enter> to run put json test\n");
   getchar();
   ulfius_init_response(&response);
-  if (ulfius_send_http_request(&req_list[6], &response) == U_OK) {
+  res = ulfius_send_http_request(&req_list[6], &response);
+  if (res == U_OK) {
     print_response(&response);
+  } else {
+    printf("Error in http request: %d\n", res);
+  }
+  ulfius_clean_response(&response);
+  
+  printf("Press <enter> to run post only test\n");
+  getchar();
+  ulfius_init_response(&response);
+  res = ulfius_send_http_request(&req_list[7], &response);
+  if (res == U_OK) {
+    print_response(&response);
+  } else {
+    printf("Error in http request: %d\n", res);
   }
   ulfius_clean_response(&response);
   
@@ -156,6 +192,7 @@ int main (int argc, char **argv) {
   u_map_clean(&headers);
   u_map_clean(&url_params);
   u_map_clean(&post_params);
+  u_map_clean(&req_headers);
   
   return 0;
 }

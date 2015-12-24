@@ -19,6 +19,7 @@
 #include "../../src/ulfius.h"
 
 #define PORT 7437
+#define PREFIX "/sheep"
 #define STATIC_FOLDER "static"
 
 // Callback function used to serve static files that are present in the static folder
@@ -70,10 +71,10 @@ int main (int argc, char **argv) {
   // The last endpoint will be called for every GET call and will serve the static files
   // The last line is mandatory to mark the end of the array
   struct _u_endpoint endpoint_list[] = {
-    {"POST", "/sheep", &callback_sheep_counter_start, &nb_sheep},
-    {"PUT", "/sheep", &callback_sheep_counter_add, &nb_sheep},
-    {"DELETE", "/sheep", &callback_sheep_counter_reset, &nb_sheep},
-    {"GET", "*", &callback_static_file, &mime_types},
+    {"POST", PREFIX, NULL, &callback_sheep_counter_start, &nb_sheep},
+    {"PUT", PREFIX, NULL, &callback_sheep_counter_add, &nb_sheep},
+    {"DELETE", PREFIX, NULL, &callback_sheep_counter_reset, &nb_sheep},
+    {"GET", NULL, "*", &callback_static_file, &mime_types},
     {NULL, NULL, NULL, NULL}
   };
   
@@ -172,7 +173,8 @@ int callback_static_file (const struct _u_request * request, struct _u_response 
   void * buffer = NULL;
   long length;
   FILE * f;
-  char * content_type, * file_path = malloc(strlen(request->http_url)+strlen(STATIC_FOLDER)+sizeof(char));
+  char  * file_path = malloc(strlen(request->http_url)+strlen(STATIC_FOLDER)+sizeof(char));
+  const char * content_type;
   snprintf(file_path, (strlen(request->http_url)+strlen(STATIC_FOLDER)+sizeof(char)), "%s%s", STATIC_FOLDER, request->http_url);
   
   if (access(file_path, F_OK) != -1) {
@@ -193,7 +195,6 @@ int callback_static_file (const struct _u_request * request, struct _u_response 
       response->binary_body = buffer;
       response->binary_body_length = length;
       u_map_put(response->map_header, "Content-Type", content_type);
-      free(content_type);
       response->status = 200;
     } else {
       response->string_body = u_strdup("");

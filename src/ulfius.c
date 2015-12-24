@@ -52,10 +52,10 @@ int validate_endpoint_list(const struct _u_endpoint * endpoint_list) {
   int i;
   if (endpoint_list != NULL) {
     for (i=0; endpoint_list[i].http_method != NULL; i++) {
-      if (endpoint_list[i].http_method == NULL && endpoint_list[i].url_format == NULL && endpoint_list[i].user_data == NULL && endpoint_list[i].callback_function == NULL && i == 0) {
+      if (endpoint_list[i].http_method == NULL && endpoint_list[i].url_format && endpoint_list[i].url_prefix == NULL && endpoint_list[i].user_data == NULL && endpoint_list[i].callback_function == NULL && i == 0) {
         // One can not have an empty endpoint in the beginning of the list
         return 0;
-      } else if (!(endpoint_list[i].http_method != NULL && endpoint_list[i].url_format != NULL && endpoint_list[i].callback_function != NULL)) {
+      } else if (endpoint_list[i].http_method == NULL || (endpoint_list[i].url_prefix == NULL && endpoint_list[i].url_format == NULL) || endpoint_list[i].callback_function == NULL) {
         // One must set at least the parameters http_method, url_format and callback_function
         return 0;
       }
@@ -110,6 +110,7 @@ int ulfius_init_framework(struct _u_instance * u_instance, struct _u_endpoint * 
           MHD_OPTION_END);
     
     if (u_instance->mhd_daemon == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error MHD_start_daemon, aborting");
       return U_ERROR_LIBMHD;
     } else {
       return U_OK;
@@ -144,6 +145,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
   // Prepare for POST or PUT input data
   // Initialize the input maps
   if (con_info == NULL) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error con_info is NULL");
     return MHD_NO;
   }
   
@@ -155,13 +157,14 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
     con_info->request->http_verb = u_strdup(method);
     con_info->request->client_address = malloc(sizeof(struct sockaddr));
     if (con_info->request->client_address == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating client_address");
       return MHD_NO;
     }
     memcpy(con_info->request->client_address, so_client, sizeof(struct sockaddr));
     MHD_get_connection_values (connection, MHD_HEADER_KIND, ulfius_fill_map, con_info->request->map_header);
     MHD_get_connection_values (connection, MHD_GET_ARGUMENT_KIND, ulfius_fill_map, con_info->request->map_url);
     MHD_get_connection_values (connection, MHD_COOKIE_KIND, ulfius_fill_map, con_info->request->map_cookie);
-    content_type = u_map_get_case(con_info->request->map_header, "content-type");
+    content_type = (char*)u_map_get_case(con_info->request->map_header, "content-type");
     
     // Set POST Processor if content-type is properly set
     if (content_type != NULL && (0 == strncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) || 
@@ -171,52 +174,53 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
       if (NULL == con_info->post_processor) {
         ulfius_clean_request_full(con_info->request);
         con_info->request = NULL;
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating post_processor");
         return MHD_NO;
       }
     }
-    free(content_type);
-    content_type = NULL;
     return MHD_YES;
   }
   
   if (*upload_data_size != 0) {
     // Handles request body
-    char * content_type = u_map_get(con_info->request->map_header, "Content-Type");
+    const char * content_type = u_map_get(con_info->request->map_header, "Content-Type");
     if (0 == strncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) || 
         0 == strncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA))) {
       MHD_post_process (con_info->post_processor, upload_data, *upload_data_size);
     } else if (0 == strncmp(ULFIUS_HTTP_ENCODING_JSON, content_type, strlen(ULFIUS_HTTP_ENCODING_JSON))) {
-      json_error_t j_error;
-      con_info->request->json_body = json_loads(upload_data, JSON_DECODE_ANY, &j_error);
+      json_error_t json_error;
+      con_info->request->json_body = json_loads(upload_data, JSON_DECODE_ANY, &json_error);
       if (!con_info->request->json_body) {
-        con_info->request->json_error = 1;
+        con_info->request->json_has_error = 1;
+        con_info->request->json_error = &json_error;
       } else {
-        con_info->request->json_error = 0;
+        con_info->request->json_has_error = 0;
       }
     }
     con_info->request->binary_body = u_strdup(upload_data);
     con_info->request->binary_body_length = *upload_data_size;
     *upload_data_size = 0;
-    free(content_type);
-    content_type = NULL;
     return MHD_YES;
   } else {
     // Check if the endpoint has a match
     current_endpoint = endpoint_match(method, url, endpoint_list);
-    
-    response = malloc(sizeof(struct _u_response));
-    if (response == NULL) {
-      return MHD_NO;
-    }
-    if (ulfius_init_response(response) != U_OK) {
-      free(response);
-      return MHD_NO;
-    }
-    
     if (current_endpoint != NULL) {
+    
+      response = malloc(sizeof(struct _u_response));
+      if (response == NULL) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating response");
+        return MHD_NO;
+      }
+      if (ulfius_init_response(response) != U_OK) {
+        free(response);
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_init_response");
+        return MHD_NO;
+      }
+    
       // Endpoint found, run callback function with the input parameters filled
       if (parse_url(url, current_endpoint, con_info->request->map_url) != U_OK) {
         free(response);
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error parsing url: ", url);
         return MHD_NO;
       }
       
@@ -231,6 +235,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
         if (u_map_put(response->map_header, ULFIUS_HTTP_HEADER_CONTENT, ULFIUS_HTTP_ENCODING_JSON) == U_OK) {
           response_buffer = (void*) json_dumps(response->json_body, JSON_COMPACT);
           if (response_buffer == NULL) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error parsing json body");
             response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
             response->string_body = u_strdup(ULFIUS_HTTP_ERROR_BODY);
           } else {
@@ -280,18 +285,17 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
       
       mhd_ret = MHD_queue_response (connection, response->status, mhd_response);
       MHD_destroy_response (mhd_response);
+    
+      // Free Response parameters
+      ulfius_clean_response_full(response);
+      response = NULL;
     } else {
       response_buffer = u_strdup(ULFIUS_HTTP_NOT_FOUND_BODY);
       response_buffer_len = strlen(ULFIUS_HTTP_NOT_FOUND_BODY);
-      response->status = MHD_HTTP_NOT_FOUND;
       mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
-      mhd_ret = MHD_queue_response (connection, response->status, mhd_response);
+      mhd_ret = MHD_queue_response (connection, MHD_HTTP_NOT_FOUND, mhd_response);
       MHD_destroy_response (mhd_response);
     }
-    
-    // Free Response parameters
-    ulfius_clean_response_full(response);
-    response = NULL;
     
     return mhd_ret;
   }

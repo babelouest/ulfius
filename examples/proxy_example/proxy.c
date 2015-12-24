@@ -29,7 +29,7 @@ int main (int argc, char **argv) {
   // Endpoint list declaration
   // The last line is mandatory to mark the end of the array
   struct _u_endpoint endpoint_list[] = {
-    {"GET", "*", &callback_get, NULL},
+    {"GET", NULL, "*", &callback_get, NULL},
     {NULL, NULL, NULL, NULL}
   };
   
@@ -48,18 +48,17 @@ int main (int argc, char **argv) {
   } else {
     printf("Error starting framework\n");
   }
-
   
   printf("End framework\n");
-	return ulfius_stop_framework(&instance);
+  return ulfius_stop_framework(&instance);
 }
 
 /**
  * Callback function that put a "Hello World!" string in the response
  */
 int callback_get (const struct _u_request * request, struct _u_response * response, void * user_data) {
-	struct _u_request * req = ulfius_duplicate_request(request);
-	struct _u_response * res = malloc(sizeof(struct _u_response));
+  struct _u_request * req = ulfius_duplicate_request(request);
+  struct _u_response * res = malloc(sizeof(struct _u_response));
   ulfius_init_response(res);
   int len;
   

@@ -28,29 +28,42 @@
 /**
  * Splits the url to an array of char *
  */
-char ** split_url(const char * url) {
-  char * saveptr=NULL, * cur_word=NULL, ** to_return = malloc(sizeof(char*)), * url_cpy = NULL, * url_cpy_addr = NULL;
+char ** split_url(const char * prefix, const char * url) {
+  char * saveptr = NULL, * cur_word = NULL, ** to_return = malloc(sizeof(char*)), * url_cpy = NULL, * url_cpy_addr = NULL;
   int counter = 1;
   
   if (to_return != NULL) {
-    *to_return = NULL;
+    to_return[0] = NULL;
+    if (prefix != NULL) {
+      url_cpy = url_cpy_addr = u_strdup(prefix);
+      cur_word = strtok_r( url_cpy, ULFIUS_URL_SEPARATOR, &saveptr );
+      while (cur_word != NULL) {
+        to_return = realloc(to_return, (counter+1)*sizeof(char*));
+        if (to_return == NULL) {
+          break;
+        }
+        to_return[counter-1] = u_strdup(cur_word);
+        to_return[counter] = NULL;
+        counter++;
+        cur_word = strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr );
+      }
+      free(url_cpy_addr);
+      url_cpy_addr = NULL;
+    }
     if (url != NULL) {
       url_cpy = url_cpy_addr = u_strdup(url);
-      if (to_return != NULL) {
-        to_return[0] = NULL;
-        cur_word = strtok_r( url_cpy, ULFIUS_URL_SEPARATOR, &saveptr );
-        while (cur_word != NULL) {
-          if (0 != strcmp("", cur_word) && cur_word[0] != '?') {
-            to_return = realloc(to_return, (counter+1)*sizeof(char*));
-            if (to_return == NULL) {
-              break;
-            }
-            to_return[counter-1] = u_strdup(cur_word);
-            to_return[counter] = NULL;
-            counter++;
+      cur_word = strtok_r( url_cpy, ULFIUS_URL_SEPARATOR, &saveptr );
+      while (cur_word != NULL) {
+        if (0 != strcmp("", cur_word) && cur_word[0] != '?') {
+          to_return = realloc(to_return, (counter+1)*sizeof(char*));
+          if (to_return == NULL) {
+            break;
           }
-          cur_word = strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr );
+          to_return[counter-1] = u_strdup(cur_word);
+          to_return[counter] = NULL;
+          counter++;
         }
+        cur_word = strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr );
       }
       free(url_cpy_addr);
       url_cpy_addr = NULL;
@@ -70,13 +83,14 @@ struct _u_endpoint * endpoint_match(const char * method, const char * url, struc
   int i;
   
   if (method != NULL && url != NULL && endpoint_list != NULL) {
-    splitted_url = split_url(url);
-    for (i=0; (splitted_url != NULL && endpoint_list[i].http_method != NULL && endpoint_list[i].url_format != NULL); i++) {
+    splitted_url = split_url(url, NULL);
+    for (i=0; (splitted_url != NULL && endpoint_list[i].http_method != NULL); i++) {
       if (0 == strcasecmp(endpoint_list[i].http_method, method) || endpoint_list[i].http_method[0] == '*') {
-        splitted_url_format = split_url(endpoint_list[i].url_format);
+        splitted_url_format = split_url(endpoint_list[i].url_prefix, endpoint_list[i].url_format);
         if (splitted_url_format != NULL && url_format_match((const char **)splitted_url, (const char **)splitted_url_format)) {
           endpoint = (endpoint_list + i);
           u_map_clean_enum(splitted_url_format);
+          splitted_url_format = NULL;
           break;
         }
         u_map_clean_enum(splitted_url_format);
@@ -119,8 +133,18 @@ int parse_url(const char * url, const struct _u_endpoint * endpoint, struct _u_m
 
   if (map != NULL && endpoint != NULL) {
     url_cpy = url_cpy_addr = u_strdup(url);
-    url_format_cpy = url_format_cpy_addr = u_strdup(endpoint->url_format);
+    url_format_cpy = url_format_cpy_addr = u_strdup(endpoint->url_prefix);
     cur_word = strtok_r( url_cpy, ULFIUS_URL_SEPARATOR, &saveptr );
+    cur_word_format = strtok_r( url_format_cpy, ULFIUS_URL_SEPARATOR, &saveptr_format );
+    while (cur_word_format != NULL && cur_word != NULL) {
+      // Ignoring url_prefix words
+      cur_word = strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr );
+      cur_word_format = strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr_format );
+    }
+    free(url_format_cpy_addr);
+    saveptr_format = NULL;
+    
+    url_format_cpy = url_format_cpy_addr = u_strdup(endpoint->url_format);
     cur_word_format = strtok_r( url_format_cpy, ULFIUS_URL_SEPARATOR, &saveptr_format );
     while (cur_word_format != NULL && cur_word != NULL) {
       if (cur_word_format[0] == ':' || cur_word_format[0] == '@') {
@@ -167,7 +191,7 @@ int ulfius_init_request(struct _u_request * request) {
     request->http_url = NULL;
     request->client_address = NULL;
     request->json_body = NULL;
-    request->json_error = 0;
+    request->json_has_error = 0;
     request->binary_body = NULL;
     request->binary_body_length = 0;
     return U_OK;
@@ -254,7 +278,7 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request) 
       new_request->map_cookie = u_map_copy(request->map_cookie);
       new_request->map_post_body = u_map_copy(request->map_post_body);
       new_request->json_body = json_copy(request->json_body);
-      new_request->json_error = request->json_error;
+      new_request->json_has_error = request->json_has_error;
       if ((new_request->map_url == NULL && request->map_url != NULL) || 
           (new_request->map_header == NULL && request->map_header != NULL) || 
           (new_request->map_cookie == NULL && request->map_cookie != NULL) || 
@@ -270,6 +294,9 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request) 
           return NULL;
         }
         memcpy(new_request->binary_body, request->binary_body, request->binary_body_length);
+      } else {
+        new_request->binary_body_length = 0;
+        new_request->binary_body = NULL;
       }
       new_request->binary_body_length = request->binary_body_length;
     } else {

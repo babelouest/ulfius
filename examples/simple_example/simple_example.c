@@ -20,6 +20,9 @@
 #include "../../src/ulfius.h"
 
 #define PORT 8537
+#define PREFIX "/test"
+#define PREFIXJSON "/testjson"
+#define PREFIXCOOKIE "/testcookie"
 
 /**
  * callback functions declaration
@@ -38,7 +41,8 @@ int callback_get_cookietest (const struct _u_request * request, struct _u_respon
  * decode a u_map into a string
  */
 char * print_map(const struct _u_map * map) {
-	char * line, * to_return = NULL, **keys, * value;
+	char * line, * to_return = NULL;
+    const char **keys, * value;
 	int len, i;
 	if (map != NULL) {
 		keys = u_map_enum_keys(map);
@@ -47,7 +51,6 @@ char * print_map(const struct _u_map * map) {
 			len = snprintf(NULL, 0, "key is %s, value is %s", keys[i], value);
 			line = malloc((len+1)*sizeof(char));
 			snprintf(line, (len+1), "key is %s, value is %s", keys[i], value);
-			free(value);
 			if (to_return != NULL) {
 				len = strlen(to_return) + strlen(line) + 1;
 				to_return = realloc(to_return, (len+1)*sizeof(char));
@@ -55,13 +58,12 @@ char * print_map(const struct _u_map * map) {
 					strcat(to_return, "\n");
 				}
 			} else {
-				to_return = malloc((strlen(line) + 1)*sizeof(char));
-        to_return[0] = 0;
+                to_return = malloc((strlen(line) + 1)*sizeof(char));
+                to_return[0] = 0;
 			}
 			strcat(to_return, line);
 			free(line);
 		}
-		u_map_clean_enum(keys);
 		return to_return;
 	} else {
 		return NULL;
@@ -70,18 +72,20 @@ char * print_map(const struct _u_map * map) {
 
 int main (int argc, char **argv) {
   
+  y_init_logs("simple_example", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting simple_example");
+  
   // Endpoint list declaration
   // The last line is mandatory to mark the end of the array
   struct _u_endpoint endpoint_list[] = {
-    {"GET", "/test", &callback_get_test, NULL},
-    {"POST", "/test", &callback_post_test, NULL},
-    {"GET", "/test/:foo", &callback_all_test_foo, "user data 1"},
-    {"POST", "/test/:foo", &callback_all_test_foo, "user data 2"},
-    {"PUT", "/test/:foo", &callback_all_test_foo, "user data 3"},
-    {"DELETE", "/test/:foo", &callback_all_test_foo, "user data 4"},
-    {"PUT", "/json/test", &callback_get_jsontest, NULL},
-    {"GET", "/cookie/test/:lang/:extra", &callback_get_cookietest, NULL},
-    {NULL, NULL, NULL, NULL}
+    {"GET", PREFIX, NULL, &callback_get_test, NULL},
+    {"POST", PREFIX, NULL, &callback_post_test, NULL},
+    {"GET", PREFIX, "/:foo", &callback_all_test_foo, "user data 1"},
+    {"POST", PREFIX, "/:foo", &callback_all_test_foo, "user data 2"},
+    {"PUT", PREFIX, "/:foo", &callback_all_test_foo, "user data 3"},
+    {"DELETE", PREFIX, "/:foo", &callback_all_test_foo, "user data 4"},
+    {"PUT", PREFIXJSON, NULL, &callback_get_jsontest, NULL},
+    {"GET", PREFIXCOOKIE, "/:lang/:extra", &callback_get_cookietest, NULL},
+    {NULL, NULL, NULL, NULL, NULL}
   };
   
   // Set the framework port number
@@ -99,7 +103,10 @@ int main (int argc, char **argv) {
     printf("Error starting framework\n");
   }
   printf("End framework\n");
-	return ulfius_stop_framework(&instance);
+  
+  y_close_logs();
+  
+  return ulfius_stop_framework(&instance);
 }
 
 /**
@@ -169,9 +176,10 @@ int callback_get_jsontest (const struct _u_request * request, struct _u_response
  * The counter cookie is incremented every time the client reloads this url
  */
 int callback_get_cookietest (const struct _u_request * request, struct _u_response * response, void * user_data) {
-	char * lang = u_map_get(request->map_url, "lang"), * extra = u_map_get(request->map_url, "extra"), 
-				* counter = u_map_get(request->map_cookie, "counter"), new_counter[8];
-	int i_counter;
+	const char * lang = u_map_get(request->map_url, "lang"), * extra = u_map_get(request->map_url, "extra"), 
+				* counter = u_map_get(request->map_cookie, "counter");
+	char new_counter[8];
+  int i_counter;
 	
 	if (counter == NULL) {
 		i_counter = 0;
@@ -180,14 +188,10 @@ int callback_get_cookietest (const struct _u_request * request, struct _u_respon
 		i_counter++;
 	}
 	snprintf(new_counter, 7, "%d", i_counter);
-  ulfius_add_cookie_to_response(response, "lang", lang, NULL, 0, NULL, NULL, 0, 0);
+	ulfius_add_cookie_to_response(response, "lang", lang, NULL, 0, NULL, NULL, 0, 0);
 	ulfius_add_cookie_to_response(response, "extra", extra, NULL, 0, NULL, NULL, 0, 0);
 	ulfius_add_cookie_to_response(response, "counter", new_counter, NULL, 0, NULL, NULL, 0, 0);
 	response->string_body = strdup("Cookies set");
-	
-	free(lang);
-	free(extra);
-	free(counter);
 	
 	return U_OK;
 }
