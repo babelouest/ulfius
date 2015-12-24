@@ -32,7 +32,7 @@ int main(void) {
   // The last line is mandatory to mark the end of the array
   struct _u_endpoint endpoint_list[] = {
     {"GET", "/helloworld", NULL, &callback_get_test, NULL},
-    {NULL, NULL, NULL, NULL}
+    {NULL, NULL, NULL, NULL, NULL}
   };
   
   // Set the framework port number
