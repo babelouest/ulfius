@@ -31,7 +31,7 @@ int main(void) {
   // Endpoint list declaration
   // The last line is mandatory to mark the end of the array
   struct _u_endpoint endpoint_list[] = {
-    {"GET", "/helloworld", &callback_get_test, NULL},
+    {"GET", "/helloworld", NULL, &callback_get_test, NULL},
     {NULL, NULL, NULL, NULL}
   };
   
@@ -64,7 +64,7 @@ To install the dependencies, for Debian based distributions (Debian, Ubuntu, Ras
 
 ## Note
 
-I suggest libcurl4-gnutls-dev for the example, but any `libcurl*-dev` library should be sufficent, depending on your needs and configuration.
+I write libcurl4-gnutls-dev for the example, but any `libcurl*-dev` library should be sufficent, depending on your needs and configuration.
 
 # Installation
 
@@ -74,7 +74,7 @@ Download Ulfius source code from Github, go to src directory, compile and instal
 $ git clone https://github.com/babelouest/ulfius.git
 $ cd src
 $ make
-# make install (as root)
+$ sudo make install
 ```
 
 By default, the shared library and the header file will be installed in the `/usr/local` location. To change this setting, you can modify the `PREFIX` value in the `Makefile`.
@@ -97,11 +97,11 @@ On your linker command, add ulfius as a dependency library, e.g. `-lulfius` for 
 
 When specified, some functions return `U_OK` on success, and other values otherwise. `U_OK` is 0, other values are non-0 values. The defined errors list is the following:
 ```c
-#define U_OK            0 // No error
-#define U_ERROR_MEMORY  1 // Error in memory allocation
-#define U_ERROR_PARAMS  2 // Error in input parameters
-#define U_ERROR_LIBMHD  3 // Error in libmicrohttpd execution
-#define U_ERROR_LIBCURL 4 // Error in libcurl execution
+#define U_ERROR_MEMORY    1 // Error in memory allocation
+#define U_ERROR_PARAMS    2 // Error in input parameters
+#define U_ERROR_LIBMHD    3 // Error in libmicrohttpd execution
+#define U_ERROR_LIBCURL   4 // Error in libcurl execution
+#define U_ERROR_NOT_FOUND 5 // Something was not found
 ```
 
 ### Initialization
@@ -142,6 +142,7 @@ The `struct _u_endpoint` is defined as:
  * 
  * Contains all informations needed for an endpoint
  * http_method:       http verb (GET, POST, PUT, etc.) in upper case
+ * url_prefix:        prefix for the url (not parsed for variables)
  * url_format:        string used to define the endpoint format
  *                    separate words with /
  *                    to define a variable in the url, prefix it with @ or :
@@ -154,6 +155,7 @@ The `struct _u_endpoint` is defined as:
  */
 struct _u_endpoint {
   char * http_method;
+  char * url_prefix;
   char * url_format;
   int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
                             struct _u_response * response,     // Output parameters (set by the user)
@@ -162,21 +164,23 @@ struct _u_endpoint {
 };
 ```
 
+HTTP Method can be an existing or not existing method, or * for any method, you must specify a url_prefix, a url_format or both, callback_function is mandatory, user_data is optoinal.
+
 Your `struct _u_endpoint` array **MUST** end with an empty `struct _u_endpoint`.
 
 for example, you can declare an endpoint list like this:
 
 ```c
   struct _u_endpoint endpoint_list[] = {
-    {"GET", "/test", &callback_get_test, NULL},
-    {"POST", "/test", &callback_post_test, NULL},
-    {"GET", "/test/:foo", &callback_all_test_foo, "user data 1"},
-    {"POST", "/test/:foo", &callback_all_test_foo, "user data 2"},
-    {"PUT", "/test/:foo", &callback_all_test_foo, "user data 3"},
-    {"DELETE", "/test/:foo", &callback_all_test_foo, "user data 4"},
-    {"GET", "/json/test", &callback_get_jsontest, NULL},
-    {"GET", "/cookie/test/:lang/:extra", &callback_get_cookietest, NULL},
-    {NULL, NULL, NULL, NULL}
+    {"GET", PREFIX, NULL, &callback_get_test, NULL},
+    {"POST", PREFIX, NULL, &callback_post_test, NULL},
+    {"GET", PREFIX, "/:foo", &callback_all_test_foo, "user data 1"},
+    {"POST", PREFIX, "/:foo", &callback_all_test_foo, "user data 2"},
+    {"PUT", PREFIX, "/:foo", &callback_all_test_foo, "user data 3"},
+    {"DELETE", PREFIX, "/:foo", &callback_all_test_foo, "user data 4"},
+    {"PUT", PREFIXJSON, NULL, &callback_get_jsontest, NULL},
+    {"GET", PREFIXCOOKIE, "/:lang/:extra", &callback_get_cookietest, NULL},
+    {NULL, NULL, NULL, NULL, NULL}
   };
 ```
 
@@ -197,13 +201,13 @@ The starting point function is ulfius_init_framework:
  * u_instance:    pointer to a struct _u_instance that describe its port and bind address
  * endpoint_list: array of struct _u_endpoint that will describe endpoints used for the application
  *                the array MUST have an empty struct _u_endpoint at the end of it
- *                {NULL, NULL, NULL, NULL}
+ *                {NULL, NULL, NULL, NULL, NULL}
  * return U_OK on success
  */
 int ulfius_init_framework(struct _u_instance * u_instance, struct _u_endpoint * endpoint_list);
 ```
 
-In your program where you want to start the web server, simply execute the function `ulfius_init_framework(struct _u_instance * u_instance, struct _u_endpoint * endpoint_list);` with the previously declared `instance` and `endpoint_list`. You can reuse the same callback function as much as you want for different endpoints. On success, this function returns `true`, otherwise `false`.
+In your program where you want to start the web server, simply execute the function `ulfius_init_framework(struct _u_instance * u_instance, struct _u_endpoint * endpoint_list);` with the previously declared `instance` and `endpoint_list`. You can reuse the same callback function as much as you want for different endpoints. On success, this function returns `U_OK`, otherwise an error code.
 
 #### Stop webservice
 
@@ -240,15 +244,18 @@ The request variable is defined as:
  * Structure of request parameters
  * 
  * Contains request data
- * http_verb:      http method (GET, POST, PUT, DELETE, etc.)
- * http_url:       url used to call this callback function or full url to call when used in a ulfius_request_http
- * client_address: IP address of the client
- * map_url:        map containing the url variables, both from the route and the ?key=value variables
- * map_header:     map containing the header variables
- * map_cookie:     map containing the cookie variables
- * map_post_body:  map containing the post body variables (if available)
- * json_body:      json_t * object containing the json body (if available)
- * json_error:     true if the json body was not parsed by jansson (if available)
+ * http_verb:          http method (GET, POST, PUT, DELETE, etc.), use '*' to match all http methods
+ * http_url:           url used to call this callback function or full url to call when used in a ulfius_send_http_request
+ * client_address:     IP address of the client
+ * map_url:            map containing the url variables, both from the route and the ?key=value variables
+ * map_header:         map containing the header variables
+ * map_cookie:         map containing the cookie variables
+ * map_post_body:      map containing the post body variables (if available)
+ * json_body:          json_t * object containing the json body (if available)
+ * json_error:            stack allocated json_error_t if json body was not parsed (if available)
+ * json_has_error:     true if the json body was not parsed by jansson (if available)
+ * binary_body:        pointer to raw body
+ * binary_body_length: length of raw body
  * 
  */
 struct _u_request {
@@ -260,9 +267,10 @@ struct _u_request {
   struct _u_map *      map_cookie;
   struct _u_map *      map_post_body;
   json_t *             json_body;
-  int                  json_error;
+  json_error_t *       json_error;
+  int                  json_has_error;
   void *               binary_body;
-  int                  binary_body_length;
+  size_t               binary_body_length;
 };
 ```
 
@@ -281,7 +289,7 @@ The response variable is defined as:
  * map_cookie:         array of cookies sent
  * string_body:        a char * containing the raw body response
  * json_body:          a json_t * object containing the json response
- * binary_body:        a void * containing a binary content
+ * binary_body:        a void * containing a raw binary content
  * binary_body_length: the length of the binary_body
  * 
  */
@@ -298,11 +306,11 @@ struct _u_response {
 };
 ```
 
-In the response variable set by the framework to the callback function, the structure is empty, except for the map_cookie which is set to the same key/values as the request element `map_cookie`.
+In the response variable set by the framework to the callback function, the structure is initialized empty, except for the map_cookie which is set to the same key/values as the request element `map_cookie`.
 
-The user must set the `string_body` or the `json_body` or the `binary_body` before the return statement, otherwise the framework will send an error 500 response. If a `string_body` is set, the `json_body` or the `binary_body` won't be tested. So to return a `json_body` object, you must leave `string_body` with a `NULL` value. Likewise, if a `json_body` is set, the `binary_body` won't be tested. Finally, if a `binary_body` is set, its length must be set to `binary_body_length`.
+The user must set the `string_body` or the `json_body` or the `binary_body` before the return statement, otherwise the framework will send an error 500 response. If a `string_body` is set, the `json_body` or the `binary_body` won't be tested. So to return a `json_body` object, you must leave `string_body` with a `NULL` value. Likewise, if a `json_body` is set, the `binary_body` won't be tested. Finally, if a `binary_body` is set, its size must be set to `binary_body_length`.
 
-You can find the `jansson` api documentation at the following address: [Jansson documentation](https://jansson.readthedocs.org/).
+The `jansson` api documentation is available at the following address: [Jansson documentation](https://jansson.readthedocs.org/).
 
 The callback function return value is `U_OK` on success. If the return value is other than `U_OK`, an error 500 response will be sent to the client.
 
@@ -439,16 +447,14 @@ int u_map_clean_enum(char ** array);
 /**
  * returns an array containing all the keys in the struct _u_map
  * return an array of char * ending with a NULL element
- * use u_map_clean_enum(char ** array) to clean a returned array
  */
-char ** u_map_enum_keys(const struct _u_map * u_map);
+const char ** u_map_enum_keys(const struct _u_map * u_map);
 
 /**
  * returns an array containing all the values in the struct _u_map
  * return an array of char * ending with a NULL element
- * use u_map_clean_enum(char ** array) to clean a returned array
  */
-char ** u_map_enum_values(const struct _u_map * u_map);
+const char ** u_map_enum_values(const struct _u_map * u_map);
 
 /**
  * return true if the sprcified u_map contains the specified key
@@ -465,21 +471,6 @@ int u_map_has_key(const struct _u_map * u_map, const char * key);
 int u_map_has_value(const struct _u_map * u_map, const char * value);
 
 /**
- * add the specified key/value pair into the specified u_map
- * if the u_map already contains a pair with the same key, replace the value
- * return U_OK on success
- */
-int u_map_put(struct _u_map * u_map, const char * key, const char * value);
-
-/**
- * get the value corresponding to the specified key in the u_map
- * return NULL if no match found
- * search is case sensitive
- * returned value must be free'd after use
- */
-char * u_map_get(const struct _u_map * u_map, const const char * key);
-
-/**
  * return true if the sprcified u_map contains the specified key
  * false otherwise
  * search is case insensitive
@@ -494,12 +485,55 @@ int u_map_has_key_case(const struct _u_map * u_map, const char * key);
 int u_map_has_value_case(const struct _u_map * u_map, const char * value);
 
 /**
+ * add the specified key/value pair into the specified u_map
+ * if the u_map already contains a pair with the same key, replace the value
+ * return U_OK on success
+ */
+int u_map_put(struct _u_map * u_map, const char * key, const char * value);
+
+/**
+ * get the value corresponding to the specified key in the u_map
+ * return NULL if no match found
+ * search is case sensitive
+ */
+const char * u_map_get(const struct _u_map * u_map, const const char * key);
+
+/**
  * get the value corresponding to the specified key in the u_map
  * return NULL if no match found
  * search is case insensitive
- * returned value must be free'd after use
  */
-char * u_map_get_case(const struct _u_map * u_map, const char * key);
+const char * u_map_get_case(const struct _u_map * u_map, const char * key);
+
+/**
+ * remove an pair key/value that has the specified key
+ * return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
+ */
+int u_map_remove_from_key(struct _u_map * u_map, const char * key);
+
+/**
+ * remove all pairs key/value that has the specified key (case insensitive search)
+ * return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
+ */
+int u_map_remove_from_key_case(struct _u_map * u_map, const char * key);
+
+/**
+ * remove all pairs key/value that has the specified value
+ * return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
+ */
+int u_map_remove_from_value(struct _u_map * u_map, const char * key);
+
+/**
+ * remove all pairs key/value that has the specified value (case insensitive search)
+ * return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
+ */
+int u_map_remove_from_value_case(struct _u_map * u_map, const char * key);
+
+/**
+ * remove the pair key/value at the specified index
+ * return U_OK on success, U_NOT_FOUND if index is out of bound, error otherwise
+ */
+int u_map_remove_at(struct _u_map * u_map, const int index);
 
 /**
  * Create an exact copy of the specified struct _u_map
