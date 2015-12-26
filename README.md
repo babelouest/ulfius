@@ -97,11 +97,12 @@ On your linker command, add ulfius as a dependency library, e.g. `-lulfius` for 
 
 When specified, some functions return `U_OK` on success, and other values otherwise. `U_OK` is 0, other values are non-0 values. The defined errors list is the following:
 ```c
-#define U_ERROR_MEMORY    1 // Error in memory allocation
-#define U_ERROR_PARAMS    2 // Error in input parameters
-#define U_ERROR_LIBMHD    3 // Error in libmicrohttpd execution
-#define U_ERROR_LIBCURL   4 // Error in libcurl execution
-#define U_ERROR_NOT_FOUND 5 // Something was not found
+#define U_ERROR           1 // Error
+#define U_ERROR_MEMORY    2 // Error in memory allocation
+#define U_ERROR_PARAMS    3 // Error in input parameters
+#define U_ERROR_LIBMHD    4 // Error in libmicrohttpd execution
+#define U_ERROR_LIBCURL   5 // Error in libcurl execution
+#define U_ERROR_NOT_FOUND 6 // Something was not found
 ```
 
 ### Initialization

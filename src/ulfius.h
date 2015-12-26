@@ -54,11 +54,12 @@
 #define ULFIUS_POSTBUFFERSIZE 1024
 
 #define U_OK              0 // No error
-#define U_ERROR_MEMORY    1 // Error in memory allocation
-#define U_ERROR_PARAMS    2 // Error in input parameters
-#define U_ERROR_LIBMHD    3 // Error in libmicrohttpd execution
-#define U_ERROR_LIBCURL   4 // Error in libcurl execution
-#define U_ERROR_NOT_FOUND 5 // Something was not found
+#define U_ERROR           1 // Error
+#define U_ERROR_MEMORY    2 // Error in memory allocation
+#define U_ERROR_PARAMS    3 // Error in input parameters
+#define U_ERROR_LIBMHD    4 // Error in libmicrohttpd execution
+#define U_ERROR_LIBCURL   5 // Error in libcurl execution
+#define U_ERROR_NOT_FOUND 6 // Something was not found
 
 #define ULFIUS_VERSION 0.9.8
 
