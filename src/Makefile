@@ -22,7 +22,7 @@
 PREFIX=/usr/local
 CC=gcc
 CFLAGS=-c -fPIC -Wall -D_REENTRANT -I$(PREFIX)/include $(ADDITIONALFLAGS)
-LIBS=-lc -lmicrohttpd -ljansson -lcurl -lyder
+LIBS=-L$(PREFIX)/lib -lc -lmicrohttpd -ljansson -lcurl -lyder
 OUTPUT=libulfius.so
 VERSION=0.9.8
 
@@ -53,7 +53,7 @@ clean:
 install: all
 	cp $(OUTPUT).$(VERSION) $(PREFIX)/lib
 	cp ulfius.h $(PREFIX)/include
-	ldconfig
+	ldconfig -r $(PREFIX)
 
 uninstall:
 	rm -f $(PREFIX)/lib/$(OUTPUT)

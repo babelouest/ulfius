@@ -189,7 +189,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
       MHD_post_process (con_info->post_processor, upload_data, *upload_data_size);
     } else if (0 == strncmp(ULFIUS_HTTP_ENCODING_JSON, content_type, strlen(ULFIUS_HTTP_ENCODING_JSON))) {
       json_error_t json_error;
-      con_info->request->json_body = json_loads(upload_data, JSON_DECODE_ANY, &json_error);
+      con_info->request->json_body = json_loadb(upload_data, *upload_data_size, JSON_DECODE_ANY, &json_error);
       if (!con_info->request->json_body) {
         con_info->request->json_has_error = 1;
         con_info->request->json_error = &json_error;
@@ -197,7 +197,8 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
         con_info->request->json_has_error = 0;
       }
     }
-    con_info->request->binary_body = u_strdup(upload_data);
+    con_info->request->binary_body = malloc(*upload_data_size);
+    memcpy(con_info->request->binary_body, upload_data, *upload_data_size);
     con_info->request->binary_body_length = *upload_data_size;
     *upload_data_size = 0;
     return MHD_YES;

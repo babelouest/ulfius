@@ -140,7 +140,7 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
   CURL * curl_handle = NULL;
   struct curl_slist * header_list = NULL;
   char * key_esc, * value_esc, * cookie, * header, * param, * fp = "?", * np = "&";
-  const char * value, ** keys;
+  const char * value, ** keys, * content_type;
   int i, has_params = 0, len;
   struct _u_request * copy_request = NULL;
 
@@ -449,7 +449,6 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
       res = curl_easy_perform(curl_handle);
       if(res == CURLE_OK && response != NULL) {
         if (curl_easy_getinfo (curl_handle, CURLINFO_RESPONSE_CODE, &response->status) != CURLE_OK) {
-          ulfius_clean_request_full(copy_request);
           free(body_data.data);
           curl_slist_free_all(header_list);
           curl_easy_cleanup(curl_handle);
@@ -468,6 +467,12 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
         }
         memcpy(response->binary_body, body_data.data, body_data.size);
         response->binary_body_length = body_data.size;
+        
+        content_type = u_map_get_case(response->map_header, ULFIUS_HTTP_HEADER_CONTENT);
+        if (content_type != NULL && 0 == strcmp(content_type, ULFIUS_HTTP_ENCODING_JSON)) {
+          // Parsing json content
+          response->json_body = json_loads(body_data.data, JSON_DECODE_ANY, NULL);
+        }
       }
       free(body_data.data);
       curl_slist_free_all(header_list);
