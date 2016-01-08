@@ -499,6 +499,7 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
 #define MAIL_SUBJECT 4
 #define MAIL_DATA    5
 #define MAIL_END     6
+
 struct upload_status {
   int lines_read;
   char * to;
@@ -522,6 +523,7 @@ static size_t smtp_payload_source(void * ptr, size_t size, size_t nmemb, void * 
     time(&now);
     data = malloc(128*sizeof(char));
     if (data == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating data for MAIL_DATE\n");
       return 0;
     } else {
       strftime(data, 128, "Date: %a, %d %b %Y %T %z\r\n", gmtime(&now));
@@ -530,30 +532,40 @@ static size_t smtp_payload_source(void * ptr, size_t size, size_t nmemb, void * 
   } else if (upload_ctx->lines_read == MAIL_TO) {
     data = msprintf("To: %s\r\n", upload_ctx->to);
     if (data == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating data for MAIL_TO\n");
       return 0;
     }
+    len = strlen(data);
   } else if (upload_ctx->lines_read == MAIL_FROM) {
     data = msprintf("From: %s\r\n", upload_ctx->from);
     if (data == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating data for MAIL_FROM\n");
       return 0;
     }
+    len = strlen(data);
   } else if (upload_ctx->lines_read == MAIL_CC && upload_ctx->cc) {
     data = msprintf("Cc: %s\r\n", upload_ctx->cc);
     if (data == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating data for MAIL_CC\n");
       return 0;
     }
+    len = strlen(data);
   } else if (upload_ctx->lines_read == MAIL_SUBJECT) {
     data = msprintf("Subject: %s\r\n", upload_ctx->subject);
     if (data == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating data for MAIL_SUBJECT\n");
       return 0;
     }
+    len = strlen(data);
   } else if (upload_ctx->lines_read == MAIL_DATA) {
     data = msprintf("%s\r\n", upload_ctx->data);
     if (data == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating data for MAIL_DATA\n");
       return 0;
     }
+    len = strlen(data);
   }
- 
+
   if (upload_ctx->lines_read != MAIL_END) {
     memcpy(ptr, data, (len+1));
     upload_ctx->lines_read++;
@@ -566,7 +578,7 @@ static size_t smtp_payload_source(void * ptr, size_t size, size_t nmemb, void * 
  
     return len;
   }
- 
+
   y_log_message(Y_LOG_LEVEL_ERROR, "Error setting mail payload");
   return 0;
 }
@@ -605,7 +617,6 @@ int ulfius_send_smtp_email(const char * host,
   int cur_port;
   struct curl_slist * recipients = NULL;
   struct upload_status upload_ctx;
- 
   
   if (host != NULL && from != NULL && to != NULL && mail_body != NULL) {
     
