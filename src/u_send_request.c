@@ -26,28 +26,6 @@
 #include "ulfius.h"
 
 /**
- * Implementation of sprintf that return a malloc'd char *  with the string construction
- * because life is too short to use 3 lines instead of 1
- * but don't forget to free the returned value after use!
- */
-char * msprintf(const char * message, ...) {
-  va_list argp, argp_cpy;
-  size_t out_len = 0;
-  char * out = NULL;
-  va_start(argp, message);
-  va_copy(argp_cpy, argp);
-  out_len = vsnprintf(NULL, 0, message, argp);
-  out = malloc(out_len+sizeof(char));
-  if (out == NULL) {
-    return NULL;
-  }
-  vsnprintf(out, (out_len+sizeof(char)), message, argp_cpy);
-  va_end(argp);
-  va_end(argp_cpy);
-  return out;
-}
-
-/**
  * Internal structure used to store temporarly the response body
  */
 typedef struct _body {
@@ -121,7 +99,7 @@ static size_t write_header(void * buffer, size_t size, size_t nitems, void * use
     if (response->protocol != NULL) {
       free(response->protocol);
     }
-    response->protocol = u_strdup(header);
+    response->protocol = nstrdup(header);
     if (response->protocol == NULL) {
       return 0;
     }
@@ -456,7 +434,7 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
           y_log_message(Y_LOG_LEVEL_ERROR, "Error executing http request, libcurl error: %d, error message %s", res, curl_easy_strerror(res));
           return U_ERROR_LIBCURL;
         }
-        response->string_body = u_strdup(body_data.data);
+        response->string_body = nstrdup(body_data.data);
         response->binary_body = malloc(body_data.size);
         if (response->binary_body == NULL) {
           free(body_data.data);
@@ -558,7 +536,7 @@ static size_t smtp_payload_source(void * ptr, size_t size, size_t nmemb, void * 
     }
     len = strlen(data);
   } else if (upload_ctx->lines_read == MAIL_DATA) {
-    data = msprintf("%s\r\n", upload_ctx->data);
+    data = msprintf("Content-Type: text/plain; charset=utf-8\r\n\r\n%s\r\n", upload_ctx->data);
     if (data == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating data for MAIL_DATA\n");
       return 0;
@@ -577,14 +555,17 @@ static size_t smtp_payload_source(void * ptr, size_t size, size_t nmemb, void * 
     free(data);
  
     return len;
+  } else if (upload_ctx->lines_read == MAIL_END) {
+    return 0;
   }
 
-  y_log_message(Y_LOG_LEVEL_ERROR, "Error setting mail payload");
+  y_log_message(Y_LOG_LEVEL_ERROR, "Error setting mail payload, len is %d, lines_read is %d", len, upload_ctx->lines_read);
   return 0;
 }
 
 /**
- * Send an email using
+ * Send an email using libcurl
+ * email is plain/text and UTF8 charset
  * host: smtp server host name
  * port: tcp port number (optional, 0 for default)
  * use_tls: true if the connection is tls secured

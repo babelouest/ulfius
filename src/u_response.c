@@ -96,10 +96,10 @@ int ulfius_add_cookie_to_response(struct _u_response * response, const char * ke
         free(response->map_cookie[i].expires);
         free(response->map_cookie[i].domain);
         free(response->map_cookie[i].path);
-        response->map_cookie[i].value = u_strdup(value);
-        response->map_cookie[i].expires = u_strdup(expires);
-        response->map_cookie[i].domain = u_strdup(domain);
-        response->map_cookie[i].path = u_strdup(path);
+        response->map_cookie[i].value = nstrdup(value);
+        response->map_cookie[i].expires = nstrdup(expires);
+        response->map_cookie[i].domain = nstrdup(domain);
+        response->map_cookie[i].path = nstrdup(path);
         response->map_cookie[i].max_age = max_age;
         response->map_cookie[i].secure = secure;
         response->map_cookie[i].http_only = http_only;
@@ -126,12 +126,12 @@ int ulfius_add_cookie_to_response(struct _u_response * response, const char * ke
         return U_ERROR_MEMORY;
       }
     }
-    response->map_cookie[response->nb_cookies].key = u_strdup(key);
-    response->map_cookie[response->nb_cookies].value = u_strdup(value);
-    response->map_cookie[response->nb_cookies].expires = u_strdup(expires);
+    response->map_cookie[response->nb_cookies].key = nstrdup(key);
+    response->map_cookie[response->nb_cookies].value = nstrdup(value);
+    response->map_cookie[response->nb_cookies].expires = nstrdup(expires);
     response->map_cookie[response->nb_cookies].max_age = max_age;
-    response->map_cookie[response->nb_cookies].domain = u_strdup(domain);
-    response->map_cookie[response->nb_cookies].path = u_strdup(path);
+    response->map_cookie[response->nb_cookies].domain = nstrdup(domain);
+    response->map_cookie[response->nb_cookies].path = nstrdup(path);
     response->map_cookie[response->nb_cookies].secure = secure;
     response->map_cookie[response->nb_cookies].http_only = http_only;
     response->nb_cookies++;
@@ -158,7 +158,7 @@ char * get_cookie_header(const struct _u_cookie * cookie) {
       }
       snprintf(attr_expires, (len+1), "; %s=%s", ULFIUS_COOKIE_ATTRIBUTE_EXPIRES, cookie->expires);
     } else {
-      attr_expires = u_strdup("");
+      attr_expires = nstrdup("");
     }
     if (cookie->max_age > 0) {
       len = snprintf(NULL, 0, "; %s=%d", ULFIUS_COOKIE_ATTRIBUTE_MAX_AGE, cookie->max_age);
@@ -170,7 +170,7 @@ char * get_cookie_header(const struct _u_cookie * cookie) {
       }
       snprintf(attr_max_age, (len+1), "; %s=%d", ULFIUS_COOKIE_ATTRIBUTE_MAX_AGE, cookie->max_age);
     } else {
-      attr_max_age = u_strdup("");
+      attr_max_age = nstrdup("");
     }
     if (cookie->domain != NULL) {
       len = snprintf(NULL, 0, "; %s=%s", ULFIUS_COOKIE_ATTRIBUTE_DOMAIN, cookie->domain);
@@ -184,7 +184,7 @@ char * get_cookie_header(const struct _u_cookie * cookie) {
       }
       snprintf(attr_domain, (len+1), "; %s=%s", ULFIUS_COOKIE_ATTRIBUTE_DOMAIN, cookie->domain);
     } else {
-      attr_domain = u_strdup("");
+      attr_domain = nstrdup("");
     }
     if (cookie->path != NULL) {
       len = snprintf(NULL, 0, "; %s=%s", ULFIUS_COOKIE_ATTRIBUTE_PATH, cookie->path);
@@ -200,7 +200,7 @@ char * get_cookie_header(const struct _u_cookie * cookie) {
       }
       snprintf(attr_path, (len+1), "; %s=%s", ULFIUS_COOKIE_ATTRIBUTE_DOMAIN, cookie->path);
     } else {
-      attr_path = u_strdup("");
+      attr_path = nstrdup("");
     }
     if (cookie->secure) {
       len = snprintf(NULL, 0, "; %s", ULFIUS_COOKIE_ATTRIBUTE_SECURE);
@@ -218,7 +218,7 @@ char * get_cookie_header(const struct _u_cookie * cookie) {
       }
       snprintf(attr_secure, (len+1), "; %s", ULFIUS_COOKIE_ATTRIBUTE_SECURE);
     } else {
-      attr_secure = u_strdup("");
+      attr_secure = nstrdup("");
     }
     if (cookie->http_only) {
       len = snprintf(NULL, 0, "; %s", ULFIUS_COOKIE_ATTRIBUTE_HTTPONLY);
@@ -238,7 +238,7 @@ char * get_cookie_header(const struct _u_cookie * cookie) {
       }
       snprintf(attr_http_only, (len+1), "; %s", ULFIUS_COOKIE_ATTRIBUTE_HTTPONLY);
     } else {
-      attr_http_only = u_strdup("");
+      attr_http_only = nstrdup("");
     }
     len = snprintf(NULL, 0, "%s=%s%s%s%s%s%s%s", cookie->key, cookie->value, attr_expires, attr_max_age, attr_domain, attr_path, attr_secure, attr_http_only);
     cookie_header_value = malloc((len+1)*sizeof(char));
@@ -292,12 +292,12 @@ int ulfius_clean_cookie(struct _u_cookie * cookie) {
  */
 int ulfius_copy_cookie(struct _u_cookie * dest, const struct _u_cookie * source) {
   if (source != NULL && dest != NULL) {
-    dest->key = u_strdup(source->key);
-    dest->value = u_strdup(source->value);
-    dest->expires = u_strdup(source->expires);
+    dest->key = nstrdup(source->key);
+    dest->value = nstrdup(source->value);
+    dest->expires = nstrdup(source->expires);
     dest->max_age = source->max_age;
-    dest->domain = u_strdup(source->domain);
-    dest->path = u_strdup(source->path);
+    dest->domain = nstrdup(source->domain);
+    dest->path = nstrdup(source->path);
     dest->secure = source->secure;
     dest->http_only = source->http_only;
     return U_OK;
@@ -392,7 +392,7 @@ struct _u_response * ulfius_duplicate_response(const struct _u_response * respon
     }
     ulfius_init_response(new_response);
     new_response->status = response->status;
-    new_response->protocol = u_strdup(response->protocol);
+    new_response->protocol = nstrdup(response->protocol);
     u_map_clean_full(new_response->map_header);
     new_response->map_header = u_map_copy(response->map_header);
     new_response->nb_cookies = response->nb_cookies;
@@ -408,7 +408,7 @@ struct _u_response * ulfius_duplicate_response(const struct _u_response * respon
     } else {
       new_response->map_cookie = NULL;
     }
-    new_response->string_body = u_strdup(response->string_body);
+    new_response->string_body = nstrdup(response->string_body);
     new_response->json_body = (response->json_body==NULL?NULL:json_copy(response->json_body));
     
     if (response->binary_body != NULL && response->binary_body_length > 0) {
@@ -434,7 +434,7 @@ int ulfius_copy_response(struct _u_response * dest, const struct _u_response * s
   int i;
   if (dest != NULL && source != NULL) {
     dest->status = source->status;
-    dest->protocol = u_strdup(source->protocol);
+    dest->protocol = nstrdup(source->protocol);
     u_map_clean_full(dest->map_header);
     dest->map_header = u_map_copy(source->map_header);
     if (dest->map_header == NULL) {
@@ -452,7 +452,7 @@ int ulfius_copy_response(struct _u_response * dest, const struct _u_response * s
     } else {
       dest->map_cookie = NULL;
     }
-    dest->string_body = u_strdup(source->string_body);
+    dest->string_body = nstrdup(source->string_body);
     dest->json_body = (source->json_body==NULL?NULL:json_copy(source->json_body));
     
     if (source->binary_body != NULL && source->binary_body_length > 0) {

@@ -33,7 +33,10 @@
 #include <microhttpd.h>
 #include <jansson.h>
 #include <curl/curl.h>
+
+/** Angharad libraries **/
 #include <yder.h>
+#include <orcania.h>
 
 #define ULFIUS_URL_SEPARATOR       "/"
 #define ULFIUS_HTTP_ENCODING_JSON  "application/json"
@@ -327,7 +330,8 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
 struct _u_response * ulfius_duplicate_response(const struct _u_response * response);
 
 /**
- * Send an email
+ * Send an email using libcurl
+ * email is plain/text and UTF8 charset
  * host: smtp server host name
  * port: tcp port number (optional, 0 for default)
  * use_tls: true if the connection is tls secured
@@ -354,6 +358,39 @@ int ulfius_send_smtp_email(const char * host,
                             const char * bcc, 
                             const char * subject, 
                             const char * mail_body);
+
+/**
+ * generate_endpoint
+ * return a pointer to an allocated endpoint
+ * returned value must be free'd after use
+ */
+int generate_endpoint(struct _u_endpoint * endpoint, const char * http_method, const char * url_prefix, const char * url_format, int (* callback_function)(const struct _u_request * request, struct _u_response * response, void * user_data), void * user_data);
+
+/**
+ * copy_endpoint
+ * return a copy of an endpoint with duplicate values
+ * returned value must be free'd after use
+ */
+int copy_endpoint(struct _u_endpoint * source, struct _u_endpoint * dest);
+
+/**
+ * copy_endpoint_list
+ * return a copy of an endpoint list with duplicate values
+ * returned value must be free'd after use
+ */
+struct _u_endpoint * duplicate_endpoint_list(struct _u_endpoint * endpoint_list);
+
+/**
+ * clean_endpoint
+ * free allocated memory by an endpoint
+ */
+void clean_endpoint(struct _u_endpoint * endpoint);
+
+/**
+ * clean_endpoint_list
+ * free allocated memory by an endpoint list
+ */
+void clean_endpoint_list(struct _u_endpoint * endpoint_list);
 
 /**
  * umap declarations
@@ -581,12 +618,5 @@ int set_response_cookie(struct MHD_Response * mhd_response, const struct _u_resp
  * Returned value must be free'd after use
  */
 char * get_cookie_header(const struct _u_cookie * cookie);
-
-/**
- * u_strdup
- * a modified strdup function that don't crash when source is NULL, instead return NULL
- * Returned value must be free'd after use
- */
-char * u_strdup(const char * source);
 
 #endif // __ULFIUS_H__

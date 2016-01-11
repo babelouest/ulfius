@@ -81,7 +81,7 @@ void * ulfius_uri_logger (void * cls, const char * uri) {
       free(con_info);
       return NULL;
     }
-    con_info->request->http_url = u_strdup(uri);
+    con_info->request->http_url = nstrdup(uri);
   }
   return con_info;
 }
@@ -154,7 +154,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
     so_client = MHD_get_connection_info (connection, MHD_CONNECTION_INFO_CLIENT_ADDRESS)->client_addr;
     con_info->has_post_processor = 0;
     
-    con_info->request->http_verb = u_strdup(method);
+    con_info->request->http_verb = nstrdup(method);
     con_info->request->client_address = malloc(sizeof(struct sockaddr));
     if (con_info->request->client_address == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating client_address");
@@ -238,13 +238,13 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
           if (response_buffer == NULL) {
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error parsing json body");
             response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
-            response->string_body = u_strdup(ULFIUS_HTTP_ERROR_BODY);
+            response->string_body = nstrdup(ULFIUS_HTTP_ERROR_BODY);
           } else {
             response_buffer_len = strlen ((char*)response_buffer);
           }
         } else {
           response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
-          response_buffer = u_strdup(ULFIUS_HTTP_ERROR_BODY);
+          response_buffer = nstrdup(ULFIUS_HTTP_ERROR_BODY);
           response_buffer_len = strlen (ULFIUS_HTTP_ERROR_BODY);
         }
       } else if (callback_ret == U_OK && response->binary_body != NULL && response->binary_body_length > 0) {
@@ -252,7 +252,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
         response_buffer = malloc(response->binary_body_length);
         if (response_buffer == NULL) {
           response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
-          response->string_body = u_strdup(ULFIUS_HTTP_ERROR_BODY);
+          response->string_body = nstrdup(ULFIUS_HTTP_ERROR_BODY);
         } else {
           memcpy(response_buffer, response->binary_body, response->binary_body_length);
           response_buffer_len = response->binary_body_length;
@@ -260,18 +260,18 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
       } else if (callback_ret == U_OK) {
         // The user sent a string response
         if (response->string_body == NULL) {
-          response_buffer = u_strdup("");
+          response_buffer = nstrdup("");
         } else {
-          response_buffer = u_strdup(response->string_body);
+          response_buffer = nstrdup(response->string_body);
           response_buffer_len = strlen(response_buffer);
         }
       } else if (response->string_body == NULL && response->json_body == NULL && response->binary_body == NULL) {
         // No valid response parameters, sending error 500
         response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
-        response->string_body = u_strdup(ULFIUS_HTTP_ERROR_BODY);
+        response->string_body = nstrdup(ULFIUS_HTTP_ERROR_BODY);
       } else {
         // callback return value different than 0, sending error 500
-        response_buffer = u_strdup(ULFIUS_HTTP_ERROR_BODY);
+        response_buffer = nstrdup(ULFIUS_HTTP_ERROR_BODY);
         response_buffer_len = strlen(ULFIUS_HTTP_ERROR_BODY);
         response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
       }
@@ -280,7 +280,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
       if (callback_ret == U_OK) {
         if (set_response_header(mhd_response, response->map_header) == -1 || set_response_cookie(mhd_response, response) == -1) {
           response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
-          response->string_body = u_strdup(ULFIUS_HTTP_ERROR_BODY);
+          response->string_body = nstrdup(ULFIUS_HTTP_ERROR_BODY);
         }
       }
       
@@ -291,7 +291,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
       ulfius_clean_response_full(response);
       response = NULL;
     } else {
-      response_buffer = u_strdup(ULFIUS_HTTP_NOT_FOUND_BODY);
+      response_buffer = nstrdup(ULFIUS_HTTP_NOT_FOUND_BODY);
       response_buffer_len = strlen(ULFIUS_HTTP_NOT_FOUND_BODY);
       mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
       mhd_ret = MHD_queue_response (connection, MHD_HTTP_NOT_FOUND, mhd_response);
@@ -356,10 +356,81 @@ int ulfius_stop_framework(struct _u_instance * u_instance) {
 }
 
 /**
- * u_strdup
- * a modified strdup function that don't crash when source is NULL, instead return NULL
- * Returned value must be free'd after use
+ * generate_endpoint
+ * return a pointer to an allocated endpoint
+ * returned value must be free'd after use
  */
-char * u_strdup(const char * source) {
-  return (source==NULL?NULL:strdup(source));
+int generate_endpoint(struct _u_endpoint * endpoint, const char * http_method, const char * url_prefix, const char * url_format, int (* callback_function)(const struct _u_request * request, struct _u_response * response, void * user_data), void * user_data) {
+  if (endpoint != NULL) {
+    endpoint->http_method = nstrdup(http_method);
+    endpoint->url_prefix = nstrdup(url_prefix);
+    endpoint->url_format = nstrdup(url_format);
+    endpoint->callback_function = callback_function;
+    endpoint->user_data = user_data;
+    return U_OK;
+  } else {
+    return U_ERROR_PARAMS;
+  }
+}
+
+/**
+ * copy_endpoint
+ * return a copy of an endpoint with duplicate values
+ * returned value must be free'd after use
+ */
+int copy_endpoint(struct _u_endpoint * source, struct _u_endpoint * dest) {
+  if (source != NULL && dest != NULL) {
+    dest->http_method = nstrdup(source->http_method);
+    dest->url_prefix = nstrdup(source->url_prefix);
+    dest->url_format = nstrdup(source->url_format);
+    dest->callback_function = source->callback_function;
+    dest->user_data = source->user_data;
+    return U_OK;
+  }
+  return U_ERROR_PARAMS;
+}
+
+/**
+ * duplicate_endpoint_list
+ * return a copy of an endpoint list with duplicate values
+ * returned value must be free'd after use
+ */
+struct _u_endpoint * duplicate_endpoint_list(struct _u_endpoint * endpoint_list) {
+  struct _u_endpoint * to_return = NULL;
+  int i;
+  
+  if (endpoint_list != NULL) {
+    for (i=0; endpoint_list[i].http_method != NULL; i++) {
+      to_return = realloc(to_return, (i+1)*sizeof(struct _u_endpoint *));
+      copy_endpoint(&endpoint_list[i], &to_return[i]);
+    }
+  }
+  return to_return;
+}
+
+/**
+ * clean_endpoint
+ * free allocated memory by an endpoint
+ */
+void clean_endpoint(struct _u_endpoint * endpoint) {
+  if (endpoint != NULL) {
+    free(endpoint->http_method);
+    free(endpoint->url_prefix);
+    free(endpoint->url_format);
+  }
+}
+
+/**
+ * clean_endpoint_list
+ * free allocated memory by an endpoint list
+ */
+void clean_endpoint_list(struct _u_endpoint * endpoint_list) {
+  int i;
+  
+  if (endpoint_list != NULL) {
+    for (i=0; endpoint_list[i].http_method != NULL; i++) {
+      clean_endpoint(&endpoint_list[i]);
+    }
+    free(endpoint_list);
+  }
 }

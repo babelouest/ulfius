@@ -22,7 +22,7 @@
 PREFIX=/usr/local
 CC=gcc
 CFLAGS=-c -fPIC -Wall -D_REENTRANT -I$(PREFIX)/include $(ADDITIONALFLAGS)
-LIBS=-L$(PREFIX)/lib -lc -lmicrohttpd -ljansson -lcurl -lyder
+LIBS=-L$(PREFIX)/lib -lc -lmicrohttpd -ljansson -lcurl -lyder -lorcania
 OUTPUT=libulfius.so
 VERSION=0.9.8
 

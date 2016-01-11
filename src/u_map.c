@@ -161,7 +161,7 @@ int u_map_put(struct _u_map * u_map, const char * key, const char * value) {
     for (i=0; i < u_map->nb_values; i++) {
       if (0 == strcmp(u_map->keys[i], key)) {
         free(u_map->values[i]);
-        dup_value = u_strdup(value);
+        dup_value = nstrdup(value);
         if (dup_value == NULL) {
           return U_ERROR_MEMORY;
         } else {
@@ -172,11 +172,11 @@ int u_map_put(struct _u_map * u_map, const char * key, const char * value) {
     }
     if (u_map->values[i] == NULL) {
       // Not found, append
-      dup_key = u_strdup(key);
+      dup_key = nstrdup(key);
       if (dup_key == NULL) {
         return U_ERROR_MEMORY;
       }
-      dup_value = u_strdup(value);
+      dup_value = nstrdup(value);
       if (dup_value == NULL) {
         free(dup_key);
         return U_ERROR_MEMORY;
