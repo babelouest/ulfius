@@ -165,6 +165,44 @@ struct _u_endpoint {
 };
 ```
 
+Some functions help you facilitate endpoints manipulation:
+
+```C
+
+/**
+ * generate_endpoint
+ * return a pointer to an allocated endpoint
+ * returned value must be free'd after use
+ */
+int generate_endpoint(struct _u_endpoint * endpoint, const char * http_method, const char * url_prefix, const char * url_format, int (* callback_function)(const struct _u_request * request, struct _u_response * response, void * user_data), void * user_data);
+
+/**
+ * copy_endpoint
+ * return a copy of an endpoint with duplicate values
+ * returned value must be free'd after use
+ */
+int copy_endpoint(struct _u_endpoint * source, struct _u_endpoint * dest);
+
+/**
+ * copy_endpoint_list
+ * return a copy of an endpoint list with duplicate values
+ * returned value must be free'd after use
+ */
+struct _u_endpoint * duplicate_endpoint_list(struct _u_endpoint * endpoint_list);
+
+/**
+ * clean_endpoint
+ * free allocated memory by an endpoint
+ */
+void clean_endpoint(struct _u_endpoint * endpoint);
+
+/**
+ * clean_endpoint_list
+ * free allocated memory by an endpoint list
+ */
+void clean_endpoint_list(struct _u_endpoint * endpoint_list);
+```
+
 HTTP Method can be an existing or not existing method, or * for any method, you must specify a url_prefix, a url_format or both, callback_function is mandatory, user_data is optoinal.
 
 Your `struct _u_endpoint` array **MUST** end with an empty `struct _u_endpoint`.
