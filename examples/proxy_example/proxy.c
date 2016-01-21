@@ -26,20 +26,19 @@ int callback_get (const struct _u_request * request, struct _u_response * respon
 
 int main (int argc, char **argv) {
   
-  // Endpoint list declaration
-  // The last line is mandatory to mark the end of the array
-  struct _u_endpoint endpoint_list[] = {
-    {"GET", NULL, "*", &callback_get, NULL},
-    {NULL, NULL, NULL, NULL}
-  };
-  
-  // Set the framework port number
+  // Initialize the instance
   struct _u_instance instance;
-  instance.port = PORT;
-  instance.bind_address = NULL;
+  
+  if (ulfius_init_instance(&instance, PORT, NULL) != U_OK) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_init_instance, abort");
+    return(1);
+  }
+  
+  // Endpoint list declaration
+  ulfius_add_endpoint_by_val(&instance, "GET", NULL, "*", &callback_get, NULL);
   
   // Start the framework
-  if (ulfius_init_framework(&instance, endpoint_list) == U_OK) {
+  if (ulfius_start_framework(&instance) == U_OK) {
     printf("Start framework on port %d\n", instance.port);
     printf("Go to url / to proxify %s\n", PROXY_DEST);
     
@@ -50,7 +49,10 @@ int main (int argc, char **argv) {
   }
   
   printf("End framework\n");
-  return ulfius_stop_framework(&instance);
+  ulfius_stop_framework(&instance);
+  ulfius_clean_instance(&instance);
+  
+  return 0;
 }
 
 /**

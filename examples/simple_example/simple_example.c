@@ -71,42 +71,43 @@ char * print_map(const struct _u_map * map) {
 }
 
 int main (int argc, char **argv) {
-  
-  // Endpoint list declaration
-  // The last line is mandatory to mark the end of the array
-  struct _u_endpoint endpoint_list[] = {
-    {"GET", PREFIX, NULL, &callback_get_test, NULL},
-    {"POST", PREFIX, NULL, &callback_post_test, NULL},
-    {"GET", PREFIX, "/:foo", &callback_all_test_foo, "user data 1"},
-    {"POST", PREFIX, "/:foo", &callback_all_test_foo, "user data 2"},
-    {"PUT", PREFIX, "/:foo", &callback_all_test_foo, "user data 3"},
-    {"DELETE", PREFIX, "/:foo", &callback_all_test_foo, "user data 4"},
-    {"PUT", PREFIXJSON, NULL, &callback_get_jsontest, NULL},
-    {"GET", PREFIXCOOKIE, "/:lang/:extra", &callback_get_cookietest, NULL},
-    {NULL, NULL, NULL, NULL, NULL}
-  };
-  
   // Set the framework port number
   struct _u_instance instance;
-  instance.port = PORT;
-  instance.bind_address = NULL;
   
   y_init_logs("simple_example", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting simple_example");
   
+  if (ulfius_init_instance(&instance, PORT, NULL) != U_OK) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_init_instance, abort");
+    return(1);
+  }
+  
+  // Endpoint list declaration
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, NULL, &callback_get_test, NULL);
+  ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, NULL, &callback_post_test, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/:foo", &callback_all_test_foo, "user data 1");
+  ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, "/:foo", &callback_all_test_foo, "user data 2");
+  ulfius_add_endpoint_by_val(&instance, "PUT", PREFIX, "/:foo", &callback_all_test_foo, "user data 3");
+  ulfius_add_endpoint_by_val(&instance, "DELETE", PREFIX, "/:foo", &callback_all_test_foo, "user data 4");
+  ulfius_add_endpoint_by_val(&instance, "PUT", PREFIXJSON, NULL, &callback_get_jsontest, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIXCOOKIE, "/:lang/:extra", &callback_get_cookietest, NULL);
+  
   // Start the framework
-  if (ulfius_init_framework(&instance, endpoint_list) == U_OK) {
-    printf("Start framework on port %d\n", instance.port);
+  if (ulfius_start_framework(&instance) == U_OK) {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "Start framework on port %d", instance.port);
     
     // Wait for the user to press <enter> on the console to quit the application
     getchar();
   } else {
-    printf("Error starting framework\n");
+    y_log_message(Y_LOG_LEVEL_DEBUG, "Error starting framework");
   }
-  printf("End framework\n");
+  y_log_message(Y_LOG_LEVEL_DEBUG, "End framework");
   
   y_close_logs();
   
-  return ulfius_stop_framework(&instance);
+  ulfius_stop_framework(&instance);
+  ulfius_clean_instance(&instance);
+  
+  return 0;
 }
 
 /**

@@ -1,9 +1,9 @@
 #
-# Example program
+# injection_example program
 #
 # Makefile used to build the software
 #
-# Copyright 2015 Nicolas Mora <mail@babelouest.org>
+# Copyright 2016 Nicolas Mora <mail@babelouest.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License
@@ -16,25 +16,25 @@
 CC=gcc
 CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS)
 ULFIUS_LOCATION=../../src
-LIBS=-lc -lulfius -ljansson -lyder -L$(ULFIUS_LOCATION)
+LIBS=-lc -lulfius -lyder -ljansson -L$(ULFIUS_LOCATION)
 
-all: proxy
+all: injection_example
 
 clean:
-	rm -f *.o proxy
+	rm -f *.o injection_example
 
 debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
-debug: proxy
+debug: injection_example
 
 libulfius.so:
 	cd $(ULFIUS_LOCATION) && $(MAKE) debug
 
-proxy.o: proxy.c
-	$(CC) $(CFLAGS) proxy.c -DDEBUG -g -O0
+injection_example.o: injection_example.c
+	$(CC) $(CFLAGS) injection_example.c -DDEBUG -g -O0
 
-proxy: libulfius.so proxy.o
-	$(CC) -o proxy proxy.o $(LIBS)
+injection_example: libulfius.so injection_example.o
+	$(CC) -o injection_example injection_example.o $(LIBS)
 
-test: proxy
-	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./proxy
+test: injection_example
+	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./injection_example

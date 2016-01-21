@@ -55,6 +55,14 @@ int main (int argc, char **argv) {
   long nb_sheep = 0;
   #endif
   
+  // Initialize the instance
+  struct _u_instance instance;
+  
+  if (ulfius_init_instance(&instance, PORT, NULL) != U_OK) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_init_instance, abort");
+    return(1);
+  }
+  
   // MIME types that will define the static files
   struct _u_map mime_types;
   u_map_init(&mime_types);
@@ -66,25 +74,16 @@ int main (int argc, char **argv) {
   u_map_put(&mime_types, ".jpg", "image/jpeg");
   u_map_put(&mime_types, "*", "application/octet-stream");
   
-  // Endpoint list
+  // Endpoint list declaration
   // The first 3 are webservices with a specific url
   // The last endpoint will be called for every GET call and will serve the static files
-  // The last line is mandatory to mark the end of the array
-  struct _u_endpoint endpoint_list[] = {
-    {"POST", PREFIX, NULL, &callback_sheep_counter_start, &nb_sheep},
-    {"PUT", PREFIX, NULL, &callback_sheep_counter_add, &nb_sheep},
-    {"DELETE", PREFIX, NULL, &callback_sheep_counter_reset, &nb_sheep},
-    {"GET", NULL, "*", &callback_static_file, &mime_types},
-    {NULL, NULL, NULL, NULL}
-  };
-  
-  // Set the framework port number
-  struct _u_instance instance;
-  instance.port = PORT;
-  instance.bind_address = NULL;
+  ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, NULL, &callback_sheep_counter_start, &nb_sheep);
+  ulfius_add_endpoint_by_val(&instance, "PUT", PREFIX, NULL, &callback_sheep_counter_add, &nb_sheep);
+  ulfius_add_endpoint_by_val(&instance, "DELETE", PREFIX, NULL, &callback_sheep_counter_reset, &nb_sheep);
+  ulfius_add_endpoint_by_val(&instance, "GET", NULL, "*", &callback_static_file, &mime_types);
   
   // Start the framework
-  if (ulfius_init_framework(&instance, endpoint_list) == U_OK) {
+  if (ulfius_start_framework(&instance) == U_OK) {
     printf("Start sheep counter on port %d\n", instance.port);
     
     // Wait for the user to press <enter> on the console to quit the application
@@ -93,12 +92,14 @@ int main (int argc, char **argv) {
     printf("Error starting framework\n");
   }
 
-  
   // Clean the mime map
   u_map_clean(&mime_types);
   
   printf("End framework\n");
-	return ulfius_stop_framework(&instance);
+  ulfius_stop_framework(&instance);
+  ulfius_clean_instance(&instance);
+  
+  return 0;
 }
 
 /**

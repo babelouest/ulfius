@@ -4,7 +4,7 @@ Web Framework for REST Applications in C.
 
 Based on [GNU Libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/) for the web server backend, [Jansson](http://www.digip.org/jansson/) for the json manipulation library, and [Libcurl](http://curl.haxx.se/libcurl/) for the send http request API.
 
-Used to facilitate creation of web applications in C programs with a small memory footprint, like embedded systems applications.
+Used to facilitate creation of web applications in C programs with a small memory footprint, as in embedded systems applications.
 
 ## Hello World! example application
 
@@ -12,6 +12,7 @@ The source code of a hello world using Ulfius could be the following:
 
 ```c
 #include <ulfius.h>
+#include <stdio.h>
 
 #define PORT 8080
 
@@ -28,29 +29,34 @@ int callback_hello_world (const struct _u_request * request, struct _u_response 
  * main function
  */
 int main(void) {
-  // Endpoint list declaration
-  // The last line is mandatory to mark the end of the array
-  struct _u_endpoint endpoint_list[] = {
-    {"GET", "/helloworld", NULL, &callback_get_test, NULL},
-    {NULL, NULL, NULL, NULL, NULL}
-  };
-  
   // Set the framework port number
   struct _u_instance instance;
-  instance.port = PORT;
-  instance.bind_address = NULL;
+  
+  if (ulfius_init_instance(&instance, PORT, NULL) != U_OK) {
+    fprintf(stderr, "Error ulfius_init_instance, abort");
+    return(1);
+  }
+  
+  // Endpoint list declaration
+  ulfius_add_endpoint_by_val(&instance, "GET", "/helloworld", NULL, &callback_hello_world, NULL);
   
   // Start the framework
-  if (ulfius_init_framework(&instance, endpoint_list) == U_OK) {
-    printf("Start framework on port %d\n", instance.port);
+  if (ulfius_start_framework(&instance) == U_OK) {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "Start framework on port %d", instance.port);
+    
     // Wait for the user to press <enter> on the console to quit the application
     getchar();
   } else {
-    printf("Error starting framework\n");
+    y_log_message(Y_LOG_LEVEL_DEBUG, "Error starting framework");
   }
+  y_log_message(Y_LOG_LEVEL_DEBUG, "End framework");
   
-  printf("End framework\n");
-  return ulfius_stop_framework(&instance);
+  y_close_logs();
+  
+  ulfius_stop_framework(&instance);
+  ulfius_clean_instance(&instance);
+  
+  return 0;
 }
 ```
 
@@ -107,9 +113,9 @@ When specified, some functions return `U_OK` on success, and other values otherw
 
 ### Initialization
 
-When initialized, Ulfius runs a thread in background that will listen to the specified port and dispatch the calls to the specified functions. Ulfius does not have high-level features like dependency injection, but its goal is to simplify writing webservices usable in embedded devices with a small memory footprint.
+When initialized, Ulfius runs a thread in background that will listen to the specified port and dispatch the calls to the specified functions. Ulfius allows adding and removing new endpoints during the instance execution.
 
-To run a webservice, you must declare a `struct _u_instance` and an array of `struct _u_endpoint`.
+To run a webservice, you must initialize a `struct _u_instance` and add your endpoints.
 
 The `struct _u_instance` is defined as:
 
@@ -123,16 +129,39 @@ The `struct _u_instance` is defined as:
  * mhd_daemon:   pointer to the libmicrohttpd daemon
  * port:         port number to listen to
  * bind_address: ip address to listen to (if needed)
+ * nb_endpoints:  Number of available endpoints
+ * endpoint_list: List of available endpoints
  * 
  */
 struct _u_instance {
   struct MHD_Daemon * mhd_daemon;
   int port;
   struct sockaddr_in * bind_address;
+  int nb_endpoints;
+  struct _u_endpoint * endpoint_list;
 };
 ```
 
 In the `struct _u_instance` structure, the element `port` must be set to the port number you want to listen to, the element `bind_address` is used if you want to listen only to a specific IP address. The element `mhd_daemon` is used by the framework, don't modify it.
+
+You can use the functions `ulfius_init_instance` and `ulfius_clean_instance` to facilitate the manipulation of the structure:
+
+```c
+/**
+ * ulfius_init_instance
+ * 
+ * Initialize a struct _u_instance * with default values
+ * return U_OK on success
+ */
+int ulfius_init_instance(struct _u_instance * u_instance, int port, struct sockaddr_in * bind_address);
+
+/**
+ * ulfius_clean_instance
+ * 
+ * Clean memory allocated by a struct _u_instance *
+ */
+void ulfius_clean_instance(struct _u_instance * u_instance);
+```
 
 The `struct _u_endpoint` is defined as:
 
@@ -167,86 +196,115 @@ struct _u_endpoint {
 
 Some functions help you facilitate endpoints manipulation:
 
-```C
+```c
+/**
+ * Add a struct _u_endpoint * to the specified u_instance
+ * Can be done during the execution of the webservice for injection
+ * u_instance: pointer to a struct _u_instance that describe its port and bind address
+ * u_endpoint: pointer to a struct _u_endpoint that will be copied in the u_instance endpoint_list
+ * return U_OK on success
+ */
+int ulfius_add_endpoint(struct _u_instance * u_instance, const struct _u_endpoint * u_endpoint);
 
 /**
- * generate_endpoint
- * return a pointer to an allocated endpoint
- * returned value must be free'd after use
+ * Add a struct _u_endpoint * to the specified u_instance with its values specified
+ * Can be done during the execution of the webservice for injection
+ * u_instance: pointer to a struct _u_instance that describe its port and bind address
+ * http_method:       http verb (GET, POST, PUT, etc.) in upper case
+ * url_prefix:        prefix for the url (optional)
+ * url_format:        string used to define the endpoint format
+ *                    separate words with /
+ *                    to define a variable in the url, prefix it with @ or :
+ *                    example: /test/resource/:name/elements
+ *                    on an url_format that ends with '*', the rest of the url will not be tested
+ * callback_function: a pointer to a function that will be executed each time the endpoint is called
+ *                    you must declare the function as described.
+ * user_data:         a pointer to a data or a structure that will be available in the callback function
+ * return U_OK on success
  */
-int generate_endpoint(struct _u_endpoint * endpoint, const char * http_method, const char * url_prefix, const char * url_format, int (* callback_function)(const struct _u_request * request, struct _u_response * response, void * user_data), void * user_data);
+int ulfius_add_endpoint_by_val(struct _u_instance * u_instance,
+                               const char * http_method,
+                               const char * url_prefix,
+                               const char * url_format,
+                               int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
+                                                         struct _u_response * response,     // Output parameters (set by the user)
+                                                         void * user_data),
+                               void * user_data);
 
 /**
- * copy_endpoint
- * return a copy of an endpoint with duplicate values
- * returned value must be free'd after use
+ * Add a struct _u_endpoint * list to the specified u_instance
+ * Can be done during the execution of the webservice for injection
+ * u_instance: pointer to a struct _u_instance that describe its port and bind address
+ * u_endpoint_list: pointer to an array of struct _u_endpoint ending with a u_empty_endpoint() that will be copied in the u_instance endpoint_list
+ * return U_OK on success
  */
-int copy_endpoint(struct _u_endpoint * source, struct _u_endpoint * dest);
+int ulfius_add_endpoint_list(struct _u_instance * u_instance, const struct _u_endpoint ** u_endpoint_list);
 
 /**
- * copy_endpoint_list
- * return a copy of an endpoint list with duplicate values
- * returned value must be free'd after use
+ * Remove a struct _u_endpoint * from the specified u_instance
+ * Can be done during the execution of the webservice for injection
+ * u_instance: pointer to a struct _u_instance that describe its port and bind address
+ * u_endpoint: pointer to a struct _u_endpoint that will be removed in the u_instance endpoint_list
+ * The parameters _u_endpoint.http_method, _u_endpoint.url_prefix and _u_endpoint.url_format are strictly compared for the match
+ * If no endpoint is found, return U_ERROR_NOT_FOUND
+ * return U_OK on success
  */
-struct _u_endpoint * duplicate_endpoint_list(struct _u_endpoint * endpoint_list);
+int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endpoint * u_endpoint);
 
 /**
- * clean_endpoint
- * free allocated memory by an endpoint
+ * Remove a struct _u_endpoint * from the specified u_instance
+ * using the specified values used to identify an endpoint
+ * Can be done during the execution of the webservice for injection
+ * u_instance: pointer to a struct _u_instance that describe its port and bind address
+ * http_method: http_method used by the endpoint
+ * url_prefix: url_prefix used by the endpoint
+ * url_format: url_format used by the endpoint
+ * The parameters _u_endpoint.http_method, _u_endpoint.url_prefix and _u_endpoint.url_format are strictly compared for the match
+ * If no endpoint is found, return U_ERROR_NOT_FOUND
+ * return U_OK on success
  */
-void clean_endpoint(struct _u_endpoint * endpoint);
-
-/**
- * clean_endpoint_list
- * free allocated memory by an endpoint list
- */
-void clean_endpoint_list(struct _u_endpoint * endpoint_list);
+int ulfius_remove_endpoint_by_val(struct _u_instance * u_instance, const char * http_method, const char * url_prefix, const char * url_format);
 ```
 
-HTTP Method can be an existing or not existing method, or * for any method, you must specify a url_prefix, a url_format or both, callback_function is mandatory, user_data is optoinal.
+HTTP Method can be an existing or not existing method, or * for any method, you must specify a url_prefix, a url_format or both, callback_function is mandatory, user_data is optional.
 
 Your `struct _u_endpoint` array **MUST** end with an empty `struct _u_endpoint`.
 
-for example, you can declare an endpoint list like this:
+You can manually declare an endpoint or use the dedicated functions as `int ulfius_add_endpoint` or `int ulfius_add_endpoint_by_val`.
 
-```c
-  struct _u_endpoint endpoint_list[] = {
-    {"GET", PREFIX, NULL, &callback_get_test, NULL},
-    {"POST", PREFIX, NULL, &callback_post_test, NULL},
-    {"GET", PREFIX, "/:foo", &callback_all_test_foo, "user data 1"},
-    {"POST", PREFIX, "/:foo", &callback_all_test_foo, "user data 2"},
-    {"PUT", PREFIX, "/:foo", &callback_all_test_foo, "user data 3"},
-    {"DELETE", PREFIX, "/:foo", &callback_all_test_foo, "user data 4"},
-    {"PUT", PREFIXJSON, NULL, &callback_get_jsontest, NULL},
-    {"GET", PREFIXCOOKIE, "/:lang/:extra", &callback_get_cookietest, NULL},
-    {NULL, NULL, NULL, NULL, NULL}
-  };
-```
+If you manipulate the attribute `u_instance.endpoint_list`, you must end the list with an empty endpoint (see `const struct _u_endpoint * u_empty_endpoint()`), and you must set the attribute `u_instance.nb_endpoints` accordingly. Also, you must use dynamically allocated values for attributes `http_method`, `url_prefix` and `url_format`.
 
 Please note that each time a call is made to the webservice, endpoints will be tested in the same order. On the first matching endpoint, the other ones won't be tested. So be careful on your endpoints declaration order.
+
+For example, if you declare the following endpoints in that order:
+
+```
+/test/*
+/test/test1
+/test/test2
+```
+
+the last 2 will never be reached because the first one will always be a match for the urls `/test/test1` and `/test/test2`.
 
 ### Start and stop webservice
 
 #### Start webservice
 
-The starting point function is ulfius_init_framework:
+The starting point function is ulfius_start_framework:
 
 ```c
 /**
- * ulfius_init_framework
+ * ulfius_start_framework
  * Initializes the framework and run the webservice based on the parameters given
  * return truze if no error
  * 
  * u_instance:    pointer to a struct _u_instance that describe its port and bind address
- * endpoint_list: array of struct _u_endpoint that will describe endpoints used for the application
- *                the array MUST have an empty struct _u_endpoint at the end of it
- *                {NULL, NULL, NULL, NULL, NULL}
  * return U_OK on success
  */
-int ulfius_init_framework(struct _u_instance * u_instance, struct _u_endpoint * endpoint_list);
+int ulfius_start_framework(struct _u_instance * u_instance);
 ```
 
-In your program where you want to start the web server, simply execute the function `ulfius_init_framework(struct _u_instance * u_instance, struct _u_endpoint * endpoint_list);` with the previously declared `instance` and `endpoint_list`. You can reuse the same callback function as much as you want for different endpoints. On success, this function returns `U_OK`, otherwise an error code.
+In your program where you want to start the web server, simply execute the function `ulfius_start_framework(struct _u_instance * u_instance, struct _u_endpoint * endpoint_list);` with the previously declared `instance` and `endpoint_list`. You can reuse the same callback function as much as you want for different endpoints. On success, this function returns `U_OK`, otherwise an error code.
 
 #### Stop webservice
 
@@ -345,7 +403,7 @@ struct _u_response {
 };
 ```
 
-In the response variable set by the framework to the callback function, the structure is initialized empty, except for the map_cookie which is set to the same key/values as the request element `map_cookie`.
+In the response variable set by the framework to the callback function, the structure is initialized with no data, except for the map_cookie which is set to the same key/values as the request element `map_cookie`.
 
 The user must set the `string_body` or the `json_body` or the `binary_body` before the return statement, otherwise the framework will send an error 500 response. If a `string_body` is set, the `json_body` or the `binary_body` won't be tested. So to return a `json_body` object, you must leave `string_body` with a `NULL` value. Likewise, if a `json_body` is set, the `binary_body` won't be tested. Finally, if a `binary_body` is set, its size must be set to `binary_body_length`.
 
