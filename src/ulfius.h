@@ -64,6 +64,10 @@
 #define U_ERROR_LIBCURL   5 // Error in libcurl execution
 #define U_ERROR_NOT_FOUND 6 // Something was not found
 
+#define U_STATUS_STOP     0
+#define U_STATUS_RUNNING  1
+#define U_STATUS_ERROR    2
+
 #define ULFIUS_VERSION 0.10.0
 
 /*************
@@ -189,19 +193,23 @@ struct _u_endpoint {
  * 
  * Contains the needed data for an ulfius instance to work
  * 
- * mhd_daemon:   pointer to the libmicrohttpd daemon
- * port:         port number to listen to
- * bind_address: ip address to listen to (if needed)
- * nb_endpoints:  Number of available endpoints
- * endpoint_list: List of available endpoints
+ * mhd_daemon:      pointer to the libmicrohttpd daemon
+ * status:          status of the current instance, status are U_STATUS_STOP, U_STATUS_RUNNING or U_STATUS_ERROR
+ * port:            port number to listen to
+ * bind_address:    ip address to listen to (if needed)
+ * nb_endpoints:    Number of available endpoints
+ * endpoint_list:   List of available endpoints
+ * default_headers: Default headers that will be added to all response->map_header
  * 
  */
 struct _u_instance {
-  struct MHD_Daemon * mhd_daemon;
-  int port;
+  struct MHD_Daemon *  mhd_daemon;
+  int                  status;
+  int                  port;
   struct sockaddr_in * bind_address;
-  int nb_endpoints;
+  int                  nb_endpoints;
   struct _u_endpoint * endpoint_list;
+  struct _u_map      * default_headers;
 };
 
 /**

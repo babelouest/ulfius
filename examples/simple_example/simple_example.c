@@ -29,6 +29,8 @@
  */
 int callback_get_test (const struct _u_request * request, struct _u_response * response, void * user_data);
 
+int callback_get_empty_response (const struct _u_request * request, struct _u_response * response, void * user_data);
+
 int callback_post_test (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_all_test_foo (const struct _u_request * request, struct _u_response * response, void * user_data);
@@ -81,8 +83,11 @@ int main (int argc, char **argv) {
     return(1);
   }
   
+  u_map_put(instance.default_headers, "Access-Control-Allow-Origin", "*");
+  
   // Endpoint list declaration
   ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, NULL, &callback_get_test, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/empty", &callback_get_empty_response, NULL);
   ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, NULL, &callback_post_test, NULL);
   ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/:foo", &callback_all_test_foo, "user data 1");
   ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, "/:foo", &callback_all_test_foo, "user data 2");
@@ -116,6 +121,13 @@ int main (int argc, char **argv) {
 int callback_get_test (const struct _u_request * request, struct _u_response * response, void * user_data) {
   response->string_body = strdup("Hello World!");
   response->status = 200;
+  return U_OK;
+}
+
+/**
+ * Callback function that put an empty response and a status 200
+ */
+int callback_get_empty_response (const struct _u_request * request, struct _u_response * response, void * user_data) {
   return U_OK;
 }
 

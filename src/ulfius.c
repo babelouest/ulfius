@@ -132,8 +132,10 @@ int ulfius_start_framework(struct _u_instance * u_instance) {
     
     if (u_instance->mhd_daemon == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error MHD_start_daemon, aborting");
+      u_instance->status = U_STATUS_ERROR;
       return U_ERROR_LIBMHD;
     } else {
+      u_instance->status = U_STATUS_RUNNING;
       return U_OK;
     }
   } else {
@@ -245,13 +247,19 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
         return MHD_NO;
       }
     
-      // Endpoint found, run callback function with the input parameters filled
       if (parse_url(url, current_endpoint, con_info->request->map_url) != U_OK) {
         free(response);
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error parsing url: ", url);
         return MHD_NO;
       }
       
+      // Add default headers (if any to the response header maps
+      if (((struct _u_instance *)cls)->default_headers != NULL && u_map_count(((struct _u_instance *)cls)->default_headers) > 0) {
+          u_map_clean_full(response->map_header);
+          response->map_header = u_map_copy(((struct _u_instance *)cls)->default_headers);
+      }
+      
+      // Endpoint found, run callback function with the input parameters filled
       callback_ret = current_endpoint->callback_function(con_info->request, response, current_endpoint->user_data);
 
       // Set the response code to 200 OK if the user did not (or forgot to) set one
@@ -409,8 +417,10 @@ void request_completed (void *cls, struct MHD_Connection *connection,
 int ulfius_stop_framework(struct _u_instance * u_instance) {
   if (u_instance != NULL && u_instance->mhd_daemon != NULL) {
     MHD_stop_daemon (u_instance->mhd_daemon);
+    u_instance->status = U_STATUS_STOP;
     return U_OK;
   } else {
+    u_instance->status = U_STATUS_ERROR;
     return U_ERROR_PARAMS;
   }
 }
@@ -673,10 +683,17 @@ int u_equals_endpoints(const struct _u_endpoint * endpoint1, const struct _u_end
 int ulfius_init_instance(struct _u_instance * u_instance, int port, struct sockaddr_in * bind_address) {
   if (u_instance != NULL) {
     u_instance->mhd_daemon = NULL;
+    u_instance->status = U_STATUS_STOP;
     u_instance->port = port;
     u_instance->bind_address = bind_address;
     u_instance->nb_endpoints = 0;
     u_instance->endpoint_list = NULL;
+    u_instance->default_headers = malloc(sizeof(struct _u_map));
+    if (u_instance->default_headers == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for u_instance->default_headers");
+      return U_ERROR_MEMORY;
+    }
+    u_map_init(u_instance->default_headers);
     return U_OK;
   } else {
     return U_ERROR_PARAMS;
@@ -728,6 +745,7 @@ int ulfius_add_endpoint_by_val(struct _u_instance * u_instance,
 void ulfius_clean_instance(struct _u_instance * u_instance) {
   if (u_instance != NULL) {
     u_clean_endpoint_list(u_instance->endpoint_list);
+    u_map_clean_full(u_instance->default_headers);
   }
 }
 
