@@ -37,11 +37,11 @@ static int ulfius_fill_map(void *cls, enum MHD_ValueKind kind, const char *key, 
 }
 
 /**
- * validate_instance
+ * ulfius_validate_instance
  * return true if u_instance has valid parameters
  */
-int validate_instance(const struct _u_instance * u_instance) {
-  if (u_instance == NULL || u_instance->port <= 0 || u_instance->port >= 65536 || !validate_endpoint_list(u_instance->endpoint_list, u_instance->nb_endpoints)) {
+int ulfius_validate_instance(const struct _u_instance * u_instance) {
+  if (u_instance == NULL || u_instance->port <= 0 || u_instance->port >= 65536 || !ulfius_validate_endpoint_list(u_instance->endpoint_list, u_instance->nb_endpoints)) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error, instance or has invalid parameters");
     return 0;
   }
@@ -49,18 +49,18 @@ int validate_instance(const struct _u_instance * u_instance) {
 }
 
 /**
- * validate_endpoint_list
+ * ulfius_validate_endpoint_list
  * return true if endpoint_list has valid parameters
  */
-int validate_endpoint_list(const struct _u_endpoint * endpoint_list, int nb_endpoints) {
+int ulfius_validate_endpoint_list(const struct _u_endpoint * endpoint_list, int nb_endpoints) {
   int i;
   if (endpoint_list != NULL) {
     for (i=0; i < nb_endpoints; i++) {
-      if (i == 0 && u_equals_endpoints(u_empty_endpoint(), &endpoint_list[i])) {
+      if (i == 0 && ulfius_equals_endpoints(ulfius_empty_endpoint(), &endpoint_list[i])) {
         // One can not have an empty endpoint in the beginning of the list
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error, no empty endpoint allowed in the beginning of the endpoint list");
         return 0;
-      } else if (!u_is_valid_endpoint(&endpoint_list[i])) {
+      } else if (!ulfius_is_valid_endpoint(&endpoint_list[i])) {
         // One must set at least the parameters http_method, url_format and callback_function
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error, endpoint at index %d has invalid parameters", i);
         return 0;
@@ -120,11 +120,11 @@ int ulfius_start_framework(struct _u_instance * u_instance) {
 #endif
   
   // Validate u_instance and endpoint_list that there is no mistake
-  if (validate_instance(u_instance)) {
+  if (ulfius_validate_instance(u_instance)) {
     u_instance->mhd_daemon = MHD_start_daemon (
           mhd_options, 
           u_instance->port, NULL, NULL, &ulfius_webservice_dispatcher, (void *)u_instance, 
-          MHD_OPTION_NOTIFY_COMPLETED, request_completed, NULL,
+          MHD_OPTION_NOTIFY_COMPLETED, mhd_request_completed, NULL,
           MHD_OPTION_SOCK_ADDR, u_instance->bind_address,
           MHD_OPTION_URI_LOG_CALLBACK, ulfius_uri_logger, NULL,
           MHD_OPTION_END
@@ -194,7 +194,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
     if (content_type != NULL && (0 == strncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) || 
         0 == strncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA)))) {
       con_info->has_post_processor = 1;
-      con_info->post_processor = MHD_create_post_processor (connection, ULFIUS_POSTBUFFERSIZE, iterate_post_data, (void *) con_info);
+      con_info->post_processor = MHD_create_post_processor (connection, ULFIUS_POSTBUFFERSIZE, mhd_iterate_post_data, (void *) con_info);
       if (NULL == con_info->post_processor) {
         ulfius_clean_request_full(con_info->request);
         con_info->request = NULL;
@@ -233,7 +233,13 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
     }
   } else {
     // Check if the endpoint has a match
-    current_endpoint = endpoint_match(method, url, endpoint_list);
+    current_endpoint = ulfius_endpoint_match(method, url, endpoint_list);
+    
+    // Set to default_endpoint if no match
+    if (current_endpoint == NULL && ((struct _u_instance *)cls)->default_endpoint != NULL && ((struct _u_instance *)cls)->default_endpoint->callback_function != NULL) {
+      current_endpoint = ((struct _u_instance *)cls)->default_endpoint;
+    }
+    
     if (current_endpoint != NULL) {
     
       response = malloc(sizeof(struct _u_response));
@@ -247,7 +253,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
         return MHD_NO;
       }
     
-      if (parse_url(url, current_endpoint, con_info->request->map_url) != U_OK) {
+      if (ulfius_parse_url(url, current_endpoint, con_info->request->map_url) != U_OK) {
         free(response);
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error parsing url: ", url);
         return MHD_NO;
@@ -338,7 +344,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
       mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
       
       if (callback_ret == U_OK) {
-        if (set_response_header(mhd_response, response->map_header) == -1 || set_response_cookie(mhd_response, response) == -1) {
+        if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
           response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
           response->string_body = nstrdup(ULFIUS_HTTP_ERROR_BODY);
           if (response->string_body == NULL) {
@@ -371,11 +377,11 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
 }
 
 /**
- * iterate_post_data
+ * mhd_iterate_post_data
  * function used to iterate post parameters
  * return MHD_NO on error
  */
-int iterate_post_data (void *coninfo_cls, enum MHD_ValueKind kind, const char *key,
+int mhd_iterate_post_data (void *coninfo_cls, enum MHD_ValueKind kind, const char *key,
                       const char *filename, const char *content_type,
                       const char *transfer_encoding, const char *data, uint64_t off,
                       size_t size) {
@@ -388,10 +394,10 @@ int iterate_post_data (void *coninfo_cls, enum MHD_ValueKind kind, const char *k
 }
 
 /**
- * request_completed
+ * mhd_request_completed
  * function used to clean data allocated after a web call is complete
  */
-void request_completed (void *cls, struct MHD_Connection *connection,
+void mhd_request_completed (void *cls, struct MHD_Connection *connection,
                         void **con_cls, enum MHD_RequestTerminationCode toe) {
   struct connection_info_struct *con_info = *con_cls;
   if (NULL == con_info) {
@@ -426,12 +432,12 @@ int ulfius_stop_framework(struct _u_instance * u_instance) {
 }
 
 /**
- * u_is_valid_endpoint
+ * ulfius_is_valid_endpoint
  * return true if the endpoind has valid parameters
  */
-int u_is_valid_endpoint(const struct _u_endpoint * endpoint) {
+int ulfius_is_valid_endpoint(const struct _u_endpoint * endpoint) {
   if (endpoint != NULL) {
-    if (u_equals_endpoints(endpoint, u_empty_endpoint())) {
+    if (ulfius_equals_endpoints(endpoint, ulfius_empty_endpoint())) {
       // Should be the last endpoint of the list to close it
       return 1;
     } else if (endpoint->http_method == NULL) {
@@ -449,18 +455,18 @@ int u_is_valid_endpoint(const struct _u_endpoint * endpoint) {
 }
 
 /**
- * u_copy_endpoint
+ * ulfius_copy_endpoint
  * return a copy of an endpoint with duplicate values
  * returned value must be free'd after use
  */
-int u_copy_endpoint(struct _u_endpoint * dest, const struct _u_endpoint * source) {
+int ulfius_copy_endpoint(struct _u_endpoint * dest, const struct _u_endpoint * source) {
   if (source != NULL && dest != NULL) {
     dest->http_method = nstrdup(source->http_method);
     dest->url_prefix = nstrdup(source->url_prefix);
     dest->url_format = nstrdup(source->url_format);
     dest->callback_function = source->callback_function;
     dest->user_data = source->user_data;
-    if (u_is_valid_endpoint(dest)) {
+    if (ulfius_is_valid_endpoint(dest)) {
       return U_OK;
     } else {
       return U_ERROR_MEMORY;
@@ -474,7 +480,7 @@ int u_copy_endpoint(struct _u_endpoint * dest, const struct _u_endpoint * source
  * return a copy of an endpoint list with duplicate values
  * returned value must be free'd after use
  */
-struct _u_endpoint * u_duplicate_endpoint_list(const struct _u_endpoint * endpoint_list) {
+struct _u_endpoint * ulfius_duplicate_endpoint_list(const struct _u_endpoint * endpoint_list) {
   struct _u_endpoint * to_return = NULL;
   int i;
   
@@ -484,7 +490,7 @@ struct _u_endpoint * u_duplicate_endpoint_list(const struct _u_endpoint * endpoi
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for duplicate_endpoint_list.to_return");
         return NULL;
       } else {
-        u_copy_endpoint(&to_return[i], &endpoint_list[i]);
+        ulfius_copy_endpoint(&to_return[i], &endpoint_list[i]);
       }
     }
   }
@@ -495,7 +501,7 @@ struct _u_endpoint * u_duplicate_endpoint_list(const struct _u_endpoint * endpoi
  * clean_endpoint
  * free allocated memory by an endpoint
  */
-void u_clean_endpoint(struct _u_endpoint * endpoint) {
+void ulfius_clean_endpoint(struct _u_endpoint * endpoint) {
   if (endpoint != NULL) {
     free(endpoint->http_method);
     free(endpoint->url_prefix);
@@ -504,15 +510,15 @@ void u_clean_endpoint(struct _u_endpoint * endpoint) {
 }
 
 /**
- * u_clean_endpoint_list
+ * ulfius_clean_endpoint_list
  * free allocated memory by an endpoint list
  */
-void u_clean_endpoint_list(struct _u_endpoint * endpoint_list) {
+void ulfius_clean_endpoint_list(struct _u_endpoint * endpoint_list) {
   int i;
   
   if (endpoint_list != NULL) {
     for (i=0; endpoint_list[i].http_method != NULL; i++) {
-      u_clean_endpoint(&endpoint_list[i]);
+      ulfius_clean_endpoint(&endpoint_list[i]);
     }
     free(endpoint_list);
   }
@@ -529,7 +535,7 @@ int ulfius_add_endpoint(struct _u_instance * u_instance, const struct _u_endpoin
   int i, res;
   
   if (u_instance != NULL && u_endpoint != NULL) {
-    if (u_is_valid_endpoint(u_endpoint)) {
+    if (ulfius_is_valid_endpoint(u_endpoint)) {
       if (u_instance->endpoint_list == NULL) {
         // No endpoint, create a list with 2 endpoints so the last one is an empty one
         u_instance->endpoint_list = malloc(2 * sizeof(struct _u_endpoint));
@@ -541,7 +547,7 @@ int ulfius_add_endpoint(struct _u_instance * u_instance, const struct _u_endpoin
       } else {
         // List has endpoints, append this one if it doesn't exist yet
         for (i=0; i <= u_instance->nb_endpoints; i++) {
-          if (u_equals_endpoints(u_endpoint, &(u_instance->endpoint_list[i]))) {
+          if (ulfius_equals_endpoints(u_endpoint, &(u_instance->endpoint_list[i]))) {
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_add_endpoint, Error endpoint already exist");
             return U_ERROR_PARAMS;
           }
@@ -553,12 +559,12 @@ int ulfius_add_endpoint(struct _u_instance * u_instance, const struct _u_endpoin
           return U_ERROR_MEMORY;
         }
       }
-      res = u_copy_endpoint(&u_instance->endpoint_list[u_instance->nb_endpoints - 1], u_endpoint);
+      res = ulfius_copy_endpoint(&u_instance->endpoint_list[u_instance->nb_endpoints - 1], u_endpoint);
       if (res != U_OK) {
         return res;
       } else {
         // Add empty endpoint at the end of the endpoint list
-        u_copy_endpoint(&u_instance->endpoint_list[u_instance->nb_endpoints], u_empty_endpoint());
+        ulfius_copy_endpoint(&u_instance->endpoint_list[u_instance->nb_endpoints], ulfius_empty_endpoint());
       }
       return U_OK;
     } else {
@@ -582,7 +588,7 @@ int ulfius_add_endpoint(struct _u_instance * u_instance, const struct _u_endpoin
 int ulfius_add_endpoint_list(struct _u_instance * u_instance, const struct _u_endpoint ** u_endpoint_list) {
   int i, res;
   if (u_instance != NULL && u_endpoint_list != NULL) {
-    for (i=0; !u_equals_endpoints(u_endpoint_list[i], u_empty_endpoint()); i++) {
+    for (i=0; !ulfius_equals_endpoints(u_endpoint_list[i], ulfius_empty_endpoint()); i++) {
       res = ulfius_add_endpoint(u_instance, u_endpoint_list[i]);
       if (res != U_OK) {
         return res;
@@ -607,7 +613,7 @@ int ulfius_add_endpoint_list(struct _u_instance * u_instance, const struct _u_en
  */
 int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endpoint * u_endpoint) {
   int i, j;
-  if (u_instance != NULL && u_endpoint != NULL && !u_equals_endpoints(u_endpoint, u_empty_endpoint()) && u_is_valid_endpoint(u_endpoint)) {
+  if (u_instance != NULL && u_endpoint != NULL && !ulfius_equals_endpoints(u_endpoint, ulfius_empty_endpoint()) && ulfius_is_valid_endpoint(u_endpoint)) {
     for (i=0; i<u_instance->nb_endpoints; i++) {
       // Compare u_endpoint with u_instance->endpoint_list[i]
       if ((u_endpoint->http_method != NULL && 0 == strcmp(u_instance->endpoint_list[i].http_method, u_endpoint->http_method)) &&
@@ -638,10 +644,10 @@ int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endp
 }
 
 /**
- * u_empty_endpoint
+ * ulfius_empty_endpoint
  * return an empty endpoint that goes at the end of an endpoint list
  */
-const struct _u_endpoint * u_empty_endpoint() {
+const struct _u_endpoint * ulfius_empty_endpoint() {
   static struct _u_endpoint empty_endpoint;
   
   empty_endpoint.http_method = NULL;
@@ -653,10 +659,10 @@ const struct _u_endpoint * u_empty_endpoint() {
 }
 
 /**
- * u_equals_endpoints
+ * ulfius_equals_endpoints
  * Compare 2 endpoints and return true if their method, prefix and format are the same or if both are NULL
  */
-int u_equals_endpoints(const struct _u_endpoint * endpoint1, const struct _u_endpoint * endpoint2) {
+int ulfius_equals_endpoints(const struct _u_endpoint * endpoint1, const struct _u_endpoint * endpoint2) {
   if (endpoint1 != NULL && endpoint2 != NULL) {
     if (endpoint1 == endpoint2) {
       return 1;
@@ -694,6 +700,7 @@ int ulfius_init_instance(struct _u_instance * u_instance, int port, struct socka
       return U_ERROR_MEMORY;
     }
     u_map_init(u_instance->default_headers);
+    u_instance->default_endpoint = NULL;
     return U_OK;
   } else {
     return U_ERROR_PARAMS;
@@ -744,8 +751,9 @@ int ulfius_add_endpoint_by_val(struct _u_instance * u_instance,
  */
 void ulfius_clean_instance(struct _u_instance * u_instance) {
   if (u_instance != NULL) {
-    u_clean_endpoint_list(u_instance->endpoint_list);
+    ulfius_clean_endpoint_list(u_instance->endpoint_list);
     u_map_clean_full(u_instance->default_headers);
+    free(u_instance->default_endpoint);
   }
 }
 
@@ -768,6 +776,38 @@ int ulfius_remove_endpoint_by_val(struct _u_instance * u_instance, const char * 
     endpoint.url_prefix = (char *)url_prefix;
     endpoint.url_format = (char *)url_format;
     return ulfius_remove_endpoint(u_instance, &endpoint);
+  } else {
+    return U_ERROR_PARAMS;
+  }
+}
+
+/**
+ * ulfius_set_default_callback_function
+ * Set the default callback function
+ * This callback will be called if no endpoint match the url called
+ * callback_function: a pointer to a function that will be executed each time the endpoint is called
+ *                    you must declare the function as described.
+ * user_data:         a pointer to a data or a structure that will be available in the callback function
+ * to remove a default callback function, call ulfius_set_default_callback_function with NULL parameter for callback_function
+ * return U_OK on success
+ */
+int ulfius_set_default_callback_function(struct _u_instance * u_instance,
+                                         int (* callback_function)(const struct _u_request * request, struct _u_response * response, void * user_data),
+                                         void * user_data) {
+  if (u_instance != NULL) {
+    if (u_instance->default_endpoint == NULL) {
+      u_instance->default_endpoint = malloc(sizeof(struct _u_endpoint));
+      if (u_instance->default_endpoint == NULL) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for u_instance->default_endpoint");
+        return U_ERROR_MEMORY;
+      }
+    }
+    u_instance->default_endpoint->http_method = NULL;
+    u_instance->default_endpoint->url_prefix = NULL;
+    u_instance->default_endpoint->url_format = NULL;
+    u_instance->default_endpoint->callback_function = callback_function;
+    u_instance->default_endpoint->user_data = user_data;
+    return U_OK;
   } else {
     return U_ERROR_PARAMS;
   }

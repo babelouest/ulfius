@@ -28,7 +28,7 @@
 /**
  * Splits the url to an array of char *
  */
-char ** split_url(const char * prefix, const char * url) {
+char ** ulfius_split_url(const char * prefix, const char * url) {
   char * saveptr = NULL, * cur_word = NULL, ** to_return = malloc(sizeof(char*)), * url_cpy = NULL, * url_cpy_addr = NULL;
   int counter = 1;
   
@@ -40,12 +40,12 @@ char ** split_url(const char * prefix, const char * url) {
       while (cur_word != NULL) {
         to_return = realloc(to_return, (counter+1)*sizeof(char*));
         if (to_return == NULL) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for split_url.to_return");
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for ulfius_split_url.to_return");
           break;
         }
         to_return[counter-1] = nstrdup(cur_word);
         if (to_return[counter-1] == NULL) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for split_url.to_return[counter-1]");
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for ulfius_split_url.to_return[counter-1]");
           break;
         }
         to_return[counter] = NULL;
@@ -62,12 +62,12 @@ char ** split_url(const char * prefix, const char * url) {
         if (0 != strcmp("", cur_word) && cur_word[0] != '?') {
           to_return = realloc(to_return, (counter+1)*sizeof(char*));
           if (to_return == NULL) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for split_url.to_return");
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for ulfius_split_url.to_return");
             break;
           }
           to_return[counter-1] = nstrdup(cur_word);
           if (to_return[counter-1] == NULL) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for split_url.to_return[counter-1]");
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for ulfius_split_url.to_return[counter-1]");
             break;
           }
           to_return[counter] = NULL;
@@ -79,27 +79,27 @@ char ** split_url(const char * prefix, const char * url) {
       url_cpy_addr = NULL;
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for split_url.to_return");
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for ulfius_split_url.to_return");
   }
   return to_return;
 }
 
 /**
- * endpoint_match
+ * ulfius_endpoint_match
  * return the endpoint matching the url called with the proper http method
  * return NULL if no endpoint is found
  */
-struct _u_endpoint * endpoint_match(const char * method, const char * url, struct _u_endpoint * endpoint_list) {
+struct _u_endpoint * ulfius_endpoint_match(const char * method, const char * url, struct _u_endpoint * endpoint_list) {
   char ** splitted_url, ** splitted_url_format;
   struct _u_endpoint * endpoint = NULL;
   int i;
   
   if (method != NULL && url != NULL && endpoint_list != NULL) {
-    splitted_url = split_url(url, NULL);
-    for (i=0; (splitted_url != NULL && !u_equals_endpoints(&(endpoint_list[i]), u_empty_endpoint())); i++) {
+    splitted_url = ulfius_split_url(url, NULL);
+    for (i=0; (splitted_url != NULL && !ulfius_equals_endpoints(&(endpoint_list[i]), ulfius_empty_endpoint())); i++) {
       if (0 == strcasecmp(endpoint_list[i].http_method, method) || endpoint_list[i].http_method[0] == '*') {
-        splitted_url_format = split_url(endpoint_list[i].url_prefix, endpoint_list[i].url_format);
-        if (splitted_url_format != NULL && url_format_match((const char **)splitted_url, (const char **)splitted_url_format)) {
+        splitted_url_format = ulfius_split_url(endpoint_list[i].url_prefix, endpoint_list[i].url_format);
+        if (splitted_url_format != NULL && ulfius_url_format_match((const char **)splitted_url, (const char **)splitted_url_format)) {
           endpoint = (endpoint_list + i);
           u_map_clean_enum(splitted_url_format);
           splitted_url_format = NULL;
@@ -116,11 +116,11 @@ struct _u_endpoint * endpoint_match(const char * method, const char * url, struc
 }
 
 /**
- * url_format_match
+ * ulfius_url_format_match
  * return true if splitted_url matches splitted_url_format
  * false otherwise
  */
-int url_format_match(const char ** splitted_url, const char ** splitted_url_format) {
+int ulfius_url_format_match(const char ** splitted_url, const char ** splitted_url_format) {
   int i;
   
   for (i=0; splitted_url_format[i] != NULL; i++) {
@@ -135,11 +135,11 @@ int url_format_match(const char ** splitted_url, const char ** splitted_url_form
 }
 
 /**
- * parse_url
+ * ulfius_parse_url
  * fills map with the keys/values defined in the url that are described in the endpoint format url
  * return U_OK on success
  */
-int parse_url(const char * url, const struct _u_endpoint * endpoint, struct _u_map * map) {
+int ulfius_parse_url(const char * url, const struct _u_endpoint * endpoint, struct _u_map * map) {
   char * saveptr = NULL, * cur_word = NULL, * url_cpy = NULL, * url_cpy_addr = NULL;
   char * saveptr_format = NULL, * cur_word_format = NULL, * url_format_cpy = NULL, * url_format_cpy_addr = NULL;
 

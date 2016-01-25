@@ -39,6 +39,8 @@ int callback_get_jsontest (const struct _u_request * request, struct _u_response
 
 int callback_get_cookietest (const struct _u_request * request, struct _u_response * response, void * user_data);
 
+int callback_default (const struct _u_request * request, struct _u_response * response, void * user_data);
+
 /**
  * decode a u_map into a string
  */
@@ -95,6 +97,9 @@ int main (int argc, char **argv) {
   ulfius_add_endpoint_by_val(&instance, "DELETE", PREFIX, "/:foo", &callback_all_test_foo, "user data 4");
   ulfius_add_endpoint_by_val(&instance, "PUT", PREFIXJSON, NULL, &callback_get_jsontest, NULL);
   ulfius_add_endpoint_by_val(&instance, "GET", PREFIXCOOKIE, "/:lang/:extra", &callback_get_cookietest, NULL);
+  
+  // default_endpoint declaration
+  ulfius_set_default_callback_function(&instance, &callback_default, NULL);
   
   // Start the framework
   if (ulfius_start_framework(&instance) == U_OK) {
@@ -206,5 +211,14 @@ int callback_get_cookietest (const struct _u_request * request, struct _u_respon
   ulfius_add_cookie_to_response(response, "counter", new_counter, NULL, 0, NULL, NULL, 0, 0);
   response->string_body = strdup("Cookies set");
   
+  return U_OK;
+}
+
+/**
+ * Default callback function called if no endpoint has a match
+ */
+int callback_default (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  response->string_body = strdup("Page not found, do what you want");
+  response->status = 404;
   return U_OK;
 }

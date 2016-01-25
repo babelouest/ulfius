@@ -193,13 +193,14 @@ struct _u_endpoint {
  * 
  * Contains the needed data for an ulfius instance to work
  * 
- * mhd_daemon:      pointer to the libmicrohttpd daemon
- * status:          status of the current instance, status are U_STATUS_STOP, U_STATUS_RUNNING or U_STATUS_ERROR
- * port:            port number to listen to
- * bind_address:    ip address to listen to (if needed)
- * nb_endpoints:    Number of available endpoints
- * endpoint_list:   List of available endpoints
- * default_headers: Default headers that will be added to all response->map_header
+ * mhd_daemon:       pointer to the libmicrohttpd daemon
+ * status:           status of the current instance, status are U_STATUS_STOP, U_STATUS_RUNNING or U_STATUS_ERROR
+ * port:             port number to listen to
+ * bind_address:     ip address to listen to (if needed)
+ * nb_endpoints:     Number of available endpoints
+ * endpoint_list:    List of available endpoints
+ * default_endpoint: Default endpoint if no other endpoint match the current url
+ * default_headers:  Default headers that will be added to all response->map_header
  * 
  */
 struct _u_instance {
@@ -209,6 +210,7 @@ struct _u_instance {
   struct sockaddr_in * bind_address;
   int                  nb_endpoints;
   struct _u_endpoint * endpoint_list;
+  struct _u_endpoint * default_endpoint;
   struct _u_map      * default_headers;
 };
 
@@ -302,7 +304,7 @@ int ulfius_add_endpoint_by_val(struct _u_instance * u_instance,
  * Add a struct _u_endpoint * list to the specified u_instance
  * Can be done during the execution of the webservice for injection
  * u_instance: pointer to a struct _u_instance that describe its port and bind address
- * u_endpoint_list: pointer to an array of struct _u_endpoint ending with a u_empty_endpoint() that will be copied in the u_instance endpoint_list
+ * u_endpoint_list: pointer to an array of struct _u_endpoint ending with a ulfius_empty_endpoint() that will be copied in the u_instance endpoint_list
  * return U_OK on success
  */
 int ulfius_add_endpoint_list(struct _u_instance * u_instance, const struct _u_endpoint ** u_endpoint_list);
@@ -319,6 +321,20 @@ int ulfius_add_endpoint_list(struct _u_instance * u_instance, const struct _u_en
 int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endpoint * u_endpoint);
 
 /**
+ * ulfius_set_default_callback_function
+ * Set the default callback function
+ * This callback will be called if no endpoint match the url called
+ * callback_function: a pointer to a function that will be executed each time the endpoint is called
+ *                    you must declare the function as described.
+ * user_data:         a pointer to a data or a structure that will be available in the callback function
+ * to remove a default callback function, call ulfius_set_default_callback_function with NULL parameter for callback_function
+ * return U_OK on success
+ */
+int ulfius_set_default_callback_function(struct _u_instance * u_instance,
+                                         int (* callback_function)(const struct _u_request * request, struct _u_response * response, void * user_data),
+                                         void * user_data);
+
+/**
  * Remove a struct _u_endpoint * from the specified u_instance
  * using the specified values used to identify an endpoint
  * Can be done during the execution of the webservice for injection
@@ -333,42 +349,42 @@ int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endp
 int ulfius_remove_endpoint_by_val(struct _u_instance * u_instance, const char * http_method, const char * url_prefix, const char * url_format);
 
 /**
- * u_empty_endpoint
+ * ulfius_empty_endpoint
  * return an empty endpoint that goes at the end of an endpoint list
  */
-const struct _u_endpoint * u_empty_endpoint();
+const struct _u_endpoint * ulfius_empty_endpoint();
 
 /**
- * u_copy_endpoint
+ * ulfius_copy_endpoint
  * return a copy of an endpoint with duplicate values
  * returned value must be free'd after use
  */
-int u_copy_endpoint(struct _u_endpoint * dest, const struct _u_endpoint * source);
+int ulfius_copy_endpoint(struct _u_endpoint * dest, const struct _u_endpoint * source);
 
 /**
  * u_copy_endpoint_list
  * return a copy of an endpoint list with duplicate values
  * returned value must be free'd after use
  */
-struct _u_endpoint * u_duplicate_endpoint_list(const struct _u_endpoint * endpoint_list);
+struct _u_endpoint * ulfius_duplicate_endpoint_list(const struct _u_endpoint * endpoint_list);
 
 /**
- * u_clean_endpoint
+ * ulfius_clean_endpoint
  * free allocated memory by an endpoint
  */
-void u_clean_endpoint(struct _u_endpoint * endpoint);
+void ulfius_clean_endpoint(struct _u_endpoint * endpoint);
 
 /**
- * u_clean_endpoint_list
+ * ulfius_clean_endpoint_list
  * free allocated memory by an endpoint list
  */
-void u_clean_endpoint_list(struct _u_endpoint * endpoint_list);
+void ulfius_clean_endpoint_list(struct _u_endpoint * endpoint_list);
 
 /**
- * u_equals_endpoints
+ * ulfius_equals_endpoints
  * Compare 2 endpoints and return true if their method, prefix and format are the same or if both are NULL
  */
-int u_equals_endpoints(const struct _u_endpoint * endpoint1, const struct _u_endpoint * endpoint2);
+int ulfius_equals_endpoints(const struct _u_endpoint * endpoint1, const struct _u_endpoint * endpoint2);
 
 /**
  * ulfius_add_cookie_to_header
@@ -636,21 +652,21 @@ int u_map_count(const struct _u_map * source);
  **********************************/
 
 /**
- * validate_instance
+ * ulfius_validate_instance
  * return true if u_instance has valid parameters, false otherwise
  */
-int validate_instance(const struct _u_instance * u_instance);
+int ulfius_validate_instance(const struct _u_instance * u_instance);
 /**
- * u_is_valid_endpoint
+ * ulfius_is_valid_endpoint
  * return true if the endpoind has valid parameters
  */
-int u_is_valid_endpoint(const struct _u_endpoint * endpoint);
+int ulfius_is_valid_endpoint(const struct _u_endpoint * endpoint);
 
 /**
- * validate_endpoint_list
+ * ulfius_validate_endpoint_list
  * return true if endpoint_list has valid parameters, false otherwise
  */
-int validate_endpoint_list(const struct _u_endpoint * endpoint_list, int nb_endpoints);
+int ulfius_validate_endpoint_list(const struct _u_endpoint * endpoint_list, int nb_endpoints);
 
 /**
  * ulfius_webservice_dispatcher
@@ -662,68 +678,68 @@ int ulfius_webservice_dispatcher (void *cls, struct MHD_Connection *connection,
                                   const char *version, const char *upload_data,
                                   size_t *upload_data_size, void **con_cls);
 /**
- * iterate_post_data
+ * mhd_iterate_post_data
  * function used to iterate post parameters
  * return MHD_NO on error
  */
-int iterate_post_data (void *coninfo_cls, enum MHD_ValueKind kind, const char *key,
+int mhd_iterate_post_data (void *coninfo_cls, enum MHD_ValueKind kind, const char *key,
                       const char *filename, const char *content_type,
                       const char *transfer_encoding, const char *data, uint64_t off,
                       size_t size);
 
 /**
- * request_completed
+ * mhd_request_completed
  * function used to clean data allocated after a web call is complete
  */
-void request_completed (void *cls, struct MHD_Connection *connection,
+void mhd_request_completed (void *cls, struct MHD_Connection *connection,
                         void **con_cls, enum MHD_RequestTerminationCode toe);
 
 /**
- * split_url
+ * ulfius_split_url
  * return an array of char based on the url words
  * returned value must be free'd after use
  */
-char ** split_url(const char * prefix, const char * url);
+char ** ulfius_split_url(const char * prefix, const char * url);
 
 /**
- * endpoint_match
+ * ulfius_endpoint_match
  * return the endpoint matching the url called with the proper http method
  * return NULL if no endpoint is found
  */
-struct _u_endpoint * endpoint_match(const char * method, const char * url, struct _u_endpoint * endpoint_list);
+struct _u_endpoint * ulfius_endpoint_match(const char * method, const char * url, struct _u_endpoint * endpoint_list);
 
 /**
- * url_format_match
+ * ulfius_url_format_match
  * return true if splitted_url matches splitted_url_format
  * false otherwise
  */
-int url_format_match(const char ** splitted_url, const char ** splitted_url_format);
+int ulfius_url_format_match(const char ** splitted_url, const char ** splitted_url_format);
 
 /**
- * parse_url
+ * ulfius_parse_url
  * fills map with the keys/values defined in the url that are described in the endpoint format url
  * return U_OK on success
  */
-int parse_url(const char * url, const struct _u_endpoint * endpoint, struct _u_map * map);
+int ulfius_parse_url(const char * url, const struct _u_endpoint * endpoint, struct _u_map * map);
 
 /**
- * set_response_header
+ * ulfius_set_response_header
  * adds headers defined in the response_map_header to the response
  * return the number of added headers, -1 on error
  */
-int set_response_header(struct MHD_Response * response, const struct _u_map * response_map_header);
+int ulfius_set_response_header(struct MHD_Response * response, const struct _u_map * response_map_header);
 
 /**
- * set_response_cookie
+ * ulfius_set_response_cookie
  * adds cookies defined in the response_map_cookie
  * return the number of added headers, -1 on error
  */
-int set_response_cookie(struct MHD_Response * mhd_response, const struct _u_response * response);
+int ulfius_set_response_cookie(struct MHD_Response * mhd_response, const struct _u_response * response);
 
 /**
  * Add a cookie in the cookie map as defined in the RFC 6265
  * Returned value must be free'd after use
  */
-char * get_cookie_header(const struct _u_cookie * cookie);
+char * ulfius_get_cookie_header(const struct _u_cookie * cookie);
 
 #endif // __ULFIUS_H__

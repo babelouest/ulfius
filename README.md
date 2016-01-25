@@ -2,7 +2,7 @@
 
 Web Framework for REST Applications in C.
 
-Based on [GNU Libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/) for the web server backend, [Jansson](http://www.digip.org/jansson/) for the json manipulation library, and [Libcurl](http://curl.haxx.se/libcurl/) for the send http request API.
+Based on [GNU Libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/) for the web server backend, [Jansson](http://www.digip.org/jansson/) for the json manipulation library, and [Libcurl](http://curl.haxx.se/libcurl/) for the http/smtp client API.
 
 Used to facilitate creation of web applications in C programs with a small memory footprint, as in embedded systems applications.
 
@@ -126,19 +126,25 @@ The `struct _u_instance` is defined as:
  * 
  * Contains the needed data for an ulfius instance to work
  * 
- * mhd_daemon:   pointer to the libmicrohttpd daemon
- * port:         port number to listen to
- * bind_address: ip address to listen to (if needed)
- * nb_endpoints:  Number of available endpoints
- * endpoint_list: List of available endpoints
+ * mhd_daemon:       pointer to the libmicrohttpd daemon
+ * status:           status of the current instance, status are U_STATUS_STOP, U_STATUS_RUNNING or U_STATUS_ERROR
+ * port:             port number to listen to
+ * bind_address:     ip address to listen to (if needed)
+ * nb_endpoints:     Number of available endpoints
+ * endpoint_list:    List of available endpoints
+ * default_endpoint: Default endpoint if no other endpoint match the current url
+ * default_headers:  Default headers that will be added to all response->map_header
  * 
  */
 struct _u_instance {
-  struct MHD_Daemon * mhd_daemon;
-  int port;
+  struct MHD_Daemon *  mhd_daemon;
+  int                  status;
+  int                  port;
   struct sockaddr_in * bind_address;
-  int nb_endpoints;
+  int                  nb_endpoints;
   struct _u_endpoint * endpoint_list;
+  struct _u_endpoint * default_endpoint;
+  struct _u_map      * default_headers;
 };
 ```
 
@@ -235,7 +241,7 @@ int ulfius_add_endpoint_by_val(struct _u_instance * u_instance,
  * Add a struct _u_endpoint * list to the specified u_instance
  * Can be done during the execution of the webservice for injection
  * u_instance: pointer to a struct _u_instance that describe its port and bind address
- * u_endpoint_list: pointer to an array of struct _u_endpoint ending with a u_empty_endpoint() that will be copied in the u_instance endpoint_list
+ * u_endpoint_list: pointer to an array of struct _u_endpoint ending with a ulfius_empty_endpoint() that will be copied in the u_instance endpoint_list
  * return U_OK on success
  */
 int ulfius_add_endpoint_list(struct _u_instance * u_instance, const struct _u_endpoint ** u_endpoint_list);
@@ -264,6 +270,20 @@ int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endp
  * return U_OK on success
  */
 int ulfius_remove_endpoint_by_val(struct _u_instance * u_instance, const char * http_method, const char * url_prefix, const char * url_format);
+
+/**
+ * ulfius_set_default_callback_function
+ * Set the default callback function
+ * This callback will be called if no endpoint match the url called
+ * callback_function: a pointer to a function that will be executed each time the endpoint is called
+ *                    you must declare the function as described.
+ * user_data:         a pointer to a data or a structure that will be available in the callback function
+ * to remove a default callback function, call ulfius_set_default_callback_function with NULL parameter for callback_function
+ * return U_OK on success
+ */
+int ulfius_set_default_callback_function(struct _u_instance * u_instance,
+                                         int (* callback_function)(const struct _u_request * request, struct _u_response * response, void * user_data),
+                                         void * user_data);
 ```
 
 HTTP Method can be an existing or not existing method, or * for any method, you must specify a url_prefix, a url_format or both, callback_function is mandatory, user_data is optional.
@@ -272,9 +292,9 @@ Your `struct _u_endpoint` array **MUST** end with an empty `struct _u_endpoint`.
 
 You can manually declare an endpoint or use the dedicated functions as `int ulfius_add_endpoint` or `int ulfius_add_endpoint_by_val`.
 
-If you manipulate the attribute `u_instance.endpoint_list`, you must end the list with an empty endpoint (see `const struct _u_endpoint * u_empty_endpoint()`), and you must set the attribute `u_instance.nb_endpoints` accordingly. Also, you must use dynamically allocated values for attributes `http_method`, `url_prefix` and `url_format`.
+If you manipulate the attribute `u_instance.endpoint_list`, you must end the list with an empty endpoint (see `const struct _u_endpoint * ulfius_empty_endpoint()`), and you must set the attribute `u_instance.nb_endpoints` accordingly. Also, you must use dynamically allocated values for attributes `http_method`, `url_prefix` and `url_format`.
 
-Please note that each time a call is made to the webservice, endpoints will be tested in the same order. On the first matching endpoint, the other ones won't be tested. So be careful on your endpoints declaration order.
+Please note that each time a call is made to the webservice, endpoints will be tested in the same order. On the first matching endpoint, the other ones won't be tested. So be careful on your endpoints declaration order. If no endpoint is found, an error 404 is raised, except if you set a default endpoint. If you set a default endpoint with `ulfius_set_default_callback_function`, the default callback function will be run if no endpoint match the current url.
 
 For example, if you declare the following endpoints in that order:
 

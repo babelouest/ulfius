@@ -26,11 +26,11 @@
 #include "ulfius.h"
 
 /**
- * set_response_header
+ * ulfius_set_response_header
  * adds headers defined in the response_map_header to the response
  * return the number of added headers, -1 on error
  */
-int set_response_header(struct MHD_Response * response, const struct _u_map * response_map_header) {
+int ulfius_set_response_header(struct MHD_Response * response, const struct _u_map * response_map_header) {
   const char ** header_keys = u_map_enum_keys(response_map_header);
   const char * header_value;
   int i = -1, ret;
@@ -51,16 +51,16 @@ int set_response_header(struct MHD_Response * response, const struct _u_map * re
 }
 
 /**
- * set_response_cookie
+ * ulfius_set_response_cookie
  * adds cookies defined in the response_map_cookie
  * return the number of added headers, -1 on error
  */
-int set_response_cookie(struct MHD_Response * mhd_response, const struct _u_response * response) {
+int ulfius_set_response_cookie(struct MHD_Response * mhd_response, const struct _u_response * response) {
   int i, ret;
   char * header;
   if (mhd_response != NULL && response != NULL) {
     for (i=0; i<response->nb_cookies; i++) {
-      header = get_cookie_header(&response->map_cookie[i]);
+      header = ulfius_get_cookie_header(&response->map_cookie[i]);
       if (header != NULL) {
         ret = MHD_add_response_header (mhd_response, MHD_HTTP_HEADER_SET_COOKIE, header);
         free(header);
@@ -164,7 +164,7 @@ int ulfius_add_cookie_to_response(struct _u_response * response, const char * ke
  * Add a cookie in the cookie map as defined in the RFC 6265
  * Returned value must be free'd after use
  */
-char * get_cookie_header(const struct _u_cookie * cookie) {
+char * ulfius_get_cookie_header(const struct _u_cookie * cookie) {
   char * attr_expires = NULL, * attr_max_age = NULL, * attr_domain = NULL, * attr_path = NULL;
   char * attr_secure = NULL, * attr_http_only = NULL, * cookie_header_value = NULL;
 
@@ -255,7 +255,7 @@ char * get_cookie_header(const struct _u_cookie * cookie) {
     }
     
     if (attr_expires == NULL || attr_max_age == NULL || attr_domain == NULL || attr_path == NULL || attr_secure == NULL || attr_http_only == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for get_cookie_header");
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for ulfius_get_cookie_header");
     } else {
       cookie_header_value = msprintf("%s=%s%s%s%s%s%s%s", cookie->key, cookie->value, attr_expires, attr_max_age, attr_domain, attr_path, attr_secure, attr_http_only);
       if (cookie_header_value == NULL) {
