@@ -13,6 +13,7 @@ The source code of a hello world using Ulfius could be the following:
 ```c
 #include <ulfius.h>
 #include <string.h>
+#include <stdio.h>
 
 #define PORT 8080
 
