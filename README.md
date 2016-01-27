@@ -12,7 +12,7 @@ The source code of a hello world using Ulfius could be the following:
 
 ```c
 #include <ulfius.h>
-#include <stdio.h>
+#include <string.h>
 
 #define PORT 8080
 
@@ -42,16 +42,14 @@ int main(void) {
   
   // Start the framework
   if (ulfius_start_framework(&instance) == U_OK) {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "Start framework on port %d", instance.port);
+    printf("Start framework on port %d", instance.port);
     
     // Wait for the user to press <enter> on the console to quit the application
     getchar();
   } else {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "Error starting framework");
+    printf("Error starting framework");
   }
-  y_log_message(Y_LOG_LEVEL_DEBUG, "End framework");
-  
-  y_close_logs();
+  printf("End framework");
   
   ulfius_stop_framework(&instance);
   ulfius_clean_instance(&instance);
