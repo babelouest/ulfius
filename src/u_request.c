@@ -141,7 +141,7 @@ int ulfius_url_format_match(const char ** splitted_url, const char ** splitted_u
  */
 int ulfius_parse_url(const char * url, const struct _u_endpoint * endpoint, struct _u_map * map) {
   char * saveptr = NULL, * cur_word = NULL, * url_cpy = NULL, * url_cpy_addr = NULL;
-  char * saveptr_format = NULL, * cur_word_format = NULL, * url_format_cpy = NULL, * url_format_cpy_addr = NULL;
+  char * saveptr_format = NULL, * saveptr_prefix = NULL, * cur_word_format = NULL, * url_format_cpy = NULL, * url_format_cpy_addr = NULL;
 
   if (map != NULL && endpoint != NULL) {
     url_cpy = url_cpy_addr = nstrdup(url);
@@ -149,21 +149,20 @@ int ulfius_parse_url(const char * url, const struct _u_endpoint * endpoint, stru
     cur_word = strtok_r( url_cpy, ULFIUS_URL_SEPARATOR, &saveptr );
     if (endpoint->url_prefix != NULL && url_format_cpy == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for url_format_cpy");
-    } else {
-      cur_word_format = strtok_r( url_format_cpy, ULFIUS_URL_SEPARATOR, &saveptr_format );
+    } else if (url_format_cpy != NULL) {
+      cur_word_format = strtok_r( url_format_cpy, ULFIUS_URL_SEPARATOR, &saveptr_prefix );
     }
     while (cur_word_format != NULL && cur_word != NULL) {
       // Ignoring url_prefix words
       cur_word = strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr );
-      cur_word_format = strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr_format );
+      cur_word_format = strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr_prefix );
     }
     free(url_format_cpy_addr);
-    saveptr_format = NULL;
     
     url_format_cpy = url_format_cpy_addr = nstrdup(endpoint->url_format);
     if (endpoint->url_format != NULL && url_format_cpy == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for url_format_cpy");
-    } else {
+    } else if (url_format_cpy != NULL) {
       cur_word_format = strtok_r( url_format_cpy, ULFIUS_URL_SEPARATOR, &saveptr_format );
     }
     while (cur_word_format != NULL && cur_word != NULL) {
