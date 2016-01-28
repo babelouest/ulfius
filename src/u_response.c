@@ -521,3 +521,127 @@ int ulfius_copy_response(struct _u_response * dest, const struct _u_response * s
     return U_ERROR_PARAMS;
   }
 }
+
+/**
+ * ulfius_set_string_response
+ * Add a string body to a response
+ * body must end with a '\0' character
+ * return U_OK on success
+ */
+int ulfius_set_string_response(struct _u_response * response, const uint status, const char * body) {
+  if (response != NULL && body != NULL) {
+    // Free all the bodies available
+    free(response->string_body);
+    response->string_body = NULL;
+    free(response->binary_body);
+    response->binary_body = NULL;
+    response->binary_body_length = 0;
+    json_decref(response->json_body);
+    response->json_body = NULL;
+    
+    response->string_body = nstrdup(body);
+    if (response->string_body == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for dest->string_body");
+      return U_ERROR_MEMORY;
+    }
+    response->status = status;
+    return U_OK;
+  } else {
+    return U_ERROR_PARAMS;
+  }
+}
+
+/**
+ * ulfius_set_binary_response
+ * Add a binary body to a response
+ * return U_OK on success
+ */
+int ulfius_set_binary_response(struct _u_response * response, const uint status, const char * body, const size_t length) {
+  if (response != NULL && body != NULL && length > 0) {
+    // Free all the bodies available
+    free(response->string_body);
+    response->string_body = NULL;
+    free(response->binary_body);
+    response->binary_body = NULL;
+    response->binary_body_length = 0;
+    json_decref(response->json_body);
+    response->json_body = NULL;
+
+    response->binary_body = malloc(length);
+    if (response->binary_body == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for dest->binary_body");
+      return U_ERROR_MEMORY;
+    }
+    memcpy(response->binary_body, body, length);
+    response->binary_body_length = length;
+    response->status = status;
+    return U_OK;
+  } else {
+    return U_ERROR_PARAMS;
+  }
+}
+
+/**
+ * ulfius_set_json_response
+ * Add a json_t body to a response
+ * return U_OK on success
+ */
+int ulfius_set_json_response(struct _u_response * response, const uint status, const json_t * body) {
+  if (response != NULL && body != NULL) {
+    // Free all the bodies available
+    free(response->string_body);
+    response->string_body = NULL;
+    free(response->binary_body);
+    response->binary_body = NULL;
+    response->binary_body_length = 0;
+    json_decref(response->json_body);
+    response->json_body = NULL;
+
+    response->json_body = json_copy((json_t *)body);
+    if (response->json_body == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for dest->json_body");
+      return U_ERROR_MEMORY;
+    }
+    response->status = status;
+    return U_OK;
+  } else {
+    return U_ERROR_PARAMS;
+  }
+}
+
+/**
+ * ulfius_set_empty_response
+ * Set an empty response with only a status
+ * return U_OK on success
+ */
+int ulfius_set_empty_response(struct _u_response * response, const uint status) {
+  if (response != NULL) {
+    // Free all the bodies available
+    free(response->string_body);
+    response->string_body = NULL;
+    free(response->binary_body);
+    response->binary_body = NULL;
+    response->binary_body_length = 0;
+    json_decref(response->json_body);
+    response->json_body = NULL;
+    
+    response->status = status;
+    return U_OK;
+  } else {
+    return U_ERROR_PARAMS;
+  }
+}
+
+/**
+ * ulfius_add_header_to_response
+ * add a header to the response
+ * return U_OK on success
+ */
+int ulfius_add_header_to_response(struct _u_response * response, const char * key, const char * value) {
+  if (response != NULL && key != NULL && value != NULL) {
+    return u_map_put(response->map_header, key, value);
+    return U_OK;
+  } else {
+    return U_ERROR_PARAMS;
+  }
+}

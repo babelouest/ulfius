@@ -386,14 +386,6 @@ void ulfius_clean_endpoint_list(struct _u_endpoint * endpoint_list);
  */
 int ulfius_equals_endpoints(const struct _u_endpoint * endpoint1, const struct _u_endpoint * endpoint2);
 
-/**
- * ulfius_add_cookie_to_header
- * add a cookie to the cookie map
- * return U_OK on success
- */
-int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const uint max_age, 
-                      const char * domain, const char * path, const int secure, const int http_only);
-
 /********************************************
  * Requests/Responses functions declarations
  ********************************************/
@@ -404,6 +396,81 @@ int ulfius_add_cookie_to_response(struct _u_response * response, const char * ke
  * return U_OK on success
  */
 int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response);
+
+/**
+ * ulfius_send_smtp_email
+ * Send an email using libcurl
+ * email is plain/text and UTF8 charset
+ * host: smtp server host name
+ * port: tcp port number (optional, 0 for default)
+ * use_tls: true if the connection is tls secured
+ * verify_certificate: true if you want to disable the certificate verification on a tls server
+ * user: connection user name (optional, NULL: no user name)
+ * password: connection password (optional, NULL: no password)
+ * from: from address (mandatory)
+ * to: to recipient address (mandatory)
+ * cc: cc recipient address (optional, NULL: no cc)
+ * bcc: bcc recipient address (optional, NULL: no bcc)
+ * subject: email subject (mandatory)
+ * mail_body: email body (mandatory)
+ * return U_OK on success
+ */
+int ulfius_send_smtp_email(const char * host, 
+                            const int port, 
+                            const int use_tls, 
+                            const int verify_certificate, 
+                            const char * user, 
+                            const char * password, 
+                            const char * from, 
+                            const char * to, 
+                            const char * cc, 
+                            const char * bcc, 
+                            const char * subject, 
+                            const char * mail_body);
+
+/**
+ * ulfius_add_cookie_to_header
+ * add a cookie to the cookie map
+ * return U_OK on success
+ */
+int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const uint max_age, 
+                      const char * domain, const char * path, const int secure, const int http_only);
+
+/**
+ * ulfius_add_header_to_response
+ * add a header to the response
+ * return U_OK on success
+ */
+int ulfius_add_header_to_response(struct _u_response * response, const char * key, const char * value);
+
+/**
+ * ulfius_set_string_response
+ * Add a string body to a response
+ * body must end with a '\0' character
+ * return U_OK on success
+ */
+int ulfius_set_string_response(struct _u_response * response, const uint status, const char * body);
+
+/**
+ * ulfius_set_binary_response
+ * Add a binary body to a response
+ * return U_OK on success
+ */
+int ulfius_set_binary_response(struct _u_response * response, const uint status, const char * body, const size_t length);
+
+/**
+ * ulfius_set_json_response
+ * Add a json_t body to a response
+ * return U_OK on success
+ */
+int ulfius_set_json_response(struct _u_response * response, const uint status, const json_t * body);
+
+/**
+ * ulfius_set_empty_response
+ * Set an empty response with only a status
+ * return U_OK on success
+ */
+int ulfius_set_empty_response(struct _u_response * response, const uint status);
 
 /**
  * ulfius_init_request
@@ -482,36 +549,6 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
  * return value must be cleaned after use
  */
 struct _u_response * ulfius_duplicate_response(const struct _u_response * response);
-
-/**
- * Send an email using libcurl
- * email is plain/text and UTF8 charset
- * host: smtp server host name
- * port: tcp port number (optional, 0 for default)
- * use_tls: true if the connection is tls secured
- * verify_certificate: true if you want to disable the certificate verification on a tls server
- * user: connection user name (optional, NULL: no user name)
- * password: connection password (optional, NULL: no password)
- * from: from address (mandatory)
- * to: to recipient address (mandatory)
- * cc: cc recipient address (optional, NULL: no cc)
- * bcc: bcc recipient address (optional, NULL: no bcc)
- * subject: email subject (mandatory)
- * mail_body: email body (mandatory)
- * return U_OK on success
- */
-int ulfius_send_smtp_email(const char * host, 
-                            const int port, 
-                            const int use_tls, 
-                            const int verify_certificate, 
-                            const char * user, 
-                            const char * password, 
-                            const char * from, 
-                            const char * to, 
-                            const char * cc, 
-                            const char * bcc, 
-                            const char * subject, 
-                            const char * mail_body);
 
 /************************************************************************
  * _u_map declarations                                                  *  

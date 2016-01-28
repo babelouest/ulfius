@@ -21,8 +21,7 @@ The source code of a hello world using Ulfius could be the following:
  * Callback function for the web application on /helloworld url call
  */
 int callback_hello_world (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  response->string_body = strdup("Hello World!");
-  response->status = 200;
+  ulfius_set_string_response(response, 200, "Hello World!");
   return U_OK;
 }
 
@@ -30,31 +29,31 @@ int callback_hello_world (const struct _u_request * request, struct _u_response 
  * main function
  */
 int main(void) {
-  // Set the framework port number
   struct _u_instance instance;
-  
+
+  // Initialize instance with the port number
   if (ulfius_init_instance(&instance, PORT, NULL) != U_OK) {
-    fprintf(stderr, "Error ulfius_init_instance, abort");
+    fprintf(stderr, "Error ulfius_init_instance, abort\n");
     return(1);
   }
-  
+
   // Endpoint list declaration
   ulfius_add_endpoint_by_val(&instance, "GET", "/helloworld", NULL, &callback_hello_world, NULL);
-  
+
   // Start the framework
   if (ulfius_start_framework(&instance) == U_OK) {
-    printf("Start framework on port %d", instance.port);
-    
+    printf("Start framework on port %d\n", instance.port);
+
     // Wait for the user to press <enter> on the console to quit the application
     getchar();
   } else {
-    printf("Error starting framework");
+    fprintf(stderr, "Error starting framework\n");
   }
-  printf("End framework");
-  
+  printf("End framework\n");
+
   ulfius_stop_framework(&instance);
   ulfius_clean_instance(&instance);
-  
+
   return 0;
 }
 ```
@@ -323,7 +322,7 @@ The starting point function is ulfius_start_framework:
 int ulfius_start_framework(struct _u_instance * u_instance);
 ```
 
-In your program where you want to start the web server, simply execute the function `ulfius_start_framework(struct _u_instance * u_instance, struct _u_endpoint * endpoint_list);` with the previously declared `instance` and `endpoint_list`. You can reuse the same callback function as much as you want for different endpoints. On success, this function returns `U_OK`, otherwise an error code.
+In your program where you want to start the web server, simply execute the function `ulfius_start_framework(struct _u_instance * u_instance);` with the previously declared `instance`. You can reuse the same callback function as much as you want for different endpoints. On success, this function returns `U_OK`, otherwise an error code.
 
 #### Stop webservice
 
@@ -424,7 +423,40 @@ struct _u_response {
 
 In the response variable set by the framework to the callback function, the structure is initialized with no data, except for the map_cookie which is set to the same key/values as the request element `map_cookie`.
 
-The user must set the `string_body` or the `json_body` or the `binary_body` before the return statement, otherwise the framework will send an error 500 response. If a `string_body` is set, the `json_body` or the `binary_body` won't be tested. So to return a `json_body` object, you must leave `string_body` with a `NULL` value. Likewise, if a `json_body` is set, the `binary_body` won't be tested. Finally, if a `binary_body` is set, its size must be set to `binary_body_length`.
+The user must set the `string_body` or the `json_body` or the `binary_body` before the return statement, otherwise the framework will send an error 500 response. If a `string_body` is set, the `json_body` or the `binary_body` won't be tested. So to return a `json_body` object, you must leave `string_body` with a `NULL` value. Likewise, if a `json_body` is set, the `binary_body` won't be tested. Finally, if a `binary_body` is set, its size must be set to `binary_body_length`. Elements `string_body`, `binary_body` and `json_body` are free'd by the framework when the response has been sent  to the client, so you must use dynamically allocated values.
+
+Some functions are dedicated to handle the response:
+
+```c
+/**
+ * ulfius_add_header_to_response
+ * add a header to the response
+ * return U_OK on success
+ */
+int ulfius_add_header_to_response(struct _u_response * response, const char * key, const char * value);
+
+/**
+ * ulfius_set_string_response
+ * Add a string body to a response
+ * body must end with a '\0' character
+ * return U_OK on success
+ */
+int ulfius_set_string_response(struct _u_response * response, const uint status, const char * body);
+
+/**
+ * ulfius_set_binary_response
+ * Add a binary body to a response
+ * return U_OK on success
+ */
+int ulfius_set_binary_response(struct _u_response * response, const uint status, const char * body, const size_t length);
+
+/**
+ * ulfius_set_json_response
+ * Add a json_t body to a response
+ * return U_OK on success
+ */
+int ulfius_set_json_response(struct _u_response * response, const uint status, const json_t * body);
+```
 
 The `jansson` api documentation is available at the following address: [Jansson documentation](https://jansson.readthedocs.org/).
 
