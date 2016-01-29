@@ -423,7 +423,7 @@ struct _u_response {
 
 In the response variable set by the framework to the callback function, the structure is initialized with no data, except for the map_cookie which is set to the same key/values as the request element `map_cookie`.
 
-The user must set the `string_body` or the `json_body` or the `binary_body` before the return statement, otherwise the framework will send an error 500 response. If a `string_body` is set, the `json_body` or the `binary_body` won't be tested. So to return a `json_body` object, you must leave `string_body` with a `NULL` value. Likewise, if a `json_body` is set, the `binary_body` won't be tested. Finally, if a `binary_body` is set, its size must be set to `binary_body_length`. Elements `string_body`, `binary_body` and `json_body` are free'd by the framework when the response has been sent  to the client, so you must use dynamically allocated values.
+The user must set the `string_body` or the `json_body` or the `binary_body` before the return statement, or no response body at all if no need. If a `string_body` is set, the `json_body` or the `binary_body` won't be tested. So to return a `json_body` object, you must leave `string_body` with a `NULL` value. Likewise, if a `json_body` is set, the `binary_body` won't be tested. Finally, if a `binary_body` is set, its size must be set to `binary_body_length`. Elements `string_body`, `binary_body` and `json_body` are free'd by the framework when the response has been sent  to the client, so you must use dynamically allocated values. If no status is set, status 200 will be sent to the client.
 
 Some functions are dedicated to handle the response:
 
