@@ -74,7 +74,32 @@ char * print_map(const struct _u_map * map) {
   }
 }
 
+char * read_file(const char * filename) {
+  char * buffer = NULL;
+  long length;
+  FILE * f = fopen (filename, "rb");
+  if (filename != NULL) {
+
+    if (f) {
+      fseek (f, 0, SEEK_END);
+      length = ftell (f);
+      fseek (f, 0, SEEK_SET);
+      buffer = malloc (length + 1);
+      if (buffer) {
+        fread (buffer, 1, length, f);
+      }
+      buffer[length] = '\0';
+      fclose (f);
+    }
+    return buffer;
+  } else {
+    return NULL;
+  }
+}
+
 int main (int argc, char **argv) {
+  int ret;
+  
   // Set the framework port number
   struct _u_instance instance;
   
@@ -102,8 +127,19 @@ int main (int argc, char **argv) {
   ulfius_set_default_endpoint(&instance, NULL, NULL, NULL, &callback_default, NULL);
   
   // Start the framework
-  if (ulfius_start_framework(&instance) == U_OK) {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "Start framework on port %d", instance.port);
+  if (argc == 4 && strcmp("-secure", argv[1]) == 0) {
+    // If command-line options are -secure <key_file> <cert_file>, then open an https connection
+    char * key_pem = read_file(argv[2]), * cert_pem = read_file(argv[3]);
+    ret = ulfius_start_secure_framework(&instance, key_pem, cert_pem);
+    free(key_pem);
+    free(cert_pem);
+  } else {
+    // Open an http connection
+    ret = ulfius_start_framework(&instance);
+  }
+  
+  if (ret == U_OK) {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "Start %sframework on port %d", ((argc == 4 && strcmp("-secure", argv[1]) == 0)?"secure ":""), instance.port);
     
     // Wait for the user to press <enter> on the console to quit the application
     getchar();

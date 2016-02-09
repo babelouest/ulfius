@@ -144,6 +144,49 @@ int ulfius_start_framework(struct _u_instance * u_instance) {
   }
 }
 
+/**
+ * ulfius_start_secure_framework
+ * Initializes the framework and run the webservice based on the parameters given using an HTTPS connection
+ * 
+ * u_instance:    pointer to a struct _u_instance that describe its port and bind address
+ * key_pem:       private key for the server
+ * cert_pem:      server certificate
+ * return U_OK on success
+ */
+int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem) {
+#ifdef DEBUG
+  uint mhd_options = MHD_USE_THREAD_PER_CONNECTION | MHD_USE_DEBUG | MHD_USE_SSL;
+#else
+  uint mhd_options = MHD_USE_THREAD_PER_CONNECTION | MHD_USE_SSL;
+#endif
+  
+  // Validate u_instance and endpoint_list that there is no mistake
+  if (ulfius_validate_instance(u_instance) && key_pem != NULL && cert_pem != NULL) {
+    u_instance->mhd_daemon = MHD_start_daemon (
+          mhd_options, 
+          u_instance->port, NULL, NULL, &ulfius_webservice_dispatcher, (void *)u_instance, 
+          MHD_OPTION_NOTIFY_COMPLETED, mhd_request_completed, NULL,
+          MHD_OPTION_SOCK_ADDR, u_instance->bind_address,
+          MHD_OPTION_URI_LOG_CALLBACK, ulfius_uri_logger, NULL,
+          MHD_OPTION_HTTPS_MEM_KEY, key_pem,
+          MHD_OPTION_HTTPS_MEM_CERT, cert_pem,
+          MHD_OPTION_END
+    );
+    
+    if (u_instance->mhd_daemon == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error MHD_start_daemon, aborting");
+      u_instance->status = U_STATUS_ERROR;
+      return U_ERROR_LIBMHD;
+    } else {
+      u_instance->status = U_STATUS_RUNNING;
+      return U_OK;
+    }
+  } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "ulfius_start_secure_framework - error input parameters");
+    return U_ERROR_PARAMS;
+  }
+}
+
 int ulfius_get_body_from_response(struct _u_response * response, void ** response_buffer, size_t * response_buffer_len) {
   if (response == NULL || response_buffer == NULL || response_buffer_len == NULL) {
     return U_ERROR_PARAMS;

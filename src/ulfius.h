@@ -259,12 +259,22 @@ void ulfius_clean_instance(struct _u_instance * u_instance);
 /**
  * ulfius_start_framework
  * Initializes the framework and run the webservice based on the parameters given
- * return truze if no error
  * 
  * u_instance:    pointer to a struct _u_instance that describe its port and bind address
  * return U_OK on success
  */
 int ulfius_start_framework(struct _u_instance * u_instance);
+
+/**
+ * ulfius_start_secure_framework
+ * Initializes the framework and run the webservice based on the parameters given using an HTTPS connection
+ * 
+ * u_instance:    pointer to a struct _u_instance that describe its port and bind address
+ * key_pem:       private key for the server
+ * cert_pem:      server certificate
+ * return U_OK on success
+ */
+int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem);
 
 /**
  * ulfius_stop_framework
