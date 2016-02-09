@@ -330,7 +330,7 @@ the last 2 will never be reached because the first one will always be a match fo
 
 #### Start webservice
 
-The starting point function is ulfius_start_framework:
+The starting point function are ulfius_start_framework or ulfius_start_secure_framework:
 
 ```c
 /**
@@ -342,9 +342,20 @@ The starting point function is ulfius_start_framework:
  * return U_OK on success
  */
 int ulfius_start_framework(struct _u_instance * u_instance);
+
+/**
+ * ulfius_start_secure_framework
+ * Initializes the framework and run the webservice based on the parameters given using an HTTPS connection
+ * 
+ * u_instance:    pointer to a struct _u_instance that describe its port and bind address
+ * key_pem:       private key for the server
+ * cert_pem:      server certificate
+ * return U_OK on success
+ */
+int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem);
 ```
 
-In your program where you want to start the web server, simply execute the function `ulfius_start_framework(struct _u_instance * u_instance);` with the previously declared `instance`. You can reuse the same callback function as much as you want for different endpoints. On success, this function returns `U_OK`, otherwise an error code.
+In your program where you want to start the web server, simply execute the function `ulfius_start_framework(struct _u_instance * u_instance)` for a non-secure http connection or `ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem)` for a secure https connection, using a valid private key and a valid corresponding server certificate, see openssl documentation for certificate generation. Those function accept the previously declared `instance` as first parameter. You can reuse the same callback function as much as you want for different endpoints. On success, these functions returns `U_OK`, otherwise an error code.
 
 #### Stop webservice
 
