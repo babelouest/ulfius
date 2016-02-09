@@ -383,7 +383,7 @@ int ulfius_clean_response_full(struct _u_response * response) {
  */
 int ulfius_init_response(struct _u_response * response) {
   if (response != NULL) {
-    response->status = 0;
+    response->status = 200;
     response->map_header = malloc(sizeof(struct _u_map));
     if (response->map_header == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->map_header");

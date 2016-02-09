@@ -21,8 +21,9 @@ PROXY_EXAMPLE_LOCATION=./examples/proxy_example
 REQUEST_EXAMPLE_LOCATION=./examples/request_example
 TEST_U_MAP_LOCATION=./examples/test_u_map
 INJECTION_EXAMPLE_LOCATION=./examples/injection_example
+AUTH_EXAMPLE_LOCATION=./examples/auth_example
 
-all: libulfius.so simple_example sheep_counter proxy_example request_example injection_example test_u_map
+all: libulfius.so simple_example sheep_counter proxy_example request_example injection_example auth_example test_u_map
 
 debug:
 	cd $(SIMPLE_EXAMPLE_LOCATION) && $(MAKE) debug
@@ -30,6 +31,7 @@ debug:
 	cd $(PROXY_EXAMPLE_LOCATION) && $(MAKE) debug
 	cd $(REQUEST_EXAMPLE_LOCATION) && $(MAKE) debug
 	cd $(INJECTION_EXAMPLE_LOCATION) && $(MAKE) debug
+	cd $(AUTH_EXAMPLE_LOCATION) && $(MAKE) debug
 	cd $(TEST_U_MAP_LOCATION) && $(MAKE) debug
 
 clean:
@@ -39,6 +41,7 @@ clean:
 	cd $(PROXY_EXAMPLE_LOCATION) && $(MAKE) clean
 	cd $(REQUEST_EXAMPLE_LOCATION) && $(MAKE) clean
 	cd $(INJECTION_EXAMPLE_LOCATION) && $(MAKE) clean
+	cd $(AUTH_EXAMPLE_LOCATION) && $(MAKE) clean
 	cd $(TEST_U_MAP_LOCATION) && $(MAKE) clean
 
 libulfius.so:
@@ -58,6 +61,9 @@ request_example:
 
 injection_example:
 	cd $(INJECTION_EXAMPLE_LOCATION) && $(MAKE)
+
+auth_example:
+	cd $(AUTH_EXAMPLE_LOCATION) && $(MAKE)
 
 test_u_map:
 	cd $(TEST_U_MAP_LOCATION) && $(MAKE)

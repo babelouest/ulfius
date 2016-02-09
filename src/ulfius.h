@@ -44,9 +44,6 @@
 #define ULFIUS_HTTP_NOT_FOUND_BODY "Resource not found"
 #define ULFIUS_HTTP_ERROR_BODY     "Server Error"
 
-#define ULFIUS_CALLBACK_RESPONSE_OK    0
-#define ULFIUS_CALLBACK_RESPONSE_ERROR 1
-
 #define ULFIUS_COOKIE_ATTRIBUTE_EXPIRES  "Expires"
 #define ULFIUS_COOKIE_ATTRIBUTE_MAX_AGE  "Max-Age"
 #define ULFIUS_COOKIE_ATTRIBUTE_DOMAIN   "Domain"
@@ -56,19 +53,20 @@
 
 #define ULFIUS_POSTBUFFERSIZE 1024
 
-#define U_OK              0 // No error
-#define U_ERROR           1 // Error
-#define U_ERROR_MEMORY    2 // Error in memory allocation
-#define U_ERROR_PARAMS    3 // Error in input parameters
-#define U_ERROR_LIBMHD    4 // Error in libmicrohttpd execution
-#define U_ERROR_LIBCURL   5 // Error in libcurl execution
-#define U_ERROR_NOT_FOUND 6 // Something was not found
+#define U_OK                 0 // No error
+#define U_ERROR              1 // Error
+#define U_ERROR_MEMORY       2 // Error in memory allocation
+#define U_ERROR_PARAMS       3 // Error in input parameters
+#define U_ERROR_LIBMHD       4 // Error in libmicrohttpd execution
+#define U_ERROR_LIBCURL      5 // Error in libcurl execution
+#define U_ERROR_NOT_FOUND    6 // Something was not found
+#define U_ERROR_UNAUTHORIZED 7 // No authorization given
 
 #define U_STATUS_STOP     0
 #define U_STATUS_RUNNING  1
 #define U_STATUS_ERROR    2
 
-#define ULFIUS_VERSION 0.10.0
+#define ULFIUS_VERSION 0.11.0
 
 /*************
  * Structures
@@ -103,24 +101,28 @@ struct _u_cookie {
  * Structure of request parameters
  * 
  * Contains request data
- * http_verb:          http method (GET, POST, PUT, DELETE, etc.), use '*' to match all http methods
- * http_url:           url used to call this callback function or full url to call when used in a ulfius_send_http_request
- * client_address:     IP address of the client
- * map_url:            map containing the url variables, both from the route and the ?key=value variables
- * map_header:         map containing the header variables
- * map_cookie:         map containing the cookie variables
- * map_post_body:      map containing the post body variables (if available)
- * json_body:          json_t * object containing the json body (if available)
- * json_error:            stack allocated json_error_t if json body was not parsed (if available)
- * json_has_error:     true if the json body was not parsed by jansson (if available)
- * binary_body:        pointer to raw body
- * binary_body_length: length of raw body
+ * http_verb:           http method (GET, POST, PUT, DELETE, etc.), use '*' to match all http methods
+ * http_url:            url used to call this callback function or full url to call when used in a ulfius_send_http_request
+ * client_address:      IP address of the client
+ * auth_basic_user:     basic authtication username
+ * auth_basic_password: basic authtication password
+ * map_url:             map containing the url variables, both from the route and the ?key=value variables
+ * map_header:          map containing the header variables
+ * map_cookie:          map containing the cookie variables
+ * map_post_body:       map containing the post body variables (if available)
+ * json_body:           json_t * object containing the json body (if available)
+ * json_error:          stack allocated json_error_t if json body was not parsed (if available)
+ * json_has_error:      true if the json body was not parsed by jansson (if available)
+ * binary_body:         pointer to raw body
+ * binary_body_length:  length of raw body
  * 
  */
 struct _u_request {
   char *               http_verb;
   char *               http_url;
   struct sockaddr *    client_address;
+  char *               auth_basic_user;
+  char *               auth_basic_password;
   struct _u_map *      map_url;
   struct _u_map *      map_header;
   struct _u_map *      map_cookie;
@@ -172,15 +174,26 @@ struct _u_response {
  *                    to define a variable in the url, prefix it with @ or :
  *                    example: /test/resource/:name/elements
  *                    on an url_format that ends with '*', the rest of the url will not be tested
+ * auth_function:     a pointer to a function used to check the client credentials he sent (optional)
+ *                    this function will be called prior to the callback function. If auth_function returned value is U_OK,
+ *                    then the callback function will be called after. If auth_function is not U_OK, response status send will be
+ *                    401 (Unauthorized), and callback_function will be skipped
+ * auth_data:         a pointer to a data or a structure that will be available in auth_function
+ * auth_realm:        realm value for authentication
  * callback_function: a pointer to a function that will be executed each time the endpoint is called
  *                    you must declare the function as described.
- * user_data:         a pointer to a data or a structure that will be available in the callback function
+ * user_data:         a pointer to a data or a structure that will be available in callback_function
  * 
  */
 struct _u_endpoint {
   char * http_method;
   char * url_prefix;
   char * url_format;
+  int (* auth_function)(const struct _u_request * request, // Input parameters (set by the framework)
+                        struct _u_response * response,     // Output parameters (set by the user)
+                        void * auth_data);
+  void * auth_data;
+  char * auth_realm;
   int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
                             struct _u_response * response,     // Output parameters (set by the user)
                             void * user_data);
@@ -286,15 +299,24 @@ int ulfius_add_endpoint(struct _u_instance * u_instance, const struct _u_endpoin
  *                    to define a variable in the url, prefix it with @ or :
  *                    example: /test/resource/:name/elements
  *                    on an url_format that ends with '*', the rest of the url will not be tested
+ * auth_function:     a pointer to a function that will be executed prior to the callback for authentication
+ *                    you must declare the function as described.
+ * auth_data:         a pointer to a data or a structure that will be available in auth_function
+ * auth_realm:        realm value for authentication
  * callback_function: a pointer to a function that will be executed each time the endpoint is called
  *                    you must declare the function as described.
- * user_data:         a pointer to a data or a structure that will be available in the callback function
+ * user_data:         a pointer to a data or a structure that will be available in callback_function
  * return U_OK on success
  */
 int ulfius_add_endpoint_by_val(struct _u_instance * u_instance,
                                const char * http_method,
                                const char * url_prefix,
                                const char * url_format,
+                               int (* auth_function)(const struct _u_request * request, // Input parameters (set by the framework)
+                                                     struct _u_response * response,     // Output parameters (set by the user)
+                                                     void * auth_data),
+                               void * auth_data,
+                               char * auth_realm,
                                int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
                                                          struct _u_response * response,     // Output parameters (set by the user)
                                                          void * user_data),
@@ -321,16 +343,23 @@ int ulfius_add_endpoint_list(struct _u_instance * u_instance, const struct _u_en
 int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endpoint * u_endpoint);
 
 /**
- * ulfius_set_default_callback_function
- * Set the default callback function
- * This callback will be called if no endpoint match the url called
+ * ulfius_set_default_endpoint
+ * Set the default endpoint
+ * This endpoint will be called if no endpoint match the url called
+ * auth_function:     a pointer to a function that will be executed prior to the callback for authentication
+ *                    you must declare the function as described.
+ * auth_data:         a pointer to a data or a structure that will be available in auth_function
+ * auth_realm:        realm value for authentication
  * callback_function: a pointer to a function that will be executed each time the endpoint is called
  *                    you must declare the function as described.
- * user_data:         a pointer to a data or a structure that will be available in the callback function
- * to remove a default callback function, call ulfius_set_default_callback_function with NULL parameter for callback_function
+ * user_data:         a pointer to a data or a structure that will be available in callback_function
+ * to remove a default endpoint, call ulfius_set_default_endpoint with NULL parameter for callback_function
  * return U_OK on success
  */
-int ulfius_set_default_callback_function(struct _u_instance * u_instance,
+int ulfius_set_default_endpoint(struct _u_instance * u_instance,
+                                         int (* auth_function)(const struct _u_request * request, struct _u_response * response, void * auth_data),
+                                         void * auth_data,
+                                         char * auth_realm,
                                          int (* callback_function)(const struct _u_request * request, struct _u_response * response, void * user_data),
                                          void * user_data);
 

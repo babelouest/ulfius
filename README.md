@@ -38,7 +38,7 @@ int main(void) {
   }
 
   // Endpoint list declaration
-  ulfius_add_endpoint_by_val(&instance, "GET", "/helloworld", NULL, &callback_hello_world, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", "/helloworld", NULL, NULL, NULL, NULL, &callback_hello_world, NULL);
 
   // Start the framework
   if (ulfius_start_framework(&instance) == U_OK) {
@@ -99,14 +99,16 @@ On your linker command, add ulfius as a dependency library, e.g. `-lulfius` for 
 
 ### Return values
 
-When specified, some functions return `U_OK` on success, and other values otherwise. `U_OK` is 0, other values are non-0 values. The defined errors list is the following:
+When specified, some functions return `U_OK` on success, and other values otherwise. `U_OK` is 0, other values are non-0 values. The defined return value list is the following:
 ```c
-#define U_ERROR           1 // Error
-#define U_ERROR_MEMORY    2 // Error in memory allocation
-#define U_ERROR_PARAMS    3 // Error in input parameters
-#define U_ERROR_LIBMHD    4 // Error in libmicrohttpd execution
-#define U_ERROR_LIBCURL   5 // Error in libcurl execution
-#define U_ERROR_NOT_FOUND 6 // Something was not found
+#define U_OK                 0 // No error
+#define U_ERROR              1 // Error
+#define U_ERROR_MEMORY       2 // Error in memory allocation
+#define U_ERROR_PARAMS       3 // Error in input parameters
+#define U_ERROR_LIBMHD       4 // Error in libmicrohttpd execution
+#define U_ERROR_LIBCURL      5 // Error in libcurl execution
+#define U_ERROR_NOT_FOUND    6 // Something was not found
+#define U_ERROR_UNAUTHORIZED 7 // No authorization given
 ```
 
 ### Initialization
@@ -176,21 +178,32 @@ The `struct _u_endpoint` is defined as:
  * 
  * Contains all informations needed for an endpoint
  * http_method:       http verb (GET, POST, PUT, etc.) in upper case
- * url_prefix:        prefix for the url (not parsed for variables)
+ * url_prefix:        prefix for the url (optional)
  * url_format:        string used to define the endpoint format
  *                    separate words with /
  *                    to define a variable in the url, prefix it with @ or :
  *                    example: /test/resource/:name/elements
  *                    on an url_format that ends with '*', the rest of the url will not be tested
+ * auth_function:     a pointer to a function used to check the client credentials he sent (optional)
+ *                    this function will be called prior to the callback function. If auth_function returned value is U_OK,
+ *                    then the callback function will be called after. If auth_function is not U_OK, response status send will be
+ *                    401 (Unauthorized), and callback_function will be skipped
+ * auth_data:         a pointer to a data or a structure that will be available in auth_function
+ * auth_realm:        realm value for authentication
  * callback_function: a pointer to a function that will be executed each time the endpoint is called
  *                    you must declare the function as described.
- * user_data:         a pointer to a data or a structure that will be available in the callback function
+ * user_data:         a pointer to a data or a structure that will be available in callback_function
  * 
  */
 struct _u_endpoint {
   char * http_method;
   char * url_prefix;
   char * url_format;
+  int (* auth_function)(const struct _u_request * request, // Input parameters (set by the framework)
+                        struct _u_response * response,     // Output parameters (set by the user)
+                        void * user_data);
+  void * auth_data;
+  char * auth_realm;
   int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
                             struct _u_response * response,     // Output parameters (set by the user)
                             void * user_data);
@@ -221,15 +234,24 @@ int ulfius_add_endpoint(struct _u_instance * u_instance, const struct _u_endpoin
  *                    to define a variable in the url, prefix it with @ or :
  *                    example: /test/resource/:name/elements
  *                    on an url_format that ends with '*', the rest of the url will not be tested
+ * auth_function:     a pointer to a function that will be executed prior to the callback for authentication
+ *                    you must declare the function as described.
+ * auth_data:         a pointer to a data or a structure that will be available in auth_function
+ * auth_realm:        realm value for authentication
  * callback_function: a pointer to a function that will be executed each time the endpoint is called
  *                    you must declare the function as described.
- * user_data:         a pointer to a data or a structure that will be available in the callback function
+ * user_data:         a pointer to a data or a structure that will be available in callback_function
  * return U_OK on success
  */
 int ulfius_add_endpoint_by_val(struct _u_instance * u_instance,
                                const char * http_method,
                                const char * url_prefix,
                                const char * url_format,
+                               int (* auth_function)(const struct _u_request * request, // Input parameters (set by the framework)
+                                                     struct _u_response * response,     // Output parameters (set by the user)
+                                                     void * auth_data),
+                               void * auth_data,
+                               char * auth_realm,
                                int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
                                                          struct _u_response * response,     // Output parameters (set by the user)
                                                          void * user_data),
@@ -339,17 +361,25 @@ To stop the webservice, call the following function:
 int ulfius_stop_framework(struct _u_instance * u_instance);
 ```
 
-### Callback function
+### Callback and Authentication functions
 
-The callback function is the function called when a user calls an endpoint managed by your webservice (as defined in your `struct _u_endpoint` list). A callback function must have the following declaration:
+The authentication function is the function called for authentication purposes. Ulfius implements basic auth, the user and the password sent by the client are members of `struct _u_request` (see below). In this function, you can implement the authentication method you want by checking the user and password given. If the return value of the authentication function is `U_OK`, the authentication will pass and the callback function will be called then, if the return value is `U_ERROR_UNAUTHORIZED`, the response will be a 401 with the realm parameter given and the response body specified, if the return value is neither `U_OK` nor `U_ERROR_UNAUTHORIZED`, an error 500 will be sent to the client. Authentication functions are optional for endpoints, but if one is set, the auth_realm value must be set too.
+
+The callback function is the function called when a user calls an endpoint managed by your webservice (as defined in your `struct _u_endpoint` list).
+
+The authentication function and the callback function have the following signature:
 
 ```c
+int (* auth_function)(const struct _u_request * request, // Input parameters (set by the framework)
+                      struct _u_response * response,     // Output parameters (set by the user)
+                      void * auth_data);
+
 int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
                           struct _u_response * response,     // Output parameters (set by the user)
                           void * user_data);
 ```
 
-In the callback function definition, the variables `request` and `response` will be set by the framework, and the `user_data` variable will be assigned to the user_data defined in your endpoint list definition.
+In the authentication and callback functions definition, the variables `request` and `response` will be set by the framework, and the `auth_data` or `user_data` variable will be assigned to the user_data defined in your endpoint list definition.
 
 The request variable is defined as:
 
@@ -359,24 +389,28 @@ The request variable is defined as:
  * Structure of request parameters
  * 
  * Contains request data
- * http_verb:          http method (GET, POST, PUT, DELETE, etc.), use '*' to match all http methods
- * http_url:           url used to call this callback function or full url to call when used in a ulfius_send_http_request
- * client_address:     IP address of the client
- * map_url:            map containing the url variables, both from the route and the ?key=value variables
- * map_header:         map containing the header variables
- * map_cookie:         map containing the cookie variables
- * map_post_body:      map containing the post body variables (if available)
- * json_body:          json_t * object containing the json body (if available)
- * json_error:            stack allocated json_error_t if json body was not parsed (if available)
- * json_has_error:     true if the json body was not parsed by jansson (if available)
- * binary_body:        pointer to raw body
- * binary_body_length: length of raw body
+ * http_verb:           http method (GET, POST, PUT, DELETE, etc.), use '*' to match all http methods
+ * http_url:            url used to call this callback function or full url to call when used in a ulfius_send_http_request
+ * client_address:      IP address of the client
+ * auth_basic_user:     basic authtication username
+ * auth_basic_password: basic authtication password
+ * map_url:             map containing the url variables, both from the route and the ?key=value variables
+ * map_header:          map containing the header variables
+ * map_cookie:          map containing the cookie variables
+ * map_post_body:       map containing the post body variables (if available)
+ * json_body:           json_t * object containing the json body (if available)
+ * json_error:          stack allocated json_error_t if json body was not parsed (if available)
+ * json_has_error:      true if the json body was not parsed by jansson (if available)
+ * binary_body:         pointer to raw body
+ * binary_body_length:  length of raw body
  * 
  */
 struct _u_request {
   char *               http_verb;
   char *               http_url;
   struct sockaddr *    client_address;
+  char *               auth_basic_user;
+  char *               auth_basic_password;
   struct _u_map *      map_url;
   struct _u_map *      map_header;
   struct _u_map *      map_cookie;
@@ -459,6 +493,8 @@ int ulfius_set_json_response(struct _u_response * response, const uint status, c
 ```
 
 The `jansson` api documentation is available at the following address: [Jansson documentation](https://jansson.readthedocs.org/).
+
+The authentication function return value must be `U_OK` on authentication success, if the credentials are incorrect, you must return `U_ERROR_UNAUTHORIZED` to send an error 401 to the client. All other returned value will send an error 500 to the client.
 
 The callback function return value is `U_OK` on success. If the return value is other than `U_OK`, an error 500 response will be sent to the client.
 

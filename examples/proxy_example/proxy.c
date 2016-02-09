@@ -35,7 +35,7 @@ int main (int argc, char **argv) {
   }
   
   // Endpoint list declaration
-  ulfius_add_endpoint_by_val(&instance, "GET", NULL, "*", &callback_get, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", NULL, "*", NULL, NULL, NULL, &callback_get, NULL);
   
   // Start the framework
   if (ulfius_start_framework(&instance) == U_OK) {

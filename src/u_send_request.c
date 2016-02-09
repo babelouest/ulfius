@@ -155,6 +155,24 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
         }
       }
       
+      // Set basic auth if defined
+      if (copy_request->auth_basic_user != NULL && copy_request->auth_basic_password != NULL) {
+        if (curl_easy_setopt(curl_handle, CURLOPT_HTTPAUTH, CURLAUTH_BASIC) == CURLE_OK) {
+          if (curl_easy_setopt(curl_handle, CURLOPT_USERNAME, copy_request->auth_basic_user) != CURLE_OK ||
+              curl_easy_setopt(curl_handle, CURLOPT_PASSWORD, copy_request->auth_basic_password) != CURLE_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting HTTP Basic user name or password");
+            ulfius_clean_request_full(copy_request);
+            curl_easy_cleanup(curl_handle);
+            return U_ERROR_LIBCURL;
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting HTTP Basic Auth option");
+          ulfius_clean_request_full(copy_request);
+          curl_easy_cleanup(curl_handle);
+          return U_ERROR_LIBCURL;
+        }
+      }
+      
       has_params = (strchr(copy_request->http_url, '?') != NULL);
       if (copy_request->map_url != NULL && u_map_count(copy_request->map_url) > 0) {
         // Append url parameters

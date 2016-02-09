@@ -88,18 +88,18 @@ int main (int argc, char **argv) {
   u_map_put(instance.default_headers, "Access-Control-Allow-Origin", "*");
   
   // Endpoint list declaration
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, NULL, &callback_get_test, NULL);
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/empty", &callback_get_empty_response, NULL);
-  ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, NULL, &callback_post_test, NULL);
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/:foo", &callback_all_test_foo, "user data 1");
-  ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, "/:foo", &callback_all_test_foo, "user data 2");
-  ulfius_add_endpoint_by_val(&instance, "PUT", PREFIX, "/:foo", &callback_all_test_foo, "user data 3");
-  ulfius_add_endpoint_by_val(&instance, "DELETE", PREFIX, "/:foo", &callback_all_test_foo, "user data 4");
-  ulfius_add_endpoint_by_val(&instance, "PUT", PREFIXJSON, NULL, &callback_get_jsontest, NULL);
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIXCOOKIE, "/:lang/:extra", &callback_get_cookietest, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, NULL, NULL, NULL, NULL, &callback_get_test, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/empty", NULL, NULL, NULL, &callback_get_empty_response, NULL);
+  ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, NULL, NULL, NULL, NULL, &callback_post_test, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/:foo", NULL, NULL, NULL, &callback_all_test_foo, "user data 1");
+  ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, "/:foo", NULL, NULL, NULL, &callback_all_test_foo, "user data 2");
+  ulfius_add_endpoint_by_val(&instance, "PUT", PREFIX, "/:foo", NULL, NULL, NULL, &callback_all_test_foo, "user data 3");
+  ulfius_add_endpoint_by_val(&instance, "DELETE", PREFIX, "/:foo", NULL, NULL, NULL, &callback_all_test_foo, "user data 4");
+  ulfius_add_endpoint_by_val(&instance, "PUT", PREFIXJSON, NULL, NULL, NULL, NULL, &callback_get_jsontest, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIXCOOKIE, "/:lang/:extra", NULL, NULL, NULL, &callback_get_cookietest, NULL);
   
   // default_endpoint declaration
-  ulfius_set_default_callback_function(&instance, &callback_default, NULL);
+  ulfius_set_default_endpoint(&instance, NULL, NULL, NULL, &callback_default, NULL);
   
   // Start the framework
   if (ulfius_start_framework(&instance) == U_OK) {

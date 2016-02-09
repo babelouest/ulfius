@@ -194,6 +194,8 @@ int ulfius_parse_url(const char * url, const struct _u_endpoint * endpoint, stru
 int ulfius_init_request(struct _u_request * request) {
   if (request != NULL) {
     request->map_url = malloc(sizeof(struct _u_map));
+    request->auth_basic_user = NULL;
+    request->auth_basic_password = NULL;
     request->map_header = malloc(sizeof(struct _u_map));
     request->map_cookie = malloc(sizeof(struct _u_map));
     request->map_post_body = malloc(sizeof(struct _u_map));
@@ -231,6 +233,8 @@ int ulfius_clean_request(struct _u_request * request) {
   if (request != NULL) {
     free(request->http_verb);
     free(request->http_url);
+    free(request->auth_basic_user);
+    free(request->auth_basic_password);
     free(request->client_address);
     u_map_clean_full(request->map_url);
     u_map_clean_full(request->map_header);
@@ -296,6 +300,8 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request) 
         }
         memcpy(new_request->client_address, request->client_address, sizeof(struct sockaddr));
       }
+      new_request->auth_basic_user = nstrdup(request->auth_basic_user);
+      new_request->auth_basic_password = nstrdup(request->auth_basic_password);
       u_map_clean_full(new_request->map_url);
       u_map_clean_full(new_request->map_header);
       u_map_clean_full(new_request->map_cookie);

@@ -46,9 +46,9 @@ int main (int argc, char **argv) {
   }
   
   // Endpoint list declaration
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/first", &callback_first, NULL);
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/second", &callback_second, NULL);
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/third", &callback_third, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/first", NULL, NULL, NULL, &callback_first, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/second", NULL, NULL, NULL, &callback_second, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/third", NULL, NULL, NULL, &callback_third, NULL);
   
   // Start the framework
   if (ulfius_start_framework(&instance) == U_OK) {
@@ -56,11 +56,11 @@ int main (int argc, char **argv) {
     
     y_log_message(Y_LOG_LEVEL_DEBUG, "Press <enter> to inject %s/fourth endpoint", PREFIX);
     getchar();
-    ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/fourth", &callback_fourth, NULL);
+    ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, NULL, NULL, NULL, "/fourth", &callback_fourth, NULL);
     
     y_log_message(Y_LOG_LEVEL_DEBUG, "Press <enter> to inject %s/fifth endpoint", PREFIX);
     getchar();
-    ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/fifth", &callback_fifth, NULL);
+    ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, NULL, NULL, NULL, "/fifth", &callback_fifth, NULL);
     
     y_log_message(Y_LOG_LEVEL_DEBUG, "Press <enter> to remove %s/fourth endpoint", PREFIX);
     getchar();
