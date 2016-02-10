@@ -105,30 +105,75 @@ void * ulfius_uri_logger (void * cls, const char * uri) {
 }
 
 /**
+ * ulfius_run_mhd_daemon
+ * Starts a mhd daemon for the specified instance
+ * return a pointer to the mhd_daemon on success, NULL on error
+ * 
+ */
+struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem) {
+  uint mhd_flags = MHD_USE_THREAD_PER_CONNECTION;
+#ifdef DEBUG
+  mhd_flags |= MHD_USE_DEBUG;
+#endif
+  
+  if (u_instance->mhd_daemon == NULL) {
+    struct MHD_OptionItem mhd_ops[6];
+    
+    // Default options
+    mhd_ops[0].option = MHD_OPTION_NOTIFY_COMPLETED;
+    mhd_ops[0].value = (intptr_t)mhd_request_completed;
+    mhd_ops[0].ptr_value = NULL;
+    
+    mhd_ops[1].option = MHD_OPTION_SOCK_ADDR;
+    mhd_ops[1].value = (intptr_t)u_instance->bind_address;
+    mhd_ops[1].ptr_value = NULL;
+    
+    mhd_ops[2].option = MHD_OPTION_URI_LOG_CALLBACK;
+    mhd_ops[2].value = (intptr_t)ulfius_uri_logger;
+    mhd_ops[2].ptr_value = NULL;
+    
+    mhd_ops[3].option = MHD_OPTION_END;
+    mhd_ops[3].value = 0;
+    mhd_ops[3].ptr_value = NULL;
+    
+    if (key_pem != NULL && cert_pem != NULL) {
+      // HTTPS parameters
+      mhd_flags |= MHD_USE_SSL;
+      mhd_ops[3].option = MHD_OPTION_HTTPS_MEM_KEY;
+      mhd_ops[3].value = 0;
+      mhd_ops[3].ptr_value = (void*)key_pem;
+      
+      mhd_ops[4].option = MHD_OPTION_HTTPS_MEM_CERT;
+      mhd_ops[4].value = 0;
+      mhd_ops[4].ptr_value = (void*)cert_pem;
+      
+      mhd_ops[5].option = MHD_OPTION_END;
+      mhd_ops[5].value = 0;
+      mhd_ops[5].ptr_value = NULL;
+    }
+    return MHD_start_daemon (
+          mhd_flags, u_instance->port, NULL, NULL, &ulfius_webservice_dispatcher, (void *)u_instance, 
+          MHD_OPTION_ARRAY, mhd_ops,
+          MHD_OPTION_END
+    );
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error, instance already started");
+    return NULL;
+  }
+}
+
+/**
  * ulfius_start_framework
  * Initializes the framework and run the webservice based on the parameters given
- * return truze if no error
+ * return true if no error
  * 
  * u_instance:    pointer to a struct _u_instance that describe its port and bind address
  * return U_OK on success
  */
 int ulfius_start_framework(struct _u_instance * u_instance) {
-#ifdef DEBUG
-  uint mhd_options = MHD_USE_THREAD_PER_CONNECTION | MHD_USE_DEBUG;
-#else
-  uint mhd_options = MHD_USE_THREAD_PER_CONNECTION;
-#endif
-  
   // Validate u_instance and endpoint_list that there is no mistake
   if (ulfius_validate_instance(u_instance)) {
-    u_instance->mhd_daemon = MHD_start_daemon (
-          mhd_options, 
-          u_instance->port, NULL, NULL, &ulfius_webservice_dispatcher, (void *)u_instance, 
-          MHD_OPTION_NOTIFY_COMPLETED, mhd_request_completed, NULL,
-          MHD_OPTION_SOCK_ADDR, u_instance->bind_address,
-          MHD_OPTION_URI_LOG_CALLBACK, ulfius_uri_logger, NULL,
-          MHD_OPTION_END
-    );
+    u_instance->mhd_daemon = ulfius_run_mhd_daemon(u_instance, NULL, NULL);
     
     if (u_instance->mhd_daemon == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error MHD_start_daemon, aborting");
@@ -154,24 +199,9 @@ int ulfius_start_framework(struct _u_instance * u_instance) {
  * return U_OK on success
  */
 int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem) {
-#ifdef DEBUG
-  uint mhd_options = MHD_USE_THREAD_PER_CONNECTION | MHD_USE_DEBUG | MHD_USE_SSL;
-#else
-  uint mhd_options = MHD_USE_THREAD_PER_CONNECTION | MHD_USE_SSL;
-#endif
-  
   // Validate u_instance and endpoint_list that there is no mistake
   if (ulfius_validate_instance(u_instance) && key_pem != NULL && cert_pem != NULL) {
-    u_instance->mhd_daemon = MHD_start_daemon (
-          mhd_options, 
-          u_instance->port, NULL, NULL, &ulfius_webservice_dispatcher, (void *)u_instance, 
-          MHD_OPTION_NOTIFY_COMPLETED, mhd_request_completed, NULL,
-          MHD_OPTION_SOCK_ADDR, u_instance->bind_address,
-          MHD_OPTION_URI_LOG_CALLBACK, ulfius_uri_logger, NULL,
-          MHD_OPTION_HTTPS_MEM_KEY, key_pem,
-          MHD_OPTION_HTTPS_MEM_CERT, cert_pem,
-          MHD_OPTION_END
-    );
+    u_instance->mhd_daemon = ulfius_run_mhd_daemon(u_instance, key_pem, cert_pem);
     
     if (u_instance->mhd_daemon == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error MHD_start_daemon, aborting");
@@ -532,6 +562,7 @@ void mhd_request_completed (void *cls, struct MHD_Connection *connection,
 int ulfius_stop_framework(struct _u_instance * u_instance) {
   if (u_instance != NULL && u_instance->mhd_daemon != NULL) {
     MHD_stop_daemon (u_instance->mhd_daemon);
+    u_instance->mhd_daemon = NULL;
     u_instance->status = U_STATUS_STOP;
     return U_OK;
   } else {
