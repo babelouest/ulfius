@@ -77,10 +77,10 @@ int main (int argc, char **argv) {
   // Endpoint list declaration
   // The first 3 are webservices with a specific url
   // The last endpoint will be called for every GET call and will serve the static files
-  ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, NULL, &callback_sheep_counter_start, &nb_sheep);
-  ulfius_add_endpoint_by_val(&instance, "PUT", PREFIX, NULL, &callback_sheep_counter_add, &nb_sheep);
-  ulfius_add_endpoint_by_val(&instance, "DELETE", PREFIX, NULL, &callback_sheep_counter_reset, &nb_sheep);
-  ulfius_add_endpoint_by_val(&instance, "GET", NULL, "*", &callback_static_file, &mime_types);
+  ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, NULL, NULL, NULL, NULL, &callback_sheep_counter_start, &nb_sheep);
+  ulfius_add_endpoint_by_val(&instance, "PUT", PREFIX, NULL, NULL, NULL, NULL, &callback_sheep_counter_add, &nb_sheep);
+  ulfius_add_endpoint_by_val(&instance, "DELETE", PREFIX, NULL, NULL, NULL, NULL, &callback_sheep_counter_reset, &nb_sheep);
+  ulfius_add_endpoint_by_val(&instance, "GET", "*", NULL, NULL, NULL, NULL, &callback_static_file, &mime_types);
   
   // Start the framework
   if (ulfius_start_framework(&instance) == U_OK) {
@@ -174,9 +174,8 @@ int callback_static_file (const struct _u_request * request, struct _u_response 
   void * buffer = NULL;
   long length;
   FILE * f;
-  char  * file_path = malloc(strlen(request->http_url)+strlen(STATIC_FOLDER)+sizeof(char));
+  char  * file_path = msprintf("%s%s", STATIC_FOLDER, request->http_url);
   const char * content_type;
-  snprintf(file_path, (strlen(request->http_url)+strlen(STATIC_FOLDER)+sizeof(char)), "%s%s", STATIC_FOLDER, request->http_url);
   
   if (access(file_path, F_OK) != -1) {
     f = fopen (file_path, "rb");
@@ -198,11 +197,9 @@ int callback_static_file (const struct _u_request * request, struct _u_response 
       u_map_put(response->map_header, "Content-Type", content_type);
       response->status = 200;
     } else {
-      response->string_body = u_strdup("");
       response->status = 404;
     }
   } else {
-    response->string_body = u_strdup("");
     response->status = 404;
   }
   free(file_path);

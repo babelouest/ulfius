@@ -233,6 +233,7 @@ int ulfius_get_body_from_response(struct _u_response * response, void ** respons
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->string_body");
             return U_ERROR_MEMORY;
           }
+          return U_ERROR_PARAMS;
         } else {
           *response_buffer_len = strlen (*response_buffer);
         }
@@ -257,7 +258,7 @@ int ulfius_get_body_from_response(struct _u_response * response, void ** respons
           return U_ERROR_MEMORY;
         }
       } else {
-        memcpy(response_buffer, response->binary_body, response->binary_body_length);
+        memcpy(*response_buffer, response->binary_body, response->binary_body_length);
         *response_buffer_len = response->binary_body_length;
       }
     } else {

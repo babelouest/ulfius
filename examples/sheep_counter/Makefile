@@ -16,7 +16,7 @@
 CC=gcc
 CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS)
 ULFIUS_LOCATION=../../src
-LIBS=-lc -lulfius -ljansson -L$(ULFIUS_LOCATION)
+LIBS=-lc -lulfius -lyder -lorcania -ljansson -L$(ULFIUS_LOCATION)
 
 all: sheep_counter
 
