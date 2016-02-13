@@ -212,7 +212,7 @@ int callback_all_test_foo (const struct _u_request * request, struct _u_response
  * Callback function that put "Hello World!", the http method and the url in a json response
  */
 int callback_get_jsontest (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  /*response->json_body = json_object();
+  response->json_body = json_object();
   json_object_set_new(response->json_body, "message", json_string("Hello World!"));
   json_object_set_new(response->json_body, "method", json_string(request->http_verb));
   json_object_set_new(response->json_body, "url", json_string(request->http_url));
@@ -220,8 +220,7 @@ int callback_get_jsontest (const struct _u_request * request, struct _u_response
     json_object_set(response->json_body, "request", request->json_body);
   } else {
     json_object_set_new(response->json_body, "request", json_string("Error parsing request"));
-  }*/
-  response->json_body = json_string("plop");
+  }
   response->status = 200;
   return U_OK;
 }
