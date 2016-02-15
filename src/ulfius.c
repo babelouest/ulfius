@@ -68,6 +68,7 @@ int ulfius_validate_endpoint_list(const struct _u_endpoint * endpoint_list, int 
     }
     return 1;
   } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error, no endpoint list");
     return 0;
   }
 }
