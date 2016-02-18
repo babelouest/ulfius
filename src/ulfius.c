@@ -443,6 +443,9 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
         ulfius_clean_response_full(response);
         response = NULL;
       } else if (auth_ret == U_OK) {
+        // Reset response structure
+        ulfius_clean_response(response);
+        ulfius_init_response(response);
         // Endpoint found, run callback function with the input parameters filled
         callback_ret = current_endpoint->callback_function(con_info->request, response, current_endpoint->user_data);
         
@@ -478,7 +481,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
           mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
         }
 
-        mhd_ret = MHD_queue_response (connection, response->status, mhd_response);
+        mhd_ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, mhd_response);
         MHD_destroy_response (mhd_response);
       
         // Free Response parameters
@@ -493,7 +496,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
         }
         response_buffer_len = strlen(ULFIUS_HTTP_ERROR_BODY);
         
-        mhd_ret = MHD_queue_response (connection, response->status, mhd_response);
+        mhd_ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, mhd_response);
         MHD_destroy_response (mhd_response);
       
         // Free Response parameters
