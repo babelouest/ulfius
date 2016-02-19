@@ -462,6 +462,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
             }
           } else {
             // Error building response, sending error 500
+            response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
             response_buffer = nstrdup(ULFIUS_HTTP_ERROR_BODY);
             if (response_buffer == NULL) {
               y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
@@ -472,6 +473,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
           }
         } else {
           // Error building response, sending error 500
+          response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
           response_buffer = nstrdup(ULFIUS_HTTP_ERROR_BODY);
           if (response_buffer == NULL) {
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
@@ -481,7 +483,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
           mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
         }
 
-        mhd_ret = MHD_queue_response (connection, MHD_HTTP_INTERNAL_SERVER_ERROR, mhd_response);
+        mhd_ret = MHD_queue_response (connection, response->status, mhd_response);
         MHD_destroy_response (mhd_response);
       
         // Free Response parameters
