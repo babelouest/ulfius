@@ -403,6 +403,7 @@ int ulfius_set_default_auth_function(struct _u_instance * u_instance,
                                          int (* default_auth_function)(const struct _u_request * request, struct _u_response * response, void * auth_data),
                                          void * default_auth_data,
                                          const char * default_auth_realm);
+
 /**
  * Remove a struct _u_endpoint * from the specified u_instance
  * using the specified values used to identify an endpoint
