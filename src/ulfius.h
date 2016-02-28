@@ -174,7 +174,7 @@ struct _u_response {
  *                    to define a variable in the url, prefix it with @ or :
  *                    example: /test/resource/:name/elements
  *                    on an url_format that ends with '*', the rest of the url will not be tested
- * auth_function:     a pointer to a function used to check the client credentials he sent (optional)
+ * auth_function:     a pointer to a function used to check the client credentials (optional)
  *                    this function will be called prior to the callback function. If auth_function returned value is U_OK,
  *                    then the callback function will be called after. If auth_function is not U_OK, response status send will be
  *                    401 (Unauthorized), and callback_function will be skipped
@@ -206,25 +206,39 @@ struct _u_endpoint {
  * 
  * Contains the needed data for an ulfius instance to work
  * 
- * mhd_daemon:       pointer to the libmicrohttpd daemon
- * status:           status of the current instance, status are U_STATUS_STOP, U_STATUS_RUNNING or U_STATUS_ERROR
- * port:             port number to listen to
- * bind_address:     ip address to listen to (if needed)
- * nb_endpoints:     Number of available endpoints
- * endpoint_list:    List of available endpoints
- * default_endpoint: Default endpoint if no other endpoint match the current url
- * default_headers:  Default headers that will be added to all response->map_header
+ * mhd_daemon:            pointer to the libmicrohttpd daemon
+ * status:                status of the current instance, status are U_STATUS_STOP, U_STATUS_RUNNING or U_STATUS_ERROR
+ * port:                  port number to listen to
+ * bind_address:          ip address to listen to (optional)
+ * nb_endpoints:          Number of available endpoints
+ * endpoint_list:         List of available endpoints
+ * default_endpoint:      Default endpoint if no other endpoint match the current url
+ * default_headers:       Default headers that will be added to all response->map_header
+ * default_auth_function: Default callback function used for authentication (optional)
+ *                        a pointer to a function used to check the client credentials
+ *                        this function will be called prior to the callback function. If default_auth_function returned value is U_OK,
+ *                        then the callback function will be called after. If default_auth_function is not U_OK, response status send will be
+ *                        401 (Unauthorized), and callback_function will be skipped
+ *                        If an endpoint already has a auth_callback set, the default_auth_function will not be called
+ *                        but the auth_callback function of the endpoint will
+ * default_auth_data:     a pointer to a data or a structure that will be available in auth_function
+ * default_auth_realm:    realm value for authentication
  * 
  */
 struct _u_instance {
-  struct MHD_Daemon *  mhd_daemon;
-  int                  status;
-  int                  port;
-  struct sockaddr_in * bind_address;
-  int                  nb_endpoints;
-  struct _u_endpoint * endpoint_list;
-  struct _u_endpoint * default_endpoint;
-  struct _u_map      * default_headers;
+  struct MHD_Daemon          *  mhd_daemon;
+  int                           status;
+  int                           port;
+  struct sockaddr_in          * bind_address;
+  int                           nb_endpoints;
+  struct _u_endpoint          * endpoint_list;
+  struct _u_endpoint          * default_endpoint;
+  struct _u_map               * default_headers;
+  int (* default_auth_function)(const struct _u_request * request, // Input parameters (set by the framework)
+                                struct _u_response * response,     // Output parameters (set by the user)
+                                void * auth_data);
+  void * default_auth_data;
+  char * default_auth_realm;
 };
 
 /**
@@ -326,7 +340,7 @@ int ulfius_add_endpoint_by_val(struct _u_instance * u_instance,
                                                      struct _u_response * response,     // Output parameters (set by the user)
                                                      void * auth_data),
                                void * auth_data,
-                               char * auth_realm,
+                               const char * auth_realm,
                                int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
                                                          struct _u_response * response,     // Output parameters (set by the user)
                                                          void * user_data),
@@ -356,6 +370,7 @@ int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endp
  * ulfius_set_default_endpoint
  * Set the default endpoint
  * This endpoint will be called if no endpoint match the url called
+ * u_instance: pointer to a struct _u_instance that describe its port and bind address
  * auth_function:     a pointer to a function that will be executed prior to the callback for authentication
  *                    you must declare the function as described.
  * auth_data:         a pointer to a data or a structure that will be available in auth_function
@@ -369,10 +384,25 @@ int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endp
 int ulfius_set_default_endpoint(struct _u_instance * u_instance,
                                          int (* auth_function)(const struct _u_request * request, struct _u_response * response, void * auth_data),
                                          void * auth_data,
-                                         char * auth_realm,
+                                         const char * auth_realm,
                                          int (* callback_function)(const struct _u_request * request, struct _u_response * response, void * user_data),
                                          void * user_data);
 
+/**
+ * ulfius_set_default_auth_function
+ * Set the default authentication function
+ * This authentication function will be called if there is no auth_function attached to the endpoint
+ * u_instance: pointer to a struct _u_instance that describe its port and bind address
+ * auth_function:     a pointer to a function that will be executed prior to the callback for authentication
+ *                    you must declare the function as described.
+ * auth_data:         a pointer to a data or a structure that will be available in auth_function
+ * auth_realm:        realm value for authentication
+ * return U_OK on success
+ */
+int ulfius_set_default_auth_function(struct _u_instance * u_instance,
+                                         int (* default_auth_function)(const struct _u_request * request, struct _u_response * response, void * auth_data),
+                                         void * default_auth_data,
+                                         const char * default_auth_realm);
 /**
  * Remove a struct _u_endpoint * from the specified u_instance
  * using the specified values used to identify an endpoint

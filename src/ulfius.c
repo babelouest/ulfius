@@ -288,7 +288,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
   struct _u_endpoint * endpoint_list = ((struct _u_instance *)cls)->endpoint_list, * current_endpoint;
   struct connection_info_struct * con_info = * con_cls;
   int mhd_ret = MHD_NO, callback_ret = U_OK, auth_ret = U_OK;
-  char * content_type;
+  char * content_type, * auth_realm;
   struct _u_response * response = NULL;
   struct sockaddr * so_client;
   
@@ -402,6 +402,10 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
       // Call auth_function if set
       if (current_endpoint->auth_function != NULL) {
         auth_ret = current_endpoint->auth_function(con_info->request, response, current_endpoint->auth_data);
+        auth_realm = current_endpoint->auth_realm;
+      } else if (((struct _u_instance *)cls)->default_auth_function != NULL) {
+        auth_ret = ((struct _u_instance *)cls)->default_auth_function(con_info->request, response, ((struct _u_instance *)cls)->default_auth_data);
+        auth_realm = ((struct _u_instance *)cls)->default_auth_realm;
       }
       
       if (auth_ret == U_ERROR_UNAUTHORIZED) {
@@ -436,7 +440,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
           response_buffer_len = strlen(ULFIUS_HTTP_ERROR_BODY);
           mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
         }
-        mhd_ret = MHD_queue_basic_auth_fail_response (connection, current_endpoint->auth_realm, mhd_response);
+        mhd_ret = MHD_queue_basic_auth_fail_response (connection, auth_realm, mhd_response);
         MHD_destroy_response (mhd_response);
       
         // Free Response parameters
@@ -657,6 +661,10 @@ void ulfius_clean_endpoint(struct _u_endpoint * endpoint) {
     free(endpoint->url_prefix);
     free(endpoint->url_format);
     free(endpoint->auth_realm);
+    endpoint->http_method = NULL;
+    endpoint->url_prefix = NULL;
+    endpoint->url_format = NULL;
+    endpoint->auth_realm = NULL;
   }
 }
 
@@ -883,22 +891,25 @@ int ulfius_add_endpoint_by_val(struct _u_instance * u_instance,
                                const char * url_prefix,
                                const char * url_format,
                                int (* auth_function)(const struct _u_request * request, // Input parameters (set by the framework)
-                                                         struct _u_response * response,     // Output parameters (set by the user)
+                                                         struct _u_response * response, // Output parameters (set by the user)
                                                          void * user_data),
                                void * auth_data,
-                               char * auth_realm,
+                               const char * auth_realm,
                                int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
                                                          struct _u_response * response,     // Output parameters (set by the user)
                                                          void * user_data),
                                void * user_data) {
   struct _u_endpoint endpoint;
   if (u_instance != NULL && ((auth_function != NULL && auth_realm != NULL) || (auth_function == NULL && auth_realm == NULL))) {
-    endpoint.http_method = (char*)http_method;
-    endpoint.url_prefix = (char*)url_prefix;
-    endpoint.url_format = (char*)url_format;
+    endpoint.http_method = (char *)http_method;
+    endpoint.url_prefix = (char *)url_prefix;
+    endpoint.url_format = (char *)url_format;
     endpoint.auth_function = auth_function;
     endpoint.auth_data = auth_data;
-    endpoint.auth_realm = auth_realm;
+    endpoint.auth_realm = (char *)auth_realm;
+    if (auth_realm != NULL && endpoint.auth_realm == NULL) {
+      return U_ERROR_MEMORY;
+    }
     endpoint.callback_function = callback_function;
     endpoint.user_data = user_data;
     return ulfius_add_endpoint(u_instance, &endpoint);
@@ -917,6 +928,7 @@ void ulfius_clean_instance(struct _u_instance * u_instance) {
     ulfius_clean_endpoint_list(u_instance->endpoint_list);
     u_map_clean_full(u_instance->default_headers);
     free(u_instance->default_endpoint);
+    free(u_instance->default_auth_realm);
   }
 }
 
@@ -960,7 +972,7 @@ int ulfius_remove_endpoint_by_val(struct _u_instance * u_instance, const char * 
 int ulfius_set_default_endpoint(struct _u_instance * u_instance,
                                          int (* auth_function)(const struct _u_request * request, struct _u_response * response, void * auth_data),
                                          void * auth_data,
-                                         char * auth_realm,
+                                         const char * auth_realm,
                                          int (* callback_function)(const struct _u_request * request, struct _u_response * response, void * user_data),
                                          void * user_data) {
   if (u_instance != NULL && ((auth_function != NULL && auth_realm != NULL) || (auth_function == NULL && auth_realm == NULL))) {
@@ -976,10 +988,42 @@ int ulfius_set_default_endpoint(struct _u_instance * u_instance,
     u_instance->default_endpoint->url_format = NULL;
     u_instance->default_endpoint->auth_function = auth_function;
     u_instance->default_endpoint->auth_data = auth_data;
-    u_instance->default_endpoint->auth_realm = auth_realm;
+    u_instance->default_endpoint->auth_realm = nstrdup(auth_realm);
+    if (auth_realm != NULL && u_instance->default_endpoint->auth_realm == NULL) {
+      return U_ERROR_MEMORY;
+    }
     u_instance->default_endpoint->callback_function = callback_function;
     u_instance->default_endpoint->user_data = user_data;
     return U_OK;
+  } else {
+    return U_ERROR_PARAMS;
+  }
+}
+
+/**
+ * ulfius_set_default_auth_function
+ * Set the default authentication function
+ * This authentication function will be called if there is no auth_function attached to the endpoint
+ * u_instance: pointer to a struct _u_instance that describe its port and bind address
+ * auth_function:     a pointer to a function that will be executed prior to the callback for authentication
+ *                    you must declare the function as described.
+ * auth_data:         a pointer to a data or a structure that will be available in auth_function
+ * auth_realm:        realm value for authentication
+ * return U_OK on success
+ */
+int ulfius_set_default_auth_function(struct _u_instance * u_instance,
+                                         int (* default_auth_function)(const struct _u_request * request, struct _u_response * response, void * auth_data),
+                                         void * default_auth_data,
+                                         const char * default_auth_realm) {
+  if (u_instance != NULL && default_auth_function != NULL && default_auth_realm != NULL) {
+    u_instance->default_auth_function = default_auth_function;
+    u_instance->default_auth_data = default_auth_data;
+    u_instance->default_auth_realm = nstrdup(default_auth_realm);
+    if (u_instance->default_auth_realm == NULL) {
+      return U_ERROR_MEMORY;
+    } else {
+      return U_OK;
+    }
   } else {
     return U_ERROR_PARAMS;
   }

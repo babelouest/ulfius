@@ -16,6 +16,7 @@
 #include "../../src/ulfius.h"
 
 #define SERVER_URL "http://localhost:2884/auth/basic"
+#define SERVER_URL_DEFAULT "http://localhost:2884/auth/default"
 
 /**
  * decode a u_map into a string
@@ -57,7 +58,7 @@ int main (int argc, char **argv) {
   
   struct _u_response response;
   int res;
-  struct _u_request req_list[4];
+  struct _u_request req_list[6];
   
   y_init_logs("auth_client", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "logs start");
   
@@ -80,7 +81,19 @@ int main (int argc, char **argv) {
   ulfius_init_request(&req_list[3]);
   req_list[3].http_verb = strdup("GET");
   req_list[3].http_url = strdup(SERVER_URL "/404");
+
+  ulfius_init_request(&req_list[4]);
+  req_list[1].http_verb = strdup("GET");
+  req_list[1].http_url = strdup(SERVER_URL_DEFAULT);
+  req_list[1].auth_basic_user = strdup("test");
+  req_list[1].auth_basic_password = strdup("testpassword");
   
+  ulfius_init_request(&req_list[4]);
+  req_list[2].http_verb = strdup("GET");
+  req_list[2].http_url = strdup(SERVER_URL_DEFAULT);
+  req_list[2].auth_basic_user = strdup("test");
+  req_list[2].auth_basic_password = strdup("wrongpassword");
+    
   printf("Press <enter> to run auth tests no authentication\n");
   getchar();
   ulfius_init_response(&response);
@@ -124,7 +137,29 @@ int main (int argc, char **argv) {
     printf("Error in http request: %d\n", res);
   }
   ulfius_clean_response(&response);
+
+  printf("Press <enter> to run default auth tests success authentication\n");
+  getchar();
+  ulfius_init_response(&response);
+  res = ulfius_send_http_request(&req_list[4], &response);
+  if (res == U_OK) {
+    print_response(&response);
+  } else {
+    printf("Error in http request: %d\n", res);
+  }
+  ulfius_clean_response(&response);
   
+  printf("Press <enter> to run default auth tests error authentication\n");
+  getchar();
+  ulfius_init_response(&response);
+  res = ulfius_send_http_request(&req_list[5], &response);
+  if (res == U_OK) {
+    print_response(&response);
+  } else {
+    printf("Error in http request: %d\n", res);
+  }
+  ulfius_clean_response(&response);
+    
   // Wait for the user to press <enter> on the console to quit the application
   printf("Press <enter> to quit test\n");
   getchar();
@@ -133,6 +168,8 @@ int main (int argc, char **argv) {
   ulfius_clean_request(&req_list[1]);
   ulfius_clean_request(&req_list[2]);
   ulfius_clean_request(&req_list[3]);
+  ulfius_clean_request(&req_list[4]);
+  ulfius_clean_request(&req_list[5]);
   y_close_logs();
   return 0;
 }

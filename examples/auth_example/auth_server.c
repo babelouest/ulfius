@@ -58,6 +58,8 @@ int main (int argc, char **argv) {
   
   // Endpoint list declaration
   ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/basic", &auth_basic, "auth param", "auth_basic", &callback_auth_basic, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/default", NULL, NULL, NULL, &callback_auth_basic, NULL);
+  ulfius_set_default_auth_function(&instance, &auth_basic, "auth param_default", "auth_basic_default");
   
   // Start the framework
   if (ulfius_start_framework(&instance) == U_OK) {
