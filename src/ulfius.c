@@ -860,6 +860,9 @@ int ulfius_init_instance(struct _u_instance * u_instance, int port, struct socka
     }
     u_map_init(u_instance->default_headers);
     u_instance->default_endpoint = NULL;
+    u_instance->default_auth_function = NULL;
+    u_instance->default_auth_data = NULL;
+    u_instance->default_auth_realm = NULL;
     return U_OK;
   } else {
     return U_ERROR_PARAMS;
