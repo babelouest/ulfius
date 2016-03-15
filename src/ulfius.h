@@ -767,7 +767,7 @@ int ulfius_validate_instance(const struct _u_instance * u_instance);
  * ulfius_is_valid_endpoint
  * return true if the endpoind has valid parameters
  */
-int ulfius_is_valid_endpoint(const struct _u_endpoint * endpoint);
+int ulfius_is_valid_endpoint(const struct _u_endpoint * endpoint, int delete);
 
 /**
  * ulfius_validate_endpoint_list

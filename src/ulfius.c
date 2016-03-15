@@ -60,7 +60,7 @@ int ulfius_validate_endpoint_list(const struct _u_endpoint * endpoint_list, int 
         // One can not have an empty endpoint in the beginning of the list
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error, no empty endpoint allowed in the beginning of the endpoint list");
         return 0;
-      } else if (!ulfius_is_valid_endpoint(&endpoint_list[i])) {
+      } else if (!ulfius_is_valid_endpoint(&endpoint_list[i], 0)) {
         // One must set at least the parameters http_method, url_format and callback_function
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error, endpoint at index %d has invalid parameters", i);
         return 0;
@@ -586,14 +586,14 @@ int ulfius_stop_framework(struct _u_instance * u_instance) {
  * ulfius_is_valid_endpoint
  * return true if the endpoind has valid parameters
  */
-int ulfius_is_valid_endpoint(const struct _u_endpoint * endpoint) {
+int ulfius_is_valid_endpoint(const struct _u_endpoint * endpoint, int delete) {
   if (endpoint != NULL) {
     if (ulfius_equals_endpoints(endpoint, ulfius_empty_endpoint())) {
       // Should be the last endpoint of the list to close it
       return 1;
     } else if (endpoint->http_method == NULL) {
       return 0;
-    } else if (endpoint->callback_function == NULL) {
+    } else if (!delete && endpoint->callback_function == NULL) {
       return 0;
     } else if (endpoint->url_prefix == NULL && endpoint->url_format == NULL) {
       return 0;
@@ -620,7 +620,7 @@ int ulfius_copy_endpoint(struct _u_endpoint * dest, const struct _u_endpoint * s
     dest->auth_realm = nstrdup(source->auth_realm);
     dest->callback_function = source->callback_function;
     dest->user_data = source->user_data;
-    if (ulfius_is_valid_endpoint(dest)) {
+    if (ulfius_is_valid_endpoint(dest, 0)) {
       return U_OK;
     } else {
       return U_ERROR_MEMORY;
@@ -694,7 +694,7 @@ int ulfius_add_endpoint(struct _u_instance * u_instance, const struct _u_endpoin
   int i, res;
   
   if (u_instance != NULL && u_endpoint != NULL) {
-    if (ulfius_is_valid_endpoint(u_endpoint)) {
+    if (ulfius_is_valid_endpoint(u_endpoint, 0)) {
       if (u_instance->endpoint_list == NULL) {
         // No endpoint, create a list with 2 endpoints so the last one is an empty one
         u_instance->endpoint_list = malloc(2 * sizeof(struct _u_endpoint));
@@ -772,7 +772,7 @@ int ulfius_add_endpoint_list(struct _u_instance * u_instance, const struct _u_en
  */
 int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endpoint * u_endpoint) {
   int i, j;
-  if (u_instance != NULL && u_endpoint != NULL && !ulfius_equals_endpoints(u_endpoint, ulfius_empty_endpoint()) && ulfius_is_valid_endpoint(u_endpoint)) {
+  if (u_instance != NULL && u_endpoint != NULL && !ulfius_equals_endpoints(u_endpoint, ulfius_empty_endpoint()) && ulfius_is_valid_endpoint(u_endpoint, 1)) {
     for (i=0; i<u_instance->nb_endpoints; i++) {
       // Compare u_endpoint with u_instance->endpoint_list[i]
       if ((u_endpoint->http_method != NULL && 0 == strcmp(u_instance->endpoint_list[i].http_method, u_endpoint->http_method)) &&
@@ -953,6 +953,7 @@ int ulfius_remove_endpoint_by_val(struct _u_instance * u_instance, const char * 
     endpoint.http_method = (char *)http_method;
     endpoint.url_prefix = (char *)url_prefix;
     endpoint.url_format = (char *)url_format;
+    endpoint.callback_function = NULL;
     return ulfius_remove_endpoint(u_instance, &endpoint);
   } else {
     return U_ERROR_PARAMS;
