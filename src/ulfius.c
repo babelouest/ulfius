@@ -776,8 +776,8 @@ int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endp
     for (i=0; i<u_instance->nb_endpoints; i++) {
       // Compare u_endpoint with u_instance->endpoint_list[i]
       if ((u_endpoint->http_method != NULL && 0 == strcmp(u_instance->endpoint_list[i].http_method, u_endpoint->http_method)) &&
-          (u_endpoint->url_prefix != NULL && 0 == strcmp(u_instance->endpoint_list[i].url_prefix, u_endpoint->url_prefix)) &&
-          (u_endpoint->url_format != NULL && 0 == strcmp(u_instance->endpoint_list[i].url_format, u_endpoint->url_format))) {
+          (u_instance->endpoint_list[i].url_prefix != NULL && u_endpoint->url_prefix != NULL && 0 == strcmp(u_instance->endpoint_list[i].url_prefix, u_endpoint->url_prefix)) &&
+          (u_instance->endpoint_list[i].url_format != NULL && u_endpoint->url_format != NULL && 0 == strcmp(u_instance->endpoint_list[i].url_format, u_endpoint->url_format))) {
         // It's a match!
         // Remove current endpoint and move the next ones to their previous index, then reduce the endpoint_list by 1
         free(u_instance->endpoint_list[i].http_method);
