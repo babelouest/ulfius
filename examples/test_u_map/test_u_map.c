@@ -19,33 +19,67 @@
  * decode a u_map into a string
  */
 char * print_map(const struct _u_map * map) {
-    char * line, * to_return = NULL;
-    const char **keys, * value;
-	int len, i;
-	if (map != NULL) {
-		keys = u_map_enum_keys(map);
-		for (i=0; keys[i] != NULL; i++) {
-			value = u_map_get(map, keys[i]);
-			len = snprintf(NULL, 0, "key is %s, value is %s", keys[i], value);
-			line = malloc((len+1)*sizeof(char));
-			snprintf(line, (len+1), "key is %s, value is %s", keys[i], value);
-			if (to_return != NULL) {
-				len = strlen(to_return) + strlen(line) + 1;
-				to_return = realloc(to_return, (len+1)*sizeof(char));
-				if (strlen(to_return) > 0) {
-					strcat(to_return, "\n");
-				}
-			} else {
-				to_return = malloc((strlen(line) + 1)*sizeof(char));
+  char * line, * to_return = NULL;
+  const char **keys, * value;
+  int len, i;
+  if (map != NULL) {
+    keys = u_map_enum_keys(map);
+    for (i=0; keys[i] != NULL; i++) {
+      value = u_map_get(map, keys[i]);
+      len = snprintf(NULL, 0, "key is %s, length is %ld, value is %.*s", keys[i], u_map_get_length(map, keys[i]), (int)u_map_get_length(map, keys[i]), value);
+      line = malloc((len+1)*sizeof(char));
+      snprintf(line, (len+1), "key is %s, length is %ld, value is %.*s", keys[i], u_map_get_length(map, keys[i]), (int)u_map_get_length(map, keys[i]), value);
+      if (to_return != NULL) {
+        len = strlen(to_return) + strlen(line) + 1;
+        to_return = realloc(to_return, (len+1)*sizeof(char));
+        if (strlen(to_return) > 0) {
+          strcat(to_return, "\n");
+        }
+      } else {
+        to_return = malloc((strlen(line) + 1)*sizeof(char));
         to_return[0] = 0;
-			}
-			strcat(to_return, line);
-			free(line);
-		}
-		return to_return;
-	} else {
-		return NULL;
-	}
+      }
+      strcat(to_return, line);
+      free(line);
+    }
+    return to_return;
+  } else {
+    return NULL;
+  }
+}
+
+/**
+ * put the content of a file in the u_map with the file_path as the key using u_map_put_binary
+ */
+int put_file_content_in_map (struct _u_map * map, const char * file_path, uint64_t offset) {
+  void * buffer = NULL;
+  long length;
+  FILE * f;
+  int res = U_OK;
+  
+  if (access(file_path, F_OK) != -1 && map != NULL) {
+    f = fopen (file_path, "rb");
+    if (f) {
+      fseek (f, 0, SEEK_END);
+      length = ftell (f);
+      fseek (f, 0, SEEK_SET);
+      buffer = malloc(length*sizeof(void));
+      if (buffer) {
+        fread (buffer, 1, length, f);
+      }
+      fclose (f);
+    }
+
+    if (buffer) {
+      res = u_map_put_binary(map,file_path,  (char *)buffer, offset, length);
+      free(buffer);
+    } else {
+      res = U_ERROR;
+    }
+  } else {
+    res = U_ERROR_PARAMS;
+  }
+  return res;
 }
 
 int main (int argc, char **argv) {
@@ -134,6 +168,31 @@ int main (int argc, char **argv) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "get value from key key_nope: %s", u_map_get(&map, "key_nope"));
     y_log_message(Y_LOG_LEVEL_DEBUG, "get value from key Key1 (no case): %s", u_map_get_case(&map, "Key1"));
     y_log_message(Y_LOG_LEVEL_DEBUG, "get value from key Key_nope (no case): %s", u_map_get_case(&map, "Key_nope"));
+    
+    put_file_content_in_map(&map, "../sheep_counter/static/sheep.png", 0);
+    
+    print = print_map(&map);
+    y_log_message(Y_LOG_LEVEL_DEBUG, "iteration 11, map is\n%s\n", print);
+    free(print);
+    
+    u_map_remove_from_key(&map, "../sheep_counter/static/sheep.png");
+    put_file_content_in_map(&map, "Makefile", 0);
+    
+    print = print_map(&map);
+    y_log_message(Y_LOG_LEVEL_DEBUG, "iteration 12, map is\n%s\n", print);
+    free(print);
+    
+    u_map_put_binary(&map, "Makefile", "Replace the first characters", 0, strlen("Replace the first characters"));
+    
+    print = print_map(&map);
+    y_log_message(Y_LOG_LEVEL_DEBUG, "iteration 12, map is\n%s\n", print);
+    free(print);
+    
+    u_map_put_binary(&map, "Makefile", "Append at the end of the value", u_map_get_length(&map, "Makefile"), strlen("Append at the end of the value"));
+    
+    print = print_map(&map);
+    y_log_message(Y_LOG_LEVEL_DEBUG, "iteration 12, map is\n%s\n", print);
+    free(print);
     
     u_map_clean(&map);
     u_map_clean_full(map_copy);
