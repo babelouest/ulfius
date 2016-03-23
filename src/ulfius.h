@@ -66,7 +66,7 @@
 #define U_STATUS_RUNNING  1
 #define U_STATUS_ERROR    2
 
-#define ULFIUS_VERSION 0.11.0
+#define ULFIUS_VERSION 0.12.0
 
 /*************
  * Structures
@@ -76,9 +76,10 @@
  * struct _u_map
  */
 struct _u_map {
-  int nb_values;
-  char ** keys;
-  char ** values;
+  int      nb_values;
+  char  ** keys;
+  char  ** values;
+  size_t * lengths;
 };
 
 /**
@@ -677,6 +678,13 @@ int u_map_has_key(const struct _u_map * u_map, const char * key);
 int u_map_has_value(const struct _u_map * u_map, const char * value);
 
 /**
+ * return true if the sprcified u_map contains the specified value up until the specified length
+ * false otherwise
+ * search is case sensitive
+ */
+int u_map_has_value_binary(const struct _u_map * u_map, const char * value, size_t length);
+
+/**
  * return true if the sprcified u_map contains the specified key
  * false otherwise
  * search is case insensitive
@@ -696,6 +704,28 @@ int u_map_has_value_case(const struct _u_map * u_map, const char * value);
  * return U_OK on success
  */
 int u_map_put(struct _u_map * u_map, const char * key, const char * value);
+
+/**
+ * add the specified key/binary value pair into the specified u_map
+ * if the u_map already contains a pair with the same key,
+ * replace the value at the specified offset with the specified length
+ * return U_OK on success
+ */
+int u_map_put_binary(struct _u_map * u_map, const char * key, const char * value, uint64_t offset, size_t length);
+
+/**
+ * get the value length corresponding to the specified key in the u_map
+ * return -1 if no match found
+ * search is case sensitive
+ */
+size_t u_map_get_length(const struct _u_map * u_map, const const char * key);
+
+/**
+ * get the value length corresponding to the specified key in the u_map
+ * return -1 if no match found
+ * search is case insensitive
+ */
+size_t u_map_get_case_length(const struct _u_map * u_map, const const char * key);
 
 /**
  * get the value corresponding to the specified key in the u_map
@@ -727,13 +757,19 @@ int u_map_remove_from_key_case(struct _u_map * u_map, const char * key);
  * remove all pairs key/value that has the specified value
  * return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
  */
-int u_map_remove_from_value(struct _u_map * u_map, const char * key);
+int u_map_remove_from_value(struct _u_map * u_map, const char * value);
 
 /**
  * remove all pairs key/value that has the specified value (case insensitive search)
  * return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
  */
-int u_map_remove_from_value_case(struct _u_map * u_map, const char * key);
+int u_map_remove_from_value_case(struct _u_map * u_map, const char * value);
+
+/**
+ * remove all pairs key/value that has the specified value up until the specified length
+ * return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
+ */
+int u_map_remove_from_value_binary(struct _u_map * u_map, const char * key, size_t length);
 
 /**
  * remove the pair key/value at the specified index
