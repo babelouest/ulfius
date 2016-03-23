@@ -353,13 +353,14 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
         con_info->request->json_has_error = 0;
       }
     }
-    con_info->request->binary_body = malloc(*upload_data_size);
+
+    con_info->request->binary_body = realloc(con_info->request->binary_body, con_info->request->binary_body_length + *upload_data_size);
     if (con_info->request->binary_body == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for con_info->request->binary_body");
       return MHD_NO;
     } else {
-      memcpy(con_info->request->binary_body, upload_data, *upload_data_size);
-      con_info->request->binary_body_length = *upload_data_size;
+      memcpy(con_info->request->binary_body + con_info->request->binary_body_length, upload_data, *upload_data_size);
+      con_info->request->binary_body_length += *upload_data_size;
       *upload_data_size = 0;
       return MHD_YES;
     }
@@ -533,10 +534,10 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
  */
 int mhd_iterate_post_data (void *coninfo_cls, enum MHD_ValueKind kind, const char *key,
                       const char *filename, const char *content_type,
-                      const char *transfer_encoding, const char *data, uint64_t off,
-                      size_t size) {
+                      const char *transfer_encoding, const char * data, uint64_t off, size_t size) {
   struct connection_info_struct *con_info = coninfo_cls;
-  if (u_map_put((struct _u_map *)con_info->request->map_post_body, key, data) == U_OK) {
+  
+  if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data, off, size) == U_OK) {
     return MHD_YES;
   } else {
     return MHD_NO;
@@ -707,7 +708,7 @@ int ulfius_add_endpoint(struct _u_instance * u_instance, const struct _u_endpoin
         // List has endpoints, append this one if it doesn't exist yet
         for (i=0; i <= u_instance->nb_endpoints; i++) {
           if (ulfius_equals_endpoints(u_endpoint, &(u_instance->endpoint_list[i]))) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_add_endpoint, Error endpoint already exist");
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_add_endpoint, Error endpoint '%s %s%s' already exist", u_endpoint->http_method, u_endpoint->url_prefix, u_endpoint->url_format);
             return U_ERROR_PARAMS;
           }
         }
@@ -783,6 +784,7 @@ int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endp
         free(u_instance->endpoint_list[i].http_method);
         free(u_instance->endpoint_list[i].url_prefix);
         free(u_instance->endpoint_list[i].url_format);
+        free(u_instance->endpoint_list[i].auth_realm);
         for (j=i; j<u_instance->nb_endpoints; j++) {
           u_instance->endpoint_list[j] = u_instance->endpoint_list[j+1];
         }
