@@ -20,6 +20,7 @@
 
 #define PORT 7437
 #define PREFIX "/sheep"
+#define FILE_PREFIX "/upload"
 #define STATIC_FOLDER "static"
 
 // Callback function used to serve static files that are present in the static folder
@@ -33,6 +34,42 @@ int callback_sheep_counter_reset (const struct _u_request * request, struct _u_r
 
 // Callback function used to add one sheep to the counter
 int callback_sheep_counter_add (const struct _u_request * request, struct _u_response * response, void * user_data);
+
+// Callback function used to upload file
+int callback_upload_file (const struct _u_request * request, struct _u_response * response, void * user_data);
+
+/**
+ * decode a u_map into a string
+ */
+char * print_map(const struct _u_map * map) {
+  char * line, * to_return = NULL;
+  const char **keys, * value;
+  int len, i;
+  if (map != NULL) {
+    keys = u_map_enum_keys(map);
+    for (i=0; keys[i] != NULL; i++) {
+      value = u_map_get(map, keys[i]);
+      len = snprintf(NULL, 0, "key is %s, length is %ld, value is %.*s", keys[i], u_map_get_length(map, keys[i]), (int)u_map_get_length(map, keys[i]), value);
+      line = malloc((len+1)*sizeof(char));
+      snprintf(line, (len+1), "key is %s, length is %ld, value is %.*s", keys[i], u_map_get_length(map, keys[i]), (int)u_map_get_length(map, keys[i]), value);
+      if (to_return != NULL) {
+        len = strlen(to_return) + strlen(line) + 1;
+        to_return = realloc(to_return, (len+1)*sizeof(char));
+        if (strlen(to_return) > 0) {
+          strcat(to_return, "\n");
+        }
+      } else {
+        to_return = malloc((strlen(line) + 1)*sizeof(char));
+        to_return[0] = 0;
+      }
+      strcat(to_return, line);
+      free(line);
+    }
+    return to_return;
+  } else {
+    return NULL;
+  }
+}
 
 /**
  * return the filename extension
@@ -80,6 +117,7 @@ int main (int argc, char **argv) {
   ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, NULL, NULL, NULL, NULL, &callback_sheep_counter_start, &nb_sheep);
   ulfius_add_endpoint_by_val(&instance, "PUT", PREFIX, NULL, NULL, NULL, NULL, &callback_sheep_counter_add, &nb_sheep);
   ulfius_add_endpoint_by_val(&instance, "DELETE", PREFIX, NULL, NULL, NULL, NULL, &callback_sheep_counter_reset, &nb_sheep);
+  ulfius_add_endpoint_by_val(&instance, "*", FILE_PREFIX, NULL, NULL, NULL, NULL, &callback_upload_file, NULL);
   ulfius_add_endpoint_by_val(&instance, "GET", "*", NULL, NULL, NULL, NULL, &callback_static_file, &mime_types);
   
   // Start the framework
@@ -203,5 +241,23 @@ int callback_static_file (const struct _u_request * request, struct _u_response 
     response->status = 404;
   }
   free(file_path);
+  return U_OK;
+}
+
+/**
+ * upload a file
+ */
+int callback_upload_file (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  char * url_params = print_map(request->map_url), * headers = print_map(request->map_header), * cookies = print_map(request->map_cookie), 
+        * post_params = print_map(request->map_post_body);
+
+  response->string_body = msprintf("Upload file\n\n  method is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n",
+                                  request->http_verb, request->http_url, url_params, cookies, headers, post_params);
+  response->status = 200;
+  
+  free(url_params);
+  free(headers);
+  free(cookies);
+  free(post_params);
   return U_OK;
 }
