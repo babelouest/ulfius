@@ -2,7 +2,7 @@
 
 Web Framework for REST Applications in C.
 
-Based on [GNU Libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/) for the web server backend, [Jansson](http://www.digip.org/jansson/) for the json manipulation library, and [Libcurl](http://curl.haxx.se/libcurl/) for the http/smtp client API.
+Based on [GNU Libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/) for the backend web server, [Jansson](http://www.digip.org/jansson/) for the json manipulation library, and [Libcurl](http://curl.haxx.se/libcurl/) for the http/smtp client API.
 
 Used to facilitate creation of web applications in C programs with a small memory footprint, as in embedded systems applications.
 
@@ -143,6 +143,7 @@ The `struct _u_instance` is defined as:
  *                        but the auth_callback function of the endpoint will
  * default_auth_data:     a pointer to a data or a structure that will be available in auth_function
  * default_auth_realm:    realm value for authentication
+ * max_post_param_size:  maximum file size for upload, 0 means no limit, default 0
  * 
  */
 struct _u_instance {
@@ -157,8 +158,9 @@ struct _u_instance {
   int (* default_auth_function)(const struct _u_request * request, // Input parameters (set by the framework)
                                 struct _u_response * response,     // Output parameters (set by the user)
                                 void * auth_data);
-  void * default_auth_data;
-  char * default_auth_realm;
+  void *                        default_auth_data;
+  char *                        default_auth_realm;
+  size_t                        max_post_param_size;
 };
 ```
 
@@ -639,6 +641,18 @@ int ulfius_add_cookie_to_response(struct _u_response * response, const char * ke
                                   const char * domain, const char * path, const int secure, const int http_only);
 ```
 
+### File upload
+
+Ulifius allows file upload to the server. Beware that an uploaded file will be stored in the request object in memory, so uploading large files may dramatically slow the application or even crash it, depending on your system. An uploaded file is stored in the `request->map_body` structure. You can use `u_map_get_length` to get the exact length of the file as it may not be a string format.
+
+If you want to limit the size of a post parameter, if you want to limit the file size for example, set the value `struct _u_instance.max_post_param_size`. Files or post data exceeding this size will be truncated to the size `struct _u_instance.max_post_param_size`. If this parameter is 0, then no limit is set. Default value is 0.
+
+See `examples/sheep_counter` for a file upload example.
+
+### Character encoding
+
+You may be careful with characters encoding if you use non UTF8 characters in your application or webservice, and especially if you use different encodings in the same application. Ulfius has not been fully tested in cases like that.
+
 ### struct _u_map API
 
 The `struct _u_map` is a simple key/value mapping API. The available functions to use this structure are:
@@ -696,6 +710,13 @@ int u_map_has_key(const struct _u_map * u_map, const char * key);
 int u_map_has_value(const struct _u_map * u_map, const char * value);
 
 /**
+ * return true if the sprcified u_map contains the specified value up until the specified length
+ * false otherwise
+ * search is case sensitive
+ */
+int u_map_has_value_binary(const struct _u_map * u_map, const char * value, size_t length);
+
+/**
  * return true if the sprcified u_map contains the specified key
  * false otherwise
  * search is case insensitive
@@ -715,6 +736,28 @@ int u_map_has_value_case(const struct _u_map * u_map, const char * value);
  * return U_OK on success
  */
 int u_map_put(struct _u_map * u_map, const char * key, const char * value);
+
+/**
+ * add the specified key/binary value pair into the specified u_map
+ * if the u_map already contains a pair with the same key,
+ * replace the value at the specified offset with the specified length
+ * return U_OK on success
+ */
+int u_map_put_binary(struct _u_map * u_map, const char * key, const char * value, uint64_t offset, size_t length);
+
+/**
+ * get the value length corresponding to the specified key in the u_map
+ * return -1 if no match found
+ * search is case sensitive
+ */
+size_t u_map_get_length(const struct _u_map * u_map, const const char * key);
+
+/**
+ * get the value length corresponding to the specified key in the u_map
+ * return -1 if no match found
+ * search is case insensitive
+ */
+size_t u_map_get_case_length(const struct _u_map * u_map, const const char * key);
 
 /**
  * get the value corresponding to the specified key in the u_map
@@ -746,13 +789,19 @@ int u_map_remove_from_key_case(struct _u_map * u_map, const char * key);
  * remove all pairs key/value that has the specified value
  * return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
  */
-int u_map_remove_from_value(struct _u_map * u_map, const char * key);
+int u_map_remove_from_value(struct _u_map * u_map, const char * value);
 
 /**
  * remove all pairs key/value that has the specified value (case insensitive search)
  * return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
  */
-int u_map_remove_from_value_case(struct _u_map * u_map, const char * key);
+int u_map_remove_from_value_case(struct _u_map * u_map, const char * value);
+
+/**
+ * remove all pairs key/value that has the specified value up until the specified length
+ * return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
+ */
+int u_map_remove_from_value_binary(struct _u_map * u_map, const char * key, size_t length);
 
 /**
  * remove the pair key/value at the specified index
