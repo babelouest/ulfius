@@ -224,6 +224,7 @@ struct _u_endpoint {
  *                        but the auth_callback function of the endpoint will
  * default_auth_data:     a pointer to a data or a structure that will be available in auth_function
  * default_auth_realm:    realm value for authentication
+ * max_post_param_size:  maximum file size for upload, 0 means no limit, default 0
  * 
  */
 struct _u_instance {
@@ -238,8 +239,9 @@ struct _u_instance {
   int (* default_auth_function)(const struct _u_request * request, // Input parameters (set by the framework)
                                 struct _u_response * response,     // Output parameters (set by the user)
                                 void * auth_data);
-  void * default_auth_data;
-  char * default_auth_realm;
+  void *                        default_auth_data;
+  char *                        default_auth_realm;
+  size_t                        max_post_param_size;
 };
 
 /**
@@ -250,6 +252,7 @@ struct connection_info_struct {
   int                        has_post_processor;
   int                        callback_first_iteration;
   struct _u_request *        request;
+  size_t                     max_post_param_size;
 };
 
 /**********************************

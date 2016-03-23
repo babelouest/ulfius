@@ -99,6 +99,7 @@ void * ulfius_uri_logger (void * cls, const char * uri) {
       free(con_info);
       return NULL;
     }
+    con_info->max_post_param_size = 0;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for con_info");
   }
@@ -153,9 +154,9 @@ struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance, const
       mhd_ops[5].ptr_value = NULL;
     }
     return MHD_start_daemon (
-          mhd_flags, u_instance->port, NULL, NULL, &ulfius_webservice_dispatcher, (void *)u_instance, 
-          MHD_OPTION_ARRAY, mhd_ops,
-          MHD_OPTION_END
+      mhd_flags, u_instance->port, NULL, NULL, &ulfius_webservice_dispatcher, (void *)u_instance, 
+      MHD_OPTION_ARRAY, mhd_ops,
+      MHD_OPTION_END
     );
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error, instance already started");
@@ -309,6 +310,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
     con_info->callback_first_iteration = 0;
     so_client = MHD_get_connection_info (connection, MHD_CONNECTION_INFO_CLIENT_ADDRESS)->client_addr;
     con_info->has_post_processor = 0;
+    con_info->max_post_param_size = ((struct _u_instance *)cls)->max_post_param_size;
     
     con_info->request->http_verb = nstrdup(method);
     con_info->request->client_address = malloc(sizeof(struct sockaddr));
@@ -530,14 +532,25 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
 /**
  * mhd_iterate_post_data
  * function used to iterate post parameters
+ * if a parameter is larger than max_post_param_size, truncate it
  * return MHD_NO on error
  */
-int mhd_iterate_post_data (void *coninfo_cls, enum MHD_ValueKind kind, const char *key,
-                      const char *filename, const char *content_type,
-                      const char *transfer_encoding, const char * data, uint64_t off, size_t size) {
-  struct connection_info_struct *con_info = coninfo_cls;
+int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, const char * key,
+                      const char * filename, const char * content_type,
+                      const char * transfer_encoding, const char * data, uint64_t off, size_t size) {
   
-  if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data, off, size) == U_OK) {
+  struct connection_info_struct * con_info = coninfo_cls;
+  size_t cur_size = size;
+  
+  if (con_info->max_post_param_size > 0) {
+    if (off > con_info->max_post_param_size) {
+      return MHD_YES;
+    } else if (off + size > con_info->max_post_param_size) {
+      cur_size = con_info->max_post_param_size - off;
+    }
+  }
+  
+  if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data, off, cur_size) == U_OK) {
     return MHD_YES;
   } else {
     return MHD_NO;
@@ -865,6 +878,7 @@ int ulfius_init_instance(struct _u_instance * u_instance, int port, struct socka
     u_instance->default_auth_function = NULL;
     u_instance->default_auth_data = NULL;
     u_instance->default_auth_realm = NULL;
+    u_instance->max_post_param_size = 0;
     return U_OK;
   } else {
     return U_ERROR_PARAMS;

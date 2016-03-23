@@ -100,6 +100,9 @@ int main (int argc, char **argv) {
     return(1);
   }
   
+  // Max file upload size is 16 Ko
+  instance.max_post_param_size = 16*1024;
+  
   // MIME types that will define the static files
   struct _u_map mime_types;
   u_map_init(&mime_types);
