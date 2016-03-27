@@ -37,13 +37,12 @@ int ulfius_set_response_header(struct MHD_Response * response, const struct _u_m
   if (header_keys != NULL && response != NULL && response_map_header != NULL) {
     for (i=0; header_keys != NULL && header_keys[i] != NULL; i++) {
       header_value = u_map_get(response_map_header, header_keys[i]);
-      if (header_value == NULL) {
-        return -1;
-      }
-      ret = MHD_add_response_header (response, header_keys[i], header_value);
-      if (ret == MHD_NO) {
-        i = -1;
-        break;
+      if (header_value != NULL) {
+        ret = MHD_add_response_header (response, header_keys[i], header_value);
+        if (ret == MHD_NO) {
+          i = -1;
+          break;
+        }
       }
     }
   }

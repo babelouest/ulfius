@@ -426,6 +426,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
         } else if (ulfius_get_body_from_response(response, &response_buffer, &response_buffer_len) == U_OK) {
           mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
           if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
             response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
             response->string_body = nstrdup(ULFIUS_HTTP_ERROR_BODY);
             if (response->string_body == NULL) {
@@ -460,6 +461,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
           if (ulfius_get_body_from_response(response, &response_buffer, &response_buffer_len) == U_OK) {
             mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
             if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
               response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
               response->string_body = nstrdup(ULFIUS_HTTP_ERROR_BODY);
               if (response->string_body == NULL) {
