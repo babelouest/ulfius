@@ -393,7 +393,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
         return MHD_NO;
       }
       
-      // Add default headers (if any to the response header maps
+      // Add default headers (if any) to the response header maps
       if (((struct _u_instance *)cls)->default_headers != NULL && u_map_count(((struct _u_instance *)cls)->default_headers) > 0) {
           u_map_clean_full(response->map_header);
           response->map_header = u_map_copy(((struct _u_instance *)cls)->default_headers);
@@ -454,6 +454,13 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
         // Reset response structure
         ulfius_clean_response(response);
         ulfius_init_response(response);
+        
+        // Add default headers (if any) to the response header maps
+        if (((struct _u_instance *)cls)->default_headers != NULL && u_map_count(((struct _u_instance *)cls)->default_headers) > 0) {
+            u_map_clean_full(response->map_header);
+            response->map_header = u_map_copy(((struct _u_instance *)cls)->default_headers);
+        }
+      
         // Endpoint found, run callback function with the input parameters filled
         callback_ret = current_endpoint->callback_function(con_info->request, response, current_endpoint->user_data);
         
