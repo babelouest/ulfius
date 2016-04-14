@@ -10,8 +10,7 @@
 #
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU GENERAL PUBLIC LICENSE for more details.
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #
 
 LIBULFIUS_LOCATION=./src
@@ -22,6 +21,7 @@ REQUEST_EXAMPLE_LOCATION=./examples/request_example
 TEST_U_MAP_LOCATION=./examples/test_u_map
 INJECTION_EXAMPLE_LOCATION=./examples/injection_example
 AUTH_EXAMPLE_LOCATION=./examples/auth_example
+STREAM_EXAMPLE_LOCATION=./examples/stream_example
 
 all: libulfius.so simple_example sheep_counter proxy_example request_example injection_example auth_example test_u_map
 
@@ -32,6 +32,7 @@ debug:
 	cd $(REQUEST_EXAMPLE_LOCATION) && $(MAKE) debug
 	cd $(INJECTION_EXAMPLE_LOCATION) && $(MAKE) debug
 	cd $(AUTH_EXAMPLE_LOCATION) && $(MAKE) debug
+	cd $(STREAM_EXAMPLE_LOCATION) && $(MAKE) debug
 	cd $(TEST_U_MAP_LOCATION) && $(MAKE) debug
 
 clean:
@@ -42,6 +43,7 @@ clean:
 	cd $(REQUEST_EXAMPLE_LOCATION) && $(MAKE) clean
 	cd $(INJECTION_EXAMPLE_LOCATION) && $(MAKE) clean
 	cd $(AUTH_EXAMPLE_LOCATION) && $(MAKE) clean
+	cd $(STREAM_EXAMPLE_LOCATION) && $(MAKE) clean
 	cd $(TEST_U_MAP_LOCATION) && $(MAKE) clean
 
 libulfius.so:
@@ -61,6 +63,9 @@ request_example:
 
 injection_example:
 	cd $(INJECTION_EXAMPLE_LOCATION) && $(MAKE)
+
+stream_example:
+	cd $(STREAM_EXAMPLE_LOCATION) && $(MAKE)
 
 auth_example:
 	cd $(AUTH_EXAMPLE_LOCATION) && $(MAKE)

@@ -474,15 +474,20 @@ The response variable is defined as:
  * Structure of response parameters
  * 
  * Contains response data that must be set by the user
- * status:             HTTP status code (200, 404, 500, etc)
- * protocol:           HTTP Protocol sent
- * map_header:         map containing the header variables
- * nb_cookies:         number of cookies sent
- * map_cookie:         array of cookies sent
- * string_body:        a char * containing the raw body response
- * json_body:          a json_t * object containing the json response
- * binary_body:        a void * containing a raw binary content
- * binary_body_length: the length of the binary_body
+ * status:               HTTP status code (200, 404, 500, etc)
+ * protocol:             HTTP Protocol sent
+ * map_header:           map containing the header variables
+ * nb_cookies:           number of cookies sent
+ * map_cookie:           array of cookies sent
+ * string_body:          a char * containing the raw body response
+ * json_body:            a json_t * object containing the json response
+ * binary_body:          a void * containing a raw binary content
+ * binary_body_length:   the length of the binary_body
+ * stream_callback:      callback function to stream data in response body
+ * stream_callback_free: callback function to free data allocated for streaming
+ * stream_size:          size of the streamed data (-1 if unknown)
+ * stream_block_size:    size of each block to be streamed, set according to your system
+ * stream_user_data:     user defined data that will be available in your callback stream functions
  * 
  */
 struct _u_response {
@@ -495,6 +500,11 @@ struct _u_response {
   json_t           * json_body;
   void             * binary_body;
   unsigned int       binary_body_length;
+  int             (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max);
+  void            (* stream_callback_free) (void * stream_user_data);
+  size_t             stream_size;
+  unsigned int       stream_block_size;
+  void             * stream_user_data;
 };
 ```
 
@@ -533,6 +543,26 @@ int ulfius_set_binary_response(struct _u_response * response, const uint status,
  * return U_OK on success
  */
 int ulfius_set_json_response(struct _u_response * response, const uint status, const json_t * body);
+
+/**
+ * ulfius_set_empty_response
+ * Set an empty response with only a status
+ * return U_OK on success
+ */
+int ulfius_set_empty_response(struct _u_response * response, const uint status);
+
+/**
+ * ulfius_set_stream_response
+ * Set an stream response with a status
+ * return U_OK on success
+ */
+int ulfius_set_stream_response(struct _u_response * response, 
+                                const uint status,
+                                int (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max),
+                                void (* stream_callback_free) (void * stream_user_data),
+                                size_t stream_size,
+                                unsigned int stream_block_size,
+                                void * stream_user_data);
 ```
 
 The `jansson` api documentation is available at the following address: [Jansson documentation](https://jansson.readthedocs.org/).
@@ -648,6 +678,37 @@ Ulifius allows file upload to the server. Beware that an uploaded file will be s
 If you want to limit the size of a post parameter, if you want to limit the file size for example, set the value `struct _u_instance.max_post_param_size`. Files or post data exceeding this size will be truncated to the size `struct _u_instance.max_post_param_size`. If this parameter is 0, then no limit is set. Default value is 0.
 
 See `examples/sheep_counter` for a file upload example.
+
+### Streaming data
+
+If you need to stream data, i.e. send a variable and potentially large amount of data, you can define and use `stream_callback_function` in the `struct _u_response`.
+
+Not that if you stream data to the client, any data that was in the `response->*_body` will be ignored. You must at least set the function pointer `struct _u_response.stream_callback` to stream data. Set `stream_size` to -1 if you don't know the size of the data you need to send, like in audio stream for example. Set `stream_block_size` according to you system resources to avoid out of memory errors, also, set `stream_callback_free` with a pointer to a function that will free values allocated by your stream callback function, as a `close()` file for example, and finally, you can set `stream_user_data` to a pointer.
+
+You can use the function `ulfius_set_stream_response` to set those parameters.
+
+The prototype of the `stream_callback` function is the following:
+
+```c
+int stream_callback (void * stream_user_data, // Your predefined user_data
+                    uint64_t offset,          // the position of the current data to send
+                    char * out_buf,           // The output buffer to fill with data
+                    size_t max);              // the max size of data to be put in the out_buf
+```
+
+The return value must be the size of the data put in `out_buf`.
+
+This function will be recalled in loop as long as the client has the connection opened.
+
+If you want to close the stream from the server side, return `ULFIUS_STREAM_END` in the `stream_callback` function. If you a problem occured, you can close the connection with a `ULFIUS_STREAM_ERROR` return value.
+
+While the `stream_callback_free` function is as simple as:
+
+```c
+void stream_callback_free (void * stream_user_data);
+```
+
+Check the program `stream_example` in the example folder.
 
 ### Character encoding
 

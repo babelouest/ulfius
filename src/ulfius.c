@@ -465,16 +465,19 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
         callback_ret = current_endpoint->callback_function(con_info->request, response, current_endpoint->user_data);
         
         if (callback_ret == U_OK) {
-          if (ulfius_get_body_from_response(response, &response_buffer, &response_buffer_len) == U_OK) {
+          if (response->stream_callback != NULL) {
+            // Call the stream_callback function to build the response body
+            mhd_response = MHD_create_response_from_callback(response->stream_size, response->stream_block_size, (MHD_ContentReaderCallback)response->stream_callback, response->stream_user_data, response->stream_callback_free);
+            if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
+              return MHD_NO;
+            }
+          } else if (ulfius_get_body_from_response(response, &response_buffer, &response_buffer_len) == U_OK) {
+            // Build the response body based on the response->*_body parameters
             mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
             if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
               y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
-              response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
-              response->string_body = nstrdup(ULFIUS_HTTP_ERROR_BODY);
-              if (response->string_body == NULL) {
-                y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->string_body");
-                return MHD_NO;
-              }
+              return MHD_NO;
             }
           } else {
             // Error building response, sending error 500

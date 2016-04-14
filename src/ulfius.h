@@ -53,6 +53,10 @@
 
 #define ULFIUS_POSTBUFFERSIZE 1024
 
+#define ULFIUS_STREAM_BLOCK_SIZE_DEFAULT 1024
+#define ULFIUS_STREAM_END MHD_CONTENT_READER_END_OF_STREAM
+#define ULFIUS_STREAM_ERROR MHD_CONTENT_READER_END_WITH_ERROR
+
 #define U_OK                 0 // No error
 #define U_ERROR              1 // Error
 #define U_ERROR_MEMORY       2 // Error in memory allocation
@@ -66,7 +70,7 @@
 #define U_STATUS_RUNNING  1
 #define U_STATUS_ERROR    2
 
-#define ULFIUS_VERSION 0.12.0
+#define ULFIUS_VERSION 0.13.0
 
 /*************
  * Structures
@@ -140,15 +144,20 @@ struct _u_request {
  * Structure of response parameters
  * 
  * Contains response data that must be set by the user
- * status:             HTTP status code (200, 404, 500, etc)
- * protocol:           HTTP Protocol sent
- * map_header:         map containing the header variables
- * nb_cookies:         number of cookies sent
- * map_cookie:         array of cookies sent
- * string_body:        a char * containing the raw body response
- * json_body:          a json_t * object containing the json response
- * binary_body:        a void * containing a raw binary content
- * binary_body_length: the length of the binary_body
+ * status:               HTTP status code (200, 404, 500, etc)
+ * protocol:             HTTP Protocol sent
+ * map_header:           map containing the header variables
+ * nb_cookies:           number of cookies sent
+ * map_cookie:           array of cookies sent
+ * string_body:          a char * containing the raw body response
+ * json_body:            a json_t * object containing the json response
+ * binary_body:          a void * containing a raw binary content
+ * binary_body_length:   the length of the binary_body
+ * stream_callback:      callback function to stream data in response body
+ * stream_callback_free: callback function to free data allocated for streaming
+ * stream_size:          size of the streamed data (-1 if unknown)
+ * stream_block_size:    size of each block to be streamed, set according to your system
+ * stream_user_data:     user defined data that will be available in your callback stream functions
  * 
  */
 struct _u_response {
@@ -161,6 +170,11 @@ struct _u_response {
   json_t           * json_body;
   void             * binary_body;
   unsigned int       binary_body_length;
+  ssize_t         (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max);
+  void            (* stream_callback_free) (void * stream_user_data);
+  size_t             stream_size;
+  unsigned int       stream_block_size;
+  void             * stream_user_data;
 };
 
 /**
@@ -545,6 +559,19 @@ int ulfius_set_json_response(struct _u_response * response, const uint status, c
  * return U_OK on success
  */
 int ulfius_set_empty_response(struct _u_response * response, const uint status);
+
+/**
+ * ulfius_set_stream_response
+ * Set an stream response with a status
+ * return U_OK on success
+ */
+int ulfius_set_stream_response(struct _u_response * response, 
+                                const uint status,
+                                ssize_t (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max),
+                                void (* stream_callback_free) (void * stream_user_data),
+                                size_t stream_size,
+                                unsigned int stream_block_size,
+                                void * stream_user_data);
 
 /**
  * ulfius_init_request

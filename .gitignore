@@ -1,0 +1,15 @@
+*.o
+examples/*/*.o
+src/*.o
+src/*.so
+src/*.so.*
+examples/auth_example/auth_client
+examples/auth_example/auth_server
+examples/injection_example/injection_example
+examples/proxy_example/proxy
+examples/request_example/client
+examples/request_example/mail
+examples/request_example/server
+examples/simple_example/simple_example
+examples/stream_example/stream_example
+examples/test_u_map/test_u_map

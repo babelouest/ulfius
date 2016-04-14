@@ -398,6 +398,10 @@ int ulfius_init_response(struct _u_response * response) {
     response->json_body = NULL;
     response->binary_body = NULL;
     response->binary_body_length = 0;
+    response->stream_callback = NULL;
+    response->stream_size = -1;
+    response->stream_block_size = ULFIUS_STREAM_BLOCK_SIZE_DEFAULT;
+    response->stream_callback_free = NULL;
     return U_OK;
   } else {
     return U_ERROR_PARAMS;
@@ -625,6 +629,42 @@ int ulfius_set_empty_response(struct _u_response * response, const uint status) 
     response->json_body = NULL;
     
     response->status = status;
+    return U_OK;
+  } else {
+    return U_ERROR_PARAMS;
+  }
+}
+
+/**
+ * ulfius_set_stream_response
+ * Set an stream response with a status
+ * set stream_size to -1 if unknown
+ * set stream_block_size to a proper value based on the system
+ * return U_OK on success
+ */
+int ulfius_set_stream_response(struct _u_response * response, 
+                                const uint status,
+                                ssize_t (* stream_callback) (void *stream_user_data, uint64_t offset, char * out_buf, size_t max),
+                                void (* stream_callback_free) (void *stream_user_data),
+                                size_t stream_size,
+                                unsigned int stream_block_size,
+                                void * stream_user_data) {
+  if (response != NULL && stream_callback != NULL) {
+    // Free all the bodies available
+    free(response->string_body);
+    response->string_body = NULL;
+    free(response->binary_body);
+    response->binary_body = NULL;
+    response->binary_body_length = 0;
+    json_decref(response->json_body);
+    response->json_body = NULL;
+    
+    response->status = status;
+    response->stream_callback = stream_callback;
+    response->stream_callback_free = stream_callback_free;
+    response->stream_size = stream_size;
+    response->stream_block_size = stream_block_size;
+    response->stream_user_data = stream_user_data;
     return U_OK;
   } else {
     return U_ERROR_PARAMS;

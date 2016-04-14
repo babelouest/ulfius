@@ -26,9 +26,9 @@ char * print_map(const struct _u_map * map) {
     keys = u_map_enum_keys(map);
     for (i=0; keys[i] != NULL; i++) {
       value = u_map_get(map, keys[i]);
-      len = snprintf(NULL, 0, "key is %s, length is %ld, value is %.*s", keys[i], u_map_get_length(map, keys[i]), (int)u_map_get_length(map, keys[i]), value);
+      len = snprintf(NULL, 0, "key is %s, length is %zu, value is %.*s", keys[i], u_map_get_length(map, keys[i]), (int)u_map_get_length(map, keys[i]), value);
       line = malloc((len+1)*sizeof(char));
-      snprintf(line, (len+1), "key is %s, length is %ld, value is %.*s", keys[i], u_map_get_length(map, keys[i]), (int)u_map_get_length(map, keys[i]), value);
+      snprintf(line, (len+1), "key is %s, length is %zu, value is %.*s", keys[i], u_map_get_length(map, keys[i]), (int)u_map_get_length(map, keys[i]), value);
       if (to_return != NULL) {
         len = strlen(to_return) + strlen(line) + 1;
         to_return = realloc(to_return, (len+1)*sizeof(char));
