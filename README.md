@@ -886,7 +886,7 @@ int u_map_count(const struct _u_map * source);
 
 ### Send request API
 
-The function `int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response)` is based on `libcul` api.
+The function `int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response)` is based on `libcurl` api.
 
 It allows to send an http request with the parameters specified by the `_u_request` structure. Use the parameter `_u_request.http_url` to specify the distant url to call.
 
