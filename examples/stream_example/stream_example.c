@@ -48,10 +48,10 @@ int main (int argc, char **argv) {
   u_map_put(instance.default_headers, "Access-Control-Allow-Origin", "*");
   
   // Endpoint list declaration
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, NULL, NULL, NULL, NULL, &callback_get_stream, NULL);
   if (argc > 1) {
-    ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, NULL, NULL, NULL, NULL, &callback_get_stream, NULL);
+    ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/audio", NULL, NULL, NULL, &callback_get_audio_stream, argv[1]);
   }
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/audio", NULL, NULL, NULL, &callback_get_audio_stream, argv[1]);
   
   // Start the framework
   ret = ulfius_start_framework(&instance);
