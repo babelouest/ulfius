@@ -136,7 +136,7 @@ int u_map_has_key(const struct _u_map * u_map, const char * key) {
   int i;
   if (u_map != NULL && key != NULL) {
     for (i=0; u_map->keys[i] != NULL; i++) {
-      if (0 == strcmp(u_map->keys[i], key)) {
+      if (0 == nstrcmp(u_map->keys[i], key)) {
         return 1;
       }
     }
@@ -194,7 +194,7 @@ int u_map_put_binary(struct _u_map * u_map, const char * key, const char * value
   char * dup_key, * dup_value;
   if (u_map != NULL && key != NULL && strlen(key) > 0) {
     for (i=0; i < u_map->nb_values; i++) {
-      if (0 == strcmp(u_map->keys[i], key)) {
+      if (0 == nstrcmp(u_map->keys[i], key)) {
         // Key already exist, extend and/or replace value
         if (u_map->lengths[i] < (offset + length)) {
           u_map->values[i] = realloc(u_map->values[i], (offset + length)*sizeof(char));
@@ -282,7 +282,7 @@ int u_map_remove_from_key(struct _u_map * u_map, const char * key) {
     return U_ERROR_PARAMS;
   } else {
     for (i = u_map->nb_values-1; i >= 0; i--) {
-      if (0 == strcmp(u_map->keys[i], key)) {
+      if (0 == nstrcmp(u_map->keys[i], key)) {
         found = 1;
         res = u_map_remove_at(u_map, i);
         if (res != U_OK) {
@@ -309,7 +309,7 @@ int u_map_remove_from_key_case(struct _u_map * u_map, const char * key) {
     return U_ERROR_PARAMS;
   } else {
     for (i = u_map->nb_values-1; i >= 0; i--) {
-      if (0 == strcasecmp(u_map->keys[i], key)) {
+      if (0 == nstrcasecmp(u_map->keys[i], key)) {
         found = 1;
         res = u_map_remove_at(u_map, i);
         if (res != U_OK) {
@@ -371,7 +371,7 @@ int u_map_remove_from_value_case(struct _u_map * u_map, const char * value) {
     return U_ERROR_PARAMS;
   } else {
     for (i = u_map->nb_values-1; i >= 0; i--) {
-      if (0 == strcasecmp(u_map->values[i], value)) {
+      if (0 == nstrcasecmp(u_map->values[i], value)) {
         found = 1;
         res = u_map_remove_at(u_map, i);
         if (res != U_OK) {
@@ -435,7 +435,7 @@ const char * u_map_get(const struct _u_map * u_map, const char * key) {
   int i;
   if (u_map != NULL && key != NULL) {
     for (i=0; u_map->keys[i] != NULL; i++) {
-      if (0 == strcmp(u_map->keys[i], key)) {
+      if (0 == nstrcmp(u_map->keys[i], key)) {
         if (u_map->lengths[i] > 0) {
           return u_map->values[i];
         } else {
@@ -458,7 +458,7 @@ int u_map_has_key_case(const struct _u_map * u_map, const char * key) {
   int i;
   if (u_map != NULL && key != NULL) {
     for (i=0; u_map->keys[i] != NULL; i++) {
-      if (0 == strcasecmp(u_map->keys[i], key)) {
+      if (0 == nstrcasecmp(u_map->keys[i], key)) {
         return 1;
       }
     }
@@ -475,7 +475,7 @@ int u_map_has_value_case(const struct _u_map * u_map, const char * value) {
   int i;
   if (u_map != NULL && value != NULL) {
     for (i=0; u_map->values[i] != NULL; i++) {
-      if (0 == strcasecmp(u_map->values[i], value)) {
+      if (0 == nstrcasecmp(u_map->values[i], value)) {
         return 1;
       }
     }
@@ -492,7 +492,7 @@ const char * u_map_get_case(const struct _u_map * u_map, const char * key) {
   int i;
   if (u_map != NULL && key != NULL) {
     for (i=0; u_map->keys[i] != NULL; i++) {
-      if (0 == strcasecmp(u_map->keys[i], key)) {
+      if (0 == nstrcasecmp(u_map->keys[i], key)) {
         return u_map->values[i];
       }
     }
@@ -511,7 +511,7 @@ size_t u_map_get_length(const struct _u_map * u_map, const const char * key) {
   int i;
   if (u_map != NULL && key != NULL) {
     for (i=0; u_map->keys[i] != NULL; i++) {
-      if (0 == strcmp(u_map->keys[i], key)) {
+      if (0 == nstrcmp(u_map->keys[i], key)) {
         return u_map->lengths[i];
       }
     }
@@ -530,7 +530,7 @@ size_t u_map_get_case_length(const struct _u_map * u_map, const const char * key
   int i;
   if (u_map != NULL && key != NULL) {
     for (i=0; u_map->keys[i] != NULL; i++) {
-      if (0 == strcasecmp(u_map->keys[i], key)) {
+      if (0 == nstrcasecmp(u_map->keys[i], key)) {
         return u_map->lengths[i];
       }
     }

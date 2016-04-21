@@ -325,8 +325,8 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
     content_type = (char*)u_map_get_case(con_info->request->map_header, "content-type");
     
     // Set POST Processor if content-type is properly set
-    if (content_type != NULL && (0 == strncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) || 
-        0 == strncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA)))) {
+    if (content_type != NULL && (0 == nstrncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) || 
+        0 == nstrncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA)))) {
       con_info->has_post_processor = 1;
       con_info->post_processor = MHD_create_post_processor (connection, ULFIUS_POSTBUFFERSIZE, mhd_iterate_post_data, (void *) con_info);
       if (NULL == con_info->post_processor) {
@@ -342,10 +342,10 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
   if (*upload_data_size != 0) {
     // Handles request body
     const char * content_type = u_map_get(con_info->request->map_header, "Content-Type");
-    if (0 == strncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) || 
-        0 == strncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA))) {
+    if (0 == nstrncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) || 
+        0 == nstrncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA))) {
       MHD_post_process (con_info->post_processor, upload_data, *upload_data_size);
-    } else if (0 == strncmp(ULFIUS_HTTP_ENCODING_JSON, content_type, strlen(ULFIUS_HTTP_ENCODING_JSON))) {
+    } else if (0 == nstrncmp(ULFIUS_HTTP_ENCODING_JSON, content_type, strlen(ULFIUS_HTTP_ENCODING_JSON))) {
       json_error_t json_error;
       con_info->request->json_body = json_loadb(upload_data, *upload_data_size, JSON_DECODE_ANY, &json_error);
       if (!con_info->request->json_body) {
@@ -801,9 +801,9 @@ int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endp
   if (u_instance != NULL && u_endpoint != NULL && !ulfius_equals_endpoints(u_endpoint, ulfius_empty_endpoint()) && ulfius_is_valid_endpoint(u_endpoint, 1)) {
     for (i=0; i<u_instance->nb_endpoints; i++) {
       // Compare u_endpoint with u_instance->endpoint_list[i]
-      if ((u_endpoint->http_method != NULL && 0 == strcmp(u_instance->endpoint_list[i].http_method, u_endpoint->http_method)) &&
-          (u_instance->endpoint_list[i].url_prefix != NULL && u_endpoint->url_prefix != NULL && 0 == strcmp(u_instance->endpoint_list[i].url_prefix, u_endpoint->url_prefix)) &&
-          (u_instance->endpoint_list[i].url_format != NULL && u_endpoint->url_format != NULL && 0 == strcmp(u_instance->endpoint_list[i].url_format, u_endpoint->url_format))) {
+      if ((u_endpoint->http_method != NULL && 0 == nstrcmp(u_instance->endpoint_list[i].http_method, u_endpoint->http_method)) &&
+          (u_instance->endpoint_list[i].url_prefix != NULL && u_endpoint->url_prefix != NULL && 0 == nstrcmp(u_instance->endpoint_list[i].url_prefix, u_endpoint->url_prefix)) &&
+          (u_instance->endpoint_list[i].url_format != NULL && u_endpoint->url_format != NULL && 0 == nstrcmp(u_instance->endpoint_list[i].url_format, u_endpoint->url_format))) {
         // It's a match!
         // Remove current endpoint and move the next ones to their previous index, then reduce the endpoint_list by 1
         free(u_instance->endpoint_list[i].http_method);

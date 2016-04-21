@@ -89,7 +89,7 @@ int ulfius_add_cookie_to_response(struct _u_response * response, const char * ke
   if (response != NULL && key != NULL && value != NULL) {
     // Look for cookies with the same key
     for (i=0; i<response->nb_cookies; i++) {
-      if (0 == strcmp(response->map_cookie[i].key, key)) {
+      if (0 == nstrcmp(response->map_cookie[i].key, key)) {
         // Key found, replace cookie
         free(response->map_cookie[i].value);
         free(response->map_cookie[i].expires);

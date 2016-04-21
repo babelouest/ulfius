@@ -59,7 +59,7 @@ char ** ulfius_split_url(const char * prefix, const char * url) {
       url_cpy = url_cpy_addr = nstrdup(url);
       cur_word = strtok_r( url_cpy, ULFIUS_URL_SEPARATOR, &saveptr );
       while (cur_word != NULL) {
-        if (0 != strcmp("", cur_word) && cur_word[0] != '?') {
+        if (0 != nstrcmp("", cur_word) && cur_word[0] != '?') {
           to_return = realloc(to_return, (counter+1)*sizeof(char*));
           if (to_return == NULL) {
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for ulfius_split_url.to_return");
@@ -97,7 +97,7 @@ struct _u_endpoint * ulfius_endpoint_match(const char * method, const char * url
   if (method != NULL && url != NULL && endpoint_list != NULL) {
     splitted_url = ulfius_split_url(url, NULL);
     for (i=0; (splitted_url != NULL && !ulfius_equals_endpoints(&(endpoint_list[i]), ulfius_empty_endpoint())); i++) {
-      if (0 == strcasecmp(endpoint_list[i].http_method, method) || endpoint_list[i].http_method[0] == '*') {
+      if (0 == nstrcasecmp(endpoint_list[i].http_method, method) || endpoint_list[i].http_method[0] == '*') {
         splitted_url_format = ulfius_split_url(endpoint_list[i].url_prefix, endpoint_list[i].url_format);
         if (splitted_url_format != NULL && ulfius_url_format_match((const char **)splitted_url, (const char **)splitted_url_format)) {
           endpoint = (endpoint_list + i);
@@ -127,7 +127,7 @@ int ulfius_url_format_match(const char ** splitted_url, const char ** splitted_u
     if (splitted_url_format[i][0] == '*' && splitted_url_format[i+1] == NULL) {
       return 1;
     }
-    if (splitted_url[i] == NULL || (splitted_url_format[i][0] != '@' && splitted_url_format[i][0] != ':' && 0 != strcmp(splitted_url_format[i], splitted_url[i]))) {
+    if (splitted_url[i] == NULL || (splitted_url_format[i][0] != '@' && splitted_url_format[i][0] != ':' && 0 != nstrcmp(splitted_url_format[i], splitted_url[i]))) {
       return 0;
     }
   }
