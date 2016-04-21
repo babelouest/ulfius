@@ -11,6 +11,12 @@ Used to facilitate creation of web applications in C programs with a small memor
 The source code of a hello world using Ulfius could be the following:
 
 ```c
+/**
+ * test.c
+ * Small Hello World! example
+ * to compile with gcc, run the following command
+ * gcc -o test test.c -lulfius
+ */
 #include <ulfius.h>
 #include <string.h>
 #include <stdio.h>
@@ -60,15 +66,35 @@ int main(void) {
 
 # Prerequisites
 
-To install the dependencies, for Debian based distributions (Debian, Ubuntu, Raspbian, etc.), run as root:
+## External dependencies
+
+To install the external dependencies, for Debian based distributions (Debian, Ubuntu, Raspbian, etc.), run as root:
 
 ```shell
 # apt-get install libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev
 ```
 
-## Note
+### Note
 
 I write libcurl4-gnutls-dev for the example, but any `libcurl*-dev` library should be sufficent, depending on your needs and configuration.
+
+## Angharad system dependencies
+
+Ulfius depends on [Yder](https://github.com/babelouest/yder) and [Orcania](https://github.com/babelouest/orcania). [Yder](https://github.com/babelouest/yder) is a small log library, useful to log messages in a file, console or syslog, [Orcania](https://github.com/babelouest/orcania) is a smaller library that contains useful functions that I don't want to duplicate in all projects. Simply get Orcania and Yder, then install them.
+
+```shell
+$ git clone https://github.com/babelouest/orcania.git
+$ cd orcania/src
+$ make
+$ sudo make install
+```
+
+```shell
+$ git clone https://github.com/babelouest/yder.git
+$ cd yder/src
+$ make
+$ sudo make install
+```
 
 # Installation
 
@@ -76,12 +102,12 @@ Download Ulfius source code from Github, go to src directory, compile and instal
 
 ```shell
 $ git clone https://github.com/babelouest/ulfius.git
-$ cd src
+$ cd ulfius/src
 $ make
 $ sudo make install
 ```
 
-By default, the shared library and the header file will be installed in the `/usr/local` location. To change this setting, you can modify the `PREFIX` value in the `Makefile`.
+By default, the shared libraries and the header files will be installed in the `/usr/local` location. To change this setting, you can modify the `PREFIX` value in the `Makefile`.
 
 # API Documentation
 
