@@ -413,7 +413,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
       
       if (auth_ret == U_ERROR_UNAUTHORIZED) {
         // Wrong credentials, send status 401 and realm value
-        if (current_endpoint->auth_realm == NULL) {
+        if (auth_realm == NULL) {
           // If no realm is set, send an erro 500 and log the error
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - No realm value set, abort authentication error");
           response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
