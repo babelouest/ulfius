@@ -140,9 +140,9 @@ int ulfius_add_cookie_to_response(struct _u_response * response, const char * ke
     response->map_cookie[response->nb_cookies].path = nstrdup(path);
     response->map_cookie[response->nb_cookies].secure = secure;
     response->map_cookie[response->nb_cookies].http_only = http_only;
-    if (response->map_cookie[response->nb_cookies].key == NULL || response->map_cookie[response->nb_cookies].value == NULL || 
-        response->map_cookie[response->nb_cookies].expires == NULL || response->map_cookie[response->nb_cookies].domain == NULL ||
-        response->map_cookie[response->nb_cookies].path) {
+    if ((key != NULL && response->map_cookie[response->nb_cookies].key == NULL) || (value != NULL && response->map_cookie[response->nb_cookies].value == NULL) || 
+        (expires != NULL && response->map_cookie[response->nb_cookies].expires == NULL) || (domain != NULL && response->map_cookie[response->nb_cookies].domain == NULL) ||
+        (path != NULL && response->map_cookie[response->nb_cookies].path == NULL)) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for ulfius_add_cookie_to_response");
       ulfius_clean_cookie(&response->map_cookie[response->nb_cookies]);
       free(response->map_cookie[response->nb_cookies].key);
