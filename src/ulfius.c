@@ -288,7 +288,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
                                   size_t * upload_data_size, void ** con_cls) {
   struct _u_endpoint * endpoint_list = ((struct _u_instance *)cls)->endpoint_list, * current_endpoint;
   struct connection_info_struct * con_info = * con_cls;
-  int mhd_ret = MHD_NO, callback_ret = U_OK, auth_ret = U_OK;
+  int mhd_ret = MHD_NO, callback_ret = U_OK, auth_ret = U_OK, inner_error = U_OK;
   char * content_type, * auth_realm;
   struct _u_response * response = NULL;
   struct sockaddr * so_client;
@@ -413,23 +413,15 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
       
       if (auth_ret == U_ERROR_UNAUTHORIZED) {
         // Wrong credentials, send status 401 and realm value
-        if (auth_realm == NULL) {
-          // If no realm is set, send an erro 500 and log the error
-          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - No realm value set, abort authentication error");
-          response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
-          response->string_body = nstrdup(ULFIUS_HTTP_ERROR_BODY);
-          if (response->string_body == NULL) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->string_body");
-            return MHD_NO;
-          }
-          mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
-        } else if (ulfius_get_body_from_response(response, &response_buffer, &response_buffer_len) == U_OK) {
+        if (ulfius_get_body_from_response(response, &response_buffer, &response_buffer_len) == U_OK) {
           mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
           if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
+            inner_error = U_ERROR_PARAMS;
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
             response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
             response->string_body = nstrdup(ULFIUS_HTTP_ERROR_BODY);
             if (response->string_body == NULL) {
+              inner_error = U_ERROR_MEMORY;
               y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->string_body");
               return MHD_NO;
             }
@@ -438,13 +430,18 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
           // Error building response, sending error 500
           response_buffer = nstrdup(ULFIUS_HTTP_ERROR_BODY);
           if (response_buffer == NULL) {
+            inner_error = U_ERROR_MEMORY;
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
             return MHD_NO;
           }
           response_buffer_len = strlen(ULFIUS_HTTP_ERROR_BODY);
           mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
         }
-        mhd_ret = MHD_queue_basic_auth_fail_response (connection, auth_realm, mhd_response);
+        if (auth_realm != NULL && inner_error == U_OK) {
+          mhd_ret = MHD_queue_basic_auth_fail_response (connection, auth_realm, mhd_response);
+        } else {
+          mhd_ret = MHD_queue_response (connection, MHD_HTTP_UNAUTHORIZED, mhd_response);
+        }
         MHD_destroy_response (mhd_response);
       
         // Free Response parameters
@@ -931,7 +928,7 @@ int ulfius_add_endpoint_by_val(struct _u_instance * u_instance,
                                                          void * user_data),
                                void * user_data) {
   struct _u_endpoint endpoint;
-  if (u_instance != NULL && ((auth_function != NULL && auth_realm != NULL) || (auth_function == NULL && auth_realm == NULL))) {
+  if (u_instance != NULL) {
     endpoint.http_method = (char *)http_method;
     endpoint.url_prefix = (char *)url_prefix;
     endpoint.url_format = (char *)url_format;
@@ -1047,7 +1044,7 @@ int ulfius_set_default_auth_function(struct _u_instance * u_instance,
                                          int (* default_auth_function)(const struct _u_request * request, struct _u_response * response, void * auth_data),
                                          void * default_auth_data,
                                          const char * default_auth_realm) {
-  if (u_instance != NULL && default_auth_function != NULL && default_auth_realm != NULL) {
+  if (u_instance != NULL && default_auth_function != NULL) {
     u_instance->default_auth_function = default_auth_function;
     u_instance->default_auth_data = default_auth_data;
     u_instance->default_auth_realm = nstrdup(default_auth_realm);
