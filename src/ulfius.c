@@ -322,7 +322,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
     MHD_get_connection_values (connection, MHD_HEADER_KIND, ulfius_fill_map, con_info->request->map_header);
     MHD_get_connection_values (connection, MHD_GET_ARGUMENT_KIND, ulfius_fill_map, con_info->request->map_url);
     MHD_get_connection_values (connection, MHD_COOKIE_KIND, ulfius_fill_map, con_info->request->map_cookie);
-    content_type = (char*)u_map_get_case(con_info->request->map_header, "content-type");
+    content_type = (char*)u_map_get_case(con_info->request->map_header, ULFIUS_HTTP_HEADER_CONTENT);
     
     // Set POST Processor if content-type is properly set
     if (content_type != NULL && (0 == nstrncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) || 
@@ -341,7 +341,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
   
   if (*upload_data_size != 0) {
     // Handles request body
-    const char * content_type = u_map_get(con_info->request->map_header, "Content-Type");
+    const char * content_type = u_map_get_case(con_info->request->map_header, ULFIUS_HTTP_HEADER_CONTENT);
     if (0 == nstrncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) || 
         0 == nstrncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA))) {
       MHD_post_process (con_info->post_processor, upload_data, *upload_data_size);
