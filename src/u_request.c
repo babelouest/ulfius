@@ -211,6 +211,7 @@ int ulfius_init_request(struct _u_request * request) {
     u_map_init(request->map_post_body);
     request->http_verb = NULL;
     request->http_url = NULL;
+    request->check_server_certificate = 1;
     request->client_address = NULL;
     request->json_body = NULL;
     request->json_has_error = 0;
@@ -300,6 +301,7 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request) 
         }
         memcpy(new_request->client_address, request->client_address, sizeof(struct sockaddr));
       }
+      new_request->check_server_certificate = request->check_server_certificate;
       new_request->auth_basic_user = nstrdup(request->auth_basic_user);
       new_request->auth_basic_password = nstrdup(request->auth_basic_password);
       u_map_clean_full(new_request->map_url);

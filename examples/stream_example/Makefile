@@ -17,14 +17,14 @@ CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS)
 ULFIUS_LOCATION=../../src
 LIBS=-lc -lulfius -L$(ULFIUS_LOCATION)
 
-all: stream_example
+all: stream_example stream_client
 
 clean:
-	rm -f *.o stream_example
+	rm -f *.o stream_example stream_client
 
 debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
-debug: stream_example
+debug: stream_example stream_client
 
 libulfius.so:
 	cd $(ULFIUS_LOCATION) && $(MAKE) debug
@@ -35,5 +35,11 @@ stream_example.o: stream_example.c
 stream_example: libulfius.so stream_example.o
 	$(CC) -o stream_example stream_example.o $(LIBS)
 
-test: stream_example
+stream_client.o: stream_client.c
+	$(CC) $(CFLAGS) stream_client.c -DDEBUG -g -O0
+
+stream_client: libulfius.so stream_client.o
+	$(CC) -o stream_client stream_client.o $(LIBS)
+
+test: stream_example stream_client
 	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./stream_example

@@ -79,7 +79,7 @@ int main (int argc, char **argv) {
   }
   
   // Endpoint list declaration
-  ulfius_add_endpoint_by_val(&instance, "*", PREFIX, NULL, NULL, NULL, "/*", &callback, NULL);
+  ulfius_add_endpoint_by_val(&instance, "*", PREFIX, "*", NULL, NULL, "/*", &callback, NULL);
   
   // Start the framework
   if (ulfius_start_framework(&instance) == U_OK) {

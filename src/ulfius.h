@@ -70,7 +70,7 @@
 #define U_STATUS_RUNNING  1
 #define U_STATUS_ERROR    2
 
-#define ULFIUS_VERSION 0.13.0
+#define ULFIUS_VERSION 0.14.0
 
 /*************
  * Structures
@@ -106,25 +106,27 @@ struct _u_cookie {
  * Structure of request parameters
  * 
  * Contains request data
- * http_verb:           http method (GET, POST, PUT, DELETE, etc.), use '*' to match all http methods
- * http_url:            url used to call this callback function or full url to call when used in a ulfius_send_http_request
- * client_address:      IP address of the client
- * auth_basic_user:     basic authtication username
- * auth_basic_password: basic authtication password
- * map_url:             map containing the url variables, both from the route and the ?key=value variables
- * map_header:          map containing the header variables
- * map_cookie:          map containing the cookie variables
- * map_post_body:       map containing the post body variables (if available)
- * json_body:           json_t * object containing the json body (if available)
- * json_error:          stack allocated json_error_t if json body was not parsed (if available)
- * json_has_error:      true if the json body was not parsed by jansson (if available)
- * binary_body:         pointer to raw body
- * binary_body_length:  length of raw body
+ * http_verb:                 http method (GET, POST, PUT, DELETE, etc.), use '*' to match all http methods
+ * http_url:                  url used to call this callback function or full url to call when used in a ulfius_send_http_request
+ * check_server_certificate:  do not check server certificate and hostname if false (default true), used by ulfius_send_http_request
+ * client_address:            IP address of the client
+ * auth_basic_user:           basic authtication username
+ * auth_basic_password:       basic authtication password
+ * map_url:                   map containing the url variables, both from the route and the ?key=value variables
+ * map_header:                map containing the header variables
+ * map_cookie:                map containing the cookie variables
+ * map_post_body:             map containing the post body variables (if available)
+ * json_body:                 json_t * object containing the json body (if available)
+ * json_error:                stack allocated json_error_t if json body was not parsed (if available)
+ * json_has_error:            true if the json body was not parsed by jansson (if available)
+ * binary_body:               pointer to raw body
+ * binary_body_length:        length of raw body
  * 
  */
 struct _u_request {
   char *               http_verb;
   char *               http_url;
+  int                  check_server_certificate;
   struct sockaddr *    client_address;
   char *               auth_basic_user;
   char *               auth_basic_password;
@@ -484,6 +486,14 @@ int ulfius_equals_endpoints(const struct _u_endpoint * endpoint1, const struct _
  * return U_OK on success
  */
 int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response);
+
+/**
+ * ulfius_send_http_streaming_request
+ * Send a HTTP request and store the result into a _u_response
+ * Except for the body which will be available using write_body_function in the write_body_data
+ * return U_OK on success
+ */
+int ulfius_send_http_streaming_request(const struct _u_request * request, struct _u_response * response, size_t (* write_body_function)(void * contents, size_t size, size_t nmemb, void * user_data), void * write_body_data);
 
 /**
  * ulfius_send_smtp_email

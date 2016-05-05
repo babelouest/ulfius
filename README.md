@@ -458,25 +458,27 @@ The request variable is defined as:
  * Structure of request parameters
  * 
  * Contains request data
- * http_verb:           http method (GET, POST, PUT, DELETE, etc.), use '*' to match all http methods
- * http_url:            url used to call this callback function or full url to call when used in a ulfius_send_http_request
- * client_address:      IP address of the client
- * auth_basic_user:     basic authtication username
- * auth_basic_password: basic authtication password
- * map_url:             map containing the url variables, both from the route and the ?key=value variables
- * map_header:          map containing the header variables
- * map_cookie:          map containing the cookie variables
- * map_post_body:       map containing the post body variables (if available)
- * json_body:           json_t * object containing the json body (if available)
- * json_error:          stack allocated json_error_t if json body was not parsed (if available)
- * json_has_error:      true if the json body was not parsed by jansson (if available)
- * binary_body:         pointer to raw body
- * binary_body_length:  length of raw body
+ * http_verb:                 http method (GET, POST, PUT, DELETE, etc.), use '*' to match all http methods
+ * http_url:                  url used to call this callback function or full url to call when used in a ulfius_send_http_request
+ * check_server_certificate:  do not check server certificate and hostname if false (default true), used by ulfius_send_http_request
+ * client_address:            IP address of the client
+ * auth_basic_user:           basic authtication username
+ * auth_basic_password:       basic authtication password
+ * map_url:                   map containing the url variables, both from the route and the ?key=value variables
+ * map_header:                map containing the header variables
+ * map_cookie:                map containing the cookie variables
+ * map_post_body:             map containing the post body variables (if available)
+ * json_body:                 json_t * object containing the json body (if available)
+ * json_error:                stack allocated json_error_t if json body was not parsed (if available)
+ * json_has_error:            true if the json body was not parsed by jansson (if available)
+ * binary_body:               pointer to raw body
+ * binary_body_length:        length of raw body
  * 
  */
 struct _u_request {
   char *               http_verb;
   char *               http_url;
+  int                  check_server_certificate;
   struct sockaddr *    client_address;
   char *               auth_basic_user;
   char *               auth_basic_password;
@@ -912,13 +914,13 @@ int u_map_count(const struct _u_map * source);
 
 ### Send request API
 
-The function `int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response)` is based on `libcurl` api.
+The functions `int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response)` and `int ulfius_send_http_streaming_request(const struct _u_request * request, struct _u_response * response, size_t (* write_body_function)(void * contents, size_t size, size_t nmemb, void * user_data), void * write_body_data)` are based on `libcurl` api.
 
 It allows to send an http request with the parameters specified by the `_u_request` structure. Use the parameter `_u_request.http_url` to specify the distant url to call.
 
 You can fill the maps in the `_u_request` structure with parameters, they will be used to build the request. Note that if you fill `_u_request.map_post_body` with parameters, the content-type `application/x-www-form-urlencoded` will be use to encode the data.
 
-The response parameters is stored into the `_u_response` structure. If you specify NULL for the response structure, the http call will still be made but no response details will be returned.
+The response parameters is stored into the `_u_response` structure. If you specify NULL for the response structure, the http call will still be made but no response details will be returned. If you use `ulfius_send_http_request`, the response body will be stored in the parameter `response->*body*`, if you use `ulfius_send_http_streaming_request`, the response body will be available in the `write_body_function` specified in the call. The `ulfius_send_http_streaming_request` can be used for streaming data or large response.
 
 Return value is U_OK on success.
 

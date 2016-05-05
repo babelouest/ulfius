@@ -34,10 +34,10 @@ typedef struct _body {
 } body;
 
 /**
- * write_body
+ * ulfius_write_body
  * Internal function used to write the body response into a _body structure
  */
-size_t write_body(void * contents, size_t size, size_t nmemb, void * user_data) {
+size_t ulfius_write_body(void * contents, size_t size, size_t nmemb, void * user_data) {
   size_t realsize = size * nmemb;
   body * body_data = (body *) user_data;
  
@@ -116,11 +116,52 @@ static size_t write_header(void * buffer, size_t size, size_t nitems, void * use
  * return U_OK on success
  */
 int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response) {
+  body body_data;
+  body_data.size = 0;
+  body_data.data = NULL;
+  int res;
+  const char * content_type;
+  
+  res = ulfius_send_http_streaming_request(request, response, ulfius_write_body, (void *)&body_data);
+  
+  if (res == U_OK && response != NULL) {
+    if (body_data.data != NULL && body_data.size > 0) {
+      response->string_body = nstrdup(body_data.data);
+      response->binary_body = malloc(body_data.size);
+      if (response->binary_body == NULL || response->string_body == NULL) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->binary_body");
+        free(body_data.data);
+        return U_ERROR_MEMORY;
+      }
+      memcpy(response->binary_body, body_data.data, body_data.size);
+      response->binary_body_length = body_data.size;
+      
+      content_type = u_map_get_case(response->map_header, ULFIUS_HTTP_HEADER_CONTENT);
+      if (content_type != NULL && 0 == nstrcmp(content_type, ULFIUS_HTTP_ENCODING_JSON)) {
+        // Parsing json content
+        response->json_body = json_loads(body_data.data, JSON_DECODE_ANY, NULL);
+      }
+    }
+    free(body_data.data);
+    return U_OK;
+  } else {
+    free(body_data.data);
+    return res;
+  }
+}
+
+/**
+ * ulfius_send_http_streaming_request
+ * Send a HTTP request and store the result into a _u_response
+ * Except for the body which will be available using write_body_function in the write_body_data
+ * return U_OK on success
+ */
+int ulfius_send_http_streaming_request(const struct _u_request * request, struct _u_response * response, size_t (* write_body_function)(void * contents, size_t size, size_t nmemb, void * user_data), void * write_body_data) {
   CURLcode res;
   CURL * curl_handle = NULL;
   struct curl_slist * header_list = NULL;
   char * key_esc, * value_esc, * cookie, * header, * param, * fp = "?", * np = "&";
-  const char * value, ** keys, * content_type;
+  const char * value, ** keys;
   int i, has_params = 0, len;
   struct _u_request * copy_request = NULL;
 
@@ -132,9 +173,6 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
       return U_ERROR_MEMORY;
     }
     curl_handle = curl_easy_init();
-    body body_data;
-    body_data.size = 0;
-    body_data.data = NULL;
 
     if (copy_request != NULL) {
       // Append header values
@@ -408,13 +446,41 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
       // Request parameters
       if (curl_easy_setopt(curl_handle, CURLOPT_URL, copy_request->http_url) != CURLE_OK ||
           curl_easy_setopt(curl_handle, CURLOPT_CUSTOMREQUEST, copy_request->http_verb) != CURLE_OK ||
-          curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, header_list) != CURLE_OK ||
-          curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_body) != CURLE_OK ||
-          curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &body_data) != CURLE_OK) {
+          curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, header_list) != CURLE_OK) {
         ulfius_clean_request_full(copy_request);
         curl_slist_free_all(header_list);
         curl_easy_cleanup(curl_handle);
-        return U_ERROR_MEMORY;
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting libcurl options (1)");
+        return U_ERROR_LIBCURL;
+      }
+      
+      // Set CURLOPT_WRITEFUNCTION if specified
+      if (write_body_function != NULL && curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_body_function) != CURLE_OK) {
+        ulfius_clean_request_full(copy_request);
+        curl_slist_free_all(header_list);
+        curl_easy_cleanup(curl_handle);
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting libcurl options (2)");
+        return U_ERROR_LIBCURL;
+      }
+      
+      // Set CURLOPT_WRITEDATA if specified
+      if (write_body_data != NULL && curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, write_body_data) != CURLE_OK) {
+        ulfius_clean_request_full(copy_request);
+        curl_slist_free_all(header_list);
+        curl_easy_cleanup(curl_handle);
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting libcurl options (3)");
+        return U_ERROR_LIBCURL;
+      }
+      
+      // Disable certificate validation if needed
+      if (!copy_request->check_server_certificate) {
+        if (curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 0) != CURLE_OK || curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYHOST, 0) != CURLE_OK) {
+          ulfius_clean_request_full(copy_request);
+          curl_slist_free_all(header_list);
+          curl_easy_cleanup(curl_handle);
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting libcurl options (4)");
+          return U_ERROR_LIBCURL;
+        }
       }
       
       // Response parameters
@@ -460,37 +526,13 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
       res = curl_easy_perform(curl_handle);
       if(res == CURLE_OK && response != NULL) {
         if (curl_easy_getinfo (curl_handle, CURLINFO_RESPONSE_CODE, &response->status) != CURLE_OK) {
-          free(body_data.data);
           curl_slist_free_all(header_list);
           curl_easy_cleanup(curl_handle);
           ulfius_clean_request_full(copy_request);
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error executing http request, libcurl error: %d, error message %s", res, curl_easy_strerror(res));
           return U_ERROR_LIBCURL;
         }
-        if (body_data.data != NULL && body_data.size > 0) {
-          response->string_body = nstrdup(body_data.data);
-          response->binary_body = malloc(body_data.size);
-          if (response->binary_body == NULL || response->string_body == NULL) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->binary_body");
-            free(body_data.data);
-            free(response->binary_body);
-            free(response->string_body);
-            curl_slist_free_all(header_list);
-            curl_easy_cleanup(curl_handle);
-            ulfius_clean_request_full(copy_request);
-            return U_ERROR_MEMORY;
-          }
-          memcpy(response->binary_body, body_data.data, body_data.size);
-          response->binary_body_length = body_data.size;
-        }
-        
-        content_type = u_map_get_case(response->map_header, ULFIUS_HTTP_HEADER_CONTENT);
-        if (content_type != NULL && 0 == nstrcmp(content_type, ULFIUS_HTTP_ENCODING_JSON)) {
-          // Parsing json content
-          response->json_body = json_loads(body_data.data, JSON_DECODE_ANY, NULL);
-        }
       }
-      free(body_data.data);
       curl_slist_free_all(header_list);
       curl_easy_cleanup(curl_handle);
       ulfius_clean_request_full(copy_request);
@@ -498,6 +540,7 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
       if (res == CURLE_OK) {
         return U_OK;
       } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error executing curl command: %s", curl_easy_strerror(res));
         return U_ERROR_LIBCURL;
       }
     }

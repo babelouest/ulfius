@@ -83,14 +83,14 @@ int main (int argc, char **argv) {
   json_object_set_new(json_body, "param2", json_string("two"));
   
   struct _u_request req_list[] = {
-    {"GET", SERVER_URL_PREFIX "/get/", NULL, NULL, NULL, &url_params, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0},                                   // Parameters in url
-    {"DELETE", SERVER_URL_PREFIX "/delete/", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0},                                    // No parameters
-    {"POST", SERVER_URL_PREFIX "/post/param/", NULL, NULL, NULL, NULL, NULL, NULL, &post_params, NULL, NULL, 0, string_body, strlen(string_body)}, // Parameters in post_map and string_body
-    {"POST", SERVER_URL_PREFIX "/post/plain/", NULL, NULL, NULL, NULL, &req_headers, NULL, NULL, NULL, NULL, 0, string_body, strlen(string_body)}, // Paremeters in string body, header MHD_HTTP_POST_ENCODING_FORM_URLENCODED
-    {"POST", SERVER_URL_PREFIX "/post/json/", NULL, NULL, NULL, NULL, NULL, NULL, NULL, json_body, NULL, 0, NULL, 0},                              // Parameters in json_body
-    {"PUT", SERVER_URL_PREFIX "/put/plain", NULL, NULL, NULL, NULL, &req_headers, NULL, NULL, NULL, NULL, 0, string_body, strlen(string_body)},    // Paremeters in string body, header MHD_HTTP_POST_ENCODING_FORM_URLENCODED
-    {"PUT", SERVER_URL_PREFIX "/put/json", NULL, NULL, NULL, NULL, NULL, NULL, NULL, json_body, NULL, 0, NULL, 0},                                 // Parameters in json_body
-    {"POST", SERVER_URL_PREFIX "/post/param/", NULL, NULL, NULL, NULL, NULL, NULL, &post_params, NULL, NULL, 0, NULL, 0}                           // Parameters in post_map
+    {"GET", SERVER_URL_PREFIX "/get/", 0, NULL, NULL, NULL, &url_params, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0},                                   // Parameters in url
+    {"DELETE", SERVER_URL_PREFIX "/delete/", 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0},                                    // No parameters
+    {"POST", SERVER_URL_PREFIX "/post/param/", 0, NULL, NULL, NULL, NULL, NULL, NULL, &post_params, NULL, NULL, 0, string_body, strlen(string_body)}, // Parameters in post_map and string_body
+    {"POST", SERVER_URL_PREFIX "/post/plain/", 0, NULL, NULL, NULL, NULL, &req_headers, NULL, NULL, NULL, NULL, 0, string_body, strlen(string_body)}, // Paremeters in string body, header MHD_HTTP_POST_ENCODING_FORM_URLENCODED
+    {"POST", SERVER_URL_PREFIX "/post/json/", 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, json_body, NULL, 0, NULL, 0},                              // Parameters in json_body
+    {"PUT", SERVER_URL_PREFIX "/put/plain", 0, NULL, NULL, NULL, NULL, &req_headers, NULL, NULL, NULL, NULL, 0, string_body, strlen(string_body)},    // Paremeters in string body, header MHD_HTTP_POST_ENCODING_FORM_URLENCODED
+    {"PUT", SERVER_URL_PREFIX "/put/json", 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, json_body, NULL, 0, NULL, 0},                                 // Parameters in json_body
+    {"POST", SERVER_URL_PREFIX "/post/param/", 0, NULL, NULL, NULL, NULL, NULL, NULL, &post_params, NULL, NULL, 0, NULL, 0}                           // Parameters in post_map
   };
   
   printf("Press <enter> to run get test\n");

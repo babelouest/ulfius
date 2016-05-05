@@ -114,7 +114,7 @@ ssize_t stream_data (void * cls, uint64_t pos, char * buf, size_t max) {
       snprintf(buf, max, "%s %" PRIu64 "\n", (char *)cls, pos);
       return strlen(buf);
   } else {
-    return ULFIUS_STREAM_ERROR;
+    return ULFIUS_STREAM_END;
   }
 }
 
