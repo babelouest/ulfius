@@ -12,4 +12,5 @@ examples/request_example/mail
 examples/request_example/server
 examples/simple_example/simple_example
 examples/stream_example/stream_example
+examples/stream_example/stream_client
 examples/test_u_map/test_u_map
