@@ -162,15 +162,31 @@ int ulfius_parse_url(const char * url, const struct _u_endpoint * endpoint, stru
     url_format_cpy = url_format_cpy_addr = nstrdup(endpoint->url_format);
     if (endpoint->url_format != NULL && url_format_cpy == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for url_format_cpy");
+      return U_ERROR_MEMORY;
     } else if (url_format_cpy != NULL) {
       cur_word_format = strtok_r( url_format_cpy, ULFIUS_URL_SEPARATOR, &saveptr_format );
     }
     while (cur_word_format != NULL && cur_word != NULL) {
       if (cur_word_format[0] == ':' || cur_word_format[0] == '@') {
-        if (u_map_put(map, cur_word_format+1, cur_word) != U_OK) {
-          url_cpy_addr = NULL;
-          url_format_cpy_addr = NULL;
-          return U_ERROR_MEMORY;
+        if (u_map_has_key(map, cur_word_format+1)) {
+          char * concat_url_param = msprintf("%s,%s", u_map_get(map, cur_word_format+1), cur_word);
+          if (concat_url_param == NULL) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for concat_url_param");
+            free(url_cpy_addr);
+            free(url_format_cpy_addr);
+            return U_ERROR_MEMORY;
+          } else if (u_map_put(map, cur_word_format+1, concat_url_param) != U_OK) {
+            url_cpy_addr = NULL;
+            url_format_cpy_addr = NULL;
+            return U_ERROR_MEMORY;
+          }
+          free(concat_url_param);
+        } else {
+          if (u_map_put(map, cur_word_format+1, cur_word) != U_OK) {
+            url_cpy_addr = NULL;
+            url_format_cpy_addr = NULL;
+            return U_ERROR_MEMORY;
+          }
         }
       }
       cur_word = strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr );

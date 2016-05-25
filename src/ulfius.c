@@ -303,6 +303,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
                                   const char * url, const char * method,
                                   const char * version, const char * upload_data,
                                   size_t * upload_data_size, void ** con_cls) {
+
   struct _u_endpoint * endpoint_list = ((struct _u_instance *)cls)->endpoint_list, * current_endpoint;
   struct connection_info_struct * con_info = * con_cls;
   int mhd_ret = MHD_NO, callback_ret = U_OK, auth_ret = U_OK, inner_error = U_OK;

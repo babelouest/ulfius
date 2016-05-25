@@ -118,6 +118,7 @@ int main (int argc, char **argv) {
   // Endpoint list declaration
   ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, NULL, NULL, NULL, NULL, &callback_get_test, NULL);
   ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/empty", NULL, NULL, NULL, &callback_get_empty_response, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/multiple/:multiple/:multiple/:not_multiple", NULL, NULL, NULL, &callback_all_test_foo, NULL);
   ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, NULL, NULL, NULL, NULL, &callback_post_test, NULL);
   ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/:foo", NULL, NULL, NULL, &callback_all_test_foo, "user data 1");
   ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, "/:foo", NULL, NULL, NULL, &callback_all_test_foo, "user data 2");

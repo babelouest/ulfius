@@ -70,7 +70,7 @@
 #define U_STATUS_RUNNING  1
 #define U_STATUS_ERROR    2
 
-#define ULFIUS_VERSION 0.14.0
+#define ULFIUS_VERSION 0.15.0
 
 /*************
  * Structures
