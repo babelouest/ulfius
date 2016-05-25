@@ -23,7 +23,7 @@ size_t my_write_body(void * contents, size_t size, size_t nmemb, void * user_dat
 }
 
 size_t my_write_meta_body(void * contents, size_t size, size_t nmemb, void * user_data) {
-  printf("got %ld %ld\n", size, nmemb);
+  printf("got %zu %zu\n", size, nmemb);
   
   return size * nmemb;
 }
