@@ -12,10 +12,12 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #
+
+LIBYDER_LOCATION=../../lib/yder/src
 CC=gcc
-CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS)
+CFLAGS=-c -Wall -I$(LIBYDER_LOCATION) -D_REENTRANT $(ADDITIONALFLAGS)
 ULFIUS_LOCATION=../../src
-LIBS=-lc -lulfius -lyder -ljansson -L$(ULFIUS_LOCATION)
+LIBS=-L$(LIBYDER_LOCATION) -lc -lulfius -lyder -ljansson -L$(ULFIUS_LOCATION)
 
 all: simple_example
 

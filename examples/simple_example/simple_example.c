@@ -99,7 +99,6 @@ char * read_file(const char * filename) {
 
 int main (int argc, char **argv) {
   int ret;
-  char a[2];
   
   // Set the framework port number
   struct _u_instance instance;
@@ -112,8 +111,6 @@ int main (int argc, char **argv) {
   }
   
   u_map_put(instance.default_headers, "Access-Control-Allow-Origin", "*");
-  
-  strcpy(&a[5], "p;lop");
   
   // Endpoint list declaration
   ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, NULL, NULL, NULL, NULL, &callback_get_test, NULL);

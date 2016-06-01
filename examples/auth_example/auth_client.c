@@ -83,16 +83,16 @@ int main (int argc, char **argv) {
   req_list[3].http_url = strdup(SERVER_URL "/404");
 
   ulfius_init_request(&req_list[4]);
-  req_list[1].http_verb = strdup("GET");
-  req_list[1].http_url = strdup(SERVER_URL_DEFAULT);
-  req_list[1].auth_basic_user = strdup("test");
-  req_list[1].auth_basic_password = strdup("testpassword");
+  req_list[4].http_verb = strdup("GET");
+  req_list[4].http_url = strdup(SERVER_URL_DEFAULT);
+  req_list[4].auth_basic_user = strdup("test");
+  req_list[4].auth_basic_password = strdup("testpassword");
   
-  ulfius_init_request(&req_list[4]);
-  req_list[2].http_verb = strdup("GET");
-  req_list[2].http_url = strdup(SERVER_URL_DEFAULT);
-  req_list[2].auth_basic_user = strdup("test");
-  req_list[2].auth_basic_password = strdup("wrongpassword");
+  ulfius_init_request(&req_list[5]);
+  req_list[5].http_verb = strdup("GET");
+  req_list[5].http_url = strdup(SERVER_URL_DEFAULT);
+  req_list[5].auth_basic_user = strdup("test");
+  req_list[5].auth_basic_password = strdup("wrongpassword");
     
   printf("Press <enter> to run auth tests no authentication\n");
   getchar();

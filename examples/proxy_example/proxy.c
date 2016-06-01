@@ -17,7 +17,7 @@
 #include "../../src/ulfius.h"
 
 #define PORT 7799
-#define PROXY_DEST "http://www.un.org/"
+#define PROXY_DEST "https://www.un.org"
 
 /**
  * callback function declaration
@@ -65,6 +65,7 @@ int callback_get (const struct _u_request * request, struct _u_response * respon
   int len;
 
   free(req->http_url);
+  u_map_remove_from_key(req->map_header, "Host");
   len = snprintf(NULL, 0, "%s%s", PROXY_DEST, request->http_url);
   req->http_url = malloc((len+1)*sizeof(char));
   snprintf(req->http_url, (len+1), "%s%s", PROXY_DEST, request->http_url);

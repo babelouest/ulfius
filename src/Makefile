@@ -19,10 +19,12 @@
 # License along with this library.	If not, see <http://www.gnu.org/licenses/>.
 #
 
+LIBORCANIA_LOCATION=../lib/orcania
+LIBYDER_LOCATION=../lib/yder/src
 PREFIX=/usr/local
 CC=gcc
-CFLAGS=-c -fPIC -Wall -D_REENTRANT -I$(PREFIX)/include $(ADDITIONALFLAGS)
-LIBS=-L$(PREFIX)/lib -lc -lmicrohttpd -ljansson -lcurl -lyder -lorcania
+CFLAGS=-c -fPIC -Wall -D_REENTRANT -I$(PREFIX)/include -I$(LIBORCANIA_LOCATION) -I$(LIBYDER_LOCATION) $(ADDITIONALFLAGS)
+LIBS=-L$(PREFIX)/lib -L$(LIBORCANIA_LOCATION) -L$(LIBYDER_LOCATION) -lc -lmicrohttpd -ljansson -lcurl -lyder -lorcania
 OUTPUT=libulfius.so
 VERSION=0.15.0
 

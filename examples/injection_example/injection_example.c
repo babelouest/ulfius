@@ -56,11 +56,11 @@ int main (int argc, char **argv) {
     
     y_log_message(Y_LOG_LEVEL_DEBUG, "Press <enter> to inject %s/fourth endpoint", PREFIX);
     getchar();
-    ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, NULL, NULL, NULL, "/fourth", &callback_fourth, NULL);
+    ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/fourth", NULL, NULL, NULL, &callback_fourth, NULL);
     
     y_log_message(Y_LOG_LEVEL_DEBUG, "Press <enter> to inject %s/fifth endpoint", PREFIX);
     getchar();
-    ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, NULL, NULL, NULL, "/fifth", &callback_fifth, NULL);
+    ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/fifth", NULL, NULL, NULL, &callback_fifth, NULL);
     
     y_log_message(Y_LOG_LEVEL_DEBUG, "Press <enter> to remove %s/fourth endpoint", PREFIX);
     getchar();

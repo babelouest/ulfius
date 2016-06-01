@@ -150,11 +150,11 @@ int main (int argc, char **argv) {
 int callback_sheep_counter_start (const struct _u_request * request, struct _u_response * response, void * user_data) {
   json_t * json_nb_sheep = json_object_get(request->json_body, "nbsheep");
   
-  #if JSON_INTEGER_IS_LONG_LONG
+#if JSON_INTEGER_IS_LONG_LONG
   long long * nb_sheep = user_data;
-  #else
+#else
   long * nb_sheep = user_data;
-  #endif
+#endif
 
   if (json_nb_sheep != NULL) {
     * nb_sheep = json_integer_value(json_nb_sheep);

@@ -78,36 +78,19 @@ To install the external dependencies, for Debian based distributions (Debian, Ub
 
 I write libcurl4-gnutls-dev for the example, but any `libcurl*-dev` library should be sufficent, depending on your needs and configuration.
 
-## Angharad system dependencies
-
-Ulfius depends on [Yder](https://github.com/babelouest/yder) and [Orcania](https://github.com/babelouest/orcania). [Yder](https://github.com/babelouest/yder) is a small log library, useful to log messages in a file, console or syslog, [Orcania](https://github.com/babelouest/orcania) is a smaller library that contains useful functions that I don't want to duplicate in all projects. Simply get Orcania and Yder, then install them.
-
-```shell
-$ git clone https://github.com/babelouest/orcania.git
-$ cd orcania/src
-$ make
-$ sudo make install
-```
-
-```shell
-$ git clone https://github.com/babelouest/yder.git
-$ cd yder/src
-$ make
-$ sudo make install
-```
-
 # Installation
 
-Download Ulfius source code from Github, go to src directory, compile and install:
+Download Ulfius source code from Github, get the submodules, compile and install:
 
 ```shell
 $ git clone https://github.com/babelouest/ulfius.git
-$ cd ulfius/src
+$ cd ulfius/
+$ git submodule --init
 $ make
 $ sudo make install
 ```
 
-By default, the shared libraries and the header files will be installed in the `/usr/local` location. To change this setting, you can modify the `PREFIX` value in the `Makefile`.
+By default, the shared libraries and the header files will be installed in the `/usr/local` location. To change this setting, you can modify the `PREFIX` value in the `src/Makefile`, `lib/orcania/Makefile` and `lib/yder/src/Makefile` files.
 
 # API Documentation
 
@@ -289,13 +272,13 @@ int ulfius_add_endpoint_by_val(struct _u_instance * u_instance,
                                const char * http_method,
                                const char * url_prefix,
                                const char * url_format,
-                               int (* auth_function)(const struct _u_request * request, // Input parameters (set by the framework)
-                                                     struct _u_response * response,     // Output parameters (set by the user)
+                               int (* auth_function)(const struct _u_request * request,
+                                                     struct _u_response * response,
                                                      void * auth_data),
                                void * auth_data,
                                char * auth_realm,
-                               int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
-                                                         struct _u_response * response,     // Output parameters (set by the user)
+                               int (* callback_function)(const struct _u_request * request,
+                                                         struct _u_response * response,
                                                          void * user_data),
                                void * user_data);
 
@@ -388,7 +371,7 @@ the last 2 will never be reached because the first one will always be a match fo
 
 #### Start webservice
 
-The starting point function are ulfius_start_framework or ulfius_start_secure_framework:
+The starting point function are `ulfius_start_framework` or `ulfius_start_secure_framework`:
 
 ```c
 /**
@@ -432,7 +415,7 @@ int ulfius_stop_framework(struct _u_instance * u_instance);
 
 ### Callback and Authentication functions
 
-The authentication function is the function called for authentication purposes. Ulfius implements basic auth, the user and the password sent by the client are members of `struct _u_request` (see below). In this function, you can implement the authentication method you want by checking the user and password given. If the return value of the authentication function is `U_OK`, the authentication will pass and the callback function will be called then, if the return value is `U_ERROR_UNAUTHORIZED`, the response will be a 401 with the realm parameter given and the response body specified, if the return value is neither `U_OK` nor `U_ERROR_UNAUTHORIZED`, an error 500 will be sent to the client. Authentication functions are optional for endpoints, but if one is set, the auth_realm value must be set too.
+The authentication function is the function called for authentication purposes. Ulfius implements basic auth, the user and the password sent by the client are members of `struct _u_request` (see below). In this function, you can implement the authentication method you want by checking the user and password given. If the return value of the authentication function is `U_OK`, the authentication will pass and the callback function will be called then, if the return value is `U_ERROR_UNAUTHORIZED`, the response will be a 401 with the realm parameter given and the response body specified, if the return value is neither `U_OK` nor `U_ERROR_UNAUTHORIZED`, an error 500 will be sent to the client. Authentication functions are optional for endpoints.
 
 The callback function is the function called when a user calls an endpoint managed by your webservice (as defined in your `struct _u_endpoint` list).
 
@@ -595,7 +578,7 @@ int ulfius_set_stream_response(struct _u_response * response,
 
 The `jansson` api documentation is available at the following address: [Jansson documentation](https://jansson.readthedocs.org/).
 
-The authentication function return value must be `U_OK` on authentication success, if the credentials are incorrect, you must return `U_ERROR_UNAUTHORIZED` to send an error 401 to the client. All other returned value will send an error 500 to the client.
+The authentication function return value must be `U_OK` on authentication success, if the credentials are incorrect, you must return `U_ERROR_UNAUTHORIZED` to send an error 401 to the client, then, the body response will be sent to the client. All other returned value will send an error 500 to the client. If the authentication function return value is `U_OK`, the response body and status will be ignored as the one sent to the client will be the response sent by the callback function.
 
 The callback function return value is `U_OK` on success. If the return value is other than `U_OK`, an error 500 response will be sent to the client.
 
@@ -744,7 +727,7 @@ You may be careful with characters encoding if you use non UTF8 characters in yo
 
 ### struct _u_map API
 
-The `struct _u_map` is a simple key/value mapping API. The available functions to use this structure are:
+The `struct _u_map` is a simple key/value mapping API used in the requests and the response for setting parameters. The available functions to use this structure are:
 
 ```c
 /**
@@ -912,7 +895,7 @@ struct _u_map * u_map_copy(const struct _u_map * source);
 int u_map_count(const struct _u_map * source);
 ```
 
-### Send request API
+### Send HTTP request API
 
 The functions `int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response)` and `int ulfius_send_http_streaming_request(const struct _u_request * request, struct _u_response * response, size_t (* write_body_function)(void * contents, size_t size, size_t nmemb, void * user_data), void * write_body_data)` are based on `libcurl` api.
 
@@ -922,9 +905,9 @@ You can fill the maps in the `_u_request` structure with parameters, they will b
 
 The response parameters is stored into the `_u_response` structure. If you specify NULL for the response structure, the http call will still be made but no response details will be returned. If you use `ulfius_send_http_request`, the response body will be stored in the parameter `response->*body*`, if you use `ulfius_send_http_streaming_request`, the response body will be available in the `write_body_function` specified in the call. The `ulfius_send_http_streaming_request` can be used for streaming data or large response.
 
-Return value is U_OK on success.
+Return value is `U_OK` on success.
 
-This function is defined as:
+This functions are defined as:
 
 ```c
 /**
@@ -933,9 +916,23 @@ This function is defined as:
  * return U_OK on success
  */
 int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response);
+
+/**
+ * ulfius_send_http_streaming_request
+ * Send a HTTP request and store the result into a _u_response
+ * Except for the body which will be available using write_body_function in the write_body_data
+ * return U_OK on success
+ */
+int ulfius_send_http_streaming_request(const struct _u_request * request, 
+                                       struct _u_response * response, 
+                                       size_t (* write_body_function)(void * contents, 
+                                                                      size_t size, 
+                                                                      size_t nmemb, 
+                                                                      void * user_data), 
+                                       void * write_body_data);
 ```
 
-### Send smtp API
+### Send SMTP request API
 
 The function `ulfius_send_smtp_email` is used to send emails using a smtp server. It is based on `libcurl` API.
 
@@ -976,5 +973,8 @@ int ulfius_send_smtp_email(const char * host,
 
 ### Example source code
 
-See `example` folder for detailed sample source codes.
+Example programs are available to see the different functionalities available, see `example` folder for detailed sample source codes and documentation.
 
+### Questions, problems ?
+
+I'm open for questions and suggestions, feel free to open an issue or send a pull request if you feel like it!

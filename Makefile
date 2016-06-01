@@ -14,61 +14,34 @@
 #
 
 LIBULFIUS_LOCATION=./src
-SIMPLE_EXAMPLE_LOCATION=./examples/simple_example
-SHEEP_COUNTER_LOCATION=./examples/sheep_counter
-PROXY_EXAMPLE_LOCATION=./examples/proxy_example
-REQUEST_EXAMPLE_LOCATION=./examples/request_example
-TEST_U_MAP_LOCATION=./examples/test_u_map
-INJECTION_EXAMPLE_LOCATION=./examples/injection_example
-AUTH_EXAMPLE_LOCATION=./examples/auth_example
-STREAM_EXAMPLE_LOCATION=./examples/stream_example
+LIBORCANIA_LOCATION=lib/orcania
+LIBYDER_LOCATION=lib/yder/src
+EXAMPLES_LOCATION=./examples
 
-all: libulfius.so simple_example sheep_counter proxy_example request_example injection_example auth_example test_u_map
+all: libulfius.so
 
 debug:
-	cd $(SIMPLE_EXAMPLE_LOCATION) && $(MAKE) debug
+	cd $(LIBORCANIA_LOCATION) && $(MAKE) debug
+	cd $(LIBYDER_LOCATION) && $(MAKE) debug
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) debug
-	cd $(PROXY_EXAMPLE_LOCATION) && $(MAKE) debug
-	cd $(REQUEST_EXAMPLE_LOCATION) && $(MAKE) debug
-	cd $(INJECTION_EXAMPLE_LOCATION) && $(MAKE) debug
-	cd $(AUTH_EXAMPLE_LOCATION) && $(MAKE) debug
-	cd $(STREAM_EXAMPLE_LOCATION) && $(MAKE) debug
-	cd $(TEST_U_MAP_LOCATION) && $(MAKE) debug
 
 clean:
+	cd $(LIBORCANIA_LOCATION) && $(MAKE) clean
+	cd $(LIBYDER_LOCATION) && $(MAKE) clean
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) clean
-	cd $(SIMPLE_EXAMPLE_LOCATION) && $(MAKE) clean
-	cd $(SHEEP_COUNTER_LOCATION) && $(MAKE) clean
-	cd $(PROXY_EXAMPLE_LOCATION) && $(MAKE) clean
-	cd $(REQUEST_EXAMPLE_LOCATION) && $(MAKE) clean
-	cd $(INJECTION_EXAMPLE_LOCATION) && $(MAKE) clean
-	cd $(AUTH_EXAMPLE_LOCATION) && $(MAKE) clean
-	cd $(STREAM_EXAMPLE_LOCATION) && $(MAKE) clean
-	cd $(TEST_U_MAP_LOCATION) && $(MAKE) clean
+	cd $(EXAMPLES_LOCATION) && $(MAKE) clean
+
+install:
+	cd $(LIBORCANIA_LOCATION) && $(MAKE) install
+	cd $(LIBYDER_LOCATION) && $(MAKE) install
+	cd $(LIBULFIUS_LOCATION) && $(MAKE) install
+
+uninstall:
+	cd $(LIBORCANIA_LOCATION) && $(MAKE) uninstall
+	cd $(LIBYDER_LOCATION) && $(MAKE) uninstall
+	cd $(LIBULFIUS_LOCATION) && $(MAKE) uninstall
 
 libulfius.so:
-	cd $(SIMPLE_EXAMPLE_LOCATION) && $(MAKE)
-
-simple_example:
+	cd $(LIBORCANIA_LOCATION) && $(MAKE)
+	cd $(LIBYDER_LOCATION) && $(MAKE)
 	cd $(LIBULFIUS_LOCATION) && $(MAKE)
-
-sheep_counter:
-	cd $(SHEEP_COUNTER_LOCATION) && $(MAKE)
-
-proxy_example:
-	cd $(PROXY_EXAMPLE_LOCATION) && $(MAKE)
-
-request_example:
-	cd $(REQUEST_EXAMPLE_LOCATION) && $(MAKE)
-
-injection_example:
-	cd $(INJECTION_EXAMPLE_LOCATION) && $(MAKE)
-
-stream_example:
-	cd $(STREAM_EXAMPLE_LOCATION) && $(MAKE)
-
-auth_example:
-	cd $(AUTH_EXAMPLE_LOCATION) && $(MAKE)
-
-test_u_map:
-	cd $(TEST_U_MAP_LOCATION) && $(MAKE)
