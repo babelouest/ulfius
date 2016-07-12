@@ -70,7 +70,7 @@
 #define U_STATUS_RUNNING  1
 #define U_STATUS_ERROR    2
 
-#define ULFIUS_VERSION 0.15.0
+#define ULFIUS_VERSION 0.15.1
 
 /*************
  * Structures
@@ -495,6 +495,7 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
  */
 int ulfius_send_http_streaming_request(const struct _u_request * request, struct _u_response * response, size_t (* write_body_function)(void * contents, size_t size, size_t nmemb, void * user_data), void * write_body_data);
 
+#ifndef ULFIUS_IGNORE_SMTP
 /**
  * ulfius_send_smtp_email
  * Send an email using libcurl
@@ -525,6 +526,7 @@ int ulfius_send_smtp_email(const char * host,
                             const char * bcc, 
                             const char * subject, 
                             const char * mail_body);
+#endif
 
 /**
  * ulfius_add_cookie_to_header

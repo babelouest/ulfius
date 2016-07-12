@@ -548,6 +548,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
   return U_ERROR_PARAMS;
 }
 
+#ifndef ULFIUS_IGNORE_SMTP
 /**
  * ulfius_send_smtp_email body fill function and structures
  */
@@ -752,3 +753,4 @@ int ulfius_send_smtp_email(const char * host,
     return U_ERROR_PARAMS;
   }
 }
+#endif

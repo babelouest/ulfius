@@ -19,14 +19,17 @@
 # License along with this library.	If not, see <http://www.gnu.org/licenses/>.
 #
 
+# Uncomment the following lline if you want to disable ulfius_send_smtp_email as in libcurl < 7.20 for example (Centos 6.5)
+#SMTPFLAGS=-DULFIUS_IGNORE_SMTP
+
 LIBORCANIA_LOCATION=../lib/orcania
 LIBYDER_LOCATION=../lib/yder/src
 PREFIX=/usr/local
 CC=gcc
-CFLAGS=-c -fPIC -Wall -D_REENTRANT -I$(PREFIX)/include -I$(LIBORCANIA_LOCATION) -I$(LIBYDER_LOCATION) $(ADDITIONALFLAGS)
+CFLAGS=-c -fPIC -Wall -D_REENTRANT -I$(PREFIX)/include -I$(LIBORCANIA_LOCATION) -I$(LIBYDER_LOCATION) $(ADDITIONALFLAGS) $(SMTPFLAGS)
 LIBS=-L$(PREFIX)/lib -L$(LIBORCANIA_LOCATION) -L$(LIBYDER_LOCATION) -lc -lmicrohttpd -ljansson -lcurl -lyder -lorcania
 OUTPUT=libulfius.so
-VERSION=0.15.0
+VERSION=0.15.1
 
 all: release
 
