@@ -92,6 +92,16 @@ $ sudo make install
 
 By default, the shared libraries and the header files will be installed in the `/usr/local` location. To change this setting, you can modify the `PREFIX` value in the `src/Makefile`, `lib/orcania/Makefile` and `lib/yder/src/Makefile` files.
 
+## libcurl older than 7.20
+
+If you use old version of liburl, as in Centos 6.5 for example, `ulfius_send_smtp_email` won't be available due to libcurl options problems. In this case, uncomment the following line in the file `src/Makefile`:
+
+```Makefile
+#SMTPFLAGS=-DULFIUS_IGNORE_SMTP
+```
+
+This will disable `ulfius_send_smtp_email` during the compilation.
+
 # API Documentation
 
 ## Header file
