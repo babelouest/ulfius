@@ -358,21 +358,6 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
   }
   
   if (*upload_data_size != 0) {
-    // Handles request body
-    const char * content_type = u_map_get_case(con_info->request->map_header, ULFIUS_HTTP_HEADER_CONTENT);
-    if (0 == nstrncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) || 
-        0 == nstrncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA))) {
-      MHD_post_process (con_info->post_processor, upload_data, *upload_data_size);
-    } else if (0 == nstrncmp(ULFIUS_HTTP_ENCODING_JSON, content_type, strlen(ULFIUS_HTTP_ENCODING_JSON))) {
-      json_error_t json_error;
-      con_info->request->json_body = json_loadb(upload_data, *upload_data_size, JSON_DECODE_ANY, &json_error);
-      if (!con_info->request->json_body) {
-        con_info->request->json_has_error = 1;
-        con_info->request->json_error = &json_error;
-      } else {
-        con_info->request->json_has_error = 0;
-      }
-    }
 
     con_info->request->binary_body = realloc(con_info->request->binary_body, con_info->request->binary_body_length + *upload_data_size);
     if (con_info->request->binary_body == NULL) {
@@ -385,6 +370,22 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
       return MHD_YES;
     }
   } else {
+    // Handles request body
+    const char * content_type = u_map_get_case(con_info->request->map_header, ULFIUS_HTTP_HEADER_CONTENT);
+    if (0 == nstrncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) || 
+        0 == nstrncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA))) {
+      MHD_post_process (con_info->post_processor, con_info->request->binary_body, con_info->request->binary_body_length);
+    } else if (0 == nstrncmp(ULFIUS_HTTP_ENCODING_JSON, content_type, strlen(ULFIUS_HTTP_ENCODING_JSON))) {
+      json_error_t json_error;
+      con_info->request->json_body = json_loadb(con_info->request->binary_body, con_info->request->binary_body_length, JSON_DECODE_ANY, &json_error);
+      if (!con_info->request->json_body) {
+        con_info->request->json_has_error = 1;
+        con_info->request->json_error = &json_error;
+      } else {
+        con_info->request->json_has_error = 0;
+      }
+    }
+    
     // Check if the endpoint has a match
     current_endpoint = ulfius_endpoint_match(method, url, endpoint_list);
     
