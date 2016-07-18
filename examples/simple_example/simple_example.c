@@ -35,7 +35,7 @@ int callback_post_test (const struct _u_request * request, struct _u_response * 
 
 int callback_all_test_foo (const struct _u_request * request, struct _u_response * response, void * user_data);
 
-int callback_get_jsontest (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_put_jsontest (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_get_cookietest (const struct _u_request * request, struct _u_response * response, void * user_data);
 
@@ -112,6 +112,9 @@ int main (int argc, char **argv) {
   
   u_map_put(instance.default_headers, "Access-Control-Allow-Origin", "*");
   
+  // Maximum body size sent by the client is 1 Kb
+  instance.max_post_body_size = 1024;
+  
   // Endpoint list declaration
   ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, NULL, NULL, NULL, NULL, &callback_get_test, NULL);
   ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/empty", NULL, NULL, NULL, &callback_get_empty_response, NULL);
@@ -121,7 +124,7 @@ int main (int argc, char **argv) {
   ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, "/:foo", NULL, NULL, NULL, &callback_all_test_foo, "user data 2");
   ulfius_add_endpoint_by_val(&instance, "PUT", PREFIX, "/:foo", NULL, NULL, NULL, &callback_all_test_foo, "user data 3");
   ulfius_add_endpoint_by_val(&instance, "DELETE", PREFIX, "/:foo", NULL, NULL, NULL, &callback_all_test_foo, "user data 4");
-  ulfius_add_endpoint_by_val(&instance, "PUT", PREFIXJSON, NULL, NULL, NULL, NULL, &callback_get_jsontest, NULL);
+  ulfius_add_endpoint_by_val(&instance, "PUT", PREFIXJSON, NULL, NULL, NULL, NULL, &callback_put_jsontest, NULL);
   ulfius_add_endpoint_by_val(&instance, "GET", PREFIXCOOKIE, "/:lang/:extra", NULL, NULL, NULL, &callback_get_cookietest, NULL);
   
   // default_endpoint declaration
@@ -212,7 +215,7 @@ int callback_all_test_foo (const struct _u_request * request, struct _u_response
 /**
  * Callback function that put "Hello World!", the http method and the url in a json response
  */
-int callback_get_jsontest (const struct _u_request * request, struct _u_response * response, void * user_data) {
+int callback_put_jsontest (const struct _u_request * request, struct _u_response * response, void * user_data) {
   response->json_body = json_object();
   json_object_set_new(response->json_body, "message", json_string("Hello World!"));
   json_object_set_new(response->json_body, "method", json_string(request->http_verb));
@@ -220,7 +223,7 @@ int callback_get_jsontest (const struct _u_request * request, struct _u_response
   if (!request->json_error) {
     json_object_set(response->json_body, "request", request->json_body);
   } else {
-    json_object_set_new(response->json_body, "request", json_string("Error parsing request"));
+    json_object_set_new(response->json_body, "request", json_pack("{ssss}", "title", "Error parsing request", "message", request->json_error->text));
   }
   response->status = 200;
   return U_OK;
