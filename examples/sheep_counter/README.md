@@ -26,4 +26,4 @@ Open in your browser the url [http://localhost:7437/upload.html](http://localhos
 
 The API endpoint is the following:
 
-- `* http://localhost:7437/upload`: upload a file and show informations about it in the response.
+- `http://localhost:7437/upload`: upload a file and show informations about it in the response.

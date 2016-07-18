@@ -100,7 +100,7 @@ int main (int argc, char **argv) {
     return(1);
   }
   
-  // Max file upload size is 16 Ko
+  // Max post param size is 16 Kb, which means an uploaded file is no more than 16 Kb
   instance.max_post_param_size = 16*1024;
   
   // MIME types that will define the static files
