@@ -359,14 +359,25 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
   
   if (*upload_data_size != 0) {
 
-    con_info->request->binary_body = realloc(con_info->request->binary_body, con_info->request->binary_body_length + *upload_data_size);
-    if (con_info->request->binary_body == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for con_info->request->binary_body");
-      return MHD_NO;
+    size_t body_len = con_info->request->binary_body_length + *upload_data_size, upload_data_size_current = *upload_data_size;
+    
+    if (((struct _u_instance *)cls)->max_post_body_size > 0 && con_info->request->binary_body_length + *upload_data_size > ((struct _u_instance *)cls)->max_post_body_size) {
+      body_len = ((struct _u_instance *)cls)->max_post_body_size;
+      upload_data_size_current = ((struct _u_instance *)cls)->max_post_body_size - con_info->request->binary_body_length;
+    }
+    
+    if (body_len >= con_info->request->binary_body_length) {
+      con_info->request->binary_body = realloc(con_info->request->binary_body, body_len);
+      if (con_info->request->binary_body == NULL) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for con_info->request->binary_body");
+        return MHD_NO;
+      } else {
+        memcpy(con_info->request->binary_body + con_info->request->binary_body_length, upload_data, upload_data_size_current);
+        con_info->request->binary_body_length += upload_data_size_current;
+        *upload_data_size = 0;
+        return MHD_YES;
+      }
     } else {
-      memcpy(con_info->request->binary_body + con_info->request->binary_body_length, upload_data, *upload_data_size);
-      con_info->request->binary_body_length += *upload_data_size;
-      *upload_data_size = 0;
       return MHD_YES;
     }
   } else {
@@ -383,6 +394,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
         con_info->request->json_error = &json_error;
       } else {
         con_info->request->json_has_error = 0;
+        con_info->request->json_error = NULL;
       }
     }
     
@@ -907,6 +919,7 @@ int ulfius_init_instance(struct _u_instance * u_instance, int port, struct socka
     u_instance->default_auth_data = NULL;
     u_instance->default_auth_realm = NULL;
     u_instance->max_post_param_size = 0;
+    u_instance->max_post_body_size = 0;
     return U_OK;
   } else {
     return U_ERROR_PARAMS;
