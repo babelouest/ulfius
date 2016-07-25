@@ -762,21 +762,21 @@ int u_map_put_binary(struct _u_map * u_map, const char * key, const char * value
  * return -1 if no match found
  * search is case sensitive
  */
-size_t u_map_get_length(const struct _u_map * u_map, const const char * key);
+size_t u_map_get_length(const struct _u_map * u_map, const char * key);
 
 /**
  * get the value length corresponding to the specified key in the u_map
  * return -1 if no match found
  * search is case insensitive
  */
-size_t u_map_get_case_length(const struct _u_map * u_map, const const char * key);
+size_t u_map_get_case_length(const struct _u_map * u_map, const char * key);
 
 /**
  * get the value corresponding to the specified key in the u_map
  * return NULL if no match found
  * search is case sensitive
  */
-const char * u_map_get(const struct _u_map * u_map, const const char * key);
+const char * u_map_get(const struct _u_map * u_map, const char * key);
 
 /**
  * get the value corresponding to the specified key in the u_map
@@ -847,7 +847,7 @@ int ulfius_validate_instance(const struct _u_instance * u_instance);
  * ulfius_is_valid_endpoint
  * return true if the endpoind has valid parameters
  */
-int ulfius_is_valid_endpoint(const struct _u_endpoint * endpoint, int delete);
+int ulfius_is_valid_endpoint(const struct _u_endpoint * endpoint, int to_delete);
 
 /**
  * ulfius_validate_endpoint_list

@@ -640,14 +640,14 @@ int ulfius_stop_framework(struct _u_instance * u_instance) {
  * ulfius_is_valid_endpoint
  * return true if the endpoind has valid parameters
  */
-int ulfius_is_valid_endpoint(const struct _u_endpoint * endpoint, int delete) {
+int ulfius_is_valid_endpoint(const struct _u_endpoint * endpoint, int to_delete) {
   if (endpoint != NULL) {
     if (ulfius_equals_endpoints(endpoint, ulfius_empty_endpoint())) {
       // Should be the last endpoint of the list to close it
       return 1;
     } else if (endpoint->http_method == NULL) {
       return 0;
-    } else if (!delete && endpoint->callback_function == NULL) {
+    } else if (!to_delete && endpoint->callback_function == NULL) {
       return 0;
     } else if (endpoint->url_prefix == NULL && endpoint->url_format == NULL) {
       return 0;
