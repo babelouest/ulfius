@@ -32,13 +32,13 @@ static int ulfius_fill_map(void * cls, enum MHD_ValueKind kind, const char * key
   char * tmp;
   int res;
   
-  if (cls == NULL || key == NULL || value == NULL) {
+  if (cls == NULL || key == NULL) {
     // Invalid parameters
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error invalid parameters for ulfius_fill_map");
     return MHD_NO;
   } else if (u_map_get(((struct _u_map *)cls), key) != NULL) {
     // u_map already has a value with this this key, appending value separated with a comma ',')
-    tmp = msprintf("%s,%s", u_map_get(((struct _u_map *)cls), key), value);
+    tmp = msprintf("%s,%s", u_map_get(((struct _u_map *)cls), key), (value==NULL?"":value));
     res = u_map_put(((struct _u_map *)cls), key, tmp);
     free(tmp);
     if (res == U_OK) {
@@ -46,7 +46,7 @@ static int ulfius_fill_map(void * cls, enum MHD_ValueKind kind, const char * key
     } else {
       return MHD_NO;
     }
-  } else if (u_map_put(((struct _u_map *)cls), key, value) == U_OK) {
+  } else if (u_map_put(((struct _u_map *)cls), key, (value==NULL?"":value)) == U_OK) {
     return MHD_YES;
   } else {
     return MHD_NO;

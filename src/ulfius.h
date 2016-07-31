@@ -70,7 +70,7 @@
 #define U_STATUS_RUNNING  1
 #define U_STATUS_ERROR    2
 
-#define ULFIUS_VERSION 0.15.1
+#define ULFIUS_VERSION 0.15.2
 
 /*************
  * Structures
@@ -171,7 +171,7 @@ struct _u_response {
   char             * string_body;
   json_t           * json_body;
   void             * binary_body;
-  unsigned int       binary_body_length;
+  size_t             binary_body_length;
   ssize_t         (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max);
   void            (* stream_callback_free) (void * stream_user_data);
   size_t             stream_size;

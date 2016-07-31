@@ -29,7 +29,7 @@ CC=gcc
 CFLAGS=-c -fPIC -Wall -D_REENTRANT -I$(PREFIX)/include -I$(LIBORCANIA_LOCATION) -I$(LIBYDER_LOCATION) $(ADDITIONALFLAGS) $(SMTPFLAGS)
 LIBS=-L$(PREFIX)/lib -L$(LIBORCANIA_LOCATION) -L$(LIBYDER_LOCATION) -lc -lmicrohttpd -ljansson -lcurl -lyder -lorcania
 OUTPUT=libulfius.so
-VERSION=0.15.1
+VERSION=0.15.2
 
 all: release
 

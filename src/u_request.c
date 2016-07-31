@@ -303,7 +303,7 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request) 
     if (ulfius_init_request(new_request) == U_OK) {
       new_request->http_verb = nstrdup(request->http_verb);
       new_request->http_url = nstrdup(request->http_url);
-      if (new_request->http_verb == NULL || new_request->http_url == NULL) {
+      if ((new_request->http_verb == NULL && request->http_verb != NULL) || (new_request->http_url == NULL && request->http_url != NULL)) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for ulfius_duplicate_request");
         ulfius_clean_request_full(new_request);
         return NULL;
