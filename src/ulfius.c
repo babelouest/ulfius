@@ -355,9 +355,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
       }
     }
     return MHD_YES;
-  }
-  
-  if (*upload_data_size != 0) {
+  } else if (*upload_data_size != 0) {
 
     size_t body_len = con_info->request->binary_body_length + *upload_data_size, upload_data_size_current = *upload_data_size;
     
@@ -496,14 +494,20 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
           if (response->stream_callback != NULL) {
             // Call the stream_callback function to build the response body
             mhd_response = MHD_create_response_from_callback(response->stream_size, response->stream_block_size, (MHD_ContentReaderCallback)response->stream_callback, response->stream_user_data, response->stream_callback_free);
-            if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
+            if (mhd_response == NULL) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error MHD_create_response_from_callback");
+              return MHD_NO;
+            } else if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
               y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
               return MHD_NO;
             }
           } else if (ulfius_get_body_from_response(response, &response_buffer, &response_buffer_len) == U_OK) {
             // Build the response body based on the response->*_body parameters
             mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
-            if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
+            if (mhd_response == NULL) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error MHD_create_response_from_buffer");
+              return MHD_NO;
+            } else if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
               y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
               return MHD_NO;
             }
