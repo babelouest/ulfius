@@ -6,7 +6,7 @@
  * 
  * ulfius.h: structures and functions declarations
  * 
- * Copyright 2015 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2015-2016 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -70,7 +70,7 @@
 #define U_STATUS_RUNNING  1
 #define U_STATUS_ERROR    2
 
-#define ULFIUS_VERSION 0.15.2
+#define ULFIUS_VERSION 1.0
 
 /*************
  * Structures

@@ -3,7 +3,7 @@
 #
 # Makefile used to build the software
 #
-# Copyright 2014-2015 Nicolas Mora <mail@babelouest.org>
+# Copyright 2015-2016 Nicolas Mora <mail@babelouest.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public License
@@ -29,7 +29,7 @@ CC=gcc
 CFLAGS=-c -fPIC -Wall -D_REENTRANT -I$(PREFIX)/include -I$(LIBORCANIA_LOCATION) -I$(LIBYDER_LOCATION) $(ADDITIONALFLAGS) $(SMTPFLAGS)
 LIBS=-L$(PREFIX)/lib -L$(LIBORCANIA_LOCATION) -L$(LIBYDER_LOCATION) -lc -lmicrohttpd -ljansson -lcurl -lyder -lorcania
 OUTPUT=libulfius.so
-VERSION=0.15.2
+VERSION=1.0
 
 all: release
 
