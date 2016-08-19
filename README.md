@@ -85,7 +85,7 @@ Download Ulfius source code from Github, get the submodules, compile and install
 ```shell
 $ git clone https://github.com/babelouest/ulfius.git
 $ cd ulfius/
-$ git submodule --init
+$ git submodule update --init
 $ make
 $ sudo make install
 ```
