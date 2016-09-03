@@ -137,7 +137,7 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
       response->binary_body_length = body_data.size;
       
       content_type = u_map_get_case(response->map_header, ULFIUS_HTTP_HEADER_CONTENT);
-      if (content_type != NULL && 0 == nstrcmp(content_type, ULFIUS_HTTP_ENCODING_JSON)) {
+      if (content_type != NULL && NULL != strstr(content_type, ULFIUS_HTTP_ENCODING_JSON)) {
         // Parsing json content
         response->json_body = json_loads(body_data.data, JSON_DECODE_ANY, NULL);
       }
