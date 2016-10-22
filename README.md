@@ -64,10 +64,18 @@ int main(void) {
 }
 ```
 
-### Example source code
+## Installation
+
+See `INSTALL.md` file for installation details
+
+## Documentation
+
+See `API.md` file for API documentation details
+
+## Example source code
 
 Example programs are available to see the different functionalities available, see `example` folder for detailed sample source codes and documentation.
 
-### Questions, problems ?
+## Questions, problems ?
 
 I'm open for questions and suggestions, feel free to open an issue or send a pull request if you feel like it!
