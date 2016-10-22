@@ -8,7 +8,7 @@ Used to facilitate creation of web applications in C programs with a small memor
 
 ## Hello World! example application
 
-The source code of a hello world using Ulfius could be the following:
+The source code of a hello world using Ulfius is the following:
 
 ```c
 /**

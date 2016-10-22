@@ -40,7 +40,7 @@
 <h2>
 <a id="hello-world-example-application" class="anchor" href="#hello-world-example-application" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Hello World! example application</h2>
 
-<p>The source code of a hello world using Ulfius could be the following:</p>
+<p>The source code of a hello world using Ulfius is the following:</p>
 
 <div class="highlight highlight-source-c"><pre><span class="pl-c">/**</span>
 <span class="pl-c"> * test.c</span>
@@ -121,6 +121,11 @@ $ make
 $ sudo make install</pre></div>
 
 <p>By default, the shared libraries and the header files will be installed in the <code>/usr/local</code> location. To change this setting, you can modify the <code>PREFIX</code> value in the <code>src/Makefile</code>, <code>lib/orcania/Makefile</code> and <code>lib/yder/src/Makefile</code> files.</p>
+
+<p>If you download Ulfius as a <code>`.zip`</code> or <code>`.tar.gz`</code> file via github release tab, you must initiaize the submodules prior to the compilaton with the following command:</p>
+
+<div class="highlight highlight-source-shell"><pre>$ <span class="pl-c1">cd</span> ulfius/
+$ git submodule update --init</pre></div>
 
 <h2>
 <a id="libcurl-older-than-720" class="anchor" href="#libcurl-older-than-720" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>libcurl older than 7.20</h2>
