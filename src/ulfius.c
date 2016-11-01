@@ -585,6 +585,7 @@ int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, const ch
   
   struct connection_info_struct * con_info = coninfo_cls;
   size_t cur_size = size;
+  char * data_dup = nstrndup(data, size); // Force value to end with a NULL character
   
   if (con_info->max_post_param_size > 0) {
     if (off > con_info->max_post_param_size) {
@@ -594,9 +595,11 @@ int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, const ch
     }
   }
   
-  if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data, off, cur_size) == U_OK) {
+  if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data_dup, off, cur_size + 1) == U_OK) {
+    free(data_dup);
     return MHD_YES;
   } else {
+    free(data_dup);
     return MHD_NO;
   }
 }
