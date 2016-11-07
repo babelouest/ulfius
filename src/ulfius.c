@@ -595,7 +595,7 @@ int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, const ch
     }
   }
   
-  if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data_dup, off, cur_size + 1) == U_OK) {
+  if (cur_size > 0 && data_dup != NULL && u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data_dup, off, cur_size + 1) == U_OK) {
     free(data_dup);
     return MHD_YES;
   } else {
@@ -614,7 +614,7 @@ void mhd_request_completed (void *cls, struct MHD_Connection *connection,
   if (NULL == con_info) {
     return;
   }
-  if (NULL != con_info && con_info->has_post_processor) {
+  if (NULL != con_info && con_info->has_post_processor && con_info->post_processor != NULL) {
     MHD_destroy_post_processor (con_info->post_processor);
   }
   ulfius_clean_request_full(con_info->request);
