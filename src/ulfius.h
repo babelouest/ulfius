@@ -32,7 +32,6 @@
 #include <ctype.h>
 #include <microhttpd.h>
 #include <jansson.h>
-#include <curl/curl.h>
 
 /** Angharad libraries **/
 #include <yder.h>

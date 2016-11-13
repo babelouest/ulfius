@@ -27,14 +27,22 @@ LIBYDER_LOCATION=../lib/yder/src
 PREFIX=/usr/local
 CC=gcc
 CFLAGS=-c -fPIC -Wall -D_REENTRANT -I$(PREFIX)/include -I$(LIBORCANIA_LOCATION) -I$(LIBYDER_LOCATION) $(ADDITIONALFLAGS) $(SMTPFLAGS)
-LIBS=-L$(PREFIX)/lib -L$(LIBORCANIA_LOCATION) -L$(LIBYDER_LOCATION) -lc -lmicrohttpd -ljansson -lcurl -lyder -lorcania
+LIBS=-L$(PREFIX)/lib -L$(LIBORCANIA_LOCATION) -L$(LIBYDER_LOCATION) -lc -lmicrohttpd -ljansson -lyder -lorcania
 OUTPUT=libulfius.so
 VERSION=1.0
+ULFIUS_OBJS=ulfius.o u_map.o u_request.o u_response.o
+
+ifndef WITHOUT_CURL
+    ULFIUS_OBJS+=u_send_request.o
+    LIBS+=-lcurl
+else
+    SMTPFLAGS=-DULFIUS_IGNORE_SMTP
+endif
 
 all: release
 
-libulfius.so: ulfius.o u_map.o u_request.o u_response.o u_send_request.o
-	$(CC) -shared -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) ulfius.o u_map.o u_request.o u_response.o u_send_request.o $(LIBS_YDER) $(LIBS)
+libulfius.so: $(ULFIUS_OBJS)
+	$(CC) -shared -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) $^ $(LIBS_YDER) $(LIBS)
 	ln -sf $(OUTPUT).$(VERSION) $(OUTPUT)
 
 ulfius.o: ulfius.h ulfius.c
