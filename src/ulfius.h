@@ -26,18 +26,15 @@
 #ifndef __ULFIUS_H__
 #define __ULFIUS_H__
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
+/** External dependencies **/
 #include <microhttpd.h>
 #include <jansson.h>
-#include <curl/curl.h>
 
 /** Angharad libraries **/
 #include <yder.h>
 #include <orcania.h>
 
+/** Macro values **/
 #define ULFIUS_URL_SEPARATOR       "/"
 #define ULFIUS_HTTP_ENCODING_JSON  "application/json"
 #define ULFIUS_HTTP_HEADER_CONTENT "Content-Type"

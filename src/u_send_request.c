@@ -23,6 +23,9 @@
  * 
  */
 
+#include <ctype.h>
+#include <curl/curl.h>
+
 #include "ulfius.h"
 
 /**

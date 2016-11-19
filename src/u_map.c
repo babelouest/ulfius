@@ -24,8 +24,9 @@
  * 
  */
 
-#include "ulfius.h"
 #include <stdio.h>
+
+#include "ulfius.h"
 
 /**
  * initialize a struct _u_map
