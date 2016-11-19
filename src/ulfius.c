@@ -23,6 +23,7 @@
  * 
  */
 
+#include <string.h>
 #include "ulfius.h"
 
 /**
