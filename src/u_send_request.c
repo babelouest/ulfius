@@ -163,7 +163,7 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
 int ulfius_send_http_streaming_request(const struct _u_request * request, struct _u_response * response, size_t (* write_body_function)(void * contents, size_t size, size_t nmemb, void * user_data), void * write_body_data) {
   CURLcode res;
   CURL * curl_handle = NULL;
-  struct curl_slist * header_list = NULL;
+  struct curl_slist * header_list = NULL, * cookies_list = NULL;
   char * key_esc, * value_esc, * cookie, * header, * param, * fp = "?", * np = "&";
   const char * value, ** keys;
   int i, has_params = 0, len;
@@ -527,6 +527,14 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting libcurl CURLOPT_NOSIGNAL");
         return U_ERROR_LIBCURL;
       }
+      if (curl_easy_setopt(curl_handle, CURLOPT_COOKIEFILE, "") != CURLE_OK) { // Apparently you have to do that to tell libcurl you'll need cookies afterwards
+        curl_slist_free_all(header_list);
+        curl_easy_cleanup(curl_handle);
+        ulfius_clean_request_full(copy_request);
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting libcurl CURLOPT_COOKIEFILE");
+        return U_ERROR_LIBCURL;
+      }
+      
       res = curl_easy_perform(curl_handle);
       if(res == CURLE_OK && response != NULL) {
         if (curl_easy_getinfo (curl_handle, CURLINFO_RESPONSE_CODE, &response->status) != CURLE_OK) {
@@ -536,6 +544,66 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error executing http request, libcurl error: %d, error message %s", res, curl_easy_strerror(res));
           return U_ERROR_LIBCURL;
         }
+        
+        if (curl_easy_getinfo(curl_handle, CURLINFO_COOKIELIST, &cookies_list) == CURLE_OK) {
+          struct curl_slist * nc = cookies_list;
+          char * key = NULL, * value = NULL, * expires = NULL, * domain = NULL, * path = NULL;
+          int secure, http_only;
+          
+          while (nc != NULL) {
+            char * nc_dup = nstrdup(nc->data), * saveptr, * elt;
+            int counter = 0;
+            
+            if (nc_dup != NULL) {
+              elt = strtok_r(nc_dup, "\t", &saveptr);
+              while (elt != NULL) {
+                // libcurl cookie format is domain\tsecure\tpath\thttp_only\texpires\tkey\tvalue
+                switch (counter) {
+                  case 0:
+                    domain = strdup(elt);
+                    break;
+                  case 1:
+                    secure = (0==strcmp(elt, "TRUE"));
+                    break;
+                  case 2:
+                    path = strdup(elt);
+                    break;
+                  case 3:
+                    http_only = (0==strcmp(elt, "TRUE"));
+                    break;
+                  case 4:
+                    expires = strdup(elt);
+                    break;
+                  case 5:
+                    key = strdup(elt);
+                    break;
+                  case 6:
+                    value = strdup(elt);
+                    break;
+                }
+                elt = strtok_r(NULL, "\t", &saveptr);
+                counter++;
+              }
+              if (ulfius_add_cookie_to_response(response, key, value, expires, 0, domain, path, secure, http_only) != U_OK) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error adding cookie %s/%s to response", key, value);
+              }
+              free(key);
+              free(value);
+              free(domain);
+              free(path);
+              free(expires);
+            }
+            free(nc_dup);
+            nc = nc->next;
+          }
+        } else {
+          curl_slist_free_all(header_list);
+          curl_easy_cleanup(curl_handle);
+          ulfius_clean_request_full(copy_request);
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error executing http request, libcurl error: %d, error message %s", res, curl_easy_strerror(res));
+          return U_ERROR_LIBCURL;
+        }
+        curl_slist_free_all(cookies_list);
       }
       curl_slist_free_all(header_list);
       curl_easy_cleanup(curl_handle);
