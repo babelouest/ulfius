@@ -826,6 +826,13 @@ int u_map_remove_at(struct _u_map * u_map, const int index);
 struct _u_map * u_map_copy(const struct _u_map * source);
 
 /**
+ * Copy all key/values pairs of source into target
+ * If key is already present in target, it's overwritten
+ * return U_OK on success, error otherwise
+ */
+int u_map_copy_into(const struct _u_map * source, struct _u_map * target);
+
+/**
  * Return the number of key/values pair in the specified struct _u_map
  * Return -1 on error
  */
