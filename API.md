@@ -578,7 +578,26 @@ The Ulfius framework will automatically free the variables referenced by the req
 
 ### Cookie management
 
-The map_cookie structure will contain a set of key/values to set the cookies. You can use the function `ulfius_add_cookie_to_response` in your callback function to facilitate cookies management. This function is defined as:
+The map_cookie structure will contain a set of key/values for the cookies. The cookie structure is defined as
+
+```c
+/**
+ * struct _u_cookie
+ * the structure containing the response cookie parameters
+ */
+struct _u_cookie {
+  char * key;
+  char * value;
+  char * expires;
+  uint   max_age;
+  char * domain;
+  char * path;
+  int    secure;
+  int    http_only;
+};
+```
+
+You can use the function `ulfius_add_cookie_to_response` in your callback function to facilitate cookies management. This function is defined as:
 
 ```c
 /**
