@@ -1,5 +1,5 @@
 #
-# Example program
+# Ulfius Framework
 #
 # Makefile used to build all programs
 #
