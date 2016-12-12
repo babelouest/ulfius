@@ -87,7 +87,7 @@ int ulfius_set_response_cookie(struct MHD_Response * mhd_response, const struct 
 int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const uint max_age, 
                                   const char * domain, const char * path, const int secure, const int http_only) {
   int i;
-  if (response != NULL && key != NULL && value != NULL) {
+  if (response != NULL && key != NULL) {
     // Look for cookies with the same key
     for (i=0; i<response->nb_cookies; i++) {
       if (0 == nstrcmp(response->map_cookie[i].key, key)) {
@@ -96,7 +96,7 @@ int ulfius_add_cookie_to_response(struct _u_response * response, const char * ke
         free(response->map_cookie[i].expires);
         free(response->map_cookie[i].domain);
         free(response->map_cookie[i].path);
-        response->map_cookie[i].value = nstrdup(value);
+        response->map_cookie[i].value = strdup(value!=NULL?value:"");
         response->map_cookie[i].expires = nstrdup(expires);
         response->map_cookie[i].domain = nstrdup(domain);
         response->map_cookie[i].path = nstrdup(path);
