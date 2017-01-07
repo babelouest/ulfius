@@ -12,7 +12,9 @@ To install the external dependencies, for Debian based distributions (Debian, Ub
 
 ### Note
 
-I write libcurl4-gnutls-dev for the example, but any `libcurl*-dev` library should be sufficent, depending on your needs and configuration.
+Here libcurl4-gnutls-dev for the example, but any `libcurl*-dev` library should be sufficent, depending on your needs and configuration.
+
+Also, it seems that Debian Wheezy uses an old version of libjansson (2.3), you can either upgrade to jessie or download the latest version of libjansson from [github](https://github.com/akheron/jansson).
 
 ## Installation
 
