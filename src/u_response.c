@@ -134,7 +134,7 @@ int ulfius_add_cookie_to_response(struct _u_response * response, const char * ke
       }
     }
     response->map_cookie[response->nb_cookies].key = nstrdup(key);
-    response->map_cookie[response->nb_cookies].value = nstrdup(value);
+    response->map_cookie[response->nb_cookies].value = strdup(value!=NULL?value:"");
     response->map_cookie[response->nb_cookies].expires = nstrdup(expires);
     response->map_cookie[response->nb_cookies].max_age = max_age;
     response->map_cookie[response->nb_cookies].domain = nstrdup(domain);
