@@ -95,7 +95,7 @@ static size_t write_header(void * buffer, size_t size, size_t nitems, void * use
     if (response->map_header != NULL) {
       // Expecting a header (key: value)
       key = trim_whitespace(strtok_r(header, ":", &saveptr));
-      value = trim_whitespace(strtok_r(NULL, ":", &saveptr));
+      value = trim_whitespace(strtok_r(NULL, "", &saveptr));
       
       u_map_put(response->map_header, key, value);
     }
