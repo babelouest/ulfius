@@ -548,7 +548,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
         if (curl_easy_getinfo(curl_handle, CURLINFO_COOKIELIST, &cookies_list) == CURLE_OK) {
           struct curl_slist * nc = cookies_list;
           char * key = NULL, * value = NULL, * expires = NULL, * domain = NULL, * path = NULL;
-          int secure, http_only;
+          int secure = 0, http_only = 0;
           
           while (nc != NULL) {
             char * nc_dup = nstrdup(nc->data), * saveptr, * elt;
