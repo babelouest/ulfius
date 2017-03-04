@@ -76,6 +76,12 @@ See `API.md` file for API documentation details
 
 Example programs are available to see the different functionalities available, see `example` folder for detailed sample source codes and documentation.
 
+## Projects using Ulfius framework
+
+- [Angharad](https://github.com/babelouest/angharad), House automation system for ZWave and other types of devices
+- [Glewlwyd](https://github.com/babelouest/glewlwyd), a lightweight OAuth2 authentication server that provides [JSON Web Tokens](https://jwt.io/)
+- [Taulas Raspberry Pi Serial interface](https://github.com/babelouest/taulas/tree/master/taulas_raspberrypi_serial), an interface for Arduino devices that implent [Taulas](https://github.com/babelouest/taulas/) protocol, a house automation protocol
+
 ## Questions, problems ?
 
 I'm open for questions and suggestions, feel free to open an issue or send a pull request if you feel like it!
