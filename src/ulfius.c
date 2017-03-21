@@ -145,8 +145,8 @@ struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance, const
     mhd_ops[0].ptr_value = NULL;
     
     mhd_ops[1].option = MHD_OPTION_SOCK_ADDR;
-    mhd_ops[1].value = (intptr_t)u_instance->bind_address;
-    mhd_ops[1].ptr_value = NULL;
+    mhd_ops[1].value = 0;
+    mhd_ops[1].ptr_value = (void *)u_instance->bind_address;
     
     mhd_ops[2].option = MHD_OPTION_URI_LOG_CALLBACK;
     mhd_ops[2].value = (intptr_t)ulfius_uri_logger;
