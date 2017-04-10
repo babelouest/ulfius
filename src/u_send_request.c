@@ -487,6 +487,17 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
         }
       }
       
+      // Set request timeout value
+      if (copy_request->timeout) {
+        if (curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, copy_request->timeout) != CURLE_OK) {
+          ulfius_clean_request_full(copy_request);
+          curl_slist_free_all(header_list);
+          curl_easy_cleanup(curl_handle);
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting libcurl options (5)");
+          return U_ERROR_LIBCURL;
+        }
+      }
+      
       // Response parameters
       if (response != NULL) {
         if (response->map_header != NULL) {

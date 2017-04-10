@@ -106,6 +106,7 @@ struct _u_cookie {
  * http_verb:                 http method (GET, POST, PUT, DELETE, etc.), use '*' to match all http methods
  * http_url:                  url used to call this callback function or full url to call when used in a ulfius_send_http_request
  * check_server_certificate:  do not check server certificate and hostname if false (default true), used by ulfius_send_http_request
+ * timeout                    connection timeout used by ulfius_send_http_request, default is 0
  * client_address:            IP address of the client
  * auth_basic_user:           basic authtication username
  * auth_basic_password:       basic authtication password
@@ -124,6 +125,7 @@ struct _u_request {
   char *               http_verb;
   char *               http_url;
   int                  check_server_certificate;
+  long                 timeout;
   struct sockaddr *    client_address;
   char *               auth_basic_user;
   char *               auth_basic_password;
