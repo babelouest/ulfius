@@ -29,6 +29,8 @@
 
 #include "ulfius.h"
 
+#include <curl/curl.h>
+
 /**
  * Internal structure used to store temporarly the response body
  */
