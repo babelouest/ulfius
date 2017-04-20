@@ -86,34 +86,66 @@ char ** ulfius_split_url(const char * prefix, const char * url) {
 }
 
 /**
- * ulfius_endpoint_match
- * return the endpoint matching the url called with the proper http method
- * return NULL if no endpoint is found
+ * Sort an array of struct _u_endpoint * using bubble sort algorithm
  */
-struct _u_endpoint * ulfius_endpoint_match(const char * method, const char * url, struct _u_endpoint * endpoint_list) {
-  char ** splitted_url, ** splitted_url_format;
-  struct _u_endpoint * endpoint = NULL;
-  int i;
-  
-  if (method != NULL && url != NULL && endpoint_list != NULL) {
-    splitted_url = ulfius_split_url(url, NULL);
-    for (i=0; (splitted_url != NULL && !ulfius_equals_endpoints(&(endpoint_list[i]), ulfius_empty_endpoint())); i++) {
-      if (0 == nstrcasecmp(endpoint_list[i].http_method, method) || endpoint_list[i].http_method[0] == '*') {
-        splitted_url_format = ulfius_split_url(endpoint_list[i].url_prefix, endpoint_list[i].url_format);
-        if (splitted_url_format != NULL && ulfius_url_format_match((const char **)splitted_url, (const char **)splitted_url_format)) {
-          endpoint = (endpoint_list + i);
-          u_map_clean_enum(splitted_url_format);
-          splitted_url_format = NULL;
-          break;
-        }
-        u_map_clean_enum(splitted_url_format);
-        splitted_url_format = NULL;
+void sort_endpoint_list (struct _u_endpoint ** endpoint_list, int length) {
+  int i, j;
+  struct _u_endpoint * temp;
+
+  for (i = 0; i < length; i++) {
+    for (j = 0; j < length - 1; j++) {
+      if (endpoint_list[j + 1]->priority < endpoint_list[j]->priority) {
+        temp = endpoint_list[j];
+        endpoint_list[j] = endpoint_list[j + 1];
+        endpoint_list[j + 1] = temp;
       }
     }
-    u_map_clean_enum(splitted_url);
-    splitted_url = NULL;
   }
-  return endpoint;
+}
+
+/**
+ * ulfius_endpoint_match
+ * return the endpoint array matching the url called with the proper http method
+ * the returned array always has its last value to NULL
+ * return NULL on memory error
+ * returned value must be free'd after use
+ */
+struct _u_endpoint ** ulfius_endpoint_match(const char * method, const char * url, struct _u_endpoint * endpoint_list) {
+  char ** splitted_url, ** splitted_url_format;
+  struct _u_endpoint ** endpoint_returned = malloc(sizeof(struct _u_endpoint *));
+  int i, count = 0;
+  
+  if (endpoint_returned == NULL) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for endpoint_returned");
+  } else {
+    endpoint_returned[0] = NULL;
+    if (method != NULL && url != NULL && endpoint_list != NULL) {
+      splitted_url = ulfius_split_url(url, NULL);
+      for (i=0; (splitted_url != NULL && !ulfius_equals_endpoints(&(endpoint_list[i]), ulfius_empty_endpoint())); i++) {
+        if (0 == nstrcasecmp(endpoint_list[i].http_method, method) || endpoint_list[i].http_method[0] == '*') {
+          splitted_url_format = ulfius_split_url(endpoint_list[i].url_prefix, endpoint_list[i].url_format);
+          if (splitted_url_format != NULL && ulfius_url_format_match((const char **)splitted_url, (const char **)splitted_url_format)) {
+            endpoint_returned = realloc(endpoint_returned, (count+2)*sizeof(struct _u_endpoint *));
+            if (endpoint_returned != NULL) {
+              endpoint_returned[count] = (endpoint_list + i);
+              endpoint_returned[count + 1] = NULL;
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error reallocating memory for endpoint_returned");
+            }
+            count++;
+            u_map_clean_enum(splitted_url_format);
+            splitted_url_format = NULL;
+          }
+          u_map_clean_enum(splitted_url_format);
+          splitted_url_format = NULL;
+        }
+      }
+      u_map_clean_enum(splitted_url);
+      splitted_url = NULL;
+    }
+  }
+  sort_endpoint_list(endpoint_returned, count);
+  return endpoint_returned;
 }
 
 /**
@@ -231,8 +263,6 @@ int ulfius_init_request(struct _u_request * request) {
     request->timeout = 0L;
     request->check_server_certificate = 1;
     request->client_address = NULL;
-    request->json_body = NULL;
-    request->json_has_error = 0;
     request->binary_body = NULL;
     request->binary_body_length = 0;
     return U_OK;
@@ -260,7 +290,6 @@ int ulfius_clean_request(struct _u_request * request) {
     u_map_clean_full(request->map_cookie);
     u_map_clean_full(request->map_post_body);
     free(request->binary_body);
-    json_decref(request->json_body);
     request->http_verb = NULL;
     request->http_url = NULL;
     request->client_address = NULL;
@@ -268,7 +297,6 @@ int ulfius_clean_request(struct _u_request * request) {
     request->map_header = NULL;
     request->map_cookie = NULL;
     request->map_post_body = NULL;
-    request->json_body = NULL;
     request->binary_body = NULL;
     return U_OK;
   } else {
@@ -331,13 +359,10 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request) 
       new_request->map_header = u_map_copy(request->map_header);
       new_request->map_cookie = u_map_copy(request->map_cookie);
       new_request->map_post_body = u_map_copy(request->map_post_body);
-      new_request->json_body = json_copy(request->json_body);
-      new_request->json_has_error = request->json_has_error;
       if ((new_request->map_url == NULL && request->map_url != NULL) || 
           (new_request->map_header == NULL && request->map_header != NULL) || 
           (new_request->map_cookie == NULL && request->map_cookie != NULL) || 
-          (new_request->map_post_body == NULL && request->map_post_body != NULL) || 
-          (new_request->json_body == NULL && request->json_body != NULL)) {
+          (new_request->map_post_body == NULL && request->map_post_body != NULL)) {
         ulfius_clean_request_full(new_request);
         return NULL;
       }

@@ -12,7 +12,6 @@
  */
 
 #include <string.h>
-#include <jansson.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -34,8 +33,6 @@ int callback_get_empty_response (const struct _u_request * request, struct _u_re
 int callback_post_test (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_all_test_foo (const struct _u_request * request, struct _u_response * response, void * user_data);
-
-int callback_put_jsontest (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_get_cookietest (const struct _u_request * request, struct _u_response * response, void * user_data);
 
@@ -116,19 +113,18 @@ int main (int argc, char **argv) {
   instance.max_post_body_size = 1024;
   
   // Endpoint list declaration
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, NULL, NULL, NULL, NULL, &callback_get_test, NULL);
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/empty", NULL, NULL, NULL, &callback_get_empty_response, NULL);
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/multiple/:multiple/:multiple/:not_multiple", NULL, NULL, NULL, &callback_all_test_foo, NULL);
-  ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, NULL, NULL, NULL, NULL, &callback_post_test, NULL);
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/:foo", NULL, NULL, NULL, &callback_all_test_foo, "user data 1");
-  ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, "/:foo", NULL, NULL, NULL, &callback_all_test_foo, "user data 2");
-  ulfius_add_endpoint_by_val(&instance, "PUT", PREFIX, "/:foo", NULL, NULL, NULL, &callback_all_test_foo, "user data 3");
-  ulfius_add_endpoint_by_val(&instance, "DELETE", PREFIX, "/:foo", NULL, NULL, NULL, &callback_all_test_foo, "user data 4");
-  ulfius_add_endpoint_by_val(&instance, "PUT", PREFIXJSON, NULL, NULL, NULL, NULL, &callback_put_jsontest, NULL);
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIXCOOKIE, "/:lang/:extra", NULL, NULL, NULL, &callback_get_cookietest, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, NULL, 0, &callback_get_test, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/empty", 0, &callback_get_empty_response, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/multiple/:multiple/:multiple/:not_multiple", 0, &callback_all_test_foo, NULL);
+  ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, NULL, 0, &callback_post_test, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/:foo", 0, &callback_all_test_foo, "user data 1");
+  ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, "/:foo", 0, &callback_all_test_foo, "user data 2");
+  ulfius_add_endpoint_by_val(&instance, "PUT", PREFIX, "/:foo", 0, &callback_all_test_foo, "user data 3");
+  ulfius_add_endpoint_by_val(&instance, "DELETE", PREFIX, "/:foo", 0, &callback_all_test_foo, "user data 4");
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIXCOOKIE, "/:lang/:extra", 0, &callback_get_cookietest, NULL);
   
   // default_endpoint declaration
-  ulfius_set_default_endpoint(&instance, NULL, NULL, NULL, &callback_default, NULL);
+  ulfius_set_default_endpoint(&instance, &callback_default, NULL);
   
   // Start the framework
   if (argc == 4 && strcmp("-secure", argv[1]) == 0) {
@@ -164,30 +160,27 @@ int main (int argc, char **argv) {
  * Callback function that put a "Hello World!" string in the response
  */
 int callback_get_test (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  response->string_body = strdup("Hello World!");
-  response->status = 200;
-  return U_OK;
+  ulfius_set_string_response(response, 200, "Hello World!");
+  return U_CALLBACK_COMPLETE;
 }
 
 /**
  * Callback function that put an empty response and a status 200
  */
 int callback_get_empty_response (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  return U_OK;
+  return U_CALLBACK_COMPLETE;
 }
 
 /**
  * Callback function that put a "Hello World!" and the post parameters send by the client in the response
  */
 int callback_post_test (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  int len;
   char * post_params = print_map(request->map_post_body);
-  len = snprintf(NULL, 0, "Hello World!\n%s", post_params);
-  response->string_body = malloc((len+1)*sizeof(char));
-  snprintf(response->string_body, (len+1), "Hello World!\n%s", post_params);
+  char * response_body = msprintf("Hello World!\n%s", post_params);
+  ulfius_set_string_response(response, 200, response_body);
+  free(response_body);
   free(post_params);
-  response->status = 200;
-  return U_OK;
+  return U_CALLBACK_COMPLETE;
 }
 
 /**
@@ -195,38 +188,16 @@ int callback_post_test (const struct _u_request * request, struct _u_response * 
  */
 int callback_all_test_foo (const struct _u_request * request, struct _u_response * response, void * user_data) {
   char * url_params = print_map(request->map_url), * headers = print_map(request->map_header), * cookies = print_map(request->map_cookie), 
-        * post_params = print_map(request->map_post_body), * json_params = json_dumps(request->json_body, JSON_INDENT(2));
-  int len;
-  len = snprintf(NULL, 0, "Hello World!\n\n  method is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n  json body parameters are \n%s\n\n  user data is %s\n\nclient address is %s\n\n",
-                                  request->http_verb, request->http_url, url_params, cookies, headers, post_params, json_params, (char *)user_data, inet_ntoa(((struct sockaddr_in *)request->client_address)->sin_addr));
-  response->string_body = malloc((len+1)*sizeof(char));
-  snprintf(response->string_body, (len+1), "Hello World!\n\n  method is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n  json body parameters are \n%s\n\n  user data is %s\n\nclient address is %s\n\n",
-                                  request->http_verb, request->http_url, url_params, cookies, headers, post_params, json_params, (char *)user_data, inet_ntoa(((struct sockaddr_in *)request->client_address)->sin_addr));
-  response->status = 200;
-  
+        * post_params = print_map(request->map_post_body);
+  char * response_body = msprintf("Hello World!\n\n  method is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n  user data is %s\n\nclient address is %s\n\n",
+                                  request->http_verb, request->http_url, url_params, cookies, headers, post_params, (char *)user_data, inet_ntoa(((struct sockaddr_in *)request->client_address)->sin_addr));
+  ulfius_set_string_response(response, 200, response_body);
   free(url_params);
   free(headers);
   free(cookies);
   free(post_params);
-  free(json_params);
-  return U_OK;
-}
-
-/**
- * Callback function that put "Hello World!", the http method and the url in a json response
- */
-int callback_put_jsontest (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  response->json_body = json_object();
-  json_object_set_new(response->json_body, "message", json_string("Hello World!"));
-  json_object_set_new(response->json_body, "method", json_string(request->http_verb));
-  json_object_set_new(response->json_body, "url", json_string(request->http_url));
-  if (!request->json_error) {
-    json_object_set(response->json_body, "request", request->json_body);
-  } else {
-    json_object_set_new(response->json_body, "request", json_pack("{ssss}", "title", "Error parsing request", "message", request->json_error->text));
-  }
-  response->status = 200;
-  return U_OK;
+  free(response_body);
+  return U_CALLBACK_COMPLETE;
 }
 
 /**
@@ -249,16 +220,15 @@ int callback_get_cookietest (const struct _u_request * request, struct _u_respon
   ulfius_add_cookie_to_response(response, "lang", lang, NULL, 0, NULL, NULL, 0, 0);
   ulfius_add_cookie_to_response(response, "extra", extra, NULL, 0, NULL, NULL, 0, 0);
   ulfius_add_cookie_to_response(response, "counter", new_counter, NULL, 0, NULL, NULL, 0, 0);
-  response->string_body = strdup("Cookies set");
+  ulfius_set_string_response(response, 200, "Cookies set!");
   
-  return U_OK;
+  return U_CALLBACK_COMPLETE;
 }
 
 /**
  * Default callback function called if no endpoint has a match
  */
 int callback_default (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  response->string_body = strdup("Page not found, do what you want");
-  response->status = 404;
-  return U_OK;
+  ulfius_set_string_response(response, 404, "Page not found, do what you want");
+  return U_CALLBACK_COMPLETE;
 }

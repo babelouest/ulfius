@@ -17,7 +17,7 @@ LIBYDER_LOCATION=../../lib/yder/src
 CC=gcc
 CFLAGS=-c -Wall -I$(LIBYDER_LOCATION) -D_REENTRANT $(ADDITIONALFLAGS)
 ULFIUS_LOCATION=../../src
-LIBS=-L$(LIBYDER_LOCATION) -lc -lulfius -lyder -ljansson -L$(ULFIUS_LOCATION)
+LIBS=-L$(LIBYDER_LOCATION) -lc -lulfius -lyder -lorcania -L$(ULFIUS_LOCATION)
 
 all: simple_example
 

@@ -28,7 +28,6 @@
 
 /** External dependencies **/
 #include <microhttpd.h>
-#include <jansson.h>
 
 /** Angharad libraries **/
 #include <yder.h>
@@ -68,6 +67,11 @@
 #define U_STATUS_ERROR    2
 
 #define ULFIUS_VERSION 1.0
+
+#define U_CALLBACK_CONTINUE     0
+#define U_CALLBACK_COMPLETE     1
+#define U_CALLBACK_UNAUTHORIZED 2
+#define U_CALLBACK_ERROR        3
 
 /*************
  * Structures
@@ -114,9 +118,6 @@ struct _u_cookie {
  * map_header:                map containing the header variables
  * map_cookie:                map containing the cookie variables
  * map_post_body:             map containing the post body variables (if available)
- * json_body:                 json_t * object containing the json body (if available)
- * json_error:                stack allocated json_error_t if json body was not parsed (if available)
- * json_has_error:            true if the json body was not parsed by jansson (if available)
  * binary_body:               pointer to raw body
  * binary_body_length:        length of raw body
  * 
@@ -133,9 +134,6 @@ struct _u_request {
   struct _u_map *      map_header;
   struct _u_map *      map_cookie;
   struct _u_map *      map_post_body;
-  json_t *             json_body;
-  json_error_t *       json_error;
-  int                  json_has_error;
   void *               binary_body;
   size_t               binary_body_length;
 };
@@ -150,8 +148,7 @@ struct _u_request {
  * map_header:           map containing the header variables
  * nb_cookies:           number of cookies sent
  * map_cookie:           array of cookies sent
- * string_body:          a char * containing the raw body response
- * json_body:            a json_t * object containing the json response
+ * auth_realm:           realm to send to the client on authenticationb failed
  * binary_body:          a void * containing a raw binary content
  * binary_body_length:   the length of the binary_body
  * stream_callback:      callback function to stream data in response body
@@ -159,6 +156,7 @@ struct _u_request {
  * stream_size:          size of the streamed data (-1 if unknown)
  * stream_block_size:    size of each block to be streamed, set according to your system
  * stream_user_data:     user defined data that will be available in your callback stream functions
+ * shared_data:          any data shared between callback functions, must be allocated and freed by the callback functions
  * 
  */
 struct _u_response {
@@ -167,8 +165,7 @@ struct _u_response {
   struct _u_map    * map_header;
   unsigned int       nb_cookies;
   struct _u_cookie * map_cookie;
-  char             * string_body;
-  json_t           * json_body;
+  char             * auth_realm;
   void             * binary_body;
   size_t             binary_body_length;
   ssize_t         (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max);
@@ -176,6 +173,7 @@ struct _u_response {
   size_t             stream_size;
   unsigned int       stream_block_size;
   void             * stream_user_data;
+  void *             shared_data;
 };
 
 /**
@@ -190,12 +188,7 @@ struct _u_response {
  *                    to define a variable in the url, prefix it with @ or :
  *                    example: /test/resource/:name/elements
  *                    on an url_format that ends with '*', the rest of the url will not be tested
- * auth_function:     a pointer to a function used to check the client credentials (optional)
- *                    this function will be called prior to the callback function. If auth_function returned value is U_OK,
- *                    then the callback function will be called after. If auth_function is not U_OK, response status send will be
- *                    401 (Unauthorized), and callback_function will be skipped
- * auth_data:         a pointer to a data or a structure that will be available in auth_function
- * auth_realm:        realm value for authentication
+ * priority:          endpoint priority in descending order (0 is the higher priority)
  * callback_function: a pointer to a function that will be executed each time the endpoint is called
  *                    you must declare the function as described.
  * user_data:         a pointer to a data or a structure that will be available in callback_function
@@ -205,11 +198,7 @@ struct _u_endpoint {
   char * http_method;
   char * url_prefix;
   char * url_format;
-  int (* auth_function)(const struct _u_request * request, // Input parameters (set by the framework)
-                        struct _u_response * response,     // Output parameters (set by the user)
-                        void * auth_data);
-  void * auth_data;
-  char * auth_realm;
+  uint   priority;
   int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
                             struct _u_response * response,     // Output parameters (set by the user)
                             void * user_data);
@@ -230,15 +219,6 @@ struct _u_endpoint {
  * endpoint_list:         List of available endpoints
  * default_endpoint:      Default endpoint if no other endpoint match the current url
  * default_headers:       Default headers that will be added to all response->map_header
- * default_auth_function: Default callback function used for authentication (optional)
- *                        a pointer to a function used to check the client credentials
- *                        this function will be called prior to the callback function. If default_auth_function returned value is U_OK,
- *                        then the callback function will be called after. If default_auth_function is not U_OK, response status send will be
- *                        401 (Unauthorized), and callback_function will be skipped
- *                        If an endpoint already has a auth_callback set, the default_auth_function will not be called
- *                        but the auth_callback function of the endpoint will
- * default_auth_data:     a pointer to a data or a structure that will be available in auth_function
- * default_auth_realm:    realm value for authentication
  * max_post_param_size:   maximum size for a post parameter, 0 means no limit, default 0
  * max_post_body_size:    maximum size for the entire post body, 0 means no limit, default 0
  * 
@@ -252,11 +232,6 @@ struct _u_instance {
   struct _u_endpoint          * endpoint_list;
   struct _u_endpoint          * default_endpoint;
   struct _u_map               * default_headers;
-  int (* default_auth_function)(const struct _u_request * request, // Input parameters (set by the framework)
-                                struct _u_response * response,     // Output parameters (set by the user)
-                                void * auth_data);
-  void *                        default_auth_data;
-  char *                        default_auth_realm;
   size_t                        max_post_param_size;
   size_t                        max_post_body_size;
 };
@@ -344,10 +319,7 @@ int ulfius_add_endpoint(struct _u_instance * u_instance, const struct _u_endpoin
  *                    to define a variable in the url, prefix it with @ or :
  *                    example: /test/resource/:name/elements
  *                    on an url_format that ends with '*', the rest of the url will not be tested
- * auth_function:     a pointer to a function that will be executed prior to the callback for authentication
- *                    you must declare the function as described.
- * auth_data:         a pointer to a data or a structure that will be available in auth_function
- * auth_realm:        realm value for authentication
+ * priority:          endpoint priority in descending order (0 is the higher priority)
  * callback_function: a pointer to a function that will be executed each time the endpoint is called
  *                    you must declare the function as described.
  * user_data:         a pointer to a data or a structure that will be available in callback_function
@@ -357,11 +329,7 @@ int ulfius_add_endpoint_by_val(struct _u_instance * u_instance,
                                const char * http_method,
                                const char * url_prefix,
                                const char * url_format,
-                               int (* auth_function)(const struct _u_request * request, // Input parameters (set by the framework)
-                                                     struct _u_response * response,     // Output parameters (set by the user)
-                                                     void * auth_data),
-                               void * auth_data,
-                               const char * auth_realm,
+                               uint priority,
                                int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
                                                          struct _u_response * response,     // Output parameters (set by the user)
                                                          void * user_data),
@@ -403,27 +371,8 @@ int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endp
  * return U_OK on success
  */
 int ulfius_set_default_endpoint(struct _u_instance * u_instance,
-                                         int (* auth_function)(const struct _u_request * request, struct _u_response * response, void * auth_data),
-                                         void * auth_data,
-                                         const char * auth_realm,
                                          int (* callback_function)(const struct _u_request * request, struct _u_response * response, void * user_data),
                                          void * user_data);
-
-/**
- * ulfius_set_default_auth_function
- * Set the default authentication function
- * This authentication function will be called if there is no auth_function attached to the endpoint
- * u_instance: pointer to a struct _u_instance that describe its port and bind address
- * auth_function:     a pointer to a function that will be executed prior to the callback for authentication
- *                    you must declare the function as described.
- * auth_data:         a pointer to a data or a structure that will be available in auth_function
- * auth_realm:        realm value for authentication
- * return U_OK on success
- */
-int ulfius_set_default_auth_function(struct _u_instance * u_instance,
-                                         int (* default_auth_function)(const struct _u_request * request, struct _u_response * response, void * auth_data),
-                                         void * default_auth_data,
-                                         const char * default_auth_realm);
 
 /**
  * Remove a struct _u_endpoint * from the specified u_instance
@@ -895,11 +844,17 @@ void mhd_request_completed (void *cls, struct MHD_Connection *connection,
 char ** ulfius_split_url(const char * prefix, const char * url);
 
 /**
- * ulfius_endpoint_match
- * return the endpoint matching the url called with the proper http method
- * return NULL if no endpoint is found
+ * Sort an array of struct _u_endpoint * using bubble sort algorithm
  */
-struct _u_endpoint * ulfius_endpoint_match(const char * method, const char * url, struct _u_endpoint * endpoint_list);
+void sort_endpoint_list (struct _u_endpoint ** endpoint_list, int length);
+
+/**
+ * ulfius_endpoint_match
+ * return the endpoint array matching the url called with the proper http method
+ * the returned array always has its last value to NULL
+ * return NULL on memory error
+ */
+struct _u_endpoint ** ulfius_endpoint_match(const char * method, const char * url, struct _u_endpoint * endpoint_list);
 
 /**
  * ulfius_url_format_match

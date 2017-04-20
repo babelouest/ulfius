@@ -124,27 +124,19 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
   body_data.size = 0;
   body_data.data = NULL;
   int res;
-  const char * content_type;
   
   res = ulfius_send_http_streaming_request(request, response, ulfius_write_body, (void *)&body_data);
   
   if (res == U_OK && response != NULL) {
     if (body_data.data != NULL && body_data.size > 0) {
-      response->string_body = nstrdup(body_data.data);
       response->binary_body = malloc(body_data.size);
-      if (response->binary_body == NULL || response->string_body == NULL) {
+      if (response->binary_body == NULL) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->binary_body");
         free(body_data.data);
         return U_ERROR_MEMORY;
       }
       memcpy(response->binary_body, body_data.data, body_data.size);
       response->binary_body_length = body_data.size;
-      
-      content_type = u_map_get_case(response->map_header, ULFIUS_HTTP_HEADER_CONTENT);
-      if (content_type != NULL && NULL != strstr(content_type, ULFIUS_HTTP_ENCODING_JSON)) {
-        // Parsing json content
-        response->json_body = json_loads(body_data.data, JSON_DECODE_ANY, NULL);
-      }
     }
     free(body_data.data);
     return U_OK;
@@ -279,25 +271,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
         }
       }
 
-      if (copy_request->json_body != NULL) {
-        // Append json body parameter
-        free(copy_request->binary_body);
-        copy_request->binary_body = json_dumps(copy_request->json_body, JSON_COMPACT);
-        if (copy_request->binary_body == NULL) {
-          ulfius_clean_request_full(copy_request);
-          curl_slist_free_all(header_list);
-          curl_easy_cleanup(curl_handle);
-          return U_ERROR_MEMORY;
-        } else {
-          copy_request->binary_body_length = strlen(copy_request->binary_body);
-          if (u_map_put(copy_request->map_header, ULFIUS_HTTP_HEADER_CONTENT, ULFIUS_HTTP_ENCODING_JSON) != U_OK) {
-            ulfius_clean_request_full(copy_request);
-            curl_slist_free_all(header_list);
-            curl_easy_cleanup(curl_handle);
-            return U_ERROR_MEMORY;
-          }
-        }
-      } else if (u_map_count(copy_request->map_post_body) > 0) {
+      if (u_map_count(copy_request->map_post_body) > 0) {
         // Append MHD_HTTP_POST_ENCODING_FORM_URLENCODED post parameters
         keys = u_map_enum_keys(copy_request->map_post_body);
         for (i=0; keys != NULL && keys[i] != NULL; i++) {
