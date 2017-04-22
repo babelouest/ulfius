@@ -6,7 +6,7 @@
  * 
  * u_request.c: request related functions defintions
  * 
- * Copyright 2015-2016 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2015-2017 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -386,3 +386,18 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request) 
   }
   return new_request;
 }
+
+#ifndef U_DISABLE_JANSSON
+/**
+ * ulfius_get_json_body_request
+ * Get JSON structure from the request body if the request is valid
+ * request: struct _u_request used
+ * json_error: structure to store json_error_t if specified
+ */
+json_t * ulfius_get_json_body_request(const struct _u_request * request, json_error_t * json_error) {
+  if (request != NULL && request->map_header != NULL && NULL != nstrstr(ULFIUS_HTTP_ENCODING_JSON, u_map_get_case(request->map_header, ULFIUS_HTTP_HEADER_CONTENT))) {
+    return json_loadb(request->binary_body, request->binary_body_length, JSON_DECODE_ANY, json_error);
+  }
+  return NULL;
+}
+#endif

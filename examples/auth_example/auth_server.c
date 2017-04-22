@@ -4,7 +4,7 @@
  * 
  * This program implements basic auth example
  *  
- * Copyright 2016 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2017 Nicolas Mora <mail@babelouest.org>
  * 
  * License MIT
  *
@@ -12,6 +12,7 @@
 
 #include <stdio.h>
 #include <yder.h>
+#include <orcania.h>
 
 #include "../../src/ulfius.h"
 
@@ -29,11 +30,11 @@ int auth_basic (const struct _u_request * request, struct _u_response * response
   y_log_message(Y_LOG_LEVEL_DEBUG, "basic auth password: %s", request->auth_basic_password);
   y_log_message(Y_LOG_LEVEL_DEBUG, "basic auth param: %s", (char *)user_data);
   if (request->auth_basic_user != NULL && request->auth_basic_password != NULL && 
-      0 == strcmp(request->auth_basic_user, USER) && 0 == strcmp(request->auth_basic_password, PASSWORD)) {
-    return U_OK;
+      0 == nstrcmp(request->auth_basic_user, USER) && 0 == nstrcmp(request->auth_basic_password, PASSWORD)) {
+    return U_CALLBACK_CONTINUE;
   } else {
     ulfius_set_string_response(response, 401, "Error authentication");
-    return U_ERROR_UNAUTHORIZED;
+    return U_CALLBACK_UNAUTHORIZED;
   }
 }
 
@@ -42,7 +43,7 @@ int auth_basic (const struct _u_request * request, struct _u_response * response
  */
 int callback_auth_basic (const struct _u_request * request, struct _u_response * response, void * user_data) {
   ulfius_set_string_response(response, 200, "Basic auth callback");
-  return U_OK;
+  return U_CALLBACK_CONTINUE;
 }
 
 int main (int argc, char **argv) {
@@ -51,15 +52,16 @@ int main (int argc, char **argv) {
   
   y_init_logs("auth_server", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "logs start");
   
-  if (ulfius_init_instance(&instance, PORT, NULL) != U_OK) {
+  if (ulfius_init_instance(&instance, PORT, NULL, "auth_basic_default") != U_OK) {
     printf("Error ulfius_init_instance, abort\n");
     return(1);
   }
   
   // Endpoint list declaration
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/basic", &auth_basic, "auth param", "auth_basic", &callback_auth_basic, NULL);
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/default", NULL, NULL, NULL, &callback_auth_basic, NULL);
-  ulfius_set_default_auth_function(&instance, &auth_basic, "auth param_default", "auth_basic_default");
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/basic", 0, &auth_basic, "auth param");
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/basic", 1, &callback_auth_basic, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/default", 1, &callback_auth_basic, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/default", 0, &auth_basic, NULL);
   
   // Start the framework
   if (ulfius_start_framework(&instance) == U_OK) {

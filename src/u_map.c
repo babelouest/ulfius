@@ -7,7 +7,7 @@
  * u_umap.c: Simple map structure functions definitions
  * not memory friendly, all pointer returned must be freed after use
  * 
- * Copyright 2015-2016 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2015-2017 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -573,18 +573,18 @@ struct _u_map * u_map_copy(const struct _u_map * source) {
 }
 
 /**
- * Copy all key/values pairs of source into target
- * If key is already present in target, it's overwritten
+ * Copy all key/values pairs of source into dest
+ * If key is already present in dest, it's overwritten
  * return U_OK on success, error otherwise
  */
-int u_map_copy_into(const struct _u_map * source, struct _u_map * target) {
+int u_map_copy_into(struct _u_map * dest, const struct _u_map * source) {
   const char ** keys;
   int i, res;
   
-  if (source != NULL && target != NULL) {
+  if (source != NULL && dest != NULL) {
     keys = u_map_enum_keys(source);
     for (i=0; keys != NULL && keys[i] != NULL; i++) {
-      res = u_map_put(target, keys[i], u_map_get(source, keys[i]));
+      res = u_map_put(dest, keys[i], u_map_get(source, keys[i]));
       if (res != U_OK) {
         return res;
       }
@@ -606,4 +606,17 @@ int u_map_count(const struct _u_map * source) {
     }
   }
   return -1;
+}
+
+/**
+ * Empty a struct u_map of all its elements
+ * return U_OK on success, error otherwise
+ */
+int u_map_empty(struct _u_map * u_map) {
+  int ret = u_map_clean(u_map);
+  if (ret == U_OK) {
+    return u_map_init(u_map);
+  } else {
+    return ret;
+  }
 }

@@ -5,7 +5,7 @@
  * This example program send several requests to describe
  * the function ulfius_request_http behaviour
  *  
- * Copyright 2015 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2015-2017 Nicolas Mora <mail@babelouest.org>
  * 
  * License MIT
  *
@@ -53,18 +53,21 @@ char * print_map(const struct _u_map * map) {
  */
 int callback (const struct _u_request * request, struct _u_response * response, void * user_data) {
   char * url_params = print_map(request->map_url), * headers = print_map(request->map_header), * cookies = print_map(request->map_cookie), 
-        * post_params = print_map(request->map_post_body), * json_params = json_dumps(request->json_body, JSON_INDENT(2));
-  response->string_body = nstrdup("ok");
+        * post_params = print_map(request->map_post_body);
+  char request_body[request->binary_body_length + 1];
+  strncpy(request_body, request->binary_body, request->binary_body_length);
+  request_body[request->binary_body_length] = '\0';
+  response->binary_body = nstrdup("ok");
+  response->binary_body_length = strlen("ok");
   response->status = 200;
-  printf("######################################################\n###################### Callback ######################\n######################################################\n\nMethod is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n  json body parameters are \n%s\n\n  raw body is \n%s\n\n  user data is %s\n\n",
-                                  request->http_verb, request->http_url, url_params, cookies, headers, post_params, json_params, (char*)request->binary_body, (char *)user_data);
+  printf("######################################################\n###################### Callback ######################\n######################################################\n\nMethod is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n  raw body is \n%s\n\n  user data is %s\n\n",
+                                  request->http_verb, request->http_url, url_params, cookies, headers, post_params, request_body, (char *)user_data);
   
   ulfius_add_cookie_to_response(response, "cook", "ie", NULL, 5000, NULL, NULL, 0, 0);
   free(url_params);
   free(headers);
   free(cookies);
   free(post_params);
-  free(json_params);
   return U_OK;
 }
 
@@ -73,13 +76,13 @@ int main (int argc, char **argv) {
   // Initialize the instance
   struct _u_instance instance;
   
-  if (ulfius_init_instance(&instance, PORT, NULL) != U_OK) {
+  if (ulfius_init_instance(&instance, PORT, NULL, NULL) != U_OK) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_init_instance, abort");
     return(1);
   }
   
   // Endpoint list declaration
-  ulfius_add_endpoint_by_val(&instance, "*", PREFIX, "*", NULL, NULL, "/*", &callback, NULL);
+  ulfius_add_endpoint_by_val(&instance, "*", PREFIX, "*", 0, &callback, NULL);
   
   // Start the framework
   if (ulfius_start_framework(&instance) == U_OK) {

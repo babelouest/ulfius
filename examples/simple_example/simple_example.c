@@ -5,7 +5,7 @@
  * This example program describes the main features 
  * that are available in a callback function
  * 
- * Copyright 2015 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2015-2017 Nicolas Mora <mail@babelouest.org>
  * 
  * License MIT
  *
@@ -102,7 +102,7 @@ int main (int argc, char **argv) {
   
   y_init_logs("simple_example", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting simple_example");
   
-  if (ulfius_init_instance(&instance, PORT, NULL) != U_OK) {
+  if (ulfius_init_instance(&instance, PORT, NULL, NULL) != U_OK) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_init_instance, abort");
     return(1);
   }

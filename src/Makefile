@@ -3,7 +3,7 @@
 #
 # Makefile used to build the software
 #
-# Copyright 2015-2016 Nicolas Mora <mail@babelouest.org>
+# Copyright 2015-2017 Nicolas Mora <mail@babelouest.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public License
@@ -19,22 +19,27 @@
 # License along with this library.	If not, see <http://www.gnu.org/licenses/>.
 #
 
-# Uncomment the following lline if you want to disable ulfius_send_smtp_email as in libcurl < 7.20 for example (Centos 6.5)
-#SMTPFLAGS=-DULFIUS_IGNORE_SMTP
-
 LIBORCANIA_LOCATION=../lib/orcania
 LIBYDER_LOCATION=../lib/yder/src
 PREFIX=/usr/local
 CC=gcc
-CFLAGS=-c -fPIC -Wall -D_REENTRANT -I$(PREFIX)/include -I$(LIBORCANIA_LOCATION) -I$(LIBYDER_LOCATION) $(ADDITIONALFLAGS) $(SMTPFLAGS)
-LIBS=-L$(PREFIX)/lib -L$(LIBORCANIA_LOCATION) -L$(LIBYDER_LOCATION) -lc -lmicrohttpd -ljansson -lcurl -lyder -lorcania
+CFLAGS=-c -fPIC -Wall -D_REENTRANT -I$(PREFIX)/include -I$(LIBORCANIA_LOCATION) -I$(LIBYDER_LOCATION) $(ADDITIONALFLAGS) $(JANSSONFLAG) $(CURLFLAG)
+LIBS=-L$(PREFIX)/lib -L$(LIBORCANIA_LOCATION) -L$(LIBYDER_LOCATION) -lc -lmicrohttpd -lyder -lorcania
 OUTPUT=libulfius.so
 VERSION=1.9
+
+ifneq (($(JANSSONFLAG)),"")
+LJANSSON=-ljansson
+endif
+
+ifneq (($(CURLFLAG)),"")
+LCURL=-lcurl
+endif
 
 all: release
 
 libulfius.so: ulfius.o u_map.o u_request.o u_response.o u_send_request.o
-	$(CC) -shared -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) ulfius.o u_map.o u_request.o u_response.o u_send_request.o $(LIBS_YDER) $(LIBS)
+	$(CC) -shared -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) ulfius.o u_map.o u_request.o u_response.o u_send_request.o $(LIBS) $(LJANSSON) $(LCURL)
 	ln -sf $(OUTPUT).$(VERSION) $(OUTPUT)
 
 ulfius.o: ulfius.h ulfius.c

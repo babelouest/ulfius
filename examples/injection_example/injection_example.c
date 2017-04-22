@@ -4,7 +4,7 @@
  * 
  * This example program describes the endpoints injections
  * 
- * Copyright 2016 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2017 Nicolas Mora <mail@babelouest.org>
  * 
  * License MIT
  *
@@ -40,15 +40,15 @@ int main (int argc, char **argv) {
   
   y_init_logs("injection_example", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting injection_example");
   
-  if (ulfius_init_instance(&instance, PORT, NULL) != U_OK) {
+  if (ulfius_init_instance(&instance, PORT, NULL, NULL) != U_OK) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_init_instance, abort");
     return(1);
   }
   
   // Endpoint list declaration
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/first", NULL, NULL, NULL, &callback_first, NULL);
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/second", NULL, NULL, NULL, &callback_second, NULL);
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/third", NULL, NULL, NULL, &callback_third, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/first", 1, &callback_first, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/second", 1, &callback_second, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/third", 1, &callback_third, NULL);
   
   // Start the framework
   if (ulfius_start_framework(&instance) == U_OK) {
@@ -56,11 +56,11 @@ int main (int argc, char **argv) {
     
     y_log_message(Y_LOG_LEVEL_DEBUG, "Press <enter> to inject %s/fourth endpoint", PREFIX);
     getchar();
-    ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/fourth", NULL, NULL, NULL, &callback_fourth, NULL);
+    ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/fourth", 1, &callback_fourth, NULL);
     
     y_log_message(Y_LOG_LEVEL_DEBUG, "Press <enter> to inject %s/fifth endpoint", PREFIX);
     getchar();
-    ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/fifth", NULL, NULL, NULL, &callback_fifth, NULL);
+    ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/fifth", 1, &callback_fifth, NULL);
     
     y_log_message(Y_LOG_LEVEL_DEBUG, "Press <enter> to remove %s/fourth endpoint", PREFIX);
     getchar();
@@ -86,8 +86,7 @@ int main (int argc, char **argv) {
  * Callback callback_first
  */
 int callback_first (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  response->string_body = strdup("Hello World from callback_first!");
-  response->status = 200;
+  ulfius_set_string_response(response, 200, "Hello World from callback_first!");
   return U_OK;
 }
 
@@ -95,8 +94,7 @@ int callback_first (const struct _u_request * request, struct _u_response * resp
  * Callback callback_second
  */
 int callback_second (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  response->string_body = strdup("Hello World from callback_second!");
-  response->status = 200;
+  ulfius_set_string_response(response, 200, "Hello World from callback_second!");
   return U_OK;
 }
 
@@ -104,8 +102,7 @@ int callback_second (const struct _u_request * request, struct _u_response * res
  * Callback callback_third
  */
 int callback_third (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  response->string_body = strdup("Hello World from callback_third!");
-  response->status = 200;
+  ulfius_set_string_response(response, 200, "Hello World from callback_third!");
   return U_OK;
 }
 
@@ -113,8 +110,7 @@ int callback_third (const struct _u_request * request, struct _u_response * resp
  * Callback callback_fourth
  */
 int callback_fourth (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  response->string_body = strdup("Hello World from callback_fourth!");
-  response->status = 200;
+  ulfius_set_string_response(response, 200, "Hello World from callback_fourth!");
   return U_OK;
 }
 
@@ -122,7 +118,6 @@ int callback_fourth (const struct _u_request * request, struct _u_response * res
  * Callback callback_fifth
  */
 int callback_fifth (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  response->string_body = strdup("Hello World from callback_fifth!");
-  response->status = 200;
+  ulfius_set_string_response(response, 200, "Hello World from callback_fifth!");
   return U_OK;
 }

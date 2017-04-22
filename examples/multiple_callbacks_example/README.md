@@ -1,6 +1,6 @@
-# simple_example
+# multiple_callbacks_example
 
-Run a simple webservice that listen on port 8537.
+Run a webservice with multiple endpoint callbacks possible and different levels of priority
 
 ## Compile and run
 
@@ -8,19 +8,21 @@ Run a simple webservice that listen on port 8537.
 $ make test
 ```
 
-### https connection
-
-If you want this program to listen to a secure (https) connection, create a certificate with its certificate and private keys in to separate files, and run the program with the options `-secure <key_file> <cert_file>`.
-
 ## Endpoints available:
 
-- `GET http://localhost:8537/test`: A "Hello World!" response (status 200)
-- `GET http://localhost:8537/test/empty`: An empty response (status 200)
-- `POST http://localhost:8537/test`: Will display all requests parameters (body, headers, cookies, etc.) given by the client
-- `GET http://localhost:8537/test/:foo`: Will display all requests parameters (body, headers, cookies, etc.) given by the client
-- `POST http://localhost:8537/test/:foo`: Will display all requests parameters (body, headers, cookies, etc.) given by the client
-- `PUT http://localhost:8537/test/:foo`: Will display all requests parameters (body, headers, cookies, etc.) given by the client
-- `DELETE http://localhost:8537/test/:foo`: Will display all requests parameters (body, headers, cookies, etc.) given by the client
-- `GET http://localhost:8537/test/multiple/:multiple/:multiple/:not_multiple`: Will display all requests parameters (body, headers, cookies, etc.) given by the client, and multiple values in `map_url:multiple` key
-- `PUT http://localhost:8537/testjson` Will display all requests parameters (body, headers, cookies, etc.) given by the client, works with JSON parameters in the body
-- `GET http://localhost:8537/testcookie/:lang/:extra` Will send a cookie to the client with `lang` and `extra` values in it
+### Multiple callbacks in cascade
+
+- `GET http://localhost:6875/multiple/zero`: Send "Level zero" response (status 200)
+- `GET http://localhost:6875/multiple/zero/one`: Send "Level zero\nlevel one" response (status 200)
+- `GET http://localhost:6875/multiple/zero/one/two`: Send "Level zero\nlevel one\nlevel two" response (status 200)
+- `GET http://localhost:6875/multiple/zero/one/two/three`: Send "Level zero\nlevel one\nlevel two\nlevel three" response (status 200)
+
+### Multiple callbacks but the cascade is stopped at `/zero/onec/`
+
+- `GET http://localhost:6875/multiple/zero/one`: Send "Level zero\nlevel one" response (status 200)
+- `GET http://localhost:6875/multiple/zero/one/two`: Send "Level zero\nlevel one" response (status 200)
+
+### Hello World with authentication
+
+- `GET http://localhost:6875/multiple/auth/data`: Send "Hello World!" response if authentication is correct (status 200), otherwise status 401 with realm "default_realm"
+- `PUT http://localhost:6875/multiple/auth/data`: Send "Hello World!" response if authentication is correct (status 200), otherwise status 401 with realm "specific_realm"

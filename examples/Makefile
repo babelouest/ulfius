@@ -21,17 +21,20 @@ TEST_U_MAP_LOCATION=./test_u_map
 INJECTION_EXAMPLE_LOCATION=./injection_example
 AUTH_EXAMPLE_LOCATION=./auth_example
 STREAM_EXAMPLE_LOCATION=./stream_example
+MULTIPLE_CALLBACKS_LOCATION=./multiple_callbacks_example
 
 all: debug
 
 debug:
 	cd $(SIMPLE_EXAMPLE_LOCATION) && $(MAKE) debug
+	cd $(SHEEP_COUNTER_LOCATION) && $(MAKE) debug
 	cd $(PROXY_EXAMPLE_LOCATION) && $(MAKE) debug
 	cd $(REQUEST_EXAMPLE_LOCATION) && $(MAKE) debug
 	cd $(INJECTION_EXAMPLE_LOCATION) && $(MAKE) debug
 	cd $(AUTH_EXAMPLE_LOCATION) && $(MAKE) debug
 	cd $(STREAM_EXAMPLE_LOCATION) && $(MAKE) debug
 	cd $(TEST_U_MAP_LOCATION) && $(MAKE) debug
+	cd $(MULTIPLE_CALLBACKS_LOCATION) && $(MAKE) debug
 
 clean:
 	cd $(SIMPLE_EXAMPLE_LOCATION) && $(MAKE) clean
@@ -42,3 +45,4 @@ clean:
 	cd $(AUTH_EXAMPLE_LOCATION) && $(MAKE) clean
 	cd $(STREAM_EXAMPLE_LOCATION) && $(MAKE) clean
 	cd $(TEST_U_MAP_LOCATION) && $(MAKE) clean
+	cd $(MULTIPLE_CALLBACKS_LOCATION) && $(MAKE) clean

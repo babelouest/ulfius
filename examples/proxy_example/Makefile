@@ -3,7 +3,7 @@
 #
 # Makefile used to build the software
 #
-# Copyright 2015 Nicolas Mora <mail@babelouest.org>
+# Copyright 2015-2017 Nicolas Mora <mail@babelouest.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License
@@ -27,7 +27,7 @@ debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 debug: proxy
 
 libulfius.so:
-	cd $(ULFIUS_LOCATION) && $(MAKE) debug
+	cd $(ULFIUS_LOCATION) && $(MAKE) debug JANSSONFLAG=-DU_DISABLE_JANSSON
 
 proxy.o: proxy.c
 	$(CC) $(CFLAGS) proxy.c -DDEBUG -g -O0

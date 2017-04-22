@@ -6,7 +6,7 @@
  * 
  * u_response.c: response related functions defintions
  * 
- * Copyright 2015-2016 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2015-2017 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -562,34 +562,6 @@ int ulfius_set_binary_response(struct _u_response * response, const uint status,
 }
 
 /**
- * ulfius_set_json_response
- * Add a json_t binary_body to a response
- * return U_OK on success
- 
-int ulfius_set_json_response(struct _u_response * response, const uint status, const json_t * binary_body) {
-  if (response != NULL && binary_body != NULL) {
-    // Free all the bodies available
-    free(response->string_body);
-    response->string_body = NULL;
-    free(response->binary_body);
-    response->binary_body = NULL;
-    response->binary_body_length = 0;
-    json_decref(response->json_body);
-    response->json_body = NULL;
-
-    response->json_body = json_copy((json_t *)binary_body);
-    if (response->json_body == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for dest->json_body");
-      return U_ERROR_MEMORY;
-    }
-    response->status = status;
-    return U_OK;
-  } else {
-    return U_ERROR_PARAMS;
-  }
-}*/
-
-/**
  * ulfius_set_empty_response
  * Set an empty response with only a status
  * return U_OK on success
@@ -638,6 +610,33 @@ int ulfius_set_stream_response(struct _u_response * response,
     return U_ERROR_PARAMS;
   }
 }
+
+#ifdef U_DISABLE_JANSSON
+/**
+ * ulfius_set_json_response
+ * Add a json_t binary_body to a response
+ * return U_OK on success
+ */
+int ulfius_set_json_response(struct _u_response * response, const uint status, const json_t * binary_body) {
+  if (response != NULL && binary_body != NULL) {
+    // Free all the bodies available
+    free(response->binary_body);
+    response->binary_body = NULL;
+    response->binary_body_length = 0;
+
+    response->binary_body = (void*) json_dumps(binary_body, JSON_COMPACT);
+    if (response->binary_body == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for dest->binary_body");
+      return U_ERROR_MEMORY;
+    }
+    response->binary_body_length = strlen((char*)response->binary_body);
+    response->status = status;
+    return U_OK;
+  } else {
+    return U_ERROR_PARAMS;
+  }
+}
+#endif
 
 /**
  * ulfius_add_header_to_response

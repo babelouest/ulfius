@@ -5,7 +5,7 @@
  * This example program send several requests to describe
  * the function ulfius_request_http behaviour
  *  
- * Copyright 2015 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2015-2017 Nicolas Mora <mail@babelouest.org>
  * 
  * License MIT
  *
@@ -49,8 +49,11 @@ char * print_map(const struct _u_map * map) {
 
 void print_response(struct _u_response * response) {
   if (response != NULL) {
+    char response_body[response->binary_body_length + 1];
+    strncpy(response_body, response->binary_body, response->binary_body_length);
+    response_body[response->binary_body_length] = '\0';
     printf("status is\n%ld\n\nstring body is \n%s\n\n",
-           response->status, (char *)response->string_body);
+           response->status, response_body);
   }
 }
 

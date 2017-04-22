@@ -3,7 +3,7 @@
 #
 # Makefile used to build the software
 #
-# Copyright 2014-2015 Nicolas Mora <mail@babelouest.org>
+# Copyright 2015-2017 Nicolas Mora <mail@babelouest.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License
@@ -27,7 +27,7 @@ debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 debug: sheep_counter
 
 libulfius.so:
-	cd $(ULFIUS_LOCATION) && $(MAKE) debug
+	cd $(ULFIUS_LOCATION) && $(MAKE) debug CURLFLAG=-DU_DISABLE_CURL
 
 sheep_counter.o: sheep_counter.c
 	$(CC) $(CFLAGS) sheep_counter.c -DDEBUG -g -O0

@@ -7,7 +7,7 @@
  * As a result, the index.html page will increment a sheep counter and 
  * shows a new sheep on the screen every time an increment is done (every 5 seconds)
  * 
- * Copyright 2015 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2015-2017 Nicolas Mora <mail@babelouest.org>
  * 
  * License MIT
  *
@@ -86,16 +86,16 @@ const char * get_filename_ext(const char *path) {
 int main (int argc, char **argv) {
   
   // jansson integer type can vary
-  #if JSON_INTEGER_IS_LONG_LONG
+#if JSON_INTEGER_IS_LONG_LONG
   long long nb_sheep = 0;
-  #else
+#else
   long nb_sheep = 0;
-  #endif
+#endif
   
   // Initialize the instance
   struct _u_instance instance;
   
-  if (ulfius_init_instance(&instance, PORT, NULL) != U_OK) {
+  if (ulfius_init_instance(&instance, PORT, NULL, NULL) != U_OK) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_init_instance, abort");
     return(1);
   }
@@ -117,11 +117,11 @@ int main (int argc, char **argv) {
   // Endpoint list declaration
   // The first 3 are webservices with a specific url
   // The last endpoint will be called for every GET call and will serve the static files
-  ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, NULL, NULL, NULL, NULL, &callback_sheep_counter_start, &nb_sheep);
-  ulfius_add_endpoint_by_val(&instance, "PUT", PREFIX, NULL, NULL, NULL, NULL, &callback_sheep_counter_add, &nb_sheep);
-  ulfius_add_endpoint_by_val(&instance, "DELETE", PREFIX, NULL, NULL, NULL, NULL, &callback_sheep_counter_reset, &nb_sheep);
-  ulfius_add_endpoint_by_val(&instance, "*", FILE_PREFIX, NULL, NULL, NULL, NULL, &callback_upload_file, NULL);
-  ulfius_add_endpoint_by_val(&instance, "GET", "*", NULL, NULL, NULL, NULL, &callback_static_file, &mime_types);
+  ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, NULL, 1, &callback_sheep_counter_start, &nb_sheep);
+  ulfius_add_endpoint_by_val(&instance, "PUT", PREFIX, NULL, 1, &callback_sheep_counter_add, &nb_sheep);
+  ulfius_add_endpoint_by_val(&instance, "DELETE", PREFIX, NULL, 1, &callback_sheep_counter_reset, &nb_sheep);
+  ulfius_add_endpoint_by_val(&instance, "*", FILE_PREFIX, NULL, 1, &callback_upload_file, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", "*", NULL, 1, &callback_static_file, &mime_types);
   
   // Start the framework
   if (ulfius_start_framework(&instance) == U_OK) {
@@ -148,7 +148,7 @@ int main (int argc, char **argv) {
  * return the current number of sheeps in a json object
  */
 int callback_sheep_counter_start (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  json_t * json_nb_sheep = json_object_get(request->json_body, "nbsheep");
+  json_t * json_nb_sheep = ulfius_get_json_body_request(request, NULL), * json_body = NULL;
   
 #if JSON_INTEGER_IS_LONG_LONG
   long long * nb_sheep = user_data;
@@ -162,10 +162,11 @@ int callback_sheep_counter_start (const struct _u_request * request, struct _u_r
     * nb_sheep = 0;
   }
   
-  response->json_body = json_object();
-  json_object_set_new(response->json_body, "nbsheep", json_integer(* nb_sheep));
-  response->status = 200;
+  json_body = json_object();
+  json_object_set_new(json_body, "nbsheep", json_integer(* nb_sheep));
+  ulfius_set_json_response(response, 200, json_body);
   json_decref(json_nb_sheep);
+  json_decref(json_body);
   return U_OK;
 }
 
@@ -174,16 +175,18 @@ int callback_sheep_counter_start (const struct _u_request * request, struct _u_r
  * return the current number of sheeps in a json object
  */
 int callback_sheep_counter_reset (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  #if JSON_INTEGER_IS_LONG_LONG
+  json_t * json_body = NULL;
+#if JSON_INTEGER_IS_LONG_LONG
   long long * nb_sheep = user_data;
-  #else
+#else
   long * nb_sheep = user_data;
-  #endif
+#endif
   * nb_sheep = 0;
   
-  response->json_body = json_object();
-  json_object_set_new(response->json_body, "nbsheep", json_integer(0));
-  response->status = 200;
+  json_body = json_object();
+  json_object_set_new(json_body, "nbsheep", json_integer(0));
+  ulfius_set_json_response(response, 200, json_body);
+  json_decref(json_body);
   
   return U_OK;
 }
@@ -193,17 +196,19 @@ int callback_sheep_counter_reset (const struct _u_request * request, struct _u_r
  * return the current number of sheeps in a json object
  */
 int callback_sheep_counter_add (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  #if JSON_INTEGER_IS_LONG_LONG
+  json_t * json_body = NULL;
+#if JSON_INTEGER_IS_LONG_LONG
   long long * nb_sheep = user_data;
-  #else
+#else
   long * nb_sheep = user_data;
-  #endif
+#endif
   
   (*nb_sheep)++;
   
-  response->json_body = json_object();
-  json_object_set_new(response->json_body, "nbsheep", json_integer(*nb_sheep));
-  response->status = 200;
+  json_body = json_object();
+  json_object_set_new(json_body, "nbsheep", json_integer(*nb_sheep));
+  ulfius_set_json_response(response, 200, json_body);
+  json_decref(json_body);
   
   return U_OK;
 }
@@ -254,10 +259,9 @@ int callback_upload_file (const struct _u_request * request, struct _u_response 
   char * url_params = print_map(request->map_url), * headers = print_map(request->map_header), * cookies = print_map(request->map_cookie), 
         * post_params = print_map(request->map_post_body);
 
-  response->string_body = msprintf("Upload file\n\n  method is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n",
+  char * string_body = msprintf("Upload file\n\n  method is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n",
                                   request->http_verb, request->http_url, url_params, cookies, headers, post_params);
-  response->status = 200;
-  
+  ulfius_set_string_response(response, 200, string_body);
   free(url_params);
   free(headers);
   free(cookies);

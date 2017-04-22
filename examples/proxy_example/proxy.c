@@ -5,7 +5,7 @@
  * This example program describes the main features 
  * that are available in a callback function
  * 
- * Copyright 2015 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2015-2017 Nicolas Mora <mail@babelouest.org>
  * 
  * License MIT
  *
@@ -17,7 +17,7 @@
 #include "../../src/ulfius.h"
 
 #define PORT 7799
-#define PROXY_DEST "https://www.un.org"
+#define PROXY_DEST "https://www.wikipedia.org"
 
 /**
  * callback function declaration
@@ -29,13 +29,13 @@ int main (int argc, char **argv) {
   // Initialize the instance
   struct _u_instance instance;
   
-  if (ulfius_init_instance(&instance, PORT, NULL) != U_OK) {
+  if (ulfius_init_instance(&instance, PORT, NULL, NULL) != U_OK) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_init_instance, abort");
     return(1);
   }
   
   // Endpoint list declaration
-  ulfius_add_endpoint_by_val(&instance, "GET", NULL, "*", NULL, NULL, NULL, &callback_get, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", NULL, "*", 0, &callback_get, NULL);
   
   // Start the framework
   if (ulfius_start_framework(&instance) == U_OK) {
@@ -69,6 +69,8 @@ int callback_get (const struct _u_request * request, struct _u_response * respon
   len = snprintf(NULL, 0, "%s%s", PROXY_DEST, request->http_url);
   req->http_url = malloc((len+1)*sizeof(char));
   snprintf(req->http_url, (len+1), "%s%s", PROXY_DEST, request->http_url);
+  printf("Accessing %s as proxy\n", req->http_url);
+  req->timeout = 30;
   ulfius_send_http_request(req, res);
   ulfius_copy_response(response, res);
   ulfius_clean_response_full(res);

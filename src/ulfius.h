@@ -6,7 +6,7 @@
  * 
  * ulfius.h: structures and functions declarations
  * 
- * Copyright 2015-2016 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2015-2017 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -32,6 +32,10 @@
 /** Angharad libraries **/
 #include <yder.h>
 #include <orcania.h>
+
+#ifndef U_DISABLE_JANSSON
+#include <jansson.h>
+#endif
 
 /** Macro values **/
 #define ULFIUS_URL_SEPARATOR       "/"
@@ -60,7 +64,6 @@
 #define U_ERROR_LIBMHD       4 // Error in libmicrohttpd execution
 #define U_ERROR_LIBCURL      5 // Error in libcurl execution
 #define U_ERROR_NOT_FOUND    6 // Something was not found
-#define U_ERROR_UNAUTHORIZED 7 // No authorization given
 
 #define U_STATUS_STOP     0
 #define U_STATUS_RUNNING  1
@@ -216,6 +219,7 @@ struct _u_endpoint {
  * port:                  port number to listen to
  * bind_address:          ip address to listen to (optional)
  * nb_endpoints:          Number of available endpoints
+ * default_auth_realm:    Default realm on authentication error
  * endpoint_list:         List of available endpoints
  * default_endpoint:      Default endpoint if no other endpoint match the current url
  * default_headers:       Default headers that will be added to all response->map_header
@@ -226,9 +230,10 @@ struct _u_endpoint {
 struct _u_instance {
   struct MHD_Daemon          *  mhd_daemon;
   int                           status;
-  int                           port;
+  uint                          port;
   struct sockaddr_in          * bind_address;
   int                           nb_endpoints;
+  char                        * default_auth_realm;
   struct _u_endpoint          * endpoint_list;
   struct _u_endpoint          * default_endpoint;
   struct _u_map               * default_headers;
@@ -245,6 +250,7 @@ struct connection_info_struct {
   int                        callback_first_iteration;
   struct _u_request *        request;
   size_t                     max_post_param_size;
+  struct _u_map              map_url_initial;
 };
 
 /**********************************
@@ -257,7 +263,7 @@ struct connection_info_struct {
  * Initialize a struct _u_instance * with default values
  * return U_OK on success
  */
-int ulfius_init_instance(struct _u_instance * u_instance, int port, struct sockaddr_in * bind_address);
+int ulfius_init_instance(struct _u_instance * u_instance, uint port, struct sockaddr_in * bind_address, const char * default_auth_realm);
 
 /**
  * ulfius_clean_instance
@@ -426,6 +432,7 @@ void ulfius_clean_endpoint_list(struct _u_endpoint * endpoint_list);
  */
 int ulfius_equals_endpoints(const struct _u_endpoint * endpoint1, const struct _u_endpoint * endpoint2);
 
+#ifndef U_DISABLE_CURL
 /********************************************
  * Requests/Responses functions declarations
  ********************************************/
@@ -445,7 +452,6 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
  */
 int ulfius_send_http_streaming_request(const struct _u_request * request, struct _u_response * response, size_t (* write_body_function)(void * contents, size_t size, size_t nmemb, void * user_data), void * write_body_data);
 
-#ifndef ULFIUS_IGNORE_SMTP
 /**
  * ulfius_send_smtp_email
  * Send an email using libcurl
@@ -507,13 +513,6 @@ int ulfius_set_string_response(struct _u_response * response, const uint status,
  * return U_OK on success
  */
 int ulfius_set_binary_response(struct _u_response * response, const uint status, const char * body, const size_t length);
-
-/**
- * ulfius_set_json_response
- * Add a json_t body to a response
- * return U_OK on success
- */
-int ulfius_set_json_response(struct _u_response * response, const uint status, const json_t * body);
 
 /**
  * ulfius_set_empty_response
@@ -612,6 +611,21 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
  * return value must be cleaned after use
  */
 struct _u_response * ulfius_duplicate_response(const struct _u_response * response);
+
+#ifndef U_DISABLE_JANSSON
+/**
+ * ulfius_get_json_body_request
+ * Get JSON structure from the request body if the request is valid
+ */
+json_t * ulfius_get_json_body_request(const struct _u_request * request, json_error_t * json_error);
+
+/**
+ * ulfius_set_json_response
+ * Add a json_t body to a response
+ * return U_OK on success
+ */
+int ulfius_set_json_response(struct _u_response * response, const uint status, const json_t * body);
+#endif
 
 /************************************************************************
  * _u_map declarations                                                  *  
@@ -777,17 +791,23 @@ int u_map_remove_at(struct _u_map * u_map, const int index);
 struct _u_map * u_map_copy(const struct _u_map * source);
 
 /**
- * Copy all key/values pairs of source into target
- * If key is already present in target, it's overwritten
+ * Copy all key/values pairs of source into dest
+ * If key is already present in dest, it's overwritten
  * return U_OK on success, error otherwise
  */
-int u_map_copy_into(const struct _u_map * source, struct _u_map * target);
+int u_map_copy_into(struct _u_map * dest, const struct _u_map * source);
 
 /**
  * Return the number of key/values pair in the specified struct _u_map
  * Return -1 on error
  */
 int u_map_count(const struct _u_map * source);
+
+/**
+ * Empty a struct u_map of all its elements
+ * return U_OK on success, error otherwise
+ */
+int u_map_empty(struct _u_map * u_map);
 
 /**********************************
  * Internal functions declarations

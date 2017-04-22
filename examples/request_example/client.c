@@ -5,7 +5,7 @@
  * This example program send several requests to describe
  * the function ulfius_request_http behaviour
  *  
- * Copyright 2015 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2015-2017 Nicolas Mora <mail@babelouest.org>
  * 
  * License MIT
  *
@@ -49,11 +49,13 @@ char * print_map(const struct _u_map * map) {
 
 void print_response(struct _u_response * response) {
   if (response != NULL) {
-    char * headers = print_map(response->map_header), * json_body = json_dumps(response->json_body, JSON_INDENT(2));
-    printf("protocol is\n%s\n\n  headers are \n%s\n\n  json body is \n%s\n\n  string body is \n%s\n\n",
-           response->protocol, headers, json_body, (char *)response->string_body);
+    char * headers = print_map(response->map_header);
+    char response_body[response->binary_body_length + 1];
+    strncpy(response_body, response->binary_body, response->binary_body_length);
+    response_body[response->binary_body_length] = '\0';
+    printf("protocol is\n%s\n\n  headers are \n%s\n\n  body is \n%s\n\n",
+           response->protocol, headers, response_body);
     free(headers);
-    free(json_body);
   }
 }
 
@@ -83,14 +85,14 @@ int main (int argc, char **argv) {
   json_object_set_new(json_body, "param2", json_string("two"));
   
   struct _u_request req_list[] = {
-    {"GET", SERVER_URL_PREFIX "/get/", 0, NULL, NULL, NULL, &url_params, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0},                                   // Parameters in url
-    {"DELETE", SERVER_URL_PREFIX "/delete/", 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0},                                    // No parameters
-    {"POST", SERVER_URL_PREFIX "/post/param/", 0, NULL, NULL, NULL, NULL, NULL, NULL, &post_params, NULL, NULL, 0, string_body, strlen(string_body)}, // Parameters in post_map and string_body
-    {"POST", SERVER_URL_PREFIX "/post/plain/", 0, NULL, NULL, NULL, NULL, &req_headers, NULL, NULL, NULL, NULL, 0, string_body, strlen(string_body)}, // Paremeters in string body, header MHD_HTTP_POST_ENCODING_FORM_URLENCODED
-    {"POST", SERVER_URL_PREFIX "/post/json/", 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, json_body, NULL, 0, NULL, 0},                              // Parameters in json_body
-    {"PUT", SERVER_URL_PREFIX "/put/plain", 0, NULL, NULL, NULL, NULL, &req_headers, NULL, NULL, NULL, NULL, 0, string_body, strlen(string_body)},    // Paremeters in string body, header MHD_HTTP_POST_ENCODING_FORM_URLENCODED
-    {"PUT", SERVER_URL_PREFIX "/put/json", 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, json_body, NULL, 0, NULL, 0},                                 // Parameters in json_body
-    {"POST", SERVER_URL_PREFIX "/post/param/", 0, NULL, NULL, NULL, NULL, NULL, NULL, &post_params, NULL, NULL, 0, NULL, 0}                           // Parameters in post_map
+    {"GET", SERVER_URL_PREFIX "/get/", 0, 20, NULL, NULL, NULL, &url_params, NULL, NULL, NULL, NULL, 0},                                   // Parameters in url
+    {"DELETE", SERVER_URL_PREFIX "/delete/", 0, 20, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0},                                    // No parameters
+    {"POST", SERVER_URL_PREFIX "/post/param/", 0, 20, NULL, NULL, NULL, NULL, NULL, NULL, &post_params, string_body, strlen(string_body)}, // Parameters in post_map and string_body
+    {"POST", SERVER_URL_PREFIX "/post/plain/", 0, 20, NULL, NULL, NULL, NULL, &req_headers, NULL, NULL, string_body, strlen(string_body)}, // Paremeters in string body, header MHD_HTTP_POST_ENCODING_FORM_URLENCODED
+    {"POST", SERVER_URL_PREFIX "/post/json/", 0, 20, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0},                              // Parameters in json_body
+    {"PUT", SERVER_URL_PREFIX "/put/plain", 0, 20, NULL, NULL, NULL, NULL, &req_headers, NULL, NULL, string_body, strlen(string_body)},    // Paremeters in string body, header MHD_HTTP_POST_ENCODING_FORM_URLENCODED
+    {"PUT", SERVER_URL_PREFIX "/put/json", 0, 20, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0},                                 // Parameters in json_body
+    {"POST", SERVER_URL_PREFIX "/post/param/", 0, 20, NULL, NULL, NULL, NULL, NULL, NULL, &post_params, NULL, 0}                           // Parameters in post_map
   };
   
   printf("Press <enter> to run get test\n");

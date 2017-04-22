@@ -14,3 +14,4 @@ examples/simple_example/simple_example
 examples/stream_example/stream_example
 examples/stream_example/stream_client
 examples/test_u_map/test_u_map
+examples/multiple_callbacks_example/multiple_callbacks_example

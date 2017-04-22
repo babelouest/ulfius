@@ -6,7 +6,7 @@
  * 
  * u_send_request.c: send request related functions defintions
  * 
- * Copyright 2015-2016 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2015-2017 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -22,6 +22,7 @@
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  * 
  */
+#ifndef U_DISABLE_CURL
 
 #include <ctype.h>
 #include <curl/curl.h>
@@ -605,7 +606,6 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
   return U_ERROR_PARAMS;
 }
 
-#ifndef ULFIUS_IGNORE_SMTP
 /**
  * ulfius_send_smtp_email body fill function and structures
  */
