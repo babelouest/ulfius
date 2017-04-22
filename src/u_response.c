@@ -611,7 +611,7 @@ int ulfius_set_stream_response(struct _u_response * response,
   }
 }
 
-#ifdef U_DISABLE_JANSSON
+#ifndef U_DISABLE_JANSSON
 /**
  * ulfius_set_json_response
  * Add a json_t binary_body to a response

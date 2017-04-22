@@ -40,7 +40,7 @@ int main (int argc, char **argv) {
   // Set the framework port number
   struct _u_instance instance;
   
-  if (ulfius_init_instance(&instance, PORT, NULL) != U_OK) {
+  if (ulfius_init_instance(&instance, PORT, NULL, NULL) != U_OK) {
     printf("Error ulfius_init_instance, abort\n");
     return(1);
   }
@@ -48,9 +48,9 @@ int main (int argc, char **argv) {
   u_map_put(instance.default_headers, "Access-Control-Allow-Origin", "*");
   
   // Endpoint list declaration
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, NULL, NULL, NULL, NULL, &callback_get_stream, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, NULL, 0, &callback_get_stream, NULL);
   if (argc > 1) {
-    ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/audio", NULL, NULL, NULL, &callback_get_audio_stream, argv[1]);
+    ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/audio", 0, &callback_get_audio_stream, argv[1]);
   }
   
   // Start the framework
