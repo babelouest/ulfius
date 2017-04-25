@@ -68,8 +68,8 @@ char * print_map(const struct _u_map * map) {
           strcat(to_return, "\n");
         }
       } else {
-                to_return = malloc((strlen(line) + 1)*sizeof(char));
-                to_return[0] = 0;
+        to_return = malloc((strlen(line) + 1)*sizeof(char));
+        to_return[0] = 0;
       }
       strcat(to_return, line);
       free(line);
