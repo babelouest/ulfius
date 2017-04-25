@@ -59,11 +59,14 @@ static int ulfius_fill_map(void * cls, enum MHD_ValueKind kind, const char * key
  * return true if u_instance has valid parameters
  */
 int ulfius_validate_instance(const struct _u_instance * u_instance) {
-  if (u_instance == NULL || u_instance->port <= 0 || u_instance->port >= 65536 || !ulfius_validate_endpoint_list(u_instance->endpoint_list, u_instance->nb_endpoints)) {
+  if (u_instance == NULL ||
+      u_instance->port <= 0 ||
+      u_instance->port >= 65536 ||
+      !ulfius_validate_endpoint_list(u_instance->endpoint_list, u_instance->nb_endpoints) == U_OK) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error, instance or has invalid parameters");
-    return 0;
+    return U_ERROR_PARAMS;
   }
-  return 1;
+  return U_OK;
 }
 
 /**
@@ -77,17 +80,17 @@ int ulfius_validate_endpoint_list(const struct _u_endpoint * endpoint_list, int 
       if (i == 0 && ulfius_equals_endpoints(ulfius_empty_endpoint(), &endpoint_list[i])) {
         // One can not have an empty endpoint in the beginning of the list
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error, no empty endpoint allowed in the beginning of the endpoint list");
-        return 0;
+        return U_ERROR_PARAMS;
       } else if (!ulfius_is_valid_endpoint(&endpoint_list[i], 0)) {
         // One must set at least the parameters http_method, url_format and callback_function
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error, endpoint at index %d has invalid parameters", i);
-        return 0;
+        return U_ERROR_PARAMS;
       }
     }
-    return 1;
+    return U_OK;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error, no endpoint list");
-    return 0;
+    return U_ERROR_PARAMS;
   }
 }
 
@@ -192,7 +195,7 @@ struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance, const
  */
 int ulfius_start_framework(struct _u_instance * u_instance) {
   // Validate u_instance and endpoint_list that there is no mistake
-  if (ulfius_validate_instance(u_instance)) {
+  if (ulfius_validate_instance(u_instance) == U_OK) {
     u_instance->mhd_daemon = ulfius_run_mhd_daemon(u_instance, NULL, NULL);
     
     if (u_instance->mhd_daemon == NULL) {
@@ -204,7 +207,7 @@ int ulfius_start_framework(struct _u_instance * u_instance) {
       return U_OK;
     }
   } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "ulfius_start_framework - error input parameters");
+    y_log_message(Y_LOG_LEVEL_ERROR, "ulfius_start_framework - error input parameters");
     return U_ERROR_PARAMS;
   }
 }
@@ -220,7 +223,7 @@ int ulfius_start_framework(struct _u_instance * u_instance) {
  */
 int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem) {
   // Validate u_instance and endpoint_list that there is no mistake
-  if (ulfius_validate_instance(u_instance) && key_pem != NULL && cert_pem != NULL) {
+  if (ulfius_validate_instance(u_instance) == U_OK && key_pem != NULL && cert_pem != NULL) {
     u_instance->mhd_daemon = ulfius_run_mhd_daemon(u_instance, key_pem, cert_pem);
     
     if (u_instance->mhd_daemon == NULL) {
@@ -372,154 +375,155 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
     if (current_endpoint_list != NULL && current_endpoint_list[0] != NULL) {
       response = malloc(sizeof(struct _u_response));
       if (response == NULL) {
-        free(current_endpoint_list);
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating response");
-        return MHD_NO;
-      }
-      if (ulfius_init_response(response) != U_OK) {
+        mhd_ret = MHD_NO;
+      } else if (ulfius_init_response(response) != U_OK) {
         free(response);
-        free(current_endpoint_list);
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_init_response");
-        return MHD_NO;
-      }
-      // Add default headers (if any) to the response header maps
-      if (((struct _u_instance *)cls)->default_headers != NULL && u_map_count(((struct _u_instance *)cls)->default_headers) > 0) {
+        mhd_ret = MHD_NO;
+      } else {
+        // Add default headers (if any) to the response header maps
+        if (((struct _u_instance *)cls)->default_headers != NULL && u_map_count(((struct _u_instance *)cls)->default_headers) > 0) {
           u_map_clean_full(response->map_header);
           response->map_header = u_map_copy(((struct _u_instance *)cls)->default_headers);
-      }
-      
-      // Initialize auth variables
-      con_info->request->auth_basic_user = MHD_basic_auth_get_username_password(connection, &con_info->request->auth_basic_password);
-      
-      for (i=0; current_endpoint_list[i] != NULL && !close_loop; i++) {
-        current_endpoint = current_endpoint_list[i];
-        u_map_empty(con_info->request->map_url);
-        u_map_copy_into(con_info->request->map_url, &con_info->map_url_initial);
-        if (ulfius_parse_url(url, current_endpoint, con_info->request->map_url) != U_OK) {
-          free(response);
-          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error parsing url: ", url);
-          return MHD_NO;
         }
-        // Run callback function with the input parameters filled for the current callback
-        callback_ret = current_endpoint->callback_function(con_info->request, response, current_endpoint->user_data);
-        if (response->stream_callback != NULL) {
-          // Call the stream_callback function to build the response binary_body
-          // A stram_callback always is the last one
-          mhd_response = MHD_create_response_from_callback(response->stream_size, response->stream_block_size, (MHD_ContentReaderCallback)response->stream_callback, response->stream_user_data, response->stream_callback_free);
-          if (mhd_response == NULL) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error MHD_create_response_from_callback");
-            return MHD_NO;
-          } else if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
-            return MHD_NO;
+        
+        // Initialize auth variables
+        con_info->request->auth_basic_user = MHD_basic_auth_get_username_password(connection, &con_info->request->auth_basic_password);
+        
+        for (i=0; current_endpoint_list[i] != NULL && !close_loop; i++) {
+          current_endpoint = current_endpoint_list[i];
+          u_map_empty(con_info->request->map_url);
+          u_map_copy_into(con_info->request->map_url, &con_info->map_url_initial);
+          if (ulfius_parse_url(url, current_endpoint, con_info->request->map_url) != U_OK) {
+            free(response);
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error parsing url: ", url);
+            mhd_ret = MHD_NO;
           }
-        } else {
-          if (callback_ret == U_CALLBACK_CONTINUE && current_endpoint_list[i+1] == NULL) {
-            // If callback_ret is U_CALLBACK_CONTINUE but callback function is the last one on the list
-            callback_ret = U_CALLBACK_COMPLETE;
-          }
-          // Test callback_ret to know what to do
-          switch (callback_ret) {
-            case U_CALLBACK_CONTINUE:
-              break;
-            case U_CALLBACK_COMPLETE:
-              close_loop = 1;
-              if (ulfius_get_body_from_response(response, &response_buffer, &response_buffer_len) == U_OK) {
-                // Build the response binary_body
-                mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
-                if (mhd_response == NULL) {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error MHD_create_response_from_buffer");
-                  return MHD_NO;
-                } else if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
-                  return MHD_NO;
+          // Run callback function with the input parameters filled for the current callback
+          callback_ret = current_endpoint->callback_function(con_info->request, response, current_endpoint->user_data);
+          if (response->stream_callback != NULL) {
+            // Call the stream_callback function to build the response binary_body
+            // A stram_callback always is the last one
+            mhd_response = MHD_create_response_from_callback(response->stream_size, response->stream_block_size, (MHD_ContentReaderCallback)response->stream_callback, response->stream_user_data, response->stream_callback_free);
+            if (mhd_response == NULL) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error MHD_create_response_from_callback");
+              mhd_ret = MHD_NO;
+            } else if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
+              mhd_ret = MHD_NO;
+            }
+          } else {
+            if (callback_ret == U_CALLBACK_CONTINUE && current_endpoint_list[i+1] == NULL) {
+              // If callback_ret is U_CALLBACK_CONTINUE but callback function is the last one on the list
+              callback_ret = U_CALLBACK_COMPLETE;
+            }
+            // Test callback_ret to know what to do
+            switch (callback_ret) {
+              case U_CALLBACK_CONTINUE:
+                break;
+              case U_CALLBACK_COMPLETE:
+                close_loop = 1;
+                if (ulfius_get_body_from_response(response, &response_buffer, &response_buffer_len) == U_OK) {
+                  // Build the response binary_body
+                  mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
+                  if (mhd_response == NULL) {
+                    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error MHD_create_response_from_buffer");
+                    mhd_ret = MHD_NO;
+                  } else if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
+                    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
+                    mhd_ret = MHD_NO;
+                  }
+                } else {
+                  // Error building response, sending error 500
+                  response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
+                  response_buffer = nstrdup(ULFIUS_HTTP_ERROR_BODY);
+                  if (response_buffer == NULL) {
+                    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
+                    mhd_ret = MHD_NO;
+                  } else {
+                    response_buffer_len = strlen(ULFIUS_HTTP_ERROR_BODY);
+                    mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
+                  }
                 }
-              } else {
-                // Error building response, sending error 500
+                break;
+              case U_CALLBACK_UNAUTHORIZED:
+                close_loop = 1;
+                // Wrong credentials, send status 401 and realm value if set
+                if (ulfius_get_body_from_response(response, &response_buffer, &response_buffer_len) == U_OK) {
+                  mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
+                  if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
+                    inner_error = U_ERROR_PARAMS;
+                    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
+                    response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
+                    response->binary_body = nstrdup(ULFIUS_HTTP_ERROR_BODY);
+                    response->binary_body_length = strlen(ULFIUS_HTTP_ERROR_BODY);
+                    if (response->binary_body == NULL) {
+                      inner_error = U_ERROR_MEMORY;
+                      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->binary_body");
+                      mhd_ret = MHD_NO;
+                    }
+                  }
+                } else {
+                  // Error building response, sending error 500
+                  response_buffer = nstrdup(ULFIUS_HTTP_ERROR_BODY);
+                  if (response_buffer == NULL) {
+                    inner_error = U_ERROR_MEMORY;
+                    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
+                    mhd_ret = MHD_NO;
+                  } else {
+                    response_buffer_len = strlen(ULFIUS_HTTP_ERROR_BODY);
+                    mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
+                    inner_error = U_CALLBACK_UNAUTHORIZED;
+                  }
+                }
+                if (response->auth_realm != NULL) {
+                  auth_realm = response->auth_realm;
+                } else if (((struct _u_instance *)cls)->default_auth_realm != NULL) {
+                  auth_realm = ((struct _u_instance *)cls)->default_auth_realm;
+                }
+                break;
+              case U_CALLBACK_ERROR:
+              default:
+                close_loop = 1;
                 response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
                 response_buffer = nstrdup(ULFIUS_HTTP_ERROR_BODY);
                 if (response_buffer == NULL) {
                   y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
-                  return MHD_NO;
+                  mhd_ret = MHD_NO;
+                } else {
+                  response_buffer_len = strlen(ULFIUS_HTTP_ERROR_BODY);
+                  mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
                 }
-                response_buffer_len = strlen(ULFIUS_HTTP_ERROR_BODY);
-                mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
-              }
-              break;
-            case U_CALLBACK_UNAUTHORIZED:
-              close_loop = 1;
-              // Wrong credentials, send status 401 and realm value if set
-              if (ulfius_get_body_from_response(response, &response_buffer, &response_buffer_len) == U_OK) {
-                mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
-                if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
-                  inner_error = U_ERROR_PARAMS;
-                  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
-                  response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
-                  response->binary_body = nstrdup(ULFIUS_HTTP_ERROR_BODY);
-                  response->binary_body_length = strlen(ULFIUS_HTTP_ERROR_BODY);
-                  if (response->binary_body == NULL) {
-                    inner_error = U_ERROR_MEMORY;
-                    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->binary_body");
-                    return MHD_NO;
-                  }
-                }
-              } else {
-                // Error building response, sending error 500
-                response_buffer = nstrdup(ULFIUS_HTTP_ERROR_BODY);
-                if (response_buffer == NULL) {
-                  inner_error = U_ERROR_MEMORY;
-                  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
-                  return MHD_NO;
-                }
-                response_buffer_len = strlen(ULFIUS_HTTP_ERROR_BODY);
-                mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
-                inner_error = U_CALLBACK_UNAUTHORIZED;
-              }
-              if (response->auth_realm != NULL) {
-                auth_realm = response->auth_realm;
-              } else if (((struct _u_instance *)cls)->default_auth_realm != NULL) {
-                auth_realm = ((struct _u_instance *)cls)->default_auth_realm;
-              }
-              break;
-            case U_CALLBACK_ERROR:
-            default:
-              close_loop = 1;
-              response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
-              response_buffer = nstrdup(ULFIUS_HTTP_ERROR_BODY);
-              if (response_buffer == NULL) {
-                y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
-                return MHD_NO;
-              }
-              response_buffer_len = strlen(ULFIUS_HTTP_ERROR_BODY);
-              mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
-              break;
+                break;
+            }
           }
         }
+        if (auth_realm != NULL && inner_error == U_CALLBACK_UNAUTHORIZED) {
+          mhd_ret = MHD_queue_basic_auth_fail_response (connection, auth_realm, mhd_response);
+        } else if (inner_error == U_CALLBACK_UNAUTHORIZED) {
+          mhd_ret = MHD_queue_response (connection, MHD_HTTP_UNAUTHORIZED, mhd_response);
+        } else {
+          mhd_ret = MHD_queue_response (connection, response->status, mhd_response);
+        }
+        MHD_destroy_response (mhd_response);
+        // Free Response parameters
+        ulfius_clean_response_full(response);
+        response = NULL;
       }
-      if (auth_realm != NULL && inner_error == U_CALLBACK_UNAUTHORIZED) {
-        mhd_ret = MHD_queue_basic_auth_fail_response (connection, auth_realm, mhd_response);
-      } else if (inner_error == U_CALLBACK_UNAUTHORIZED) {
-        mhd_ret = MHD_queue_response (connection, MHD_HTTP_UNAUTHORIZED, mhd_response);
-      } else {
-        mhd_ret = MHD_queue_response (connection, response->status, mhd_response);
-      }
-      MHD_destroy_response (mhd_response);
-      // Free Response parameters
-      ulfius_clean_response_full(response);
-      response = NULL;
-      free(current_endpoint_list);
     } else {
       response_buffer = nstrdup(ULFIUS_HTTP_NOT_FOUND_BODY);
       if (response_buffer == NULL) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
-        return MHD_NO;
+        mhd_ret = MHD_NO;
+      } else {
+        response_buffer_len = strlen(ULFIUS_HTTP_NOT_FOUND_BODY);
+        mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
+        mhd_ret = MHD_queue_response (connection, MHD_HTTP_NOT_FOUND, mhd_response);
+        MHD_destroy_response (mhd_response);
       }
-      response_buffer_len = strlen(ULFIUS_HTTP_NOT_FOUND_BODY);
-      mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
-      mhd_ret = MHD_queue_response (connection, MHD_HTTP_NOT_FOUND, mhd_response);
-      MHD_destroy_response (mhd_response);
     }
-    
+    free(current_endpoint_list);
     return mhd_ret;
   }
 }
