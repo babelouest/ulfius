@@ -16,3 +16,4 @@ The example programs were developped to help implementing the functionnalities o
 - `stream_example`: data streaming (server and client side)
 - `request_example`: send http and smtp requests
 - `test_u_map`: struct _u_map tests
+- `multiple_callbacks_example`: Test new feature in Ulfius 2.0 where you can access multiple callback functions on a single endpoint, one after the other
