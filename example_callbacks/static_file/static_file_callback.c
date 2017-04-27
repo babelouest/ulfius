@@ -105,7 +105,7 @@ int callback_hutch_static_file (const struct _u_request * request, struct _u_res
   const char * content_type;
 
   if (user_data != NULL && ((struct static_file_config *)user_data)->files_path != NULL && ((struct static_file_config *)user_data)->mime_types != NULL) {
-    file_requested = nstrdup(request->http_url + sizeof(char));
+    file_requested = o_strdup(request->http_url + sizeof(char));
     
     if (strchr(file_requested, '#') != NULL) {
       *strchr(file_requested, '#') = '\0';
@@ -115,7 +115,7 @@ int callback_hutch_static_file (const struct _u_request * request, struct _u_res
       *strchr(file_requested, '?') = '\0';
     }
     
-    if (file_requested == NULL || strlen(file_requested) == 0 || 0 == nstrcmp("/", file_requested)) {
+    if (file_requested == NULL || strlen(file_requested) == 0 || 0 == o_strcmp("/", file_requested)) {
       file_requested = "/index.html";
     }
     

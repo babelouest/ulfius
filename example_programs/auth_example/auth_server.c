@@ -30,7 +30,7 @@ int auth_basic (const struct _u_request * request, struct _u_response * response
   y_log_message(Y_LOG_LEVEL_DEBUG, "basic auth password: %s", request->auth_basic_password);
   y_log_message(Y_LOG_LEVEL_DEBUG, "basic auth param: %s", (char *)user_data);
   if (request->auth_basic_user != NULL && request->auth_basic_password != NULL && 
-      0 == nstrcmp(request->auth_basic_user, USER) && 0 == nstrcmp(request->auth_basic_password, PASSWORD)) {
+      0 == o_strcmp(request->auth_basic_user, USER) && 0 == o_strcmp(request->auth_basic_password, PASSWORD)) {
     return U_CALLBACK_CONTINUE;
   } else {
     ulfius_set_string_response(response, 401, "Error authentication");

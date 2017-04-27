@@ -157,7 +157,7 @@ int callback_multiple_level_one (const struct _u_request * request, struct _u_re
   new_body = msprintf("%s\n%s", old_body, "Level one");
   ulfius_set_string_response(response, 200, new_body);
   free(new_body);
-  y_log_message(Y_LOG_LEVEL_DEBUG, "sahred_data is %s", response->shared_data);
+  y_log_message(Y_LOG_LEVEL_DEBUG, "shared_data is %s", response->shared_data);
   return U_CALLBACK_CONTINUE;
 }
 
@@ -172,7 +172,7 @@ int callback_multiple_level_one_complete (const struct _u_request * request, str
   new_body = msprintf("%s\n%s", old_body, "Level one");
   ulfius_set_string_response(response, 200, new_body);
   free(new_body);
-  y_log_message(Y_LOG_LEVEL_DEBUG, "sahred_data is %s", response->shared_data);
+  y_log_message(Y_LOG_LEVEL_DEBUG, "shared_data is %s", response->shared_data);
   free(response->shared_data);
   return U_CALLBACK_COMPLETE;
 }
@@ -188,7 +188,7 @@ int callback_multiple_level_two (const struct _u_request * request, struct _u_re
   new_body = msprintf("%s\n%s", old_body, "Level two");
   ulfius_set_string_response(response, 200, new_body);
   free(new_body);
-  y_log_message(Y_LOG_LEVEL_DEBUG, "sahred_data is %s", response->shared_data);
+  y_log_message(Y_LOG_LEVEL_DEBUG, "shared_data is %s", response->shared_data);
   return U_CALLBACK_CONTINUE;
 }
 
@@ -203,7 +203,7 @@ int callback_multiple_level_three (const struct _u_request * request, struct _u_
   new_body = msprintf("%s\n%s", old_body, "Level three");
   ulfius_set_string_response(response, 200, new_body);
   free(new_body);
-  y_log_message(Y_LOG_LEVEL_DEBUG, "sahred_data is %s", response->shared_data);
+  y_log_message(Y_LOG_LEVEL_DEBUG, "shared_data is %s", response->shared_data);
   return U_CALLBACK_CONTINUE;
 }
 
@@ -225,7 +225,7 @@ int callback_multiple_level_auth_check (const struct _u_request * request, struc
       0 == strcmp(request->auth_basic_user, USER) && 0 == strcmp(request->auth_basic_password, PASSWORD)) {
     return U_CALLBACK_CONTINUE;
   } else {
-    if (0 == nstrcmp("PUT", request->http_verb)) {
+    if (0 == o_strcmp("PUT", request->http_verb)) {
       response->auth_realm = strdup(SPECIFIC_REALM);
     }
     ulfius_set_string_response(response, 401, "Error authentication");

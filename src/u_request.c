@@ -36,7 +36,7 @@ char ** ulfius_split_url(const char * prefix, const char * url) {
   if (to_return != NULL) {
     to_return[0] = NULL;
     if (prefix != NULL) {
-      url_cpy = url_cpy_addr = nstrdup(prefix);
+      url_cpy = url_cpy_addr = o_strdup(prefix);
       cur_word = strtok_r( url_cpy, ULFIUS_URL_SEPARATOR, &saveptr );
       while (cur_word != NULL) {
         to_return = o_realloc(to_return, (counter+1)*sizeof(char*));
@@ -44,7 +44,7 @@ char ** ulfius_split_url(const char * prefix, const char * url) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for ulfius_split_url.to_return");
           break;
         }
-        to_return[counter-1] = nstrdup(cur_word);
+        to_return[counter-1] = o_strdup(cur_word);
         if (to_return[counter-1] == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for ulfius_split_url.to_return[counter-1]");
           break;
@@ -57,16 +57,16 @@ char ** ulfius_split_url(const char * prefix, const char * url) {
       url_cpy_addr = NULL;
     }
     if (url != NULL) {
-      url_cpy = url_cpy_addr = nstrdup(url);
+      url_cpy = url_cpy_addr = o_strdup(url);
       cur_word = strtok_r( url_cpy, ULFIUS_URL_SEPARATOR, &saveptr );
       while (cur_word != NULL) {
-        if (0 != nstrcmp("", cur_word) && cur_word[0] != '?') {
+        if (0 != o_strcmp("", cur_word) && cur_word[0] != '?') {
           to_return = o_realloc(to_return, (counter+1)*sizeof(char*));
           if (to_return == NULL) {
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for ulfius_split_url.to_return");
             break;
           }
-          to_return[counter-1] = nstrdup(cur_word);
+          to_return[counter-1] = o_strdup(cur_word);
           if (to_return[counter-1] == NULL) {
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for ulfius_split_url.to_return[counter-1]");
             break;
@@ -122,7 +122,7 @@ struct _u_endpoint ** ulfius_endpoint_match(const char * method, const char * ur
     if (method != NULL && url != NULL && endpoint_list != NULL) {
       splitted_url = ulfius_split_url(url, NULL);
       for (i=0; (splitted_url != NULL && !ulfius_equals_endpoints(&(endpoint_list[i]), ulfius_empty_endpoint())); i++) {
-        if (0 == nstrcasecmp(endpoint_list[i].http_method, method) || endpoint_list[i].http_method[0] == '*') {
+        if (0 == o_strcasecmp(endpoint_list[i].http_method, method) || endpoint_list[i].http_method[0] == '*') {
           splitted_url_format = ulfius_split_url(endpoint_list[i].url_prefix, endpoint_list[i].url_format);
           if (splitted_url_format != NULL && ulfius_url_format_match((const char **)splitted_url, (const char **)splitted_url_format)) {
             endpoint_returned = o_realloc(endpoint_returned, (count+2)*sizeof(struct _u_endpoint *));
@@ -160,7 +160,7 @@ int ulfius_url_format_match(const char ** splitted_url, const char ** splitted_u
     if (splitted_url_format[i][0] == '*' && splitted_url_format[i+1] == NULL) {
       return 1;
     }
-    if (splitted_url[i] == NULL || (splitted_url_format[i][0] != '@' && splitted_url_format[i][0] != ':' && 0 != nstrcmp(splitted_url_format[i], splitted_url[i]))) {
+    if (splitted_url[i] == NULL || (splitted_url_format[i][0] != '@' && splitted_url_format[i][0] != ':' && 0 != o_strcmp(splitted_url_format[i], splitted_url[i]))) {
       return 0;
     }
   }
@@ -177,8 +177,8 @@ int ulfius_parse_url(const char * url, const struct _u_endpoint * endpoint, stru
   char * saveptr_format = NULL, * saveptr_prefix = NULL, * cur_word_format = NULL, * url_format_cpy = NULL, * url_format_cpy_addr = NULL;
 
   if (map != NULL && endpoint != NULL) {
-    url_cpy = url_cpy_addr = nstrdup(url);
-    url_format_cpy = url_format_cpy_addr = nstrdup(endpoint->url_prefix);
+    url_cpy = url_cpy_addr = o_strdup(url);
+    url_format_cpy = url_format_cpy_addr = o_strdup(endpoint->url_prefix);
     cur_word = strtok_r( url_cpy, ULFIUS_URL_SEPARATOR, &saveptr );
     if (endpoint->url_prefix != NULL && url_format_cpy == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for url_format_cpy");
@@ -192,7 +192,7 @@ int ulfius_parse_url(const char * url, const struct _u_endpoint * endpoint, stru
     }
     o_free(url_format_cpy_addr);
     
-    url_format_cpy = url_format_cpy_addr = nstrdup(endpoint->url_format);
+    url_format_cpy = url_format_cpy_addr = o_strdup(endpoint->url_format);
     if (endpoint->url_format != NULL && url_format_cpy == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for url_format_cpy");
       return U_ERROR_MEMORY;
@@ -331,8 +331,8 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request) 
       return NULL;
     }
     if (ulfius_init_request(new_request) == U_OK) {
-      new_request->http_verb = nstrdup(request->http_verb);
-      new_request->http_url = nstrdup(request->http_url);
+      new_request->http_verb = o_strdup(request->http_verb);
+      new_request->http_url = o_strdup(request->http_url);
       if ((new_request->http_verb == NULL && request->http_verb != NULL) || (new_request->http_url == NULL && request->http_url != NULL)) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for ulfius_duplicate_request");
         ulfius_clean_request_full(new_request);
@@ -349,8 +349,8 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request) 
       }
       new_request->check_server_certificate = request->check_server_certificate;
       new_request->timeout = request->timeout;
-      new_request->auth_basic_user = nstrdup(request->auth_basic_user);
-      new_request->auth_basic_password = nstrdup(request->auth_basic_password);
+      new_request->auth_basic_user = o_strdup(request->auth_basic_user);
+      new_request->auth_basic_password = o_strdup(request->auth_basic_password);
       u_map_clean_full(new_request->map_url);
       u_map_clean_full(new_request->map_header);
       u_map_clean_full(new_request->map_cookie);
@@ -395,7 +395,7 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request) 
  * json_error: structure to store json_error_t if specified
  */
 json_t * ulfius_get_json_body_request(const struct _u_request * request, json_error_t * json_error) {
-  if (request != NULL && request->map_header != NULL && NULL != nstrstr(ULFIUS_HTTP_ENCODING_JSON, u_map_get_case(request->map_header, ULFIUS_HTTP_HEADER_CONTENT))) {
+  if (request != NULL && request->map_header != NULL && NULL != o_strstr(ULFIUS_HTTP_ENCODING_JSON, u_map_get_case(request->map_header, ULFIUS_HTTP_HEADER_CONTENT))) {
     return json_loadb(request->binary_body, request->binary_body_length, JSON_DECODE_ANY, json_error);
   }
   return NULL;

@@ -57,7 +57,7 @@ int callback (const struct _u_request * request, struct _u_response * response, 
   char request_body[request->binary_body_length + 1];
   strncpy(request_body, request->binary_body, request->binary_body_length);
   request_body[request->binary_body_length] = '\0';
-  response->binary_body = nstrdup("ok");
+  response->binary_body = o_strdup("ok");
   response->binary_body_length = strlen("ok");
   response->status = 200;
   printf("######################################################\n###################### Callback ######################\n######################################################\n\nMethod is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n  raw body is \n%s\n\n  user data is %s\n\n",

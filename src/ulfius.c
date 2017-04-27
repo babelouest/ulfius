@@ -113,7 +113,7 @@ void * ulfius_uri_logger (void * cls, const char * uri) {
       o_free(con_info);
       return NULL;
     }
-    con_info->request->http_url = nstrdup(uri);
+    con_info->request->http_url = o_strdup(uri);
     if (con_info->request->http_url == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for con_info->request->http_url");
       ulfius_clean_request_full(con_info->request);
@@ -250,7 +250,7 @@ int ulfius_get_body_from_response(struct _u_response * response, void ** respons
       if (*response_buffer == NULL) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
         response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
-        response->binary_body = nstrdup(ULFIUS_HTTP_ERROR_BODY);
+        response->binary_body = o_strdup(ULFIUS_HTTP_ERROR_BODY);
         response->binary_body_length = strlen(ULFIUS_HTTP_ERROR_BODY);
         if (response->binary_body == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->binary_body");
@@ -304,7 +304,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
     con_info->has_post_processor = 0;
     con_info->max_post_param_size = ((struct _u_instance *)cls)->max_post_param_size;
     u_map_init(&con_info->map_url_initial);
-    con_info->request->http_verb = nstrdup(method);
+    con_info->request->http_verb = o_strdup(method);
     con_info->request->client_address = o_malloc(sizeof(struct sockaddr));
     if (con_info->request->client_address == NULL || con_info->request->http_verb == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating client_address or http_verb");
@@ -317,8 +317,8 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
     content_type = (char*)u_map_get_case(con_info->request->map_header, ULFIUS_HTTP_HEADER_CONTENT);
     
     // Set POST Processor if content-type is properly set
-    if (content_type != NULL && (0 == nstrncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) || 
-        0 == nstrncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA)))) {
+    if (content_type != NULL && (0 == o_strncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) || 
+        0 == o_strncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA)))) {
       con_info->has_post_processor = 1;
       con_info->post_processor = MHD_create_post_processor (connection, ULFIUS_POSTBUFFERSIZE, mhd_iterate_post_data, (void *) con_info);
       if (NULL == con_info->post_processor) {
@@ -355,8 +355,8 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
   } else {
     // Handles request binary_body
     const char * content_type = u_map_get_case(con_info->request->map_header, ULFIUS_HTTP_HEADER_CONTENT);
-    if (0 == nstrncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) || 
-        0 == nstrncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA))) {
+    if (0 == o_strncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) || 
+        0 == o_strncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA))) {
       MHD_post_process (con_info->post_processor, con_info->request->binary_body, con_info->request->binary_body_length);
     }
     
@@ -437,7 +437,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
                 } else {
                   // Error building response, sending error 500
                   response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
-                  response_buffer = nstrdup(ULFIUS_HTTP_ERROR_BODY);
+                  response_buffer = o_strdup(ULFIUS_HTTP_ERROR_BODY);
                   if (response_buffer == NULL) {
                     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
                     mhd_ret = MHD_NO;
@@ -456,7 +456,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
                     inner_error = U_ERROR_PARAMS;
                     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
                     response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
-                    response->binary_body = nstrdup(ULFIUS_HTTP_ERROR_BODY);
+                    response->binary_body = o_strdup(ULFIUS_HTTP_ERROR_BODY);
                     response->binary_body_length = strlen(ULFIUS_HTTP_ERROR_BODY);
                     if (response->binary_body == NULL) {
                       inner_error = U_ERROR_MEMORY;
@@ -466,7 +466,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
                   }
                 } else {
                   // Error building response, sending error 500
-                  response_buffer = nstrdup(ULFIUS_HTTP_ERROR_BODY);
+                  response_buffer = o_strdup(ULFIUS_HTTP_ERROR_BODY);
                   if (response_buffer == NULL) {
                     inner_error = U_ERROR_MEMORY;
                     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
@@ -487,7 +487,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
               default:
                 close_loop = 1;
                 response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
-                response_buffer = nstrdup(ULFIUS_HTTP_ERROR_BODY);
+                response_buffer = o_strdup(ULFIUS_HTTP_ERROR_BODY);
                 if (response_buffer == NULL) {
                   y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
                   mhd_ret = MHD_NO;
@@ -512,7 +512,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
         response = NULL;
       }
     } else {
-      response_buffer = nstrdup(ULFIUS_HTTP_NOT_FOUND_BODY);
+      response_buffer = o_strdup(ULFIUS_HTTP_NOT_FOUND_BODY);
       if (response_buffer == NULL) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
         mhd_ret = MHD_NO;
@@ -540,7 +540,7 @@ int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, const ch
   
   struct connection_info_struct * con_info = coninfo_cls;
   size_t cur_size = size;
-  char * data_dup = nstrndup(data, size); // Force value to end with a NULL character
+  char * data_dup = o_strndup(data, size); // Force value to end with a NULL character
   
   if (con_info->max_post_param_size > 0) {
     if (off > con_info->max_post_param_size) {
@@ -629,9 +629,9 @@ int ulfius_is_valid_endpoint(const struct _u_endpoint * endpoint, int to_delete)
  */
 int ulfius_copy_endpoint(struct _u_endpoint * dest, const struct _u_endpoint * source) {
   if (source != NULL && dest != NULL) {
-    dest->http_method = nstrdup(source->http_method);
-    dest->url_prefix = nstrdup(source->url_prefix);
-    dest->url_format = nstrdup(source->url_format);
+    dest->http_method = o_strdup(source->http_method);
+    dest->url_prefix = o_strdup(source->url_prefix);
+    dest->url_format = o_strdup(source->url_format);
     dest->callback_function = source->callback_function;
     dest->user_data = source->user_data;
     dest->priority = source->priority;
@@ -781,9 +781,9 @@ int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endp
   if (u_instance != NULL && u_endpoint != NULL && !ulfius_equals_endpoints(u_endpoint, ulfius_empty_endpoint()) && ulfius_is_valid_endpoint(u_endpoint, 1)) {
     for (i=0; i<u_instance->nb_endpoints; i++) {
       // Compare u_endpoint with u_instance->endpoint_list[i]
-      if ((u_endpoint->http_method != NULL && 0 == nstrcmp(u_instance->endpoint_list[i].http_method, u_endpoint->http_method)) &&
-          (u_instance->endpoint_list[i].url_prefix != NULL && u_endpoint->url_prefix != NULL && 0 == nstrcmp(u_instance->endpoint_list[i].url_prefix, u_endpoint->url_prefix)) &&
-          (u_instance->endpoint_list[i].url_format != NULL && u_endpoint->url_format != NULL && 0 == nstrcmp(u_instance->endpoint_list[i].url_format, u_endpoint->url_format))) {
+      if ((u_endpoint->http_method != NULL && 0 == o_strcmp(u_instance->endpoint_list[i].http_method, u_endpoint->http_method)) &&
+          (u_instance->endpoint_list[i].url_prefix != NULL && u_endpoint->url_prefix != NULL && 0 == o_strcmp(u_instance->endpoint_list[i].url_prefix, u_endpoint->url_prefix)) &&
+          (u_instance->endpoint_list[i].url_format != NULL && u_endpoint->url_format != NULL && 0 == o_strcmp(u_instance->endpoint_list[i].url_format, u_endpoint->url_format))) {
         // It's a match!
         // Remove current endpoint and move the next ones to their previous index, then reduce the endpoint_list by 1
         o_free(u_instance->endpoint_list[i].http_method);
@@ -831,11 +831,11 @@ int ulfius_equals_endpoints(const struct _u_endpoint * endpoint1, const struct _
   if (endpoint1 != NULL && endpoint2 != NULL) {
     if (endpoint1 == endpoint2) {
       return 1;
-    } else if (nstrcmp(endpoint2->http_method, endpoint1->http_method) != 0) {
+    } else if (o_strcmp(endpoint2->http_method, endpoint1->http_method) != 0) {
         return 0;
-    } else if (nstrcmp(endpoint2->url_prefix, endpoint1->url_prefix) != 0) {
+    } else if (o_strcmp(endpoint2->url_prefix, endpoint1->url_prefix) != 0) {
         return 0;
-    } else if (nstrcmp(endpoint2->url_format, endpoint1->url_format) != 0) {
+    } else if (o_strcmp(endpoint2->url_format, endpoint1->url_format) != 0) {
         return 0;
     } else {
       return 1;
@@ -860,7 +860,7 @@ int ulfius_init_instance(struct _u_instance * u_instance, uint port, struct sock
     u_instance->status = U_STATUS_STOP;
     u_instance->port = port;
     u_instance->bind_address = bind_address;
-    u_instance->default_auth_realm = nstrdup(default_auth_realm);
+    u_instance->default_auth_realm = o_strdup(default_auth_realm);
     u_instance->nb_endpoints = 0;
     u_instance->endpoint_list = NULL;
     u_instance->default_headers = o_malloc(sizeof(struct _u_map));

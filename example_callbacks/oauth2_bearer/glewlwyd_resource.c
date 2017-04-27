@@ -143,7 +143,7 @@ int access_token_check_validity(struct _glewlwyd_resource_config * config, json_
     if (now < expiration && 
         json_object_get(j_access_token, "type") != NULL &&
         json_is_string(json_object_get(j_access_token, "type")) &&
-        0 == nstrcmp("access_token", json_string_value(json_object_get(j_access_token, "type"))) &&
+        0 == o_strcmp("access_token", json_string_value(json_object_get(j_access_token, "type"))) &&
         json_object_get(j_access_token, "username") != NULL &&
         json_is_string(json_object_get(j_access_token, "username")) &&
         json_string_length(json_object_get(j_access_token, "username")) > 0) {
