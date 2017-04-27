@@ -30,7 +30,7 @@
  * Splits the url to an array of char *
  */
 char ** ulfius_split_url(const char * prefix, const char * url) {
-  char * saveptr = NULL, * cur_word = NULL, ** to_return = malloc(sizeof(char*)), * url_cpy = NULL, * url_cpy_addr = NULL;
+  char * saveptr = NULL, * cur_word = NULL, ** to_return = o_malloc(sizeof(char*)), * url_cpy = NULL, * url_cpy_addr = NULL;
   int counter = 1;
   
   if (to_return != NULL) {
@@ -39,7 +39,7 @@ char ** ulfius_split_url(const char * prefix, const char * url) {
       url_cpy = url_cpy_addr = nstrdup(prefix);
       cur_word = strtok_r( url_cpy, ULFIUS_URL_SEPARATOR, &saveptr );
       while (cur_word != NULL) {
-        to_return = realloc(to_return, (counter+1)*sizeof(char*));
+        to_return = o_realloc(to_return, (counter+1)*sizeof(char*));
         if (to_return == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for ulfius_split_url.to_return");
           break;
@@ -53,7 +53,7 @@ char ** ulfius_split_url(const char * prefix, const char * url) {
         counter++;
         cur_word = strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr );
       }
-      free(url_cpy_addr);
+      o_free(url_cpy_addr);
       url_cpy_addr = NULL;
     }
     if (url != NULL) {
@@ -61,7 +61,7 @@ char ** ulfius_split_url(const char * prefix, const char * url) {
       cur_word = strtok_r( url_cpy, ULFIUS_URL_SEPARATOR, &saveptr );
       while (cur_word != NULL) {
         if (0 != nstrcmp("", cur_word) && cur_word[0] != '?') {
-          to_return = realloc(to_return, (counter+1)*sizeof(char*));
+          to_return = o_realloc(to_return, (counter+1)*sizeof(char*));
           if (to_return == NULL) {
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for ulfius_split_url.to_return");
             break;
@@ -76,7 +76,7 @@ char ** ulfius_split_url(const char * prefix, const char * url) {
         }
         cur_word = strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr );
       }
-      free(url_cpy_addr);
+      o_free(url_cpy_addr);
       url_cpy_addr = NULL;
     }
   } else {
@@ -112,7 +112,7 @@ void sort_endpoint_list (struct _u_endpoint ** endpoint_list, int length) {
  */
 struct _u_endpoint ** ulfius_endpoint_match(const char * method, const char * url, struct _u_endpoint * endpoint_list) {
   char ** splitted_url, ** splitted_url_format;
-  struct _u_endpoint ** endpoint_returned = malloc(sizeof(struct _u_endpoint *));
+  struct _u_endpoint ** endpoint_returned = o_malloc(sizeof(struct _u_endpoint *));
   int i, count = 0;
   
   if (endpoint_returned == NULL) {
@@ -125,7 +125,7 @@ struct _u_endpoint ** ulfius_endpoint_match(const char * method, const char * ur
         if (0 == nstrcasecmp(endpoint_list[i].http_method, method) || endpoint_list[i].http_method[0] == '*') {
           splitted_url_format = ulfius_split_url(endpoint_list[i].url_prefix, endpoint_list[i].url_format);
           if (splitted_url_format != NULL && ulfius_url_format_match((const char **)splitted_url, (const char **)splitted_url_format)) {
-            endpoint_returned = realloc(endpoint_returned, (count+2)*sizeof(struct _u_endpoint *));
+            endpoint_returned = o_realloc(endpoint_returned, (count+2)*sizeof(struct _u_endpoint *));
             if (endpoint_returned != NULL) {
               endpoint_returned[count] = (endpoint_list + i);
               endpoint_returned[count + 1] = NULL;
@@ -190,7 +190,7 @@ int ulfius_parse_url(const char * url, const struct _u_endpoint * endpoint, stru
       cur_word = strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr );
       cur_word_format = strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr_prefix );
     }
-    free(url_format_cpy_addr);
+    o_free(url_format_cpy_addr);
     
     url_format_cpy = url_format_cpy_addr = nstrdup(endpoint->url_format);
     if (endpoint->url_format != NULL && url_format_cpy == NULL) {
@@ -205,15 +205,15 @@ int ulfius_parse_url(const char * url, const struct _u_endpoint * endpoint, stru
           char * concat_url_param = msprintf("%s,%s", u_map_get(map, cur_word_format+1), cur_word);
           if (concat_url_param == NULL) {
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for concat_url_param");
-            free(url_cpy_addr);
-            free(url_format_cpy_addr);
+            o_free(url_cpy_addr);
+            o_free(url_format_cpy_addr);
             return U_ERROR_MEMORY;
           } else if (u_map_put(map, cur_word_format+1, concat_url_param) != U_OK) {
             url_cpy_addr = NULL;
             url_format_cpy_addr = NULL;
             return U_ERROR_MEMORY;
           }
-          free(concat_url_param);
+          o_free(concat_url_param);
         } else {
           if (u_map_put(map, cur_word_format+1, cur_word) != U_OK) {
             url_cpy_addr = NULL;
@@ -225,8 +225,8 @@ int ulfius_parse_url(const char * url, const struct _u_endpoint * endpoint, stru
       cur_word = strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr );
       cur_word_format = strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr_format );
     }
-    free(url_cpy_addr);
-    free(url_format_cpy_addr);
+    o_free(url_cpy_addr);
+    o_free(url_format_cpy_addr);
     url_cpy_addr = NULL;
     url_format_cpy_addr = NULL;
     return U_OK;
@@ -242,12 +242,12 @@ int ulfius_parse_url(const char * url, const struct _u_endpoint * endpoint, stru
  */
 int ulfius_init_request(struct _u_request * request) {
   if (request != NULL) {
-    request->map_url = malloc(sizeof(struct _u_map));
+    request->map_url = o_malloc(sizeof(struct _u_map));
     request->auth_basic_user = NULL;
     request->auth_basic_password = NULL;
-    request->map_header = malloc(sizeof(struct _u_map));
-    request->map_cookie = malloc(sizeof(struct _u_map));
-    request->map_post_body = malloc(sizeof(struct _u_map));
+    request->map_header = o_malloc(sizeof(struct _u_map));
+    request->map_cookie = o_malloc(sizeof(struct _u_map));
+    request->map_post_body = o_malloc(sizeof(struct _u_map));
     if (request->map_post_body == NULL || request->map_cookie == NULL || 
         request->map_url == NULL || request->map_header == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for request->map*");
@@ -280,16 +280,16 @@ int ulfius_init_request(struct _u_request * request) {
  */
 int ulfius_clean_request(struct _u_request * request) {
   if (request != NULL) {
-    free(request->http_verb);
-    free(request->http_url);
-    free(request->auth_basic_user);
-    free(request->auth_basic_password);
-    free(request->client_address);
+    o_free(request->http_verb);
+    o_free(request->http_url);
+    o_free(request->auth_basic_user);
+    o_free(request->auth_basic_password);
+    o_free(request->client_address);
     u_map_clean_full(request->map_url);
     u_map_clean_full(request->map_header);
     u_map_clean_full(request->map_cookie);
     u_map_clean_full(request->map_post_body);
-    free(request->binary_body);
+    o_free(request->binary_body);
     request->http_verb = NULL;
     request->http_url = NULL;
     request->client_address = NULL;
@@ -311,7 +311,7 @@ int ulfius_clean_request(struct _u_request * request) {
  */
 int ulfius_clean_request_full(struct _u_request * request) {
   if (ulfius_clean_request(request) == U_OK) {
-    free(request);
+    o_free(request);
     return U_OK;
   } else {
     return U_ERROR_PARAMS;
@@ -325,7 +325,7 @@ int ulfius_clean_request_full(struct _u_request * request) {
 struct _u_request * ulfius_duplicate_request(const struct _u_request * request) {
   struct _u_request * new_request = NULL;
   if (request != NULL) {
-    new_request = malloc(sizeof(struct _u_request));
+    new_request = o_malloc(sizeof(struct _u_request));
     if (new_request == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for new_request");
       return NULL;
@@ -339,7 +339,7 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request) 
         return NULL;
       }
       if (request->client_address != NULL) {
-        new_request->client_address = malloc(sizeof(struct sockaddr));
+        new_request->client_address = o_malloc(sizeof(struct sockaddr));
         if (new_request->client_address == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for new_request->client_address");
           ulfius_clean_request_full(new_request);
@@ -367,7 +367,7 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request) 
         return NULL;
       }
       if (request->binary_body != NULL && request->binary_body_length > 0) {
-        new_request->binary_body = malloc(request->binary_body_length);
+        new_request->binary_body = o_malloc(request->binary_body_length);
         if (new_request->binary_body == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for new_request->binary_body");
           ulfius_clean_request_full(new_request);
@@ -380,7 +380,7 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request) 
       }
       new_request->binary_body_length = request->binary_body_length;
     } else {
-      free(new_request);
+      o_free(new_request);
       new_request = NULL;
     }
   }

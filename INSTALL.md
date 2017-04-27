@@ -16,6 +16,8 @@ Here libcurl4-gnutls-dev for the example, but any `libcurl*-dev` library should 
 
 Also, it seems that Debian Wheezy uses an old version of libjansson (2.3), you can either upgrade to jessie or download the latest version of libjansson from [github](https://github.com/akheron/jansson).
 
+As in version 2.0, libcurl and libjansson are no longer mandatory if you don't need one or both.
+
 ## Installation
 
 Download Ulfius source code from Github, get the submodules, compile and install:
@@ -28,6 +30,24 @@ $ make
 $ sudo make install
 ```
 
+To disable libcurl functions, append the option `CURLFLAG=-DU_DISABLE_CURL` to the make command:
+
+```shell
+$ make CURLFLAG=-DU_DISABLE_CURL
+```
+
+To disable libjansson functions, append the option `JANSSONFLAG=-DU_DISABLE_JANSSON` to the make command:
+
+```shell
+$ make JANSSONFLAG=-DU_DISABLE_JANSSON
+```
+
+To disable both libraries, append both options:
+
+```shell
+$ make CURLFLAG=-DU_DISABLE_CURL JANSSONFLAG=-DU_DISABLE_JANSSON
+```
+
 By default, the shared libraries and the header files will be installed in the `/usr/local` location. To change this setting, you can modify the `PREFIX` value in the `src/Makefile`, `lib/orcania/Makefile` and `lib/yder/src/Makefile` files.
 
 If you download Ulfius as a `.zip` or `.tar.gz` file via github release tab, you must initiaize the submodules prior to the compilaton with the following command:
@@ -36,13 +56,3 @@ If you download Ulfius as a `.zip` or `.tar.gz` file via github release tab, you
 $ cd ulfius/
 $ git submodule update --init
 ```
-
-### libcurl older than 7.20
-
-If you use old version of liburl, as in Centos 6.5 for example, `ulfius_send_smtp_email` won't be available due to libcurl options problems. In this case, uncomment the following line in the file `src/Makefile`:
-
-```Makefile
-#SMTPFLAGS=-DULFIUS_IGNORE_SMTP
-```
-
-This will disable `ulfius_send_smtp_email` during the compilation.

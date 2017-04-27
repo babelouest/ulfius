@@ -41,7 +41,7 @@ static int ulfius_fill_map(void * cls, enum MHD_ValueKind kind, const char * key
     // u_map already has a value with this this key, appending value separated with a comma ',')
     tmp = msprintf("%s,%s", u_map_get(((struct _u_map *)cls), key), (value==NULL?"":value));
     res = u_map_put(((struct _u_map *)cls), key, tmp);
-    free(tmp);
+    o_free(tmp);
     if (res == U_OK) {
       return MHD_YES;
     } else {
@@ -98,26 +98,26 @@ int ulfius_validate_endpoint_list(const struct _u_endpoint * endpoint_list, int 
  * Internal method used to duplicate the full url before it's manipulated and modified by MHD
  */
 void * ulfius_uri_logger (void * cls, const char * uri) {
-  struct connection_info_struct * con_info = malloc (sizeof (struct connection_info_struct));
+  struct connection_info_struct * con_info = o_malloc (sizeof (struct connection_info_struct));
   if (con_info != NULL) {
     con_info->callback_first_iteration = 1;
     con_info->request = malloc(sizeof(struct _u_request));
     if (con_info->request == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for con_info->request");
-      free(con_info);
+      o_free(con_info);
       return NULL;
     }
     
     if (NULL == con_info->request || ulfius_init_request(con_info->request) != U_OK) {
       ulfius_clean_request_full(con_info->request);
-      free(con_info);
+      o_free(con_info);
       return NULL;
     }
     con_info->request->http_url = nstrdup(uri);
     if (con_info->request->http_url == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for con_info->request->http_url");
       ulfius_clean_request_full(con_info->request);
-      free(con_info);
+      o_free(con_info);
       return NULL;
     }
     con_info->max_post_param_size = 0;
@@ -246,7 +246,7 @@ int ulfius_get_body_from_response(struct _u_response * response, void ** respons
   } else {
     if (response->binary_body != NULL && response->binary_body_length > 0) {
       // The user sent a binary response
-      *response_buffer = malloc(response->binary_body_length);
+      *response_buffer = o_malloc(response->binary_body_length);
       if (*response_buffer == NULL) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
         response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
@@ -305,7 +305,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
     con_info->max_post_param_size = ((struct _u_instance *)cls)->max_post_param_size;
     u_map_init(&con_info->map_url_initial);
     con_info->request->http_verb = nstrdup(method);
-    con_info->request->client_address = malloc(sizeof(struct sockaddr));
+    con_info->request->client_address = o_malloc(sizeof(struct sockaddr));
     if (con_info->request->client_address == NULL || con_info->request->http_verb == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating client_address or http_verb");
       return MHD_NO;
@@ -339,7 +339,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
     }
     
     if (body_len >= con_info->request->binary_body_length) {
-      con_info->request->binary_body = realloc(con_info->request->binary_body, body_len);
+      con_info->request->binary_body = o_realloc(con_info->request->binary_body, body_len);
       if (con_info->request->binary_body == NULL) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for con_info->request->binary_body");
         return MHD_NO;
@@ -365,7 +365,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
     
     // Set to default_endpoint if no match
     if ((current_endpoint_list == NULL || current_endpoint_list[0] == NULL) && ((struct _u_instance *)cls)->default_endpoint != NULL && ((struct _u_instance *)cls)->default_endpoint->callback_function != NULL) {
-      current_endpoint_list = realloc(current_endpoint_list, 2*sizeof(struct _u_endpoint *));
+      current_endpoint_list = o_realloc(current_endpoint_list, 2*sizeof(struct _u_endpoint *));
       if (current_endpoint_list != NULL) {
         current_endpoint_list[0] = ((struct _u_instance *)cls)->default_endpoint;
         current_endpoint_list[1] = NULL;
@@ -373,12 +373,12 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
     }
     
     if (current_endpoint_list != NULL && current_endpoint_list[0] != NULL) {
-      response = malloc(sizeof(struct _u_response));
+      response = o_malloc(sizeof(struct _u_response));
       if (response == NULL) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating response");
         mhd_ret = MHD_NO;
       } else if (ulfius_init_response(response) != U_OK) {
-        free(response);
+        o_free(response);
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_init_response");
         mhd_ret = MHD_NO;
       } else {
@@ -396,7 +396,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
           u_map_empty(con_info->request->map_url);
           u_map_copy_into(con_info->request->map_url, &con_info->map_url_initial);
           if (ulfius_parse_url(url, current_endpoint, con_info->request->map_url) != U_OK) {
-            free(response);
+            o_free(response);
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error parsing url: ", url);
             mhd_ret = MHD_NO;
           }
@@ -523,7 +523,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
         MHD_destroy_response (mhd_response);
       }
     }
-    free(current_endpoint_list);
+    o_free(current_endpoint_list);
     return mhd_ret;
   }
 }
@@ -551,10 +551,10 @@ int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, const ch
   }
   
   if (cur_size > 0 && data_dup != NULL && u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data_dup, off, cur_size + 1) == U_OK) {
-    free(data_dup);
+    o_free(data_dup);
     return MHD_YES;
   } else {
-    free(data_dup);
+    o_free(data_dup);
     return MHD_NO;
   }
 }
@@ -575,7 +575,7 @@ void mhd_request_completed (void *cls, struct MHD_Connection *connection,
   ulfius_clean_request_full(con_info->request);
   u_map_clean(&con_info->map_url_initial);
   con_info->request = NULL;
-  free(con_info);
+  o_free(con_info);
   con_info = NULL;
   *con_cls = NULL;
 }
@@ -655,7 +655,7 @@ struct _u_endpoint * ulfius_duplicate_endpoint_list(const struct _u_endpoint * e
   
   if (endpoint_list != NULL) {
     for (i=0; endpoint_list[i].http_method != NULL; i++) {
-      if ((to_return = realloc(to_return, (i+1)*sizeof(struct _u_endpoint *))) == NULL) {
+      if ((to_return = o_realloc(to_return, (i+1)*sizeof(struct _u_endpoint *))) == NULL) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for duplicate_endpoint_list.to_return");
         return NULL;
       } else {
@@ -672,9 +672,9 @@ struct _u_endpoint * ulfius_duplicate_endpoint_list(const struct _u_endpoint * e
  */
 void ulfius_clean_endpoint(struct _u_endpoint * endpoint) {
   if (endpoint != NULL) {
-    free(endpoint->http_method);
-    free(endpoint->url_prefix);
-    free(endpoint->url_format);
+    o_free(endpoint->http_method);
+    o_free(endpoint->url_prefix);
+    o_free(endpoint->url_format);
     endpoint->http_method = NULL;
     endpoint->url_prefix = NULL;
     endpoint->url_format = NULL;
@@ -692,7 +692,7 @@ void ulfius_clean_endpoint_list(struct _u_endpoint * endpoint_list) {
     for (i=0; endpoint_list[i].http_method != NULL; i++) {
       ulfius_clean_endpoint(&endpoint_list[i]);
     }
-    free(endpoint_list);
+    o_free(endpoint_list);
   }
 }
 
@@ -710,7 +710,7 @@ int ulfius_add_endpoint(struct _u_instance * u_instance, const struct _u_endpoin
     if (ulfius_is_valid_endpoint(u_endpoint, 0)) {
       if (u_instance->endpoint_list == NULL) {
         // No endpoint, create a list with 2 endpoints so the last one is an empty one
-        u_instance->endpoint_list = malloc(2 * sizeof(struct _u_endpoint));
+        u_instance->endpoint_list = o_malloc(2 * sizeof(struct _u_endpoint));
         if (u_instance->endpoint_list == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_add_endpoint, Error allocating memory for u_instance->endpoint_list");
           return U_ERROR_MEMORY;
@@ -718,7 +718,7 @@ int ulfius_add_endpoint(struct _u_instance * u_instance, const struct _u_endpoin
         u_instance->nb_endpoints = 1;
       } else {
         u_instance->nb_endpoints++;
-        u_instance->endpoint_list = realloc(u_instance->endpoint_list, (u_instance->nb_endpoints + 1) * sizeof(struct _u_endpoint));
+        u_instance->endpoint_list = o_realloc(u_instance->endpoint_list, (u_instance->nb_endpoints + 1) * sizeof(struct _u_endpoint));
         if (u_instance->endpoint_list == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_add_endpoint, Error reallocating memory for u_instance->endpoint_list");
           return U_ERROR_MEMORY;
@@ -786,14 +786,14 @@ int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endp
           (u_instance->endpoint_list[i].url_format != NULL && u_endpoint->url_format != NULL && 0 == nstrcmp(u_instance->endpoint_list[i].url_format, u_endpoint->url_format))) {
         // It's a match!
         // Remove current endpoint and move the next ones to their previous index, then reduce the endpoint_list by 1
-        free(u_instance->endpoint_list[i].http_method);
-        free(u_instance->endpoint_list[i].url_prefix);
-        free(u_instance->endpoint_list[i].url_format);
+        o_free(u_instance->endpoint_list[i].http_method);
+        o_free(u_instance->endpoint_list[i].url_prefix);
+        o_free(u_instance->endpoint_list[i].url_format);
         for (j=i; j<u_instance->nb_endpoints; j++) {
           u_instance->endpoint_list[j] = u_instance->endpoint_list[j+1];
         }
         u_instance->nb_endpoints--;
-        u_instance->endpoint_list = realloc(u_instance->endpoint_list, (u_instance->nb_endpoints + 1)*sizeof(struct _u_endpoint));
+        u_instance->endpoint_list = o_realloc(u_instance->endpoint_list, (u_instance->nb_endpoints + 1)*sizeof(struct _u_endpoint));
         if (u_instance->endpoint_list == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_add_endpoint, Error reallocating memory for u_instance->endpoint_list");
           return U_ERROR_MEMORY;
@@ -863,7 +863,7 @@ int ulfius_init_instance(struct _u_instance * u_instance, uint port, struct sock
     u_instance->default_auth_realm = nstrdup(default_auth_realm);
     u_instance->nb_endpoints = 0;
     u_instance->endpoint_list = NULL;
-    u_instance->default_headers = malloc(sizeof(struct _u_map));
+    u_instance->default_headers = o_malloc(sizeof(struct _u_map));
     if (u_instance->default_headers == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for u_instance->default_headers");
       return U_ERROR_MEMORY;
@@ -927,9 +927,9 @@ void ulfius_clean_instance(struct _u_instance * u_instance) {
   if (u_instance != NULL) {
     ulfius_clean_endpoint_list(u_instance->endpoint_list);
     u_map_clean_full(u_instance->default_headers);
-    free(u_instance->default_auth_realm);
-    free(u_instance->bind_address);
-    free(u_instance->default_endpoint);
+    o_free(u_instance->default_auth_realm);
+    o_free(u_instance->bind_address);
+    o_free(u_instance->default_endpoint);
   }
 }
 
@@ -973,7 +973,7 @@ int ulfius_set_default_endpoint(struct _u_instance * u_instance,
                                          void * user_data) {
   if (u_instance != NULL) {
     if (u_instance->default_endpoint == NULL) {
-      u_instance->default_endpoint = malloc(sizeof(struct _u_endpoint));
+      u_instance->default_endpoint = o_malloc(sizeof(struct _u_endpoint));
       if (u_instance->default_endpoint == NULL) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for u_instance->default_endpoint");
         return U_ERROR_MEMORY;

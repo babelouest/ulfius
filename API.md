@@ -8,6 +8,28 @@ Include file `ulfius.h` in your source file:
 #include <ulfius.h>
 ```
 
+If you have disabled `libcurl` during the build, define the macro `U_DISABLE_CURL` before including `ulfius.h`:
+
+```c
+#define U_DISABLE_CURL
+#include <ulfius.h>
+```
+
+If you have disabled `libjansson` during the build, define the macro `U_DISABLE_JANSSON` before including `ulfius.h`:
+
+```c
+#define U_DISABLE_JANSSON
+#include <ulfius.h>
+```
+
+If you have disabled both `libcurl` and `libjansson`, define both macros before including `ulfius.h`:
+
+```c
+#define U_DISABLE_CURL
+#define U_DISABLE_JANSSON
+#include <ulfius.h>
+```
+
 On your linker command, add ulfius as a dependency library, e.g. `-lulfius` for gcc.
 
 ## API Documentation
@@ -23,7 +45,15 @@ When specified, some functions return `U_OK` on success, and other values otherw
 #define U_ERROR_LIBMHD       4 // Error in libmicrohttpd execution
 #define U_ERROR_LIBCURL      5 // Error in libcurl execution
 #define U_ERROR_NOT_FOUND    6 // Something was not found
-#define U_ERROR_UNAUTHORIZED 7 // No authorization given
+```
+
+### Memory management
+
+Ulfius uses memory allocation functions `malloc/realloc/free` by default, but you can overwrite this and use any other memory allocation functions of your choice. Use Orcania's functions `o_set_alloc_funcs` and `o_get_alloc_funcs` to set and get memory allocation functions.
+
+```C
+void o_set_alloc_funcs(o_malloc_t malloc_fn, o_realloc_t realloc_fn, o_free_t free_fn);
+void o_get_alloc_funcs(o_malloc_t * malloc_fn, o_realloc_t * realloc_fn, o_free_t * free_fn);
 ```
 
 ### Initialization
@@ -46,18 +76,10 @@ The `struct _u_instance` is defined as:
  * port:                  port number to listen to
  * bind_address:          ip address to listen to (optional)
  * nb_endpoints:          Number of available endpoints
+ * default_auth_realm:    Default realm on authentication error
  * endpoint_list:         List of available endpoints
  * default_endpoint:      Default endpoint if no other endpoint match the current url
  * default_headers:       Default headers that will be added to all response->map_header
- * default_auth_function: Default callback function used for authentication (optional)
- *                        a pointer to a function used to check the client credentials
- *                        this function will be called prior to the callback function. If default_auth_function returned value is U_OK,
- *                        then the callback function will be called after. If default_auth_function is not U_OK, response status send will be
- *                        401 (Unauthorized), and callback_function will be skipped
- *                        If an endpoint already has a auth_callback set, the default_auth_function will not be called
- *                        but the auth_callback function of the endpoint will
- * default_auth_data:     a pointer to a data or a structure that will be available in auth_function
- * default_auth_realm:    realm value for authentication
  * max_post_param_size:   maximum size for a post parameter, 0 means no limit, default 0
  * max_post_body_size:    maximum size for the entire post body, 0 means no limit, default 0
  * 
@@ -65,17 +87,13 @@ The `struct _u_instance` is defined as:
 struct _u_instance {
   struct MHD_Daemon          *  mhd_daemon;
   int                           status;
-  int                           port;
+  uint                          port;
   struct sockaddr_in          * bind_address;
   int                           nb_endpoints;
+  char                        * default_auth_realm;
   struct _u_endpoint          * endpoint_list;
   struct _u_endpoint          * default_endpoint;
   struct _u_map               * default_headers;
-  int (* default_auth_function)(const struct _u_request * request, // Input parameters (set by the framework)
-                                struct _u_response * response,     // Output parameters (set by the user)
-                                void * auth_data);
-  void *                        default_auth_data;
-  char *                        default_auth_realm;
   size_t                        max_post_param_size;
   size_t                        max_post_body_size;
 };
@@ -92,7 +110,7 @@ You can use the functions `ulfius_init_instance` and `ulfius_clean_instance` to 
  * Initialize a struct _u_instance * with default values
  * return U_OK on success
  */
-int ulfius_init_instance(struct _u_instance * u_instance, int port, struct sockaddr_in * bind_address);
+int ulfius_init_instance(struct _u_instance * u_instance, int port, struct sockaddr_in * bind_address, const char * default_auth_realm);
 
 /**
  * ulfius_clean_instance
@@ -117,12 +135,7 @@ The `struct _u_endpoint` is defined as:
  *                    to define a variable in the url, prefix it with @ or :
  *                    example: /test/resource/:name/elements
  *                    on an url_format that ends with '*', the rest of the url will not be tested
- * auth_function:     a pointer to a function used to check the client credentials he sent (optional)
- *                    this function will be called prior to the callback function. If auth_function returned value is U_OK,
- *                    then the callback function will be called after. If auth_function is not U_OK, response status send will be
- *                    401 (Unauthorized), and callback_function will be skipped
- * auth_data:         a pointer to a data or a structure that will be available in auth_function
- * auth_realm:        realm value for authentication
+ * priority:          endpoint priority in descending order (0 is the higher priority)
  * callback_function: a pointer to a function that will be executed each time the endpoint is called
  *                    you must declare the function as described.
  * user_data:         a pointer to a data or a structure that will be available in callback_function
@@ -132,11 +145,7 @@ struct _u_endpoint {
   char * http_method;
   char * url_prefix;
   char * url_format;
-  int (* auth_function)(const struct _u_request * request, // Input parameters (set by the framework)
-                        struct _u_response * response,     // Output parameters (set by the user)
-                        void * user_data);
-  void * auth_data;
-  char * auth_realm;
+  uint   priority;
   int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
                             struct _u_response * response,     // Output parameters (set by the user)
                             void * user_data);
@@ -167,10 +176,7 @@ int ulfius_add_endpoint(struct _u_instance * u_instance, const struct _u_endpoin
  *                    to define a variable in the url, prefix it with @ or :
  *                    example: /test/resource/:name/elements
  *                    on an url_format that ends with '*', the rest of the url will not be tested
- * auth_function:     a pointer to a function that will be executed prior to the callback for authentication
- *                    you must declare the function as described.
- * auth_data:         a pointer to a data or a structure that will be available in auth_function
- * auth_realm:        realm value for authentication
+ * priority:          endpoint priority in descending order (0 is the higher priority)
  * callback_function: a pointer to a function that will be executed each time the endpoint is called
  *                    you must declare the function as described.
  * user_data:         a pointer to a data or a structure that will be available in callback_function
@@ -180,13 +186,9 @@ int ulfius_add_endpoint_by_val(struct _u_instance * u_instance,
                                const char * http_method,
                                const char * url_prefix,
                                const char * url_format,
-                               int (* auth_function)(const struct _u_request * request,
-                                                     struct _u_response * response,
-                                                     void * auth_data),
-                               void * auth_data,
-                               char * auth_realm,
-                               int (* callback_function)(const struct _u_request * request,
-                                                         struct _u_response * response,
+                               uint priority,
+                               int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
+                                                         struct _u_response * response,     // Output parameters (set by the user)
                                                          void * user_data),
                                void * user_data);
 
@@ -237,22 +239,6 @@ int ulfius_remove_endpoint_by_val(struct _u_instance * u_instance, const char * 
 int ulfius_set_default_callback_function(struct _u_instance * u_instance,
                                          int (* callback_function)(const struct _u_request * request, struct _u_response * response, void * user_data),
                                          void * user_data);
-
-/**
- * ulfius_set_default_auth_function
- * Set the default authentication function
- * This authentication function will be called if there is no auth_function attached to the endpoint
- * u_instance: pointer to a struct _u_instance that describe its port and bind address
- * auth_function:     a pointer to a function that will be executed prior to the callback for authentication
- *                    you must declare the function as described.
- * auth_data:         a pointer to a data or a structure that will be available in auth_function
- * auth_realm:        realm value for authentication
- * return U_OK on success
- */
-int ulfius_set_default_auth_function(struct _u_instance * u_instance,
-                                         int (* default_auth_function)(const struct _u_request * request, struct _u_response * response, void * auth_data),
-                                         void * default_auth_data,
-                                         const char * default_auth_realm);
 ```
 
 HTTP Method can be an existing or not existing method, or * for any method, you must specify a url_prefix, a url_format or both, callback_function is mandatory, user_data is optional.
@@ -263,17 +249,13 @@ You can manually declare an endpoint or use the dedicated functions as `int ulfi
 
 If you manipulate the attribute `u_instance.endpoint_list`, you must end the list with an empty endpoint (see `const struct _u_endpoint * ulfius_empty_endpoint()`), and you must set the attribute `u_instance.nb_endpoints` accordingly. Also, you must use dynamically allocated values for attributes `http_method`, `url_prefix` and `url_format`.
 
-Please note that each time a call is made to the webservice, endpoints will be tested in the same order. On the first matching endpoint, the other ones won't be tested. So be careful on your endpoints declaration order. If no endpoint is found, an error 404 is raised, except if you set a default endpoint. If you set a default endpoint with `ulfius_set_default_callback_function`, the default callback function will be run if no endpoint match the current url.
+Ulfius allows multiple callbacks for the same endpoint. This is helpful when you need to execute several actions in sequence, for example check authentication, get resource, set cookie, then gzip response body. That's also why a priority must be set for each callback.
 
-For example, if you declare the following endpoints in that order:
+The priority is in descending order, which means that it starts with 0 (highest priority) and priority decreases when priority number increases. There is no more signification to the priority number, which means you can use any incrementation of your choice.
 
-```
-/test/*
-/test/test1
-/test/test2
-```
+`Warning`: Having 2 callback functions with the same priority number will result in an undefined result.
 
-the last 2 will never be reached because the first one will always be a match for the urls `/test/test1` and `/test/test2`.
+To help passing parameters between callback functions of the same request, the value `struct _u_response.shared_data` can bse used. But it will not be allocated or freed by the framework, the program using this variable must free by itself.
 
 ### Start and stop webservice
 
@@ -304,7 +286,7 @@ int ulfius_start_framework(struct _u_instance * u_instance);
 int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem);
 ```
 
-In your program where you want to start the web server, simply execute the function `ulfius_start_framework(struct _u_instance * u_instance)` for a non-secure http connection or `ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem)` for a secure https connection, using a valid private key and a valid corresponding server certificate, see openssl documentation for certificate generation. Those function accept the previously declared `instance` as first parameter. You can reuse the same callback function as much as you want for different endpoints. On success, these functions returns `U_OK`, otherwise an error code.
+In your program where you want to start the web server, simply execute the function `ulfius_start_framework(struct _u_instance * u_instance)` for a non-secure http connection or `ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem)` for a secure https connection, using a valid private key and a valid corresponding server certificate, see openssl documentation for certificate generation. Those function accept the previously declared `instance` as first parameter. You can reuse the same callback function as much as you want for different endpoints. On success, these functions returns `U_CALLBACK_CONTINUE` or `U_CALLBACK_COMPLETE`, otherwise an error code.
 
 #### Stop webservice
 
@@ -321,25 +303,19 @@ To stop the webservice, call the following function:
 int ulfius_stop_framework(struct _u_instance * u_instance);
 ```
 
-### Callback and Authentication functions
+### Callback functions
 
-The authentication function is the function called for authentication purposes. Ulfius implements basic auth, the user and the password sent by the client are members of `struct _u_request` (see below). In this function, you can implement the authentication method you want by checking the user and password given. If the return value of the authentication function is `U_OK`, the authentication will pass and the callback function will be called then, if the return value is `U_ERROR_UNAUTHORIZED`, the response will be a 401 with the realm parameter given and the response body specified, if the return value is neither `U_OK` nor `U_ERROR_UNAUTHORIZED`, an error 500 will be sent to the client. Authentication functions are optional for endpoints.
+The callback function is the function executed when a user calls an endpoint managed by your webservice (as defined in your `struct _u_endpoint` list).
 
-The callback function is the function called when a user calls an endpoint managed by your webservice (as defined in your `struct _u_endpoint` list).
-
-The authentication function and the callback function have the following signature:
+The callback function has the following signature:
 
 ```c
-int (* auth_function)(const struct _u_request * request, // Input parameters (set by the framework)
-                      struct _u_response * response,     // Output parameters (set by the user)
-                      void * auth_data);
-
 int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
                           struct _u_response * response,     // Output parameters (set by the user)
                           void * user_data);
 ```
 
-In the authentication and callback functions definition, the variables `request` and `response` will be set by the framework, and the `auth_data` or `user_data` variable will be assigned to the user_data defined in your endpoint list definition.
+In the callback function definition, the variables `request` and `response` will be set by the framework, and the `user_data` variable will be assigned to the user_data defined in your endpoint list definition.
 
 The request variable is defined as:
 
@@ -360,9 +336,6 @@ The request variable is defined as:
  * map_header:                map containing the header variables
  * map_cookie:                map containing the cookie variables
  * map_post_body:             map containing the post body variables (if available)
- * json_body:                 json_t * object containing the json body (if available)
- * json_error:                stack allocated json_error_t if json body was not parsed (if available)
- * json_has_error:            true if the json body was not parsed by jansson (if available)
  * binary_body:               pointer to raw body
  * binary_body_length:        length of raw body
  * 
@@ -379,9 +352,6 @@ struct _u_request {
   struct _u_map *      map_header;
   struct _u_map *      map_cookie;
   struct _u_map *      map_post_body;
-  json_t *             json_body;
-  json_error_t *       json_error;
-  int                  json_has_error;
   void *               binary_body;
   size_t               binary_body_length;
 };
@@ -400,8 +370,7 @@ The response variable is defined as:
  * map_header:           map containing the header variables
  * nb_cookies:           number of cookies sent
  * map_cookie:           array of cookies sent
- * string_body:          a char * containing the raw body response
- * json_body:            a json_t * object containing the json response
+ * auth_realm:           realm to send to the client on authenticationb failed
  * binary_body:          a void * containing a raw binary content
  * binary_body_length:   the length of the binary_body
  * stream_callback:      callback function to stream data in response body
@@ -409,6 +378,7 @@ The response variable is defined as:
  * stream_size:          size of the streamed data (-1 if unknown)
  * stream_block_size:    size of each block to be streamed, set according to your system
  * stream_user_data:     user defined data that will be available in your callback stream functions
+ * shared_data:          any data shared between callback functions, must be allocated and freed by the callback functions
  * 
  */
 struct _u_response {
@@ -417,21 +387,21 @@ struct _u_response {
   struct _u_map    * map_header;
   unsigned int       nb_cookies;
   struct _u_cookie * map_cookie;
-  char             * string_body;
-  json_t           * json_body;
+  char             * auth_realm;
   void             * binary_body;
-  unsigned int       binary_body_length;
-  int             (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max);
+  size_t             binary_body_length;
+  ssize_t         (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max);
   void            (* stream_callback_free) (void * stream_user_data);
   size_t             stream_size;
   unsigned int       stream_block_size;
   void             * stream_user_data;
+  void *             shared_data;
 };
 ```
 
 In the response variable set by the framework to the callback function, the structure is initialized with no data.
 
-The user can set the `string_body` or the `json_body` or the `binary_body` before the return statement, or no response body at all if no need. If a `string_body` is set, the `json_body` or the `binary_body` won't be tested. So to return a `json_body` object, you must leave `string_body` with a `NULL` value. Likewise, if a `json_body` is set, the `binary_body` won't be tested. Finally, if a `binary_body` is set, its size must be set to `binary_body_length`. Elements `string_body`, `binary_body` and `json_body` are free'd by the framework when the response has been sent  to the client, so you must use dynamically allocated values. If no status is set, status 200 will be sent to the client.
+The user can set the `binary_body` before the return statement, or no response body at all if no need. If a `binary_body` is set, its size must be set to `binary_body_length`. `binary_body` is free'd by the framework when the response has been sent to the client, so you must use dynamically allocated values. If no status is set, status 200 will be sent to the client.
 
 Some functions are dedicated to handle the response:
 
@@ -459,13 +429,6 @@ int ulfius_set_string_response(struct _u_response * response, const uint status,
 int ulfius_set_binary_response(struct _u_response * response, const uint status, const char * body, const size_t length);
 
 /**
- * ulfius_set_json_response
- * Add a json_t body to a response
- * return U_OK on success
- */
-int ulfius_set_json_response(struct _u_response * response, const uint status, const json_t * body);
-
-/**
  * ulfius_set_empty_response
  * Set an empty response with only a status
  * return U_OK on success
@@ -486,11 +449,41 @@ int ulfius_set_stream_response(struct _u_response * response,
                                 void * stream_user_data);
 ```
 
+### JSON body in request and response
+
+In Ulfius 2.0, hard dependency with libjansson has been removed, the jansson library is now optional but enabled by default.
+
+If you want to remove libjansson dependency, build Ulfius library with the flag `JANSSONFLAG=-DU_DISABLE_JANSSON`
+
+```
+$ make JANSSONFLAG=-DU_DISABLE_JANSSON
+```
+
+if libjansson library is enabled, the following functions are available in Ulfius:
+
+```c
+/**
+ * ulfius_get_json_body_request
+ * Get JSON structure from the request body if the request is valid
+ */
+json_t * ulfius_get_json_body_request(const struct _u_request * request, json_error_t * json_error);
+
+/**
+ * ulfius_set_json_response
+ * Add a json_t body to a response
+ * return U_OK on success
+ */
+int ulfius_set_json_response(struct _u_response * response, const uint status, const json_t * body);
+```
+
 The `jansson` api documentation is available at the following address: [Jansson documentation](https://jansson.readthedocs.org/).
 
-The authentication function return value must be `U_OK` on authentication success, if the credentials are incorrect, you must return `U_ERROR_UNAUTHORIZED` to send an error 401 to the client, then, the body response will be sent to the client. All other returned value will send an error 500 to the client. If the authentication function return value is `U_OK`, the response body and status will be ignored as the one sent to the client will be the response sent by the callback function.
+The callback returned value can have the following values:
 
-The callback function return value is `U_OK` on success. If the return value is other than `U_OK`, an error 500 response will be sent to the client.
+- `U_CALLBACK_CONTINUE`: The framework can pass the request and the response to the next callback function in priority order if there is one, or complete the transaction and send back the response to the client.
+- `U_CALLBACK_COMPLETE`: The framework must complete the transaction and send the response to the client without calling any further callback function.
+- `U_CALLBACK_UNAUTHORIZED`: The framework must complete the transaction and send an unauthorized response to the client with the status 401, the body specified and the `auth_realm` value if specified.
+- `U_CALLBACK_ERROR`: An error occured during execution, the framework must complete the transaction and send an error 500 to the client.
 
 In addition with manipulating the raw parameters of the structures, you can use the `_u_request` and `_u_response` structures by using specific functions designed to facilitate their use and memory management:
 
@@ -576,7 +569,7 @@ struct _u_response * ulfius_duplicate_response(const struct _u_response * respon
 
 ### Memory management
 
-The Ulfius framework will automatically free the variables referenced by the request and responses structures, so you must use dynamically allocated values for the response pointers.
+The Ulfius framework will automatically free the variables referenced by the request and responses structures, except for `struct _u_response.shared_data`, so you must use dynamically allocated values for the response pointers.
 
 ### Cookie management
 
@@ -623,7 +616,7 @@ See `examples/sheep_counter` for a file upload example.
 
 If you need to stream data, i.e. send a variable and potentially large amount of data, you can define and use `stream_callback_function` in the `struct _u_response`.
 
-Not that if you stream data to the client, any data that was in the `response->*_body` will be ignored. You must at least set the function pointer `struct _u_response.stream_callback` to stream data. Set `stream_size` to -1 if you don't know the size of the data you need to send, like in audio stream for example. Set `stream_block_size` according to you system resources to avoid out of memory errors, also, set `stream_callback_free` with a pointer to a function that will free values allocated by your stream callback function, as a `close()` file for example, and finally, you can set `stream_user_data` to a pointer.
+Not that if you stream data to the client, any data that was in the `response->binary_body` will be ignored. You must at least set the function pointer `struct _u_response.stream_callback` to stream data. Set `stream_size` to -1 if you don't know the size of the data you need to send, like in audio stream for example. Set `stream_block_size` according to you system resources to avoid out of memory errors, also, set `stream_callback_free` with a pointer to a function that will free values allocated by your stream callback function, as a `close()` file for example, and finally, you can set `stream_user_data` to a pointer.
 
 You can use the function `ulfius_set_stream_response` to set those parameters.
 
@@ -638,7 +631,7 @@ int stream_callback (void * stream_user_data, // Your predefined user_data
 
 The return value must be the size of the data put in `out_buf`.
 
-This function will be recalled in loop as long as the client has the connection opened.
+This function will be called over and over in loop as long as the client has the connection opened.
 
 If you want to close the stream from the server side, return `ULFIUS_STREAM_END` in the `stream_callback` function. If you a problem occured, you can close the connection with a `ULFIUS_STREAM_ERROR` return value.
 
@@ -831,11 +824,19 @@ int u_map_copy_into(const struct _u_map * source, struct _u_map * target);
 int u_map_count(const struct _u_map * source);
 ```
 
+## Output request functions
+
+Ulfius allows output functions to send HTTP or SMTP requests. These functions use `libcurl`. You can disable these functions by appending the argument `CURLFLAG=-DU_DISABLE_CURL` when you build the library:
+
+```
+$ make CURLFLAG=-DU_DISABLE_CURL
+```
+
 ### Send HTTP request API
 
 The functions `int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response)` and `int ulfius_send_http_streaming_request(const struct _u_request * request, struct _u_response * response, size_t (* write_body_function)(void * contents, size_t size, size_t nmemb, void * user_data), void * write_body_data)` are based on `libcurl` api.
 
-It allows to send an http request with the parameters specified by the `_u_request` structure. Use the parameter `_u_request.http_url` to specify the distant url to call.
+They allow to send an HTTP request with the parameters specified by the `_u_request` structure. Use the parameter `_u_request.http_url` to specify the distant url to call.
 
 You can fill the maps in the `_u_request` structure with parameters, they will be used to build the request. Note that if you fill `_u_request.map_post_body` with parameters, the content-type `application/x-www-form-urlencoded` will be use to encode the data.
 
