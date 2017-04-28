@@ -777,15 +777,16 @@ int ulfius_add_endpoint_list(struct _u_instance * u_instance, const struct _u_en
  * return U_OK on success
  */
 int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endpoint * u_endpoint) {
-  int i, j;
+  int i, j, found = 0;
   if (u_instance != NULL && u_endpoint != NULL && !ulfius_equals_endpoints(u_endpoint, ulfius_empty_endpoint()) && ulfius_is_valid_endpoint(u_endpoint, 1)) {
     for (i=0; i<u_instance->nb_endpoints; i++) {
       // Compare u_endpoint with u_instance->endpoint_list[i]
       if ((u_endpoint->http_method != NULL && 0 == o_strcmp(u_instance->endpoint_list[i].http_method, u_endpoint->http_method)) &&
-          (u_instance->endpoint_list[i].url_prefix != NULL && u_endpoint->url_prefix != NULL && 0 == o_strcmp(u_instance->endpoint_list[i].url_prefix, u_endpoint->url_prefix)) &&
-          (u_instance->endpoint_list[i].url_format != NULL && u_endpoint->url_format != NULL && 0 == o_strcmp(u_instance->endpoint_list[i].url_format, u_endpoint->url_format))) {
+          ((u_instance->endpoint_list[i].url_prefix == NULL && u_endpoint->url_prefix == NULL) || (u_instance->endpoint_list[i].url_prefix != NULL && u_endpoint->url_prefix != NULL && 0 == o_strcmp(u_instance->endpoint_list[i].url_prefix, u_endpoint->url_prefix))) &&
+          ((u_instance->endpoint_list[i].url_format == NULL && u_endpoint->url_format == NULL) || (u_instance->endpoint_list[i].url_format != NULL && u_endpoint->url_format != NULL && 0 == o_strcmp(u_instance->endpoint_list[i].url_format, u_endpoint->url_format)))) {
         // It's a match!
         // Remove current endpoint and move the next ones to their previous index, then reduce the endpoint_list by 1
+        found = 1;
         o_free(u_instance->endpoint_list[i].http_method);
         o_free(u_instance->endpoint_list[i].url_prefix);
         o_free(u_instance->endpoint_list[i].url_format);
@@ -800,7 +801,11 @@ int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endp
         }
       }
     }
-    return U_OK;
+    if (found) {
+      return U_OK;
+    } else {
+      return U_ERROR_NOT_FOUND;
+    }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_remove_endpoint, invalid parameters");
     return U_ERROR_PARAMS;
@@ -928,8 +933,12 @@ void ulfius_clean_instance(struct _u_instance * u_instance) {
     ulfius_clean_endpoint_list(u_instance->endpoint_list);
     u_map_clean_full(u_instance->default_headers);
     o_free(u_instance->default_auth_realm);
-    o_free(u_instance->bind_address);
     o_free(u_instance->default_endpoint);
+    u_instance->endpoint_list = NULL;
+    u_instance->default_headers = NULL;
+    u_instance->default_auth_realm = NULL;
+    u_instance->bind_address = NULL;
+    u_instance->default_endpoint = NULL;
   }
 }
 
@@ -971,7 +980,7 @@ int ulfius_remove_endpoint_by_val(struct _u_instance * u_instance, const char * 
 int ulfius_set_default_endpoint(struct _u_instance * u_instance,
                                          int (* callback_function)(const struct _u_request * request, struct _u_response * response, void * user_data),
                                          void * user_data) {
-  if (u_instance != NULL) {
+  if (u_instance != NULL && callback_function != NULL) {
     if (u_instance->default_endpoint == NULL) {
       u_instance->default_endpoint = o_malloc(sizeof(struct _u_endpoint));
       if (u_instance->default_endpoint == NULL) {

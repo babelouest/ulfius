@@ -69,7 +69,7 @@
 #define U_STATUS_RUNNING  1
 #define U_STATUS_ERROR    2
 
-#define ULFIUS_VERSION 1.0
+#define ULFIUS_VERSION 2.0
 
 #define U_CALLBACK_CONTINUE     0
 #define U_CALLBACK_COMPLETE     1
