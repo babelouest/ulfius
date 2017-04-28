@@ -30,17 +30,17 @@ char * print_map(const struct _u_map * map) {
     keys = u_map_enum_keys(map);
     for (i=0; keys[i] != NULL; i++) {
       len = snprintf(NULL, 0, "key is %s, value is %s\n", keys[i], u_map_get(map, keys[i]));
-      line = malloc((len+1)*sizeof(char));
+      line = o_malloc((len+1)*sizeof(char));
       snprintf(line, (len+1), "key is %s, value is %s\n", keys[i], u_map_get(map, keys[i]));
       if (to_return != NULL) {
         len = strlen(to_return) + strlen(line) + 1;
-        to_return = realloc(to_return, (len+1)*sizeof(char));
+        to_return = o_realloc(to_return, (len+1)*sizeof(char));
       } else {
-        to_return = malloc((strlen(line) + 1)*sizeof(char));
+        to_return = o_malloc((strlen(line) + 1)*sizeof(char));
         to_return[0] = 0;
       }
       strcat(to_return, line);
-      free(line);
+      o_free(line);
     }
     return to_return;
   } else {
@@ -64,10 +64,10 @@ int callback (const struct _u_request * request, struct _u_response * response, 
                                   request->http_verb, request->http_url, url_params, cookies, headers, post_params, request_body, (char *)user_data);
   
   ulfius_add_cookie_to_response(response, "cook", "ie", NULL, 5000, NULL, NULL, 0, 0);
-  free(url_params);
-  free(headers);
-  free(cookies);
-  free(post_params);
+  o_free(url_params);
+  o_free(headers);
+  o_free(cookies);
+  o_free(post_params);
   return U_OK;
 }
 

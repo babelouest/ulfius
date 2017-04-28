@@ -127,7 +127,7 @@ int callback_hutch_static_file (const struct _u_request * request, struct _u_res
         fseek (f, 0, SEEK_END);
         length = ftell (f);
         fseek (f, 0, SEEK_SET);
-        buffer = malloc(length*sizeof(void));
+        buffer = o_malloc(length*sizeof(void));
         if (buffer) {
           res = fread (buffer, 1, length, f);
           if (res != length) {
@@ -153,8 +153,8 @@ int callback_hutch_static_file (const struct _u_request * request, struct _u_res
     } else {
       ulfius_set_string_response(response, 404, "Resource not found");
     }
-    free(file_path);
-    free(file_requested);
+    o_free(file_path);
+    o_free(file_requested);
     return U_CALLBACK_CONTINUE;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "Static File Server - Error, user_data is NULL");

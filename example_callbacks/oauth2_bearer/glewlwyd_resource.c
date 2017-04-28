@@ -64,33 +64,33 @@ int callback_check_glewlwyd_access_token (const struct _u_request * request, str
           if (res_scope == G_ERROR_INSUFFICIENT_SCOPE) {
             response_value = msprintf(HEADER_PREFIX_BEARER "%s%s%serror=\"insufficient_scope\",error_description=\"The scope is invalid\"", (config->realm!=NULL?"realm=":""), (config->realm!=NULL?config->realm:""), (config->realm!=NULL?",":""));
             u_map_put(response->map_header, HEADER_RESPONSE, response_value);
-            free(response_value);
+            o_free(response_value);
           } else if (res_scope != G_OK) {
             response_value = msprintf(HEADER_PREFIX_BEARER "%s%s%serror=\"invalid_request\",error_description=\"Internal server error\"", (config->realm!=NULL?"realm=":""), (config->realm!=NULL?config->realm:""), (config->realm!=NULL?",":""));
             u_map_put(response->map_header, HEADER_RESPONSE, response_value);
-            free(response_value);
+            o_free(response_value);
           } else {
             res = U_OK;
           }
         } else if (res_validity == G_ERROR_INVALID_TOKEN) {
           response_value = msprintf(HEADER_PREFIX_BEARER "%s%s%serror=\"invalid_request\",error_description=\"The access token is invalid\"", (config->realm!=NULL?"realm=":""), (config->realm!=NULL?config->realm:""), (config->realm!=NULL?",":""));
           u_map_put(response->map_header, HEADER_RESPONSE, response_value);
-          free(response_value);
+          o_free(response_value);
         } else {
           response_value = msprintf(HEADER_PREFIX_BEARER "%s%s%serror=\"invalid_request\",error_description=\"Internal server error\"", (config->realm!=NULL?"realm=":""), (config->realm!=NULL?config->realm:""), (config->realm!=NULL?",":""));
           u_map_put(response->map_header, HEADER_RESPONSE, response_value);
-          free(response_value);
+          o_free(response_value);
         }
       } else {
         response_value = msprintf(HEADER_PREFIX_BEARER "%s%s%serror=\"invalid_request\",error_description=\"The access token is invalid\"", (config->realm!=NULL?"realm=":""), (config->realm!=NULL?config->realm:""), (config->realm!=NULL?",":""));
         u_map_put(response->map_header, HEADER_RESPONSE, response_value);
-        free(response_value);
+        o_free(response_value);
       }
       json_decref(j_access_token);
     } else {
       response_value = msprintf(HEADER_PREFIX_BEARER "%s%s%serror=\"invalid_token\",error_description=\"The access token is missing\"", (config->realm!=NULL?"realm=":""), (config->realm!=NULL?config->realm:""), (config->realm!=NULL?",":""));
       u_map_put(response->map_header, HEADER_RESPONSE, response_value);
-      free(response_value);
+      o_free(response_value);
     }
   }
   return res;
@@ -174,7 +174,7 @@ json_t * access_token_check_signature(struct _glewlwyd_resource_config * config,
       } else {
         j_return = json_pack("{si}", "result", G_ERROR);
       }
-      free(grants);
+      o_free(grants);
     } else {
       j_return = json_pack("{si}", "result", G_ERROR_INVALID_TOKEN);
     }
@@ -202,7 +202,7 @@ json_t * access_token_get_payload(const char * token_value) {
       } else {
         j_return = json_pack("{si}", "result", G_ERROR);
       }
-      free(grants);
+      o_free(grants);
     } else {
       j_return = json_pack("{si}", "result", G_ERROR_INVALID_TOKEN);
     }

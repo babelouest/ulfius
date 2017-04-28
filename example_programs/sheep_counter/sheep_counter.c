@@ -50,20 +50,20 @@ char * print_map(const struct _u_map * map) {
     for (i=0; keys[i] != NULL; i++) {
       value = u_map_get(map, keys[i]);
       len = snprintf(NULL, 0, "key is %s, length is %ld, value is %.*s", keys[i], u_map_get_length(map, keys[i]), (int)u_map_get_length(map, keys[i]), value);
-      line = malloc((len+1)*sizeof(char));
+      line = o_malloc((len+1)*sizeof(char));
       snprintf(line, (len+1), "key is %s, length is %ld, value is %.*s", keys[i], u_map_get_length(map, keys[i]), (int)u_map_get_length(map, keys[i]), value);
       if (to_return != NULL) {
         len = strlen(to_return) + strlen(line) + 1;
-        to_return = realloc(to_return, (len+1)*sizeof(char));
+        to_return = o_realloc(to_return, (len+1)*sizeof(char));
         if (strlen(to_return) > 0) {
           strcat(to_return, "\n");
         }
       } else {
-        to_return = malloc((strlen(line) + 1)*sizeof(char));
+        to_return = o_malloc((strlen(line) + 1)*sizeof(char));
         to_return[0] = 0;
       }
       strcat(to_return, line);
-      free(line);
+      o_free(line);
     }
     return to_return;
   } else {
@@ -229,7 +229,7 @@ int callback_static_file (const struct _u_request * request, struct _u_response 
       fseek (f, 0, SEEK_END);
       length = ftell (f);
       fseek (f, 0, SEEK_SET);
-      buffer = malloc(length*sizeof(void));
+      buffer = o_malloc(length*sizeof(void));
       if (buffer) {
         fread (buffer, 1, length, f);
       }
@@ -248,7 +248,7 @@ int callback_static_file (const struct _u_request * request, struct _u_response 
   } else {
     response->status = 404;
   }
-  free(file_path);
+  o_free(file_path);
   return U_OK;
 }
 
@@ -262,9 +262,9 @@ int callback_upload_file (const struct _u_request * request, struct _u_response 
   char * string_body = msprintf("Upload file\n\n  method is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n",
                                   request->http_verb, request->http_url, url_params, cookies, headers, post_params);
   ulfius_set_string_response(response, 200, string_body);
-  free(url_params);
-  free(headers);
-  free(cookies);
-  free(post_params);
+  o_free(url_params);
+  o_free(headers);
+  o_free(cookies);
+  o_free(post_params);
   return U_OK;
 }

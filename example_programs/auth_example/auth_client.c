@@ -29,17 +29,17 @@ char * print_map(const struct _u_map * map) {
     keys = u_map_enum_keys(map);
     for (i=0; keys[i] != NULL; i++) {
       len = snprintf(NULL, 0, "key is %s, value is %s\n", keys[i], u_map_get(map, keys[i]));
-      line = malloc((len+1)*sizeof(char));
+      line = o_malloc((len+1)*sizeof(char));
       snprintf(line, (len+1), "key is %s, value is %s\n", keys[i], u_map_get(map, keys[i]));
       if (to_return != NULL) {
         len = strlen(to_return) + strlen(line) + 1;
-        to_return = realloc(to_return, (len+1)*sizeof(char));
+        to_return = o_realloc(to_return, (len+1)*sizeof(char));
       } else {
-        to_return = malloc((strlen(line) + 1)*sizeof(char));
+        to_return = o_malloc((strlen(line) + 1)*sizeof(char));
         to_return[0] = 0;
       }
       strcat(to_return, line);
-      free(line);
+      o_free(line);
     }
     return to_return;
   } else {
@@ -66,36 +66,36 @@ int main (int argc, char **argv) {
   y_init_logs("auth_client", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "logs start");
   
   ulfius_init_request(&req_list[0]);
-  req_list[0].http_verb = strdup("GET");
-  req_list[0].http_url = strdup(SERVER_URL);
+  req_list[0].http_verb = o_strdup("GET");
+  req_list[0].http_url = o_strdup(SERVER_URL);
   
   ulfius_init_request(&req_list[1]);
-  req_list[1].http_verb = strdup("GET");
-  req_list[1].http_url = strdup(SERVER_URL);
-  req_list[1].auth_basic_user = strdup("test");
-  req_list[1].auth_basic_password = strdup("testpassword");
+  req_list[1].http_verb = o_strdup("GET");
+  req_list[1].http_url = o_strdup(SERVER_URL);
+  req_list[1].auth_basic_user = o_strdup("test");
+  req_list[1].auth_basic_password = o_strdup("testpassword");
   
   ulfius_init_request(&req_list[2]);
-  req_list[2].http_verb = strdup("GET");
-  req_list[2].http_url = strdup(SERVER_URL);
-  req_list[2].auth_basic_user = strdup("test");
-  req_list[2].auth_basic_password = strdup("wrongpassword");
+  req_list[2].http_verb = o_strdup("GET");
+  req_list[2].http_url = o_strdup(SERVER_URL);
+  req_list[2].auth_basic_user = o_strdup("test");
+  req_list[2].auth_basic_password = o_strdup("wrongpassword");
   
   ulfius_init_request(&req_list[3]);
-  req_list[3].http_verb = strdup("GET");
-  req_list[3].http_url = strdup(SERVER_URL "/404");
+  req_list[3].http_verb = o_strdup("GET");
+  req_list[3].http_url = o_strdup(SERVER_URL "/404");
 
   ulfius_init_request(&req_list[4]);
-  req_list[4].http_verb = strdup("GET");
-  req_list[4].http_url = strdup(SERVER_URL_DEFAULT);
-  req_list[4].auth_basic_user = strdup("test");
-  req_list[4].auth_basic_password = strdup("testpassword");
+  req_list[4].http_verb = o_strdup("GET");
+  req_list[4].http_url = o_strdup(SERVER_URL_DEFAULT);
+  req_list[4].auth_basic_user = o_strdup("test");
+  req_list[4].auth_basic_password = o_strdup("testpassword");
   
   ulfius_init_request(&req_list[5]);
-  req_list[5].http_verb = strdup("GET");
-  req_list[5].http_url = strdup(SERVER_URL_DEFAULT);
-  req_list[5].auth_basic_user = strdup("test");
-  req_list[5].auth_basic_password = strdup("wrongpassword");
+  req_list[5].http_verb = o_strdup("GET");
+  req_list[5].http_url = o_strdup(SERVER_URL_DEFAULT);
+  req_list[5].auth_basic_user = o_strdup("test");
+  req_list[5].auth_basic_password = o_strdup("wrongpassword");
     
   printf("Press <enter> to run auth tests no authentication\n");
   getchar();

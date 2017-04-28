@@ -164,7 +164,7 @@ START_TEST(test_u_map_copy_empty)
 }
 END_TEST
 
-static Suite *orcania_suite(void)
+static Suite *ulfius_suite(void)
 {
 	Suite *s;
 	TCase *tc_core;
@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
   Suite *s;
   SRunner *sr;
   
-  s = orcania_suite();
+  s = ulfius_suite();
   sr = srunner_create(s);
 
   srunner_run_all(sr, CK_VERBOSE);

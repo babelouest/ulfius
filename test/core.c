@@ -6,12 +6,13 @@
 #include <errno.h>
 #include <time.h>
 #include <netinet/in.h>
+#include <jansson.h>
 
 #include <check.h>
 #include "../src/ulfius.h"
 
-int callback_function(const struct _u_request * request, struct _u_response * response, void * user_data) {
-  return U_OK;
+int callback_function_empty(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  return U_CALLBACK_CONTINUE;
 }
 
 START_TEST(test_ulfius_init_instance)
@@ -54,7 +55,7 @@ START_TEST(test_endpoint)
   endpoint.url_format = "nope";
   ck_assert_int_eq(ulfius_add_endpoint(&u_instance, &endpoint), U_ERROR_PARAMS);
   
-  endpoint.callback_function = &callback_function;
+  endpoint.callback_function = &callback_function_empty;
   ck_assert_int_eq(ulfius_add_endpoint(&u_instance, &endpoint), U_ERROR_PARAMS);
   endpoint.url_format = NULL;
   endpoint.url_prefix = "nope";
@@ -73,13 +74,13 @@ START_TEST(test_endpoint)
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, NULL, "nope", "nope", 0, NULL, NULL), U_ERROR_PARAMS);
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "nope", NULL, "nope", 0, NULL, NULL), U_ERROR_PARAMS);
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "nope", "nope", NULL, 0, NULL, NULL), U_ERROR_PARAMS);
-  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "nope", NULL, NULL, 0, &callback_function, NULL), U_ERROR_PARAMS);
-  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, NULL, "nope", NULL, 0, &callback_function, NULL), U_ERROR_PARAMS);
-  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, NULL, NULL, "nope", 0, &callback_function, NULL), U_ERROR_PARAMS);
-  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, NULL, "nope", "nope", 0, &callback_function, NULL), U_ERROR_PARAMS);
-  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "test1", "test1", "test1", 0, &callback_function, NULL), U_OK);
-  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "test2", NULL, "test2", 0, &callback_function, NULL), U_OK);
-  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "test3", "test3", NULL, 0, &callback_function, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "nope", NULL, NULL, 0, &callback_function_empty, NULL), U_ERROR_PARAMS);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, NULL, "nope", NULL, 0, &callback_function_empty, NULL), U_ERROR_PARAMS);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, NULL, NULL, "nope", 0, &callback_function_empty, NULL), U_ERROR_PARAMS);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, NULL, "nope", "nope", 0, &callback_function_empty, NULL), U_ERROR_PARAMS);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "test1", "test1", "test1", 0, &callback_function_empty, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "test2", NULL, "test2", 0, &callback_function_empty, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "test3", "test3", NULL, 0, &callback_function_empty, NULL), U_OK);
   ck_assert_int_eq(ulfius_remove_endpoint(&u_instance, &endpoint), U_OK);
   ck_assert_int_eq(ulfius_remove_endpoint(&u_instance, &endpoint), U_ERROR_NOT_FOUND);
   ck_assert_int_eq(ulfius_remove_endpoint_by_val(&u_instance, "nope", "nope", NULL), U_ERROR_NOT_FOUND);
@@ -88,7 +89,7 @@ START_TEST(test_endpoint)
   ck_assert_int_eq(ulfius_remove_endpoint_by_val(&u_instance, "test2", NULL, "test2"), U_OK);
   ck_assert_int_eq(ulfius_remove_endpoint_by_val(&u_instance, "test3", "test3", NULL), U_OK);
   ck_assert_int_eq(ulfius_set_default_endpoint(&u_instance, NULL, NULL), U_ERROR_PARAMS);
-  ck_assert_int_eq(ulfius_set_default_endpoint(&u_instance, &callback_function, NULL), U_OK);
+  ck_assert_int_eq(ulfius_set_default_endpoint(&u_instance, &callback_function_empty, NULL), U_OK);
   
   ulfius_clean_instance(&u_instance);
 }
@@ -101,10 +102,10 @@ START_TEST(test_ulfius_start_instance)
   ck_assert_int_eq(ulfius_start_framework(NULL), U_ERROR_PARAMS);
   ck_assert_int_eq(ulfius_start_secure_framework(NULL, NULL, NULL), U_ERROR_PARAMS);
   ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
-  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", NULL, "test", 0, &callback_function, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", NULL, "test", 0, &callback_function_empty, NULL), U_OK);
   ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
   ck_assert_int_eq(ulfius_stop_framework(&u_instance), U_OK);
-  ck_assert_int_eq(ulfius_start_secure_framework(&u_instance, "error", "error"), U_ERROR_PARAMS);
+  ck_assert_int_eq(ulfius_start_secure_framework(&u_instance, "error", "error"), U_ERROR_LIBMHD);
   ck_assert_int_eq(ulfius_start_secure_framework(&u_instance, "-----BEGIN PRIVATE KEY-----\
 MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDr90HrswgEmln/\
 rXeNqYq0boIvas5wu27hmeHDdGGKtkCWIWGAo9GUy45xqsI4mDl3bOWS+pmb/3yi\
@@ -158,7 +159,7 @@ fYxFAheH3CjryHqqR9DD+d9396W8mqEaUp+plMwSjpcTDSR4rEQkUJg=\
 }
 END_TEST
 
-static Suite *orcania_suite(void)
+static Suite *ulfius_suite(void)
 {
 	Suite *s;
 	TCase *tc_core;
@@ -180,7 +181,7 @@ int main(int argc, char *argv[])
   Suite *s;
   SRunner *sr;
   //y_init_logs("Ulfius", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Ulfius core tests");
-  s = orcania_suite();
+  s = ulfius_suite();
   sr = srunner_create(s);
 
   srunner_run_all(sr, CK_VERBOSE);

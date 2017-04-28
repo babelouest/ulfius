@@ -101,7 +101,7 @@ void * ulfius_uri_logger (void * cls, const char * uri) {
   struct connection_info_struct * con_info = o_malloc (sizeof (struct connection_info_struct));
   if (con_info != NULL) {
     con_info->callback_first_iteration = 1;
-    con_info->request = malloc(sizeof(struct _u_request));
+    con_info->request = o_malloc(sizeof(struct _u_request));
     if (con_info->request == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for con_info->request");
       o_free(con_info);
@@ -463,6 +463,8 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
                       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->binary_body");
                       mhd_ret = MHD_NO;
                     }
+                  } else {
+                    inner_error = U_CALLBACK_UNAUTHORIZED;
                   }
                 } else {
                   // Error building response, sending error 500

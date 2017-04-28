@@ -27,21 +27,27 @@ LIBS=-lc -lorcania -lyder -lulfius -lcheck -lpthread -lm -lrt -lsubunit -L$(ULFI
 all: test
 
 clean:
-	rm -f *.o u_map core valgrind.txt
+	rm -f *.o u_map core framework valgrind.txt
 
-liborcania.so:
+libulfius.so:
 	cd $(ULFIUS_LOCATION) && $(MAKE) debug
 
 u_map: u_map.c
 	$(CC) $(CFLAGS) u_map.c -o u_map $(LIBS)
 
-test_u_map: liborcania.so u_map
+test_u_map: libulfius.so u_map
 	-LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./u_map
 
 core: core.c
 	$(CC) $(CFLAGS) core.c -o core $(LIBS)
 
-test_core: liborcania.so core
+test_core: libulfius.so core
 	-LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./core
 
-test: test_u_map test_core
+framework: framework.c
+	$(CC) $(CFLAGS) framework.c -o framework $(LIBS)
+
+test_framework: libulfius.so framework
+	-LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./framework
+
+test: test_u_map test_core test_framework

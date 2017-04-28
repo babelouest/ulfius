@@ -60,14 +60,14 @@ int main (int argc, char **argv) {
  */
 int callback_get (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _u_request * req = ulfius_duplicate_request(request);
-  struct _u_response * res = malloc(sizeof(struct _u_response));
+  struct _u_response * res = o_malloc(sizeof(struct _u_response));
   ulfius_init_response(res);
   int len;
 
-  free(req->http_url);
+  o_free(req->http_url);
   u_map_remove_from_key(req->map_header, "Host");
   len = snprintf(NULL, 0, "%s%s", PROXY_DEST, request->http_url);
-  req->http_url = malloc((len+1)*sizeof(char));
+  req->http_url = o_malloc((len+1)*sizeof(char));
   snprintf(req->http_url, (len+1), "%s%s", PROXY_DEST, request->http_url);
   printf("Accessing %s as proxy\n", req->http_url);
   req->timeout = 30;

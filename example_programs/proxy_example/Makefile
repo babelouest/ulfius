@@ -15,7 +15,7 @@
 CC=gcc
 CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS)
 ULFIUS_LOCATION=../../src
-LIBS=-lc -lulfius -ljansson -lyder -L$(ULFIUS_LOCATION)
+LIBS=-lc -lorcania -lulfius -ljansson -lyder -L$(ULFIUS_LOCATION)
 
 all: proxy
 

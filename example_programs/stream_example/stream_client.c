@@ -35,8 +35,8 @@ int main(void) {
   
   ulfius_init_response(&response);
   ulfius_init_request(&request);
-  request.http_verb = strdup("GET");
-  request.http_url = strdup(URL);
+  request.http_verb = o_strdup("GET");
+  request.http_url = o_strdup(URL);
   
   printf("Press <enter> to run stream test\n");
   getchar();
@@ -49,8 +49,8 @@ int main(void) {
   ulfius_clean_response(&response);
   
   printf("Press <enter> to run stream audio test\n");
-  free(request.http_url);
-  request.http_url = strdup(URL "/audio");
+  o_free(request.http_url);
+  request.http_url = o_strdup(URL "/audio");
   getchar();
   res = ulfius_send_http_streaming_request(&request, &response, my_write_meta_body, NULL);
   if (res == U_OK) {
@@ -61,8 +61,8 @@ int main(void) {
   ulfius_clean_response(&response);
   
   printf("Press <enter> to run no stream test\n");
-  free(request.http_url);
-  request.http_url = strdup("http://www.w3.org/");
+  o_free(request.http_url);
+  request.http_url = o_strdup("http://www.w3.org/");
   getchar();
   res = ulfius_send_http_request(&request, &response);
   if (res == U_OK) {

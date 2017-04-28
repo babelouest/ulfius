@@ -21,3 +21,4 @@ test/valgrind*.txt
 test/*.o
 test/core
 test/u_map
+test/framework

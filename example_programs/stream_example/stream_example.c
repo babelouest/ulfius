@@ -76,7 +76,7 @@ int main (int argc, char **argv) {
  * Callback function
  */
 int callback_get_stream (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  ulfius_set_stream_response(response, 200, stream_data, free_stream_data, -1, 32 * 1024, strdup("stream test"));
+  ulfius_set_stream_response(response, 200, stream_data, free_stream_data, -1, 32 * 1024, o_strdup("stream test"));
   return U_OK;
 }
 
@@ -127,7 +127,7 @@ ssize_t stream_audio_file (void * cls, uint64_t pos, char * buf, size_t max) {
 
 void free_stream_data(void * cls) {
   printf("clean data\n");
-  free(cls);
+  o_free(cls);
 }
 
 void free_stream_audio_file(void * cls) {

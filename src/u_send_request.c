@@ -555,25 +555,25 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
                 // libcurl cookie format is domain\tsecure\tpath\thttp_only\texpires\tkey\tvalue
                 switch (counter) {
                   case 0:
-                    domain = strdup(elt);
+                    domain = o_strdup(elt);
                     break;
                   case 1:
                     secure = (0==strcmp(elt, "TRUE"));
                     break;
                   case 2:
-                    path = strdup(elt);
+                    path = o_strdup(elt);
                     break;
                   case 3:
                     http_only = (0==strcmp(elt, "TRUE"));
                     break;
                   case 4:
-                    expires = strdup(elt);
+                    expires = o_strdup(elt);
                     break;
                   case 5:
-                    key = strdup(elt);
+                    key = o_strdup(elt);
                     break;
                   case 6:
-                    value = strdup(elt);
+                    value = o_strdup(elt);
                     break;
                 }
                 elt = strtok_r(NULL, "\t", &saveptr);

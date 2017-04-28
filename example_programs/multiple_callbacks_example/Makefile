@@ -22,7 +22,7 @@ LIBS=-L$(LIBYDER_LOCATION) -lc -lulfius -lyder -lorcania -L$(ULFIUS_LOCATION)
 all: multiple_callbacks_example
 
 clean:
-	rm -f *.o multiple_callbacks_example
+	rm -f *.o multiple_callbacks_example valgrind.txt
 
 debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
