@@ -165,27 +165,26 @@ int websocket_manager_callback(const struct _u_request * request,
                                const struct _websocket_manager_cls * websocket_manager_cls,
                                void * websocket_manager_user_data) {
   int i, ret;
-  struct _websocket_message my_message;
+  char * my_message;
   for (i=0; i<10; i++) {
     sleep(2);
-    my_message.opcode = WEBSOCKET_OPCODE_TEXT;
-    my_message.has_mask = 0;
-    my_message.data_len = 15;
-    my_message.data = msprintf("Gondor restored '%d'", i);
-    ret = ulfius_websocket_send_message(websocket_manager_cls, &my_message);
-    y_log_message(Y_LOG_LEVEL_DEBUG, "Send text message '%s': %d", my_message.data, ret);
-    o_free(my_message.data);
-    if (ret != U_OK) {
+    if (websocket_manager_cls->connected) {
+      my_message = msprintf("Gondor restored '%d'", i);
+      ret = ulfius_websocket_send_message(websocket_manager_cls, WEBSOCKET_OPCODE_TEXT, o_strlen(my_message), my_message);
+      y_log_message(Y_LOG_LEVEL_DEBUG, "Send text message '%s': %d", my_message, ret);
+      o_free(my_message);
+      if (ret != U_OK) {
+        break;
+      }
+    } else {
       break;
     }
   }
   sleep(2);
-  my_message.opcode = WEBSOCKET_OPCODE_CLOSE;
-  my_message.has_mask = 0;
-  my_message.data_len = 0;
-  my_message.data = NULL;
-  ret = ulfius_websocket_send_message(websocket_manager_cls, &my_message);
-  y_log_message(Y_LOG_LEVEL_DEBUG, "Send close message");
+  if (websocket_manager_cls->connected) {
+    ret = ulfius_websocket_send_message(websocket_manager_cls, WEBSOCKET_OPCODE_CLOSE, 0, NULL);
+    y_log_message(Y_LOG_LEVEL_DEBUG, "Send close message");
+  }
   return 0;
 }
 

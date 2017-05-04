@@ -6,9 +6,8 @@
 </head>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 <body>
-  <input type="button" id="start" name="start" value="Start websocket">
-  <input type="button" id="close" name="close" value="Close websocket"><br/>
-  <textarea name="sendMessage" id="sendMessage" cols="30" rows="10"></textarea><br>
+  <input type="button" id="connect" name="connect" value="Connect websocket"><br>
+  <textarea name="sendMessage" id="sendMessage" cols="80" rows="20"></textarea><br>
   <input type="button" id="send" name="send" value="Send message">
   <input type="button" id="clear" name="clear" value="Clear messages"><br/>
   <hr>
@@ -16,28 +15,35 @@
 </body>
 <script type="text/javascript">
   $(document).ready(function() {
-    var mySocket;
+    var mySocket = false;
     function connectSocket() {
-      mySocket = new WebSocket("ws://localhost:9275/websocket");
+      mySocket = new WebSocket("ws://localhost:9275/websocket", ["plop", "grut"]);
       mySocket.onmessage = function (event) {
-        var message = "<div><strong>Date: </strong>" + new Date() + "</div><p><strong>Message: </strong>" + event.data + "</p><hr>"
+        var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleDateString() + "</div><p><strong>Message: </strong>" + event.data + "</p><hr>"
         $("#receivedMessage").append(message);
+      };
+      mySocket.onclose = function () {
+        var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleDateString() + "</div><p><strong>Websocket closed</strong></p><hr>"
+        $("#receivedMessage").append(message);
+        $("#connect").val("Connect websocket");
       };
     }
     
-    $("#start").click(function() {
-      connectSocket();
-      console.log("Start websocket: ", mySocket);
+    $("#connect").click(function() {
+      if (!mySocket) {
+        connectSocket();
+        console.log("Start websocket: ", mySocket);
+        $(this).val("Disconnect websocket");
+      } else {
+      mySocket.close();
+      mySocket = false;
+      console.log("Websocket closed");
+      $(this).val("Connect websocket");
+      }
     });
     
     $("#clear").click(function() {
       $("#receivedMessage").text("");
-    });
-    
-    $("#close").click(function() {
-      mySocket.close();
-      mySocket = null;
-      console.log("Websocket closed");
     });
     
     $("#send").click(function() {
