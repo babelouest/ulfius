@@ -643,6 +643,10 @@ void stream_callback_free (void * stream_user_data);
 
 Check the program `stream_example` in the example folder.
 
+### Websockets communication
+
+TBD
+
 ### Character encoding
 
 You may be careful with characters encoding if you use non UTF8 characters in your application or webservice, and especially if you use different encodings in the same application. Ulfius has not been fully tested in cases like that.

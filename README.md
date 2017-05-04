@@ -6,6 +6,8 @@ Based on [GNU Libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/) for th
 
 Used to facilitate creation of web applications in C programs with a small memory footprint, as in embedded systems applications.
 
+Warning! The branch 2.0 is still in development and doesn't have all the features, use it only for tests or development, or use the master branch.
+
 ## Hello World! example application
 
 The source code of a hello world using Ulfius is the following:
@@ -28,7 +30,7 @@ The source code of a hello world using Ulfius is the following:
  */
 int callback_hello_world (const struct _u_request * request, struct _u_response * response, void * user_data) {
   ulfius_set_string_response(response, 200, "Hello World!");
-  return U_OK;
+  return U_CALLBACK_CONTINUE;
 }
 
 /**
@@ -89,7 +91,7 @@ Example callback functions are available in the folder `example_callbacks`, see 
 
 ## What's new in Ulfius 2.0 ?
 
-Ulfius 2.0 brings several changes that make the library incompatible with Ulfius 1.0.x branch. The goal of making Ulfius 2.0 is to make a spring cleaning of some functions, remove what is apparently useless, and should bring bugs and memory loss.
+Ulfius 2.0 brings several changes that make the library incompatible with Ulfius 1.0.x branch. The goal of making Ulfius 2.0 is to make a spring cleaning of some functions, remove what is apparently useless, and should bring bugs and memory loss. The main new features are multiple callback functions and websockets implementation.
 
 ### Multiple callback functions
 
@@ -228,6 +230,10 @@ $ sudo make install
 ### Ready-to-use callback functions
 
 You can find some ready-to-use callback functions in the folder `example_callbacks`.
+
+### Websockets
+
+Ulfius now allows websockets communication between the client and the server. Check the [API.md#websockets-communication](https://github.com/babelouest/ulfius/blob/master/API.md) file for implementation details.
 
 ## Questions, problems ?
 
