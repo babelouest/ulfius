@@ -17,6 +17,7 @@ example_programs/stream_example/stream_client
 example_programs/test_u_map/test_u_map
 example_programs/multiple_callbacks_example/multiple_callbacks_example
 example_programs/sheep_counter/sheep_counter
+example_programs/websocket_example/websocket_example
 test/valgrind*.txt
 test/*.o
 test/core
