@@ -3,7 +3,7 @@
 #
 # Makefile used to build all programs
 #
-# Copyright 2014-2015 Nicolas Mora <mail@babelouest.org>
+# Copyright 2014-2017 Nicolas Mora <mail@babelouest.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License
@@ -14,7 +14,7 @@
 #
 
 LIBULFIUS_LOCATION=./src
-LIBORCANIA_LOCATION=lib/orcania
+LIBORCANIA_LOCATION=lib/orcania/src
 LIBYDER_LOCATION=lib/yder/src
 EXAMPLES_LOCATION=./examples
 

@@ -19,7 +19,7 @@
 # License along with this library.	If not, see <http://www.gnu.org/licenses/>.
 #
 
-LIBORCANIA_LOCATION=../lib/orcania
+LIBORCANIA_LOCATION=../lib/orcania/src
 LIBYDER_LOCATION=../lib/yder/src
 PREFIX=/usr/local
 CC=gcc
