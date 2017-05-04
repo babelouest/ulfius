@@ -68,11 +68,11 @@ int main(void) {
 
 ## Installation
 
-See [INSTALL.md](https://github.com/babelouest/ulfius/blob/master/INSTALL.md) file for installation details
+See [INSTALL.md](INSTALL.md) file for installation details
 
 ## Documentation
 
-See [API.md](https://github.com/babelouest/ulfius/blob/master/API.md) file for API documentation details
+See [API.md](API.md) file for API documentation details
 
 ## Example programs source code
 
@@ -80,7 +80,7 @@ Example programs are available to see the different functionalities available, s
 
 ## Example callback functions
 
-Example callback functions are available in the folder `example_callbacks`, see the [example_callbacks README.md](https://github.com/babelouest/ulfius/blob/master/example_callbacks/README.md) file for detailed documentation.
+Example callback functions are available in the folder `example_callbacks`, see the [example_callbacks README.md](example_callbacks/README.md) file for detailed documentation.
 
 ## Projects using Ulfius framework
 
@@ -233,7 +233,7 @@ You can find some ready-to-use callback functions in the folder `example_callbac
 
 ### Websockets
 
-Ulfius now allows websockets communication between the client and the server. Check the [API.md](https://github.com/babelouest/ulfius/blob/master/API.md#websockets-communication) file for implementation details.
+Ulfius now allows websockets communication between the client and the server. Check the [API.md](API.md#websockets-communication) file for implementation details.
 
 ## Questions, problems ?
 
