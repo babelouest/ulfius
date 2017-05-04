@@ -258,6 +258,7 @@ int ulfius_init_request(struct _u_request * request) {
     u_map_init(request->map_header);
     u_map_init(request->map_cookie);
     u_map_init(request->map_post_body);
+    request->http_protocol = NULL;
     request->http_verb = NULL;
     request->http_url = NULL;
     request->timeout = 0L;
@@ -280,6 +281,7 @@ int ulfius_init_request(struct _u_request * request) {
  */
 int ulfius_clean_request(struct _u_request * request) {
   if (request != NULL) {
+    o_free(request->http_protocol);
     o_free(request->http_verb);
     o_free(request->http_url);
     o_free(request->auth_basic_user);
@@ -290,6 +292,7 @@ int ulfius_clean_request(struct _u_request * request) {
     u_map_clean_full(request->map_cookie);
     u_map_clean_full(request->map_post_body);
     o_free(request->binary_body);
+    request->http_protocol = NULL;
     request->http_verb = NULL;
     request->http_url = NULL;
     request->client_address = NULL;
@@ -331,9 +334,12 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request) 
       return NULL;
     }
     if (ulfius_init_request(new_request) == U_OK) {
+      new_request->http_protocol = o_strdup(request->http_protocol);
       new_request->http_verb = o_strdup(request->http_verb);
       new_request->http_url = o_strdup(request->http_url);
-      if ((new_request->http_verb == NULL && request->http_verb != NULL) || (new_request->http_url == NULL && request->http_url != NULL)) {
+      if ((new_request->http_verb == NULL && request->http_verb != NULL) ||
+          (new_request->http_url == NULL && request->http_url != NULL) ||
+          (new_request->http_protocol == NULL && request->http_protocol != NULL)) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for ulfius_duplicate_request");
         ulfius_clean_request_full(new_request);
         return NULL;

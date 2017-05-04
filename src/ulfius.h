@@ -191,6 +191,7 @@ struct _u_cookie {
  * Structure of request parameters
  * 
  * Contains request data
+ * http_protocol:             http protocol used (1.0 or 1.1)
  * http_verb:                 http method (GET, POST, PUT, DELETE, etc.), use '*' to match all http methods
  * http_url:                  url used to call this callback function or full url to call when used in a ulfius_send_http_request
  * check_server_certificate:  do not check server certificate and hostname if false (default true), used by ulfius_send_http_request
@@ -207,6 +208,7 @@ struct _u_cookie {
  * 
  */
 struct _u_request {
+  char *               http_protocol;
   char *               http_verb;
   char *               http_url;
   int                  check_server_certificate;
@@ -227,21 +229,26 @@ struct _u_request {
  * Structure of response parameters
  * 
  * Contains response data that must be set by the user
- * status:               HTTP status code (200, 404, 500, etc)
- * protocol:             HTTP Protocol sent
- * map_header:           map containing the header variables
- * nb_cookies:           number of cookies sent
- * map_cookie:           array of cookies sent
- * auth_realm:           realm to send to the client on authenticationb failed
- * binary_body:          a void * containing a raw binary content
- * binary_body_length:   the length of the binary_body
- * stream_callback:      callback function to stream data in response body
- * stream_callback_free: callback function to free data allocated for streaming
- * stream_size:          size of the streamed data (-1 if unknown)
- * stream_block_size:    size of each block to be streamed, set according to your system
- * stream_user_data:     user defined data that will be available in your callback stream functions
- * websocket_callback:   callback function to manipulate the websocket
- * shared_data:          any data shared between callback functions, must be allocated and freed by the callback functions
+ * status:                              HTTP status code (200, 404, 500, etc)
+ * protocol:                            HTTP Protocol sent
+ * map_header:                          map containing the header variables
+ * nb_cookies:                          number of cookies sent
+ * map_cookie:                          array of cookies sent
+ * auth_realm:                          realm to send to the client on authenticationb failed
+ * binary_body:                         a void * containing a raw binary content
+ * binary_body_length:                  the length of the binary_body
+ * stream_callback:                     callback function to stream data in response body
+ * stream_callback_free:                callback function to free data allocated for streaming
+ * stream_size:                         size of the streamed data (-1 if unknown)
+ * stream_block_size:                   size of each block to be streamed, set according to your system
+ * stream_user_data:                    user defined data that will be available in your callback stream functions
+ * websocket_manager_callback:          callback function for working with the websocket
+ * websocket_manager_user_data:         user-defined data that will be handled to websocket_manager_callback
+ * websocket_incoming_message_callback: callback function that will be called every time a message arrives from the client in the websocket
+ * websocket_incoming_user_data:        user-defined data that will be handled to websocket_incoming_message_callback
+ * websocket_onclose_callback:          callback function that will be called if the websocket is open while the program calls ulfius_stop_framework
+ * websocket_onclose_user_data:         user-defined data that will be handled to websocket_onclose_callback
+ * shared_data:                         any data shared between callback functions, must be allocated and freed by the callback functions
  * 
  */
 struct _u_response {

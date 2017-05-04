@@ -305,6 +305,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
     con_info->has_post_processor = 0;
     con_info->max_post_param_size = ((struct _u_instance *)cls)->max_post_param_size;
     u_map_init(&con_info->map_url_initial);
+    con_info->request->http_protocol = o_strdup(version);
     con_info->request->http_verb = o_strdup(method);
     con_info->request->client_address = o_malloc(sizeof(struct sockaddr));
     if (con_info->request->client_address == NULL || con_info->request->http_verb == NULL) {

@@ -72,7 +72,7 @@ void ulfius_start_websocket_cb (void *cls,
             const char * extra_in,
             size_t extra_in_size,
             MHD_socket sock,
-            struct MHD_UpgradeResponseHandle *urh) {
+            struct MHD_UpgradeResponseHandle * urh) {
   int len, flags, i, message_complete = 0, message_error = 0;
   size_t msg_len;
   struct _websocket_cls * ws_cls = (struct _websocket_cls*)cls;
@@ -169,24 +169,26 @@ void ulfius_start_websocket_cb (void *cls,
             }
           }
           if (!message_error) {
-            payload_data = o_malloc(msg_len*sizeof(uint8_t));
-            len = read(sock, payload_data, msg_len);
-            if (len == msg_len) {
-              // If mask, decode message
-              if (message->has_mask) {
-                message->data = o_realloc(message->data, (msg_len+message->data_len)*sizeof(uint8_t));
-                for (i = message->data_len; i < msg_len; i++) {
-                  message->data[i] = payload_data[i-message->data_len] ^ masking_key[(i-message->data_len)%4];
+            if (msg_len > 0) {
+              payload_data = o_malloc(msg_len*sizeof(uint8_t));
+              len = read(sock, payload_data, msg_len);
+              if (len == msg_len) {
+                // If mask, decode message
+                if (message->has_mask) {
+                  message->data = o_realloc(message->data, (msg_len+message->data_len)*sizeof(uint8_t));
+                  for (i = message->data_len; i < msg_len; i++) {
+                    message->data[i] = payload_data[i-message->data_len] ^ masking_key[(i-message->data_len)%4];
+                  }
+                } else {
+                  memcpy(message->data+message->data_len, payload_data, msg_len);
                 }
+                message->data_len += msg_len;
               } else {
-                memcpy(message->data+message->data_len, payload_data, msg_len);
+                message_error = 1;
+                y_log_message(Y_LOG_LEVEL_ERROR, "Error reading socket for payload_data");
               }
-              message->data_len += msg_len;
-            } else {
-              message_error = 1;
-              y_log_message(Y_LOG_LEVEL_ERROR, "Error reading socket for payload_data");
+              o_free(payload_data);
             }
-            o_free(payload_data);
             if (!message_error && (header[0] & WEBSOCKET_BIT_FIN)) {
               push_message(&message_list_incoming, message);
               if (ws_cls->websocket_incoming_message_callback != NULL) {
@@ -212,7 +214,6 @@ void ulfius_start_websocket_cb (void *cls,
                 if (ulfius_websocket_send_message(&wsm_cls, WEBSOCKET_OPCODE_CLOSE, 0, NULL) != U_OK) {
                   y_log_message(Y_LOG_LEVEL_ERROR, "Error sending close command");
                 }
-                close(sock);
                 wsm_cls.connected = 0;
               }
               message = NULL;
@@ -233,6 +234,7 @@ void ulfius_start_websocket_cb (void *cls,
   clear_message_list(&message_list_incoming);
   clear_message_list(&message_list_outcoming);
   o_free(cls);
+  MHD_upgrade_action (urh, MHD_UPGRADE_ACTION_CLOSE);
 }
 
 int generate_handshake_answer(const char * key, char * out_digest) {
@@ -392,6 +394,8 @@ int ulfius_websocket_send_message(const struct _websocket_manager_cls * websocke
       if (data_len > 0) {
         memcpy(sent_data + off, data, data_len);
         memcpy(my_message->data, data, data_len);
+      } else {
+        my_message->data = NULL;
       }
       send_all(websocket_manager_cls->sock, sent_data, frame_data_len);
       push_message(websocket_manager_cls->message_list_outcoming, my_message);
