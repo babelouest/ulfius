@@ -24,7 +24,7 @@ LIBYDER_LOCATION=../lib/yder/src
 PREFIX=/usr/local
 CC=gcc
 CFLAGS=-c -fPIC -Wall -D_REENTRANT -I$(PREFIX)/include -I$(LIBORCANIA_LOCATION) -I$(LIBYDER_LOCATION) $(ADDITIONALFLAGS) $(JANSSONFLAG) $(CURLFLAG)
-LIBS=-L$(PREFIX)/lib -L$(LIBORCANIA_LOCATION) -L$(LIBYDER_LOCATION) -lc -lmicrohttpd -lyder -lorcania
+LIBS=-L$(PREFIX)/lib -L$(LIBORCANIA_LOCATION) -L$(LIBYDER_LOCATION) -lc -lmicrohttpd -lyder -lorcania -lpthread
 OUTPUT=libulfius.so
 VERSION=2.0
 
@@ -36,10 +36,14 @@ ifneq (($(CURLFLAG)),"")
 LCURL=-lcurl
 endif
 
+ifneq (($(WEBSOCKETFLAG)),"")
+LWEBSOCKET=-lcrypto -lcrypt
+endif
+
 all: release
 
-libulfius.so: ulfius.o u_map.o u_request.o u_response.o u_send_request.o
-	$(CC) -shared -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) ulfius.o u_map.o u_request.o u_response.o u_send_request.o $(LIBS) $(LJANSSON) $(LCURL)
+libulfius.so: ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o
+	$(CC) -shared -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o $(LIBS) $(LJANSSON) $(LCURL) $(LWEBSOCKET)
 	ln -sf $(OUTPUT).$(VERSION) $(OUTPUT)
 
 ulfius.o: ulfius.h ulfius.c
@@ -53,6 +57,9 @@ u_request.o: ulfius.h u_request.c
 
 u_response.o: ulfius.h u_response.c
 	$(CC) $(CFLAGS) $(FLAGS_YDER) u_response.c
+
+u_websocket.o: ulfius.h u_websocket.c
+	$(CC) $(CFLAGS) $(FLAGS_YDER) u_websocket.c
 
 u_send_request.o: ulfius.h u_send_request.c
 	$(CC) $(CFLAGS) $(FLAGS_YDER) u_send_request.c

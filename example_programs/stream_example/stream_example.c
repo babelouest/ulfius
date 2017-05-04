@@ -77,7 +77,7 @@ int main (int argc, char **argv) {
  */
 int callback_get_stream (const struct _u_request * request, struct _u_response * response, void * user_data) {
   ulfius_set_stream_response(response, 200, stream_data, free_stream_data, -1, 32 * 1024, o_strdup("stream test"));
-  return U_OK;
+  return U_CALLBACK_CONTINUE;
 }
 
 int callback_get_audio_stream (const struct _u_request * request, struct _u_response * response, void * user_data) {
@@ -101,9 +101,9 @@ int callback_get_audio_stream (const struct _u_request * request, struct _u_resp
     }
     u_map_put(response->map_header, "Content-Type", "audio/mpeg");
     ulfius_set_stream_response(response, 200, stream_audio_file, free_stream_audio_file, buf.st_size, 32 * 1024, file);
-    return U_OK;
+    return U_CALLBACK_CONTINUE;
   } else {
-    return U_ERROR;
+    return U_CALLBACK_ERROR;
   }
 }
 
@@ -114,7 +114,7 @@ ssize_t stream_data (void * cls, uint64_t pos, char * buf, size_t max) {
       snprintf(buf, max, "%s %" PRIu64 "\n", (char *)cls, pos);
       return strlen(buf);
   } else {
-    return ULFIUS_STREAM_END;
+    return U_STREAM_END;
   }
 }
 

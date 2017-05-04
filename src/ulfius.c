@@ -134,7 +134,7 @@ void * ulfius_uri_logger (void * cls, const char * uri) {
  * 
  */
 struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem) {
-  uint mhd_flags = MHD_USE_THREAD_PER_CONNECTION | MHD_USE_INTERNAL_POLLING_THREAD;
+  uint mhd_flags = MHD_USE_THREAD_PER_CONNECTION | MHD_USE_INTERNAL_POLLING_THREAD | MHD_ALLOW_UPGRADE;
 #ifdef DEBUG
   mhd_flags |= MHD_USE_DEBUG;
 #endif
@@ -280,7 +280,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
 
   struct _u_endpoint * endpoint_list = ((struct _u_instance *)cls)->endpoint_list, ** current_endpoint_list = NULL, * current_endpoint = NULL;
   struct connection_info_struct * con_info = * con_cls;
-  int mhd_ret = MHD_NO, callback_ret = U_OK, i, close_loop = 0, inner_error = U_OK;
+  int mhd_ret = MHD_NO, callback_ret = U_OK, i, close_loop = 0, inner_error = U_OK, upgrade_protocol = 0;
   char * content_type, * auth_realm = NULL;
   struct _u_response * response = NULL;
   struct sockaddr * so_client;
@@ -404,7 +404,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
           callback_ret = current_endpoint->callback_function(con_info->request, response, current_endpoint->user_data);
           if (response->stream_callback != NULL) {
             // Call the stream_callback function to build the response binary_body
-            // A stram_callback always is the last one
+            // A stram_callback is always the last one
             mhd_response = MHD_create_response_from_callback(response->stream_size, response->stream_block_size, (MHD_ContentReaderCallback)response->stream_callback, response->stream_user_data, response->stream_callback_free);
             if (mhd_response == NULL) {
               y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error MHD_create_response_from_callback");
@@ -413,6 +413,48 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
               y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
               mhd_ret = MHD_NO;
             }
+            close_loop = 1;
+          } else if (response->websocket_manager_callback != NULL || response->websocket_incoming_message_callback != NULL) {
+            // if the session is a valid websocket request,
+            // Initiate an UPGRADE session, then
+            // Run the websocket callback functions with initialized data
+            if (0 == o_strcasecmp(u_map_get_case(con_info->request->map_header, "upgrade"), WEBSOCKET_UPGRADE_VALUE) && u_map_get(con_info->request->map_header, "Sec-WebSocket-Key") != NULL) {
+              char websocket_accept[32] = {0};
+              if (generate_handshake_answer(u_map_get(con_info->request->map_header, "Sec-WebSocket-Key"), websocket_accept)) {
+                struct _websocket_cls * cls = malloc(sizeof(struct _websocket_cls));
+                if (cls != NULL) {
+                  cls->request = con_info->request;
+                  cls->websocket_manager_callback = response->websocket_manager_callback;
+                  cls->websocket_manager_user_data = response->websocket_manager_user_data;
+                  cls->websocket_incoming_message_callback = response->websocket_incoming_message_callback;
+                  cls->websocket_incoming_user_data = response->websocket_incoming_user_data;
+                  cls->tls = 0;
+                  mhd_response = MHD_create_response_for_upgrade(ulfius_start_websocket_cb, cls);
+                  MHD_add_response_header (mhd_response,
+                                           MHD_HTTP_HEADER_UPGRADE,
+                                           WEBSOCKET_UPGRADE_VALUE);
+                  MHD_add_response_header (mhd_response,
+                                           "Sec-WebSocket-Accept",
+                                           websocket_accept);
+                  if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
+                    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
+                    mhd_ret = MHD_NO;
+                  } else {
+                    upgrade_protocol = 1;
+                  }
+                } else {
+                  // TODO: error 500
+                  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error 500");
+                }
+              } else {
+                // TODO: error 500
+                y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error 500");
+              }
+            } else {
+              // TODO: error 400
+              y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error 400");
+            }
+            close_loop = 1;
           } else {
             if (callback_ret == U_CALLBACK_CONTINUE && current_endpoint_list[i+1] == NULL) {
               // If callback_ret is U_CALLBACK_CONTINUE but callback function is the last one on the list
@@ -505,6 +547,10 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
           mhd_ret = MHD_queue_basic_auth_fail_response (connection, auth_realm, mhd_response);
         } else if (inner_error == U_CALLBACK_UNAUTHORIZED) {
           mhd_ret = MHD_queue_response (connection, MHD_HTTP_UNAUTHORIZED, mhd_response);
+        } else if (upgrade_protocol) {
+          mhd_ret = MHD_queue_response (connection,
+                                    MHD_HTTP_SWITCHING_PROTOCOLS,
+                                    mhd_response);
         } else {
           mhd_ret = MHD_queue_response (connection, response->status, mhd_response);
         }

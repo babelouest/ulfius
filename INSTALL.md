@@ -7,7 +7,7 @@
 To install the external dependencies, for Debian based distributions (Debian, Ubuntu, Raspbian, etc.), run as root:
 
 ```shell
-# apt-get install libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev
+# apt-get install libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev libssl-dev
 ```
 
 ### Note
@@ -42,7 +42,13 @@ To disable libjansson functions, append the option `JANSSONFLAG=-DU_DISABLE_JANS
 $ make JANSSONFLAG=-DU_DISABLE_JANSSON
 ```
 
-To disable both libraries, append both options:
+To disable websocket implementation and avoid installing libssl, append the option `WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET` to the make command:
+
+```shell
+$ make WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET
+```
+
+To disable two or more libraries, append options:
 
 ```shell
 $ make CURLFLAG=-DU_DISABLE_CURL JANSSONFLAG=-DU_DISABLE_JANSSON

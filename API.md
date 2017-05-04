@@ -633,7 +633,7 @@ The return value must be the size of the data put in `out_buf`.
 
 This function will be called over and over in loop as long as the client has the connection opened.
 
-If you want to close the stream from the server side, return `ULFIUS_STREAM_END` in the `stream_callback` function. If you a problem occured, you can close the connection with a `ULFIUS_STREAM_ERROR` return value.
+If you want to close the stream from the server side, return `U_STREAM_END` in the `stream_callback` function. If you a problem occured, you can close the connection with a `U_STREAM_ERROR` return value.
 
 While the `stream_callback_free` function is as simple as:
 

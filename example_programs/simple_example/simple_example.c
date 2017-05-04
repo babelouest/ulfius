@@ -161,14 +161,14 @@ int main (int argc, char **argv) {
  */
 int callback_get_test (const struct _u_request * request, struct _u_response * response, void * user_data) {
   ulfius_set_string_response(response, 200, "Hello World!");
-  return U_CALLBACK_COMPLETE;
+  return U_CALLBACK_CONTINUE;
 }
 
 /**
  * Callback function that put an empty response and a status 200
  */
 int callback_get_empty_response (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  return U_CALLBACK_COMPLETE;
+  return U_CALLBACK_CONTINUE;
 }
 
 /**
@@ -180,7 +180,7 @@ int callback_post_test (const struct _u_request * request, struct _u_response * 
   ulfius_set_string_response(response, 200, response_body);
   o_free(response_body);
   o_free(post_params);
-  return U_CALLBACK_COMPLETE;
+  return U_CALLBACK_CONTINUE;
 }
 
 /**
@@ -197,7 +197,7 @@ int callback_all_test_foo (const struct _u_request * request, struct _u_response
   o_free(cookies);
   o_free(post_params);
   o_free(response_body);
-  return U_CALLBACK_COMPLETE;
+  return U_CALLBACK_CONTINUE;
 }
 
 /**
@@ -222,7 +222,7 @@ int callback_get_cookietest (const struct _u_request * request, struct _u_respon
   ulfius_add_cookie_to_response(response, "counter", new_counter, NULL, 0, NULL, NULL, 0, 0);
   ulfius_set_string_response(response, 200, "Cookies set!");
   
-  return U_CALLBACK_COMPLETE;
+  return U_CALLBACK_CONTINUE;
 }
 
 /**
@@ -230,5 +230,5 @@ int callback_get_cookietest (const struct _u_request * request, struct _u_respon
  */
 int callback_default (const struct _u_request * request, struct _u_response * response, void * user_data) {
   ulfius_set_string_response(response, 404, "Page not found, do what you want");
-  return U_CALLBACK_COMPLETE;
+  return U_CALLBACK_CONTINUE;
 }

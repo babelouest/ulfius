@@ -1,0 +1,54 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Websocket example</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<body>
+  <input type="button" id="start" name="start" value="Start websocket">
+  <input type="button" id="close" name="close" value="Close websocket"><br/>
+  <textarea name="sendMessage" id="sendMessage" cols="30" rows="10"></textarea><br>
+  <input type="button" id="send" name="send" value="Send message">
+  <input type="button" id="clear" name="clear" value="Clear messages"><br/>
+  <hr>
+  <div style="width=100%; height=100%" id="receivedMessage"></div>
+</body>
+<script type="text/javascript">
+  $(document).ready(function() {
+    var mySocket;
+    function connectSocket() {
+      mySocket = new WebSocket("ws://localhost:9275/websocket");
+      mySocket.onmessage = function (event) {
+        var message = "<div><strong>Date: </strong>" + new Date() + "</div><p><strong>Message: </strong>" + event.data + "</p><hr>"
+        $("#receivedMessage").append(message);
+      };
+    }
+    
+    $("#start").click(function() {
+      connectSocket();
+      console.log("Start websocket: ", mySocket);
+    });
+    
+    $("#clear").click(function() {
+      $("#receivedMessage").text("");
+    });
+    
+    $("#close").click(function() {
+      mySocket.close();
+      mySocket = null;
+      console.log("Websocket closed");
+    });
+    
+    $("#send").click(function() {
+      if ($("#sendMessage").val()) {
+        if (!mySocket) {
+          connectSocket();
+        }
+        mySocket.send($("#sendMessage").val());
+        console.log("message sent: ", $("#sendMessage").val());
+      }
+    });
+  });
+</script>
+</html>

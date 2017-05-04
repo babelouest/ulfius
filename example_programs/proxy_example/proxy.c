@@ -75,5 +75,5 @@ int callback_get (const struct _u_request * request, struct _u_response * respon
   ulfius_copy_response(response, res);
   ulfius_clean_response_full(res);
   ulfius_clean_request_full(req);
-  return U_OK;
+  return U_CALLBACK_CONTINUE;
 }

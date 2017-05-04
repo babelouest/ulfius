@@ -167,7 +167,7 @@ int callback_sheep_counter_start (const struct _u_request * request, struct _u_r
   ulfius_set_json_response(response, 200, json_body);
   json_decref(json_nb_sheep);
   json_decref(json_body);
-  return U_OK;
+  return U_CALLBACK_CONTINUE;
 }
 
 /**
@@ -188,7 +188,7 @@ int callback_sheep_counter_reset (const struct _u_request * request, struct _u_r
   ulfius_set_json_response(response, 200, json_body);
   json_decref(json_body);
   
-  return U_OK;
+  return U_CALLBACK_CONTINUE;
 }
 
 /**
@@ -210,7 +210,7 @@ int callback_sheep_counter_add (const struct _u_request * request, struct _u_res
   ulfius_set_json_response(response, 200, json_body);
   json_decref(json_body);
   
-  return U_OK;
+  return U_CALLBACK_CONTINUE;
 }
 
 /**
@@ -249,7 +249,7 @@ int callback_static_file (const struct _u_request * request, struct _u_response 
     response->status = 404;
   }
   o_free(file_path);
-  return U_OK;
+  return U_CALLBACK_CONTINUE;
 }
 
 /**
@@ -266,5 +266,5 @@ int callback_upload_file (const struct _u_request * request, struct _u_response 
   o_free(headers);
   o_free(cookies);
   o_free(post_params);
-  return U_OK;
+  return U_CALLBACK_CONTINUE;
 }

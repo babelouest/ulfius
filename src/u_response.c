@@ -401,6 +401,12 @@ int ulfius_init_response(struct _u_response * response) {
     response->stream_block_size = ULFIUS_STREAM_BLOCK_SIZE_DEFAULT;
     response->stream_callback_free = NULL;
     response->shared_data = NULL;
+#ifndef U_DISABLE_WEBSOCKET
+    response->websocket_manager_callback = NULL;
+    response->websocket_manager_user_data = NULL;
+    response->websocket_incoming_message_callback = NULL;
+    response->websocket_incoming_user_data = NULL;
+#endif
     return U_OK;
   } else {
     return U_ERROR_PARAMS;
