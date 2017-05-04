@@ -233,7 +233,7 @@ You can find some ready-to-use callback functions in the folder `example_callbac
 
 ### Websockets
 
-Ulfius now allows websockets communication between the client and the server. Check the [API.md#websockets-communication](https://github.com/babelouest/ulfius/blob/master/API.md) file for implementation details.
+Ulfius now allows websockets communication between the client and the server. Check the [API.md](https://github.com/babelouest/ulfius/blob/master/API.md#websockets-communication) file for implementation details.
 
 ## Questions, problems ?
 
