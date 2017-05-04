@@ -24,6 +24,7 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
 #include "ulfius.h"
 
 /**
@@ -414,11 +415,14 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
               mhd_ret = MHD_NO;
             }
             close_loop = 1;
+#if !defined(U_DISABLE_WEBSOCKET)
           } else if (response->websocket_manager_callback != NULL || response->websocket_incoming_message_callback != NULL) {
             // if the session is a valid websocket request,
             // Initiate an UPGRADE session, then
             // Run the websocket callback functions with initialized data
-            if (0 == o_strcasecmp(u_map_get_case(con_info->request->map_header, "upgrade"), WEBSOCKET_UPGRADE_VALUE) && u_map_get(con_info->request->map_header, "Sec-WebSocket-Key") != NULL) {
+            if (NULL != o_strcasestr(u_map_get_case(con_info->request->map_header, "upgrade"), WEBSOCKET_UPGRADE_VALUE) &&
+                u_map_get(con_info->request->map_header, "Sec-WebSocket-Key") != NULL &&
+                0 == o_strcmp(con_info->request->http_verb, "GET")) {
               char websocket_accept[32] = {0};
               if (generate_handshake_answer(u_map_get(con_info->request->map_header, "Sec-WebSocket-Key"), websocket_accept)) {
                 struct _websocket_cls * cls = malloc(sizeof(struct _websocket_cls));
@@ -455,6 +459,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
               y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error 400");
             }
             close_loop = 1;
+#endif
           } else {
             if (callback_ret == U_CALLBACK_CONTINUE && current_endpoint_list[i+1] == NULL) {
               // If callback_ret is U_CALLBACK_CONTINUE but callback function is the last one on the list

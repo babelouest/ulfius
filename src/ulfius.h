@@ -76,12 +76,12 @@
 #define U_CALLBACK_UNAUTHORIZED 2
 #define U_CALLBACK_ERROR        3
 
-#ifndef U_DISABLE_WEBSOCKET
+#if !defined(U_DISABLE_WEBSOCKET)
 /**********************************
  * Websocket functions declarations
  **********************************/
 
-#define WEBSOCKET_MAGIC_STRING "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+#define WEBSOCKET_MAGIC_STRING  "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 #define WEBSOCKET_UPGRADE_VALUE "websocket"
 
 #define WEBSOCKET_BIT_FIN         0x80
@@ -96,7 +96,10 @@
 #define WEBSOCKET_OPCODE_NONE     0xFF
 
 struct _websocket_manager_cls {
-  struct _websocket_message_list * message_list;
+  struct _websocket_message_list * message_list_incoming;
+  struct _websocket_message_list * message_list_outcoming;
+  int tls;
+  int connected;
   MHD_socket sock;
 };
 
@@ -124,6 +127,10 @@ struct _websocket_cls {
                                                             const struct _websocket_message * message,
                                                             void * websocket_incoming_user_data);
   void              * websocket_incoming_user_data;
+  int              (* websocket_onclose_callback) (const struct _u_request * request,
+                                                  const struct _websocket_manager_cls * websocket_manager_cls,
+                                                  void * websocket_onclose_user_data);
+  void              * websocket_onclose_user_data;
   int                 tls;
 };
 
@@ -137,7 +144,10 @@ void ulfius_start_websocket_cb (void *cls,
 void send_all(MHD_socket sock, const uint8_t * data, size_t len);
 
 int generate_handshake_answer(const char * key, char * out_digest);
-int ulfius_websocket_send_message(const struct _websocket_manager_cls * websocket_manager_cls, struct _websocket_message * message);
+int ulfius_websocket_send_message(const struct _websocket_manager_cls * websocket_manager_cls,
+                                  const uint8_t opcode,
+                                  const uint64_t data_len,
+                                  const char * data);
 
 int init_message_list(struct _websocket_message_list * message_list);
 void clear_message_list(struct _websocket_message_list * message_list);
@@ -248,16 +258,20 @@ struct _u_response {
   size_t             stream_size;
   unsigned int       stream_block_size;
   void             * stream_user_data;
-#ifndef U_DISABLE_WEBSOCKET
+#if !defined(U_DISABLE_WEBSOCKET)
   int             (* websocket_manager_callback) (const struct _u_request * request,
                                                   const struct _websocket_manager_cls * websocket_manager_cls,
-                                                  void * websocket_user_data);
+                                                  void * websocket_manager_user_data);
   void             * websocket_manager_user_data;
   int             (* websocket_incoming_message_callback) (const struct _u_request * request,
                                                            const struct _websocket_manager_cls * websocket_manager_cls,
                                                            const struct _websocket_message * message,
-                                                           void * websocket_user_data);
+                                                           void * websocket_incoming_user_data);
   void             * websocket_incoming_user_data;
+  int             (* websocket_onclose_callback) (const struct _u_request * request,
+                                                  const struct _websocket_manager_cls * websocket_manager_cls,
+                                                  void * websocket_onclose_user_data);
+  void             * websocket_onclose_user_data;
 #endif
   void *             shared_data;
 };

@@ -24,6 +24,7 @@
  */
 #ifndef U_DISABLE_CURL
 
+#include <stdlib.h>
 #include <ctype.h>
 #include <curl/curl.h>
 #include <string.h>
