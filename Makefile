@@ -33,8 +33,6 @@ endif
 all: libulfius.so
 
 debug:
-	cd $(LIBORCANIA_LOCATION) && $(MAKE) debug $(ADD_JANSSONFLAG)
-	cd $(LIBYDER_LOCATION) && $(MAKE) debug
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) debug $(ADD_JANSSONFLAG) $(ADD_CURLFLAG) $(ADD_WEBSOCKETFLAG)
 
 clean:
@@ -44,16 +42,10 @@ clean:
 	cd $(EXAMPLES_LOCATION) && $(MAKE) clean
 
 install:
-	cd $(LIBORCANIA_LOCATION) && $(MAKE) install
-	cd $(LIBYDER_LOCATION) && $(MAKE) install
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) install
 
 uninstall:
-	cd $(LIBORCANIA_LOCATION) && $(MAKE) uninstall
-	cd $(LIBYDER_LOCATION) && $(MAKE) uninstall
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) uninstall
 
 libulfius.so:
-	cd $(LIBORCANIA_LOCATION) && $(MAKE) $(ADD_JANSSONFLAG)
-	cd $(LIBYDER_LOCATION) && $(MAKE)
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) $(ADD_JANSSONFLAG) $(ADD_CURLFLAG) $(ADD_WEBSOCKETFLAG)
