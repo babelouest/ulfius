@@ -166,7 +166,7 @@ int websocket_manager_callback(const struct _u_request * request,
                                void * websocket_manager_user_data) {
   int i, ret;
   char * my_message;
-  for (i=0; i<10; i++) {
+  for (i=0; i<5; i++) {
     sleep(2);
     if (websocket_manager_cls->connected) {
       my_message = msprintf("Gondor restored '%d'", i);
@@ -185,6 +185,7 @@ int websocket_manager_callback(const struct _u_request * request,
     ret = ulfius_websocket_send_message(websocket_manager_cls, WEBSOCKET_OPCODE_CLOSE, 0, NULL);
     y_log_message(Y_LOG_LEVEL_DEBUG, "Send close message");
   }
+  y_log_message(Y_LOG_LEVEL_DEBUG, "Closing websocket_manager_callback");
   return 0;
 }
 

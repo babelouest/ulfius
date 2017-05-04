@@ -19,11 +19,11 @@
     function connectSocket() {
       mySocket = new WebSocket("ws://localhost:9275/websocket", ["plop", "grut"]);
       mySocket.onmessage = function (event) {
-        var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleDateString() + "</div><p><strong>Message: </strong>" + event.data + "</p><hr>"
+        var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Message: </strong>" + event.data + "</p><hr>"
         $("#receivedMessage").append(message);
       };
       mySocket.onclose = function () {
-        var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleDateString() + "</div><p><strong>Websocket closed</strong></p><hr>"
+        var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Websocket closed</strong></p><hr>"
         $("#receivedMessage").append(message);
         $("#connect").val("Connect websocket");
       };
