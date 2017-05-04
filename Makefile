@@ -16,7 +16,7 @@
 LIBULFIUS_LOCATION=./src
 LIBORCANIA_LOCATION=lib/orcania/src
 LIBYDER_LOCATION=lib/yder/src
-EXAMPLES_LOCATION=./examples
+EXAMPLES_LOCATION=./example_programs
 
 all: libulfius.so
 
