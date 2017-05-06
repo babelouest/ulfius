@@ -205,6 +205,7 @@ int ulfius_start_framework(struct _u_instance * u_instance) {
       return U_ERROR_LIBMHD;
     } else {
       u_instance->status = U_STATUS_RUNNING;
+      u_instance->secure = 0;
       return U_OK;
     }
   } else {
@@ -233,6 +234,7 @@ int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * 
       return U_ERROR_LIBMHD;
     } else {
       u_instance->status = U_STATUS_RUNNING;
+      u_instance->secure = 1;
       return U_OK;
     }
   } else {
@@ -435,7 +437,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
                    * protocol = check_list_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Protocol"), response->websocket_protocol);
               if (extensions != NULL && protocol != NULL) {
                 char websocket_accept[32] = {0};
-                if (generate_handshake_answer(u_map_get(con_info->request->map_header, "Sec-WebSocket-Key"), websocket_accept)) {
+                if (ulfius_generate_handshake_answer(u_map_get(con_info->request->map_header, "Sec-WebSocket-Key"), websocket_accept)) {
                   struct _websocket * websocket = o_malloc(sizeof(struct _websocket));
                   if (websocket != NULL) {
                     websocket->instance = (struct _u_instance *)cls;
@@ -476,7 +478,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
                     }
                   }
                 } else {
-                  // Error building generate_handshake_answer, sending error 500
+                  // Error building ulfius_generate_handshake_answer, sending error 500
                   response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
                   response_buffer = o_strdup(ULFIUS_HTTP_ERROR_BODY);
                   if (response_buffer == NULL) {

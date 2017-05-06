@@ -4,7 +4,7 @@
  * 
  * REST framework library
  * 
- * ulfius.h: structures and functions declarations
+ * ulfius.h: public structures and functions declarations
  * 
  * Copyright 2015-2017 Nicolas Mora <mail@babelouest.org>
  *
@@ -37,22 +37,6 @@
 #include <jansson.h>
 #endif
 
-/** Macro values **/
-#define ULFIUS_URL_SEPARATOR       "/"
-#define ULFIUS_HTTP_ENCODING_JSON  "application/json"
-#define ULFIUS_HTTP_HEADER_CONTENT "Content-Type"
-#define ULFIUS_HTTP_NOT_FOUND_BODY "Resource not found"
-#define ULFIUS_HTTP_ERROR_BODY     "Server Error"
-
-#define ULFIUS_COOKIE_ATTRIBUTE_EXPIRES  "Expires"
-#define ULFIUS_COOKIE_ATTRIBUTE_MAX_AGE  "Max-Age"
-#define ULFIUS_COOKIE_ATTRIBUTE_DOMAIN   "Domain"
-#define ULFIUS_COOKIE_ATTRIBUTE_PATH     "Path"
-#define ULFIUS_COOKIE_ATTRIBUTE_SECURE   "Secure"
-#define ULFIUS_COOKIE_ATTRIBUTE_HTTPONLY "HttpOnly"
-
-#define ULFIUS_POSTBUFFERSIZE 1024
-
 #define ULFIUS_STREAM_BLOCK_SIZE_DEFAULT 1024
 #define U_STREAM_END MHD_CONTENT_READER_END_OF_STREAM
 #define U_STREAM_ERROR MHD_CONTENT_READER_END_WITH_ERROR
@@ -64,10 +48,6 @@
 #define U_ERROR_LIBMHD       4 // Error in libmicrohttpd execution
 #define U_ERROR_LIBCURL      5 // Error in libcurl execution
 #define U_ERROR_NOT_FOUND    6 // Something was not found
-
-#define U_STATUS_STOP     0
-#define U_STATUS_RUNNING  1
-#define U_STATUS_ERROR    2
 
 #define ULFIUS_VERSION 2.0
 
@@ -272,6 +252,7 @@ struct _u_instance {
   size_t                        max_post_param_size;
   size_t                        max_post_body_size;
 #if !defined(U_DISABLE_WEBSOCKET)
+  int                           secure;
   size_t                        nb_websocket_active;
   struct _websocket          ** websocket_active;
 #endif
@@ -845,6 +826,142 @@ int u_map_count(const struct _u_map * source);
  */
 int u_map_empty(struct _u_map * u_map);
 
+#if !defined(U_DISABLE_WEBSOCKET)
+/**********************************
+ * Websocket functions declarations
+ **********************************/
+
+#define U_WEBSOCKET_MAGIC_STRING     "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+#define U_WEBSOCKET_UPGRADE_VALUE    "websocket"
+#define U_WEBSOCKET_BAD_REQUEST_BODY "Error in websocket handshake, wrong parameters"
+
+#define U_WEBSOCKET_BIT_FIN         0x80
+#define U_WEBSOCKET_HAS_MASK        0x80
+#define U_WEBSOCKET_LEN_MASK        0x7F
+#define U_WEBSOCKET_OPCODE_CONTINUE 0x00
+#define U_WEBSOCKET_OPCODE_TEXT     0x01
+#define U_WEBSOCKET_OPCODE_BINARY   0x01
+#define U_WEBSOCKET_OPCODE_CLOSE    0x08
+#define U_WEBSOCKET_OPCODE_PING     0x09
+#define U_WEBSOCKET_OPCODE_PONG     0x0A
+#define U_WEBSOCKET_OPCODE_ERROR    0xFF
+
+/**
+ * Websocket manager structure
+ * contains among other things the socket
+ * the status (open, closed), and the list of incoming and outcoming messages
+ * Used on public callback functions
+ */
+struct _websocket_manager {
+  struct _websocket_message_list * message_list_incoming;
+  struct _websocket_message_list * message_list_outcoming;
+  int tls;
+  int connected;
+  MHD_socket sock;
+  int closed;
+};
+
+/**
+ * websocket message structure
+ * contains all the data of a websocket message
+ * and the timestamp of when it was sent of received
+ */
+struct _websocket_message {
+  time_t datestamp;
+  uint8_t opcode;
+  uint8_t has_mask;
+  uint8_t mask[4];
+  uint64_t data_len;
+  char * data;
+};
+
+struct _websocket_message_list {
+  struct _websocket_message ** list;
+  size_t len;
+};
+
+/**
+ * websocket structure
+ * contains all the data of the websocket
+ */
+struct _websocket {
+  struct _u_instance               * instance;
+  struct _u_request                * request;
+  char                             * websocket_protocol;
+  char                             * websocket_extensions;
+  void                             (* websocket_manager_callback) (const struct _u_request * request,
+                                                                  const struct _websocket_manager * websocket_manager,
+                                                                  void * websocket_manager_user_data);
+  void                             * websocket_manager_user_data;
+  void                             (* websocket_incoming_message_callback) (const struct _u_request * request,
+                                                                           const struct _websocket_manager * websocket_manager,
+                                                                           const struct _websocket_message * message,
+                                                                           void * websocket_incoming_user_data);
+  void                             * websocket_incoming_user_data;
+  void                             (* websocket_onclose_callback) (const struct _u_request * request,
+                                                                  const struct _websocket_manager * websocket_manager,
+                                                                  void * websocket_onclose_user_data);
+  void                             * websocket_onclose_user_data;
+  int                                tls;
+  struct _websocket_manager        * websocket_manager;
+  struct MHD_UpgradeResponseHandle * urh;
+};
+
+/**
+ * Set a websocket in the response
+ * You must set at least websocket_manager_callback or websocket_incoming_message_callback
+ * @Parameters
+ * response: struct _u_response to send back the websocket initialization, mandatory
+ * websocket_protocol: list of protocols, separated by a comma, or NULL if all protocols are accepted
+ * websocket_extensions: list of extensions, separated by a comma, or NULL if all extensions are accepted
+ * websocket_manager_callback: callback function called right after the handshake acceptance, optional
+ * websocket_manager_user_data: any data that will be given to the websocket_manager_callback, optional
+ * websocket_incoming_message_callback: callback function called on each incoming complete message, optional
+ * websocket_incoming_user_data: any data that will be given to the websocket_incoming_message_callback, optional
+ * websocket_onclose_callback: callback function called right before closing the websocket, must be complete for the websocket to close
+ * websocket_onclose_user_data: any data that will be given to the websocket_onclose_callback, optional
+ * @Return value: U_OK on success
+ */
+int ulfius_set_websocket_response(struct _u_response * response,
+                                   const char * websocket_protocol,
+                                   const char * websocket_extensions, 
+                                   void (* websocket_manager_callback) (const struct _u_request * request,
+                                                                        const struct _websocket_manager * websocket_manager,
+                                                                        void * websocket_manager_user_data),
+                                   void * websocket_manager_user_data,
+                                   void (* websocket_incoming_message_callback) (const struct _u_request * request,
+                                                                                 const struct _websocket_manager * websocket_manager,
+                                                                                 const struct _websocket_message * message,
+                                                                                 void * websocket_incoming_user_data),
+                                   void * websocket_incoming_user_data,
+                                   void (* websocket_onclose_callback) (const struct _u_request * request,
+                                                                        const struct _websocket_manager * websocket_manager,
+                                                                        void * websocket_onclose_user_data),
+                                   void * websocket_onclose_user_data);
+
+/**
+ * Send a message in the websocket
+ * Return U_OK on success
+ */
+int ulfius_websocket_send_message(const struct _websocket_manager * websocket_manager,
+                                  const uint8_t opcode,
+                                  const uint64_t data_len,
+                                  const char * data);
+
+/**
+ * Clear data of a websocket message
+ */
+void ulfius_clear_websocket_message(struct _websocket_message * message);
+
+/**
+ * Return the first message of the message list
+ * Return NULL if message_list has no message
+ * Returned value must be cleared after use
+ */
+struct _websocket_message * pop_first_message(struct _websocket_message_list * message_list);
+
+#endif
+
 /**********************************
  * Internal functions declarations
  **********************************/
@@ -946,81 +1063,35 @@ int ulfius_set_response_cookie(struct MHD_Response * mhd_response, const struct 
  */
 char * ulfius_get_cookie_header(const struct _u_cookie * cookie);
 
+/** Macro values **/
+#define ULFIUS_URL_SEPARATOR       "/"
+#define ULFIUS_HTTP_ENCODING_JSON  "application/json"
+#define ULFIUS_HTTP_HEADER_CONTENT "Content-Type"
+#define ULFIUS_HTTP_NOT_FOUND_BODY "Resource not found"
+#define ULFIUS_HTTP_ERROR_BODY     "Server Error"
+
+#define ULFIUS_COOKIE_ATTRIBUTE_EXPIRES  "Expires"
+#define ULFIUS_COOKIE_ATTRIBUTE_MAX_AGE  "Max-Age"
+#define ULFIUS_COOKIE_ATTRIBUTE_DOMAIN   "Domain"
+#define ULFIUS_COOKIE_ATTRIBUTE_PATH     "Path"
+#define ULFIUS_COOKIE_ATTRIBUTE_SECURE   "Secure"
+#define ULFIUS_COOKIE_ATTRIBUTE_HTTPONLY "HttpOnly"
+
+#define ULFIUS_POSTBUFFERSIZE 1024
+
+#define U_STATUS_STOP     0
+#define U_STATUS_RUNNING  1
+#define U_STATUS_ERROR    2
+
 #if !defined(U_DISABLE_WEBSOCKET)
-/**********************************
- * Websocket functions declarations
- **********************************/
 
-#define U_WEBSOCKET_MAGIC_STRING     "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
-#define U_WEBSOCKET_UPGRADE_VALUE    "websocket"
-#define U_WEBSOCKET_BAD_REQUEST_BODY "Error in websocket handshake, wrong parameters"
-
-#define U_WEBSOCKET_BIT_FIN         0x80
-#define U_WEBSOCKET_HAS_MASK        0x80
-#define U_WEBSOCKET_LEN_MASK        0x7F
-#define U_WEBSOCKET_OPCODE_CONTINUE 0x00
-#define U_WEBSOCKET_OPCODE_TEXT     0x01
-#define U_WEBSOCKET_OPCODE_BINARY   0x01
-#define U_WEBSOCKET_OPCODE_CLOSE    0x08
-#define U_WEBSOCKET_OPCODE_PING     0x09
-#define U_WEBSOCKET_OPCODE_PONG     0x0A
-#define U_WEBSOCKET_OPCODE_ERROR    0xFE
-#define U_WEBSOCKET_OPCODE_CLOSED   0xFF
-
-struct _websocket_manager {
-  struct _websocket_message_list * message_list_incoming;
-  struct _websocket_message_list * message_list_outcoming;
-  int tls;
-  int connected;
-  MHD_socket sock;
-  int closed;
-};
-
-struct _websocket_message {
-  uint8_t opcode;
-  uint8_t has_mask;
-  uint8_t mask[4];
-  uint64_t data_len;
-  char * data;
-};
-
-struct _websocket_message_list {
-  struct _websocket_message ** list;
-  size_t len;
-};
-
-struct _websocket {
-  struct _u_instance               * instance;
-  struct _u_request                * request;
-  char                             * websocket_protocol;
-  char                             * websocket_extensions;
-  void                             (* websocket_manager_callback) (const struct _u_request * request,
-                                                                  const struct _websocket_manager * websocket_manager,
-                                                                  void * websocket_manager_user_data);
-  void                             * websocket_manager_user_data;
-  void                             (* websocket_incoming_message_callback) (const struct _u_request * request,
-                                                                           const struct _websocket_manager * websocket_manager,
-                                                                           const struct _websocket_message * message,
-                                                                           void * websocket_incoming_user_data);
-  void                             * websocket_incoming_user_data;
-  void                             (* websocket_onclose_callback) (const struct _u_request * request,
-                                                                  const struct _websocket_manager * websocket_manager,
-                                                                  void * websocket_onclose_user_data);
-  void                             * websocket_onclose_user_data;
-  int                                tls;
-  struct _websocket_manager        * websocket_manager;
-  struct MHD_UpgradeResponseHandle * urh;
-};
-
-struct _websocket_manager_thread_arg {
-  struct _websocket * websocket;
-  struct _u_request * request;
-  void (* websocket_manager_callback) (const struct _u_request * request,
-                                      const struct _websocket_manager * websocket_manager,
-                                      void * websocket_manager_user_data);
-  void * websocket_manager_user_data;
-};
-
+/**
+ * Websocket callback function for MHD
+ * Starts the websocket manager if set,
+ * then sets a listening message loop
+ * Complete the callback when the websocket is closed
+ * The websocket can be closed by the client, the manager, the program, or on network disconnect
+ */
 void ulfius_start_websocket_cb (void *cls,
             struct MHD_Connection *connection,
             void *con_cls,
@@ -1028,44 +1099,83 @@ void ulfius_start_websocket_cb (void *cls,
             size_t extra_in_size,
             MHD_socket sock,
             struct MHD_UpgradeResponseHandle *urh);
+
+/**
+ * Workaround to make sure a message, as long as it can be is complete sent
+ */
 void send_all(MHD_socket sock, const uint8_t * data, size_t len);
 
-int generate_handshake_answer(const char * key, char * out_digest);
-int ulfius_init_websocket_response(struct _u_response * response,
-                                   const char * websocket_protocol,
-                                   const char * websocket_extensions, 
-                                   void (* websocket_manager_callback) (const struct _u_request * request,
-                                                                        const struct _websocket_manager * websocket_manager,
-                                                                        void * websocket_manager_user_data),
-                                   void * websocket_manager_user_data,
-                                   void (* websocket_incoming_message_callback) (const struct _u_request * request,
-                                                                                 const struct _websocket_manager * websocket_manager,
-                                                                                 const struct _websocket_message * message,
-                                                                                 void * websocket_incoming_user_data),
-                                   void * websocket_incoming_user_data,
-                                   void (* websocket_onclose_callback) (const struct _u_request * request,
-                                                                        const struct _websocket_manager * websocket_manager,
-                                                                        void * websocket_onclose_user_data),
-                                   void * websocket_onclose_user_data);
-int ulfius_websocket_send_message(const struct _websocket_manager * websocket_manager,
-                                  const uint8_t opcode,
-                                  const uint64_t data_len,
-                                  const char * data);
+/**
+ * Generates a handhshake answer from the key given in parameter
+ */
+int ulfius_generate_handshake_answer(const char * key, char * out_digest);
+
+/**
+ * Close the websocket
+ */
 int ulfius_close_websocket(struct _websocket * websocket);
+
+/**
+ * Return a match list between two list of items
+ * If match is NULL, then return source duplicate
+ * Returned value must be free'd after use
+ */
 char * check_list_match(const char * source, const char * match);
-int init_message_list(struct _websocket_message_list * message_list);
-void clear_message_list(struct _websocket_message_list * message_list);
-void clear_message(struct _websocket_message * message);
-int push_message(struct _websocket_message_list * message_list, struct _websocket_message * message);
-struct _websocket_message * pop_first_message(struct _websocket_message_list * message_list);
+
+/**
+ * Initialize a websocket message list
+ * Return U_OK on success
+ */
+int ulfius_init_websocket_message_list(struct _websocket_message_list * message_list);
+
+/**
+ * Clear data of a websocket message list
+ */
+void ulfius_clear_websocket_message_list(struct _websocket_message_list * message_list);
+
+/**
+ * Append a message in a message list
+ * Return U_OK on success
+ */
+int ulfius_push_websocket_message(struct _websocket_message_list * message_list, struct _websocket_message * message);
+
+/**
+ * Clear data of a websocket
+ */
 void clear_websocket(struct _websocket * websocket);
+
+/**
+ * Clear data of a websocket_manager
+ */
 void clear_websocket_manager(struct _websocket_manager * websocket_manager);
+
+/**
+ * Add a websocket in the list of active websockets of the instance
+ */
 int ulfius_instance_add_websocket_active(struct _u_instance * instance, struct _websocket * websocket);
+
+/**
+ * Remove a websocket from the list of active websockets of the instance
+ */
 int ulfius_instance_remove_websocket_active(struct _u_instance * instance, struct _websocket * websocket);
+
+/**
+ * Read and parse a new message from the websocket
+ * Return the opcode of the new websocket, or U_WEBSOCKET_OPCODE_ERROR on error
+ * Sets the new message in the message variable
+ */
 int read_incoming_message(struct _websocket * websocket, struct _websocket_message ** message);
+
+/**
+ * Close the websocket, then clear all data related to it
+ */
 int shutdown_websocket(struct _websocket * websocket);
+
+/**
+ * Run the websocket manager in a separated detached thread
+ */
 void * thread_websocket_manager_run(void * args);
 
-#endif
+#endif // U_DISABLE_WEBSOCKET
 
 #endif // __ULFIUS_H__

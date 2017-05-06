@@ -214,7 +214,7 @@ void websocket_incoming_message_callback (const struct _u_request * request,
 
 int callback_websocket (const struct _u_request * request, struct _u_response * response, void * user_data) {
   char * websocket_user_data = "my_user_data";
-  if (ulfius_init_websocket_response(response, NULL, NULL, &websocket_manager_callback, websocket_user_data, &websocket_incoming_message_callback, websocket_user_data, &websocket_onclose_callback, websocket_user_data) == U_OK) {
+  if (ulfius_set_websocket_response(response, NULL, NULL, &websocket_manager_callback, websocket_user_data, &websocket_incoming_message_callback, websocket_user_data, &websocket_onclose_callback, websocket_user_data) == U_OK) {
     return U_CALLBACK_CONTINUE;
   } else {
     return U_CALLBACK_ERROR;
