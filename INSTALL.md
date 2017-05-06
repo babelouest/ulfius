@@ -35,19 +35,19 @@ $ make
 $ sudo make install
 ```
 
-To disable libcurl functions, append the option `CURLFLAG=-DU_DISABLE_CURL` to the make command to build Ulfius:
+To disable libcurl functions, append the option `CURLFLAG=-DU_DISABLE_CURL` to the make command when you build Ulfius:
 
 ```shell
 $ make CURLFLAG=-DU_DISABLE_CURL
 ```
 
-To disable libjansson functions, append the option `JANSSONFLAG=-DU_DISABLE_JANSSON` to the make command to build Ulfius and Orcania:
+To disable libjansson functions, append the option `JANSSONFLAG=-DU_DISABLE_JANSSON` to the make command when you build Ulfius and Orcania:
 
 ```shell
 $ make JANSSONFLAG=-DU_DISABLE_JANSSON
 ```
 
-To disable websocket implementation and avoid installing libssl, append the option `WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET` to the make command to build Ulfius:
+To disable websocket implementation and avoid installing libssl, append the option `WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET` to the make command when you build Ulfius:
 
 ```shell
 $ make WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET

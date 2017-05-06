@@ -23,6 +23,7 @@
         $("#receivedMessage").append(message);
       };
       mySocket.onclose = function () {
+        mySocket = false;
         var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Websocket closed</strong></p><hr>"
         $("#receivedMessage").append(message);
         $("#connect").val("Connect websocket");
@@ -35,10 +36,10 @@
         console.log("Start websocket: ", mySocket);
         $(this).val("Disconnect websocket");
       } else {
-      mySocket.close();
-      mySocket = false;
-      console.log("Websocket closed");
-      $(this).val("Connect websocket");
+        mySocket.close();
+        mySocket = false;
+        console.log("Websocket closed");
+        $(this).val("Connect websocket");
       }
     });
     

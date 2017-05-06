@@ -354,6 +354,18 @@ int ulfius_clean_response(struct _u_response * response) {
     response->auth_realm = NULL;
     response->map_cookie = NULL;
     response->binary_body = NULL;
+#if !defined(U_DISABLE_WEBSOCKET)
+    o_free(response->websocket_protocol);
+    o_free(response->websocket_extensions);
+    response->websocket_protocol = NULL;
+    response->websocket_extensions = NULL;
+    response->websocket_manager_callback = NULL;
+    response->websocket_manager_user_data = NULL;
+    response->websocket_incoming_message_callback = NULL;
+    response->websocket_incoming_user_data = NULL;
+    response->websocket_onclose_callback = NULL;
+    response->websocket_onclose_user_data = NULL;
+#endif
     return U_OK;
   } else {
     return U_ERROR_PARAMS;
@@ -402,6 +414,8 @@ int ulfius_init_response(struct _u_response * response) {
     response->stream_callback_free = NULL;
     response->shared_data = NULL;
 #if !defined(U_DISABLE_WEBSOCKET)
+    response->websocket_protocol = NULL;
+    response->websocket_extensions = NULL;
     response->websocket_manager_callback = NULL;
     response->websocket_manager_user_data = NULL;
     response->websocket_incoming_message_callback = NULL;
@@ -464,6 +478,16 @@ struct _u_response * ulfius_duplicate_response(const struct _u_response * respon
       new_response->binary_body_length = response->binary_body_length;
       memcpy(new_response->binary_body, response->binary_body, response->binary_body_length);
     }
+#if !defined(U_DISABLE_WEBSOCKET)
+    new_response->websocket_protocol = o_strdup(response->websocket_protocol);
+    new_response->websocket_extensions = o_strdup(response->websocket_extensions);
+    new_response->websocket_manager_callback = response->websocket_manager_callback;
+    new_response->websocket_manager_user_data = response->websocket_manager_user_data;
+    new_response->websocket_incoming_message_callback = response->websocket_incoming_message_callback;
+    new_response->websocket_incoming_user_data = response->websocket_incoming_user_data;
+    new_response->websocket_onclose_callback = response->websocket_onclose_callback;
+    new_response->websocket_onclose_user_data = response->websocket_onclose_user_data;
+#endif
   }
   return new_response;
 }
@@ -510,6 +534,16 @@ int ulfius_copy_response(struct _u_response * dest, const struct _u_response * s
       dest->binary_body_length = source->binary_body_length;
       memcpy(dest->binary_body, source->binary_body, source->binary_body_length);
     }
+#if !defined(U_DISABLE_WEBSOCKET)
+    dest->websocket_protocol = o_strdup(source->websocket_protocol);
+    dest->websocket_extensions = o_strdup(source->websocket_extensions);
+    dest->websocket_manager_callback = source->websocket_manager_callback;
+    dest->websocket_manager_user_data = source->websocket_manager_user_data;
+    dest->websocket_incoming_message_callback = source->websocket_incoming_message_callback;
+    dest->websocket_incoming_user_data = source->websocket_incoming_user_data;
+    dest->websocket_onclose_callback = source->websocket_onclose_callback;
+    dest->websocket_onclose_user_data = source->websocket_onclose_user_data;
+#endif
     return U_OK;
   } else {
     return U_ERROR_PARAMS;

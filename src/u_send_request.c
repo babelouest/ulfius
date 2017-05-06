@@ -61,29 +61,6 @@ size_t ulfius_write_body(void * contents, size_t size, size_t nmemb, void * user
 }
 
 /**
- * trim_whitespace
- * Return the string without its beginning and ending whitespaces
- */
-char * trim_whitespace(char *str) {
-  char *end;
-
-  // Trim leading space
-  while(isspace(*str)) str++;
-
-  if(*str == 0)  // All spaces?
-    return str;
-
-  // Trim trailing space
-  end = str + strlen(str) - 1;
-  while(end > str && isspace(*end)) end--;
-
-  // Write new null terminator
-  *(end+1) = 0;
-
-  return str;
-}
-
-/**
  * write_header
  * Write the header value into the response map_header structure
  * return the size_t of the header written
@@ -96,12 +73,12 @@ static size_t write_header(void * buffer, size_t size, size_t nitems, void * use
   if (strchr(header, ':') != NULL) {
     if (response->map_header != NULL) {
       // Expecting a header (key: value)
-      key = trim_whitespace(strtok_r(header, ":", &saveptr));
-      value = trim_whitespace(strtok_r(NULL, "", &saveptr));
+      key = trimwhitespace(strtok_r(header, ":", &saveptr));
+      value = trimwhitespace(strtok_r(NULL, "", &saveptr));
       
       u_map_put(response->map_header, key, value);
     }
-  } else if (strlen(trim_whitespace(header)) > 0) {
+  } else if (strlen(trimwhitespace(header)) > 0) {
     // Expecting the HTTP/x.x header
     if (response->protocol != NULL) {
       o_free(response->protocol);

@@ -153,25 +153,35 @@ fYxFAheH3CjryHqqR9DD+d9396W8mqEaUp+plMwSjpcTDSR4rEQkUJg=\
   }
   y_log_message(Y_LOG_LEVEL_INFO, "End framework");
   
-  y_close_logs();
   ulfius_stop_framework(&instance);
   ulfius_clean_instance(&instance);
   u_map_clean(&file_config.mime_types);
+  y_close_logs();
   
   return 0;
 }
 
-int websocket_manager_callback(const struct _u_request * request,
-                               const struct _websocket_manager_cls * websocket_manager_cls,
+void websocket_onclose_callback (const struct _u_request * request,
+                                const struct _websocket_manager * websocket_manager,
+                                void * websocket_onclose_user_data) {
+  if (websocket_onclose_user_data != NULL) {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_onclose_user_data is %s", websocket_onclose_user_data);
+  }
+}
+
+void websocket_manager_callback(const struct _u_request * request,
+                               const struct _websocket_manager * websocket_manager,
                                void * websocket_manager_user_data) {
   int i, ret;
   char * my_message;
+  if (websocket_manager_user_data != NULL) {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_manager_user_data is %s", websocket_manager_user_data);
+  }
   for (i=0; i<5; i++) {
     sleep(2);
-    if (websocket_manager_cls->connected) {
-      my_message = msprintf("Gondor restored '%d'", i);
-      ret = ulfius_websocket_send_message(websocket_manager_cls, WEBSOCKET_OPCODE_TEXT, o_strlen(my_message), my_message);
-      y_log_message(Y_LOG_LEVEL_DEBUG, "Send text message '%s': %d", my_message, ret);
+    if (websocket_manager != NULL && websocket_manager->connected) {
+      my_message = msprintf("Send message #%d", i);
+      ret = ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(my_message), my_message);
       o_free(my_message);
       if (ret != U_OK) {
         break;
@@ -181,29 +191,32 @@ int websocket_manager_callback(const struct _u_request * request,
     }
   }
   sleep(2);
-  if (websocket_manager_cls->connected) {
-    ret = ulfius_websocket_send_message(websocket_manager_cls, WEBSOCKET_OPCODE_CLOSE, 0, NULL);
-    y_log_message(Y_LOG_LEVEL_DEBUG, "Send close message");
+  if (websocket_manager != NULL && websocket_manager->connected) {
+    ret = ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_CLOSE, 0, NULL);
   }
   y_log_message(Y_LOG_LEVEL_DEBUG, "Closing websocket_manager_callback");
-  return 0;
 }
 
-int websocket_incoming_message_callback (const struct _u_request * request,
-                                         const struct _websocket_manager_cls * websocket_manager_cls,
+void websocket_incoming_message_callback (const struct _u_request * request,
+                                         const struct _websocket_manager * websocket_manager,
                                          const struct _websocket_message * last_message,
-                                         void * websocket_user_data) {
+                                         void * websocket_incoming_message_user_data) {
+  if (websocket_incoming_message_user_data != NULL) {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_incoming_message_user_data is %s", websocket_incoming_message_user_data);
+  }
   y_log_message(Y_LOG_LEVEL_DEBUG, "Incoming message, opcode: %x, mask: %d, len: %d", last_message->opcode, last_message->has_mask, last_message->data_len);
-  if (last_message->opcode == WEBSOCKET_OPCODE_TEXT) {
+  if (last_message->opcode == U_WEBSOCKET_OPCODE_TEXT) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "text payload '%.*s'", last_message->data_len, last_message->data);
-  } else if (last_message->opcode == WEBSOCKET_OPCODE_BINARY) {
+  } else if (last_message->opcode == U_WEBSOCKET_OPCODE_BINARY) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "binary payload");
   }
-  return 0;
 }
 
 int callback_websocket (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  response->websocket_manager_callback = &websocket_manager_callback;
-  response->websocket_incoming_message_callback = &websocket_incoming_message_callback;
-  return U_CALLBACK_CONTINUE;
+  char * websocket_user_data = "my_user_data";
+  if (ulfius_init_websocket_response(response, NULL, NULL, &websocket_manager_callback, websocket_user_data, &websocket_incoming_message_callback, websocket_user_data, &websocket_onclose_callback, websocket_user_data) == U_OK) {
+    return U_CALLBACK_CONTINUE;
+  } else {
+    return U_CALLBACK_ERROR;
+  }
 }

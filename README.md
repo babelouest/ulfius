@@ -120,9 +120,21 @@ If you need to communicate between callback functions for any purpose, you can u
 
 the values `string_body` and `json_body` have been removed from the structures `struct _u_request` and `struct _u_response`. This may be painless in the response if you used only the functions `ulfius_set_xxx_response`. Otherwise, you should make small arrangements to your code.
 
+### Websockets
+
+Ulfius now allows websockets communication between the client and the server. Check the [API.md](API.md#websockets-communication) file for implementation details.
+
+Using websocket requires [libssl](https://www.openssl.org/source/). It also requires a recent version of [Libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/), at least 0.9.52.
+
+If you dont need or can't use this feature, you can disable it by adding the option `WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET` to the make command when you build Ulfius:
+
+```shell
+$ make WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET
+```
+
 ### Remove libjansson and libcurl hard dependency
 
-In Ulfius 1.0, libjansson and libcurl were mandatory to build the library, but their usage was not in the core of the framework. But they can be very useful, so the dependency is now optional.
+In Ulfius 1.0, libjansson and libcurl were mandatory to build the library, but their usage was not in the core of the framework. Although they can be very useful, so the dependency is now optional.
 
 They are enabled by default, but if you don't need them, you can disable them when you build Ulfius library.
 
@@ -229,11 +241,7 @@ $ sudo make install
 
 ### Ready-to-use callback functions
 
-You can find some ready-to-use callback functions in the folder `example_callbacks`.
-
-### Websockets
-
-Ulfius now allows websockets communication between the client and the server. Check the [API.md](API.md#websockets-communication) file for implementation details.
+You can find some ready-to-use callback functions in the folder [example_callbacks](example_callbacks/).
 
 ## Questions, problems ?
 
