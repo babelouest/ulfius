@@ -53,14 +53,11 @@ int read_incoming_message(struct _websocket * websocket, struct _websocket_messa
     // New frame has arrived
     if (len == 2) {
       if ((*message) == NULL) {
-        //y_log_message(Y_LOG_LEVEL_DEBUG, "New message");
         *message = o_malloc(sizeof(struct _websocket_message));
         (*message)->data_len = 0;
         (*message)->has_mask = 0;
         (*message)->opcode = header[0] & 0x0F;
         (*message)->data = NULL;
-     // } else {
-       // y_log_message(Y_LOG_LEVEL_DEBUG, "Continue message");
       }
       if ((header[1] & U_WEBSOCKET_LEN_MASK) <= 125) {
         msg_len = (header[1] & U_WEBSOCKET_LEN_MASK);
@@ -157,7 +154,6 @@ void ulfius_start_websocket_cb (void *cls,
   
   if (websocket != NULL) {
     websocket->urh = urh;
-    y_log_message(Y_LOG_LEVEL_DEBUG, "receiving");
     // Set socket blocking mode
     flags = fcntl (sock, F_GETFL);
     if (-1 == flags) {
@@ -198,7 +194,6 @@ void ulfius_start_websocket_cb (void *cls,
       if (opcode != U_WEBSOCKET_OPCODE_ERROR) {
         if (opcode == U_WEBSOCKET_OPCODE_CLOSE) {
           // Send close command back, then close the socket
-          y_log_message(Y_LOG_LEVEL_DEBUG, "Send close command back");
           if (websocket->websocket_manager->connected && ulfius_websocket_send_message(websocket->websocket_manager, U_WEBSOCKET_OPCODE_CLOSE, 0, NULL) != U_OK) {
             y_log_message(Y_LOG_LEVEL_ERROR, "Error sending close command");
           }
@@ -211,18 +206,15 @@ void ulfius_start_websocket_cb (void *cls,
         push_message(websocket->websocket_manager->message_list_incoming, message);
       }
     }
-    y_log_message(Y_LOG_LEVEL_DEBUG, "closing");
   }
   while (!websocket->websocket_manager->closed) {
     usleep(50);
   }
-  y_log_message(Y_LOG_LEVEL_DEBUG, "End websocket callback");
   shutdown_websocket(websocket);
 }
 
 int shutdown_websocket(struct _websocket * websocket) {
   if (websocket != NULL) {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "shutdown_websocket");
     ulfius_close_websocket(websocket);
     if (MHD_upgrade_action (websocket->urh, MHD_UPGRADE_ACTION_CLOSE) != MHD_YES) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error sending MHD_UPGRADE_ACTION_CLOSE frame to urh");
@@ -540,7 +532,6 @@ int ulfius_instance_add_websocket_active(struct _u_instance * instance, struct _
     if (instance->websocket_active != NULL) {
       instance->websocket_active[instance->nb_websocket_active] = websocket;
       instance->nb_websocket_active++;
-      y_log_message(Y_LOG_LEVEL_DEBUG, "Add active websocket %p", websocket);
       return U_OK;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for instance->websocket_active");
@@ -566,12 +557,10 @@ int ulfius_instance_remove_websocket_active(struct _u_instance * instance, struc
             return U_ERROR_MEMORY;
           }
         } else {
-          y_log_message(Y_LOG_LEVEL_DEBUG, "no more active websocket");
           o_free(instance->websocket_active);
           instance->websocket_active = NULL;
         }
         instance->nb_websocket_active--;
-        y_log_message(Y_LOG_LEVEL_DEBUG, "Remove active websocket %p", websocket);
         return U_OK;
       }
     }

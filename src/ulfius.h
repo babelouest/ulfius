@@ -994,16 +994,16 @@ struct _websocket {
   struct _u_request                * request;
   char                             * websocket_protocol;
   char                             * websocket_extensions;
-  int                             (* websocket_manager_callback) (const struct _u_request * request,
+  void                             (* websocket_manager_callback) (const struct _u_request * request,
                                                                   const struct _websocket_manager * websocket_manager,
                                                                   void * websocket_manager_user_data);
   void                             * websocket_manager_user_data;
-  int                             (* websocket_incoming_message_callback) (const struct _u_request * request,
+  void                             (* websocket_incoming_message_callback) (const struct _u_request * request,
                                                                            const struct _websocket_manager * websocket_manager,
                                                                            const struct _websocket_message * message,
                                                                            void * websocket_incoming_user_data);
   void                             * websocket_incoming_user_data;
-  int                             (* websocket_onclose_callback) (const struct _u_request * request,
+  void                             (* websocket_onclose_callback) (const struct _u_request * request,
                                                                   const struct _websocket_manager * websocket_manager,
                                                                   void * websocket_onclose_user_data);
   void                             * websocket_onclose_user_data;
@@ -1015,7 +1015,7 @@ struct _websocket {
 struct _websocket_manager_thread_arg {
   struct _websocket * websocket;
   struct _u_request * request;
-  int (* websocket_manager_callback) (const struct _u_request * request,
+  void (* websocket_manager_callback) (const struct _u_request * request,
                                       const struct _websocket_manager * websocket_manager,
                                       void * websocket_manager_user_data);
   void * websocket_manager_user_data;

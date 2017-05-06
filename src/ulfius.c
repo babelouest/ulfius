@@ -682,13 +682,11 @@ void mhd_request_completed (void *cls, struct MHD_Connection *connection,
  * return U_OK on success
  */
 int ulfius_stop_framework(struct _u_instance * u_instance) {
-  int i;
   if (u_instance != NULL && u_instance->mhd_daemon != NULL) {
 #if !defined(U_DISABLE_WEBSOCKET)
+    int i;
     // Loop in all active websockets and close them manually
-    y_log_message(Y_LOG_LEVEL_DEBUG, "end websockets %d", u_instance->nb_websocket_active);
     for (i=u_instance->nb_websocket_active-1; i>=0; i--) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "End framework call closing websocket %d %d %p", i, (i>=0), u_instance->websocket_active[i]);
       // TODO: close each websocket in a thread and watch for them to be closed
       ulfius_close_websocket(u_instance->websocket_active[i]);
       while (!u_instance->websocket_active[i]->websocket_manager->closed) {
