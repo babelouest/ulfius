@@ -1176,6 +1176,12 @@ int shutdown_websocket(struct _websocket * websocket);
  */
 void * thread_websocket_manager_run(void * args);
 
+/**
+ * Base64 encode and decode functions
+ */
+int base64_encode(const unsigned char * src, size_t len, unsigned char * out, size_t * out_len);
+int base64_decode(const unsigned char *src, size_t len, unsigned char * out, size_t * out_len);
+
 #endif // U_DISABLE_WEBSOCKET
 
 #endif // __ULFIUS_H__

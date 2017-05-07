@@ -23,10 +23,11 @@
  * 
  */
 #if !defined(U_DISABLE_WEBSOCKET)
-#include <openssl/ssl.h>
+#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <gnutls/gnutls.h>
 
 #include "ulfius.h"
 
@@ -313,47 +314,25 @@ void * thread_websocket_manager_run(void * args) {
  * Generates a handhshake answer from the key given in parameter
  */
 int ulfius_generate_handshake_answer(const char * key, char * out_digest) {
-  EVP_MD_CTX mdctx;
-  const EVP_MD *md;
-  unsigned char md_value[32] = {0};
-  unsigned int md_len, res = 0;
+  gnutls_datum_t key_data;
+  unsigned char encoded_key[32] = {0};
+  size_t encoded_key_size, encoded_key_size_base64;
+  int res, to_return = 0;
   
-	BIO *bio, *b64;
-	BUF_MEM *bufferPtr;
-  char * intermediate, buffer[32] = {0};
+  key_data.data = (unsigned char*)msprintf("%s%s", key, U_WEBSOCKET_MAGIC_STRING);
+  key_data.size = strlen((const char *)key_data.data);
   
-  if (key != NULL && out_digest != NULL) {
-    md = EVP_sha1();
-    intermediate = msprintf("%s%s", key, U_WEBSOCKET_MAGIC_STRING);
-    EVP_MD_CTX_init(&mdctx);
-    if (EVP_DigestInit_ex(&mdctx, md, NULL) && 
-        EVP_DigestUpdate(&mdctx,
-                         intermediate,
-                         (unsigned int) strlen(intermediate)) &&
-        EVP_DigestFinal_ex(&mdctx,
-                           md_value,
-                           &md_len)) {
-      memcpy(buffer, md_value, md_len);
-      b64 = BIO_new(BIO_f_base64());
-      bio = BIO_new(BIO_s_mem());
-      bio = BIO_push(b64, bio);
-
-      BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
-      if (BIO_write(bio, buffer, md_len) > 0) {
-        BIO_flush(bio);
-        BIO_get_mem_ptr(bio, &bufferPtr);
-
-        memcpy(out_digest, (*bufferPtr).data, (*bufferPtr).length);
-        
-        BIO_set_close(bio, BIO_CLOSE);
-        BIO_free_all(bio);
-        EVP_MD_CTX_cleanup(&mdctx);
-        res = 1;
-      }
+  if (key != NULL && out_digest != NULL && (res = gnutls_fingerprint(GNUTLS_DIG_SHA1, &key_data, encoded_key, &encoded_key_size)) == GNUTLS_E_SUCCESS) {
+    if (base64_encode(encoded_key, encoded_key_size, (unsigned char *)out_digest, &encoded_key_size_base64)) {
+      to_return = 1;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error base64 encoding hashed key");
     }
-    o_free(intermediate);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error getting sha1 signature for key");
   }
-  return res;
+  o_free(key_data.data);
+  return to_return;
 }
 
 /**

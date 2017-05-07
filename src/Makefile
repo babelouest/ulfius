@@ -42,27 +42,30 @@ endif
 
 all: release
 
-libulfius.so: ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o
-	$(CC) -shared -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o $(LIBS) $(LJANSSON) $(LCURL) $(LWEBSOCKET)
+libulfius.so: ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o base64.o
+	$(CC) -shared -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o base64.o $(LIBS) $(LJANSSON) $(LCURL) $(LWEBSOCKET)
 	ln -sf $(OUTPUT).$(VERSION) $(OUTPUT)
 
 ulfius.o: ulfius.h ulfius.c
-	$(CC) $(CFLAGS) $(FLAGS_YDER) ulfius.c
+	$(CC) $(CFLAGS) ulfius.c
 
 u_map.o: ulfius.h u_map.c
-	$(CC) $(CFLAGS) $(FLAGS_YDER) u_map.c
+	$(CC) $(CFLAGS) u_map.c
 
 u_request.o: ulfius.h u_request.c
-	$(CC) $(CFLAGS) $(FLAGS_YDER) u_request.c
+	$(CC) $(CFLAGS) u_request.c
 
 u_response.o: ulfius.h u_response.c
-	$(CC) $(CFLAGS) $(FLAGS_YDER) u_response.c
+	$(CC) $(CFLAGS) u_response.c
 
 u_websocket.o: ulfius.h u_websocket.c
-	$(CC) $(CFLAGS) $(FLAGS_YDER) u_websocket.c
+	$(CC) $(CFLAGS) u_websocket.c
 
 u_send_request.o: ulfius.h u_send_request.c
-	$(CC) $(CFLAGS) $(FLAGS_YDER) u_send_request.c
+	$(CC) $(CFLAGS) u_send_request.c
+
+base64.o: ulfius.h base64.c
+	$(CC) $(CFLAGS) base64.c
 
 clean:
 	rm -f *.o *.so $(OUTPUT) $(OUTPUT).*
