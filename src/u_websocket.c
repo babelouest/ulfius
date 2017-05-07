@@ -50,16 +50,16 @@ int ulfius_set_websocket_response(struct _u_response * response,
                                    const char * websocket_protocol,
                                    const char * websocket_extensions, 
                                    void (* websocket_manager_callback) (const struct _u_request * request,
-                                                                       const struct _websocket_manager * websocket_manager,
+                                                                       struct _websocket_manager * websocket_manager,
                                                                        void * websocket_manager_user_data),
                                    void * websocket_manager_user_data,
                                    void (* websocket_incoming_message_callback) (const struct _u_request * request,
-                                                                                const struct _websocket_manager * websocket_manager,
+                                                                                struct _websocket_manager * websocket_manager,
                                                                                 const struct _websocket_message * message,
                                                                                 void * websocket_incoming_user_data),
                                    void * websocket_incoming_user_data,
                                    void (* websocket_onclose_callback) (const struct _u_request * request,
-                                                                       const struct _websocket_manager * websocket_manager,
+                                                                       struct _websocket_manager * websocket_manager,
                                                                        void * websocket_onclose_user_data),
                                    void * websocket_onclose_user_data) {
   if (response != NULL && (websocket_manager_callback != NULL || websocket_incoming_message_callback)) {
@@ -414,7 +414,7 @@ struct _websocket_message * pop_first_message(struct _websocket_message_list * m
  * Send a message in the websocket
  * Return U_OK on success
  */
-int ulfius_websocket_send_message(const struct _websocket_manager * websocket_manager,
+int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
                                   const uint8_t opcode,
                                   const uint64_t data_len,
                                   const char * data) {

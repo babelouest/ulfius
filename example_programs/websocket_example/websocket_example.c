@@ -59,7 +59,7 @@ char * print_map(const struct _u_map * map) {
   }
 }
 
-int main() {
+int main(int argc, char ** argv) {
   int ret;
   struct _u_instance instance;
   struct static_file_config file_config;
@@ -93,8 +93,8 @@ int main() {
   ulfius_add_endpoint_by_val(&instance, "GET", PREFIX_STATIC, "*", 0, &callback_static_file, &file_config);
   
   // Start the framework
-  ret = ulfius_start_framework(&instance);
-  /*ret = ulfius_start_secure_framework(&instance, "-----BEGIN PRIVATE KEY-----\
+  if (argc > 1 && 0 == o_strcmp(argv[1], "-https")) {
+    ret = ulfius_start_secure_framework(&instance, "-----BEGIN PRIVATE KEY-----\
 MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDr90HrswgEmln/\
 rXeNqYq0boIvas5wu27hmeHDdGGKtkCWIWGAo9GUy45xqsI4mDl3bOWS+pmb/3yi\
 +nhe+BmYHvEqUFo1JfUcVMxaNEbdd9REytMjKdOS+kkLf++BBRoZI/g8DggIu+Ri\
@@ -141,10 +141,13 @@ woocge65bl85h10l2TxxnlT5BIJezm5r3NiZSwOK2zxxIEyL4vh+b/xqQblBEkR3\
 e4/A4Ugn9Egh8GdpF4klGp4MjjpRyAVI7BDaleAhvDSfPmm7ylHJ2y7CLI9ApOQY\
 glwRuTmowAZQtaSiE1Ox7QtWj858HDzzTZyFWRG/MNqQptn7AMTPJv3DivNfDNPj\
 fYxFAheH3CjryHqqR9DD+d9396W8mqEaUp+plMwSjpcTDSR4rEQkUJg=\
------END CERTIFICATE-----");*/
+-----END CERTIFICATE-----");
+  } else {
+    ret = ulfius_start_framework(&instance);
+  }
   
   if (ret == U_OK) {
-    y_log_message(Y_LOG_LEVEL_INFO, "Start framework on port %d", instance.port);
+    y_log_message(Y_LOG_LEVEL_INFO, "Start framework on port %d %s", instance.port, (argc > 1 && 0 == o_strcmp(argv[1], "-https"))?"https mode":"http mode");
     
     // Wait for the user to press <enter> on the console to quit the application
     getchar();
@@ -162,7 +165,7 @@ fYxFAheH3CjryHqqR9DD+d9396W8mqEaUp+plMwSjpcTDSR4rEQkUJg=\
 }
 
 void websocket_onclose_callback (const struct _u_request * request,
-                                const struct _websocket_manager * websocket_manager,
+                                struct _websocket_manager * websocket_manager,
                                 void * websocket_onclose_user_data) {
   if (websocket_onclose_user_data != NULL) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_onclose_user_data is %s", websocket_onclose_user_data);
@@ -170,7 +173,7 @@ void websocket_onclose_callback (const struct _u_request * request,
 }
 
 void websocket_manager_callback(const struct _u_request * request,
-                               const struct _websocket_manager * websocket_manager,
+                               struct _websocket_manager * websocket_manager,
                                void * websocket_manager_user_data) {
   int i, ret;
   char * my_message;
@@ -184,21 +187,26 @@ void websocket_manager_callback(const struct _u_request * request,
       ret = ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(my_message), my_message);
       o_free(my_message);
       if (ret != U_OK) {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "Error send message");
         break;
       }
     } else {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "websocket not connected");
       break;
     }
   }
   sleep(2);
   if (websocket_manager != NULL && websocket_manager->connected) {
     ret = ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_CLOSE, 0, NULL);
+    if (ret != U_OK) {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "Error send close message");
+    }
   }
   y_log_message(Y_LOG_LEVEL_DEBUG, "Closing websocket_manager_callback");
 }
 
 void websocket_incoming_message_callback (const struct _u_request * request,
-                                         const struct _websocket_manager * websocket_manager,
+                                         struct _websocket_manager * websocket_manager,
                                          const struct _websocket_message * last_message,
                                          void * websocket_incoming_message_user_data) {
   if (websocket_incoming_message_user_data != NULL) {

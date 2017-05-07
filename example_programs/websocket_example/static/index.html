@@ -17,7 +17,11 @@
   $(document).ready(function() {
     var mySocket = false;
     function connectSocket() {
-      mySocket = new WebSocket("ws://localhost:9275/websocket", ["plop", "grut"]);
+      if (location.protocol === "https:") {
+        mySocket = new WebSocket("wss://localhost:9275/websocket", ["plop", "grut"]);
+      } else {
+        mySocket = new WebSocket("ws://localhost:9275/websocket", ["plop", "grut"]);
+      }
       mySocket.onmessage = function (event) {
         var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Message: </strong>" + event.data + "</p><hr>"
         $("#receivedMessage").append(message);
