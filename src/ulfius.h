@@ -952,16 +952,16 @@ int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
                                   const char * data);
 
 /**
- * Clear data of a websocket message
- */
-void ulfius_clear_websocket_message(struct _websocket_message * message);
-
-/**
  * Return the first message of the message list
  * Return NULL if message_list has no message
  * Returned value must be cleared after use
  */
-struct _websocket_message * pop_first_message(struct _websocket_message_list * message_list);
+struct _websocket_message * ulfius_websocket_pop_first_message(struct _websocket_message_list * message_list);
+
+/**
+ * Clear data of a websocket message
+ */
+void ulfius_clear_websocket_message(struct _websocket_message * message);
 
 #endif
 

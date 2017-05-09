@@ -489,14 +489,14 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
               } else {
                 response->status = MHD_HTTP_BAD_REQUEST;
                 response_buffer = o_strdup(U_WEBSOCKET_BAD_REQUEST_BODY);
-                y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error 400");
+                mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
               }
               o_free(extensions);
               o_free(protocol);
             } else {
               response->status = MHD_HTTP_BAD_REQUEST;
               response_buffer = o_strdup(U_WEBSOCKET_BAD_REQUEST_BODY);
-              y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error 400");
+              mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
             }
             close_loop = 1;
 #endif

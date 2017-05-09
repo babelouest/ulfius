@@ -6,6 +6,8 @@ Based on [GNU Libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/) for th
 
 Used to facilitate creation of web applications in C programs with a small memory footprint, as in embedded systems applications.
 
+You can create webservices in HTTP or HTTPS mode, stream data, or implement server websockets.
+
 Warning! The branch 2.0 is still in development and doesn't have all the features, use it only for tests or development, or use the master branch.
 
 ## Hello World! example application

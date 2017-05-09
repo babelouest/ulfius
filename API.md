@@ -4,27 +4,27 @@
 
 Include file `ulfius.h` in your source file:
 
-```c
+```C
 #include <ulfius.h>
 ```
 
 If you have disabled `libcurl` during the build, define the macro `U_DISABLE_CURL` before including `ulfius.h`:
 
-```c
+```C
 #define U_DISABLE_CURL
 #include <ulfius.h>
 ```
 
 If you have disabled `libjansson` during the build, define the macro `U_DISABLE_JANSSON` before including `ulfius.h`:
 
-```c
+```C
 #define U_DISABLE_JANSSON
 #include <ulfius.h>
 ```
 
 If you have disabled both `libcurl` and `libjansson`, define both macros before including `ulfius.h`:
 
-```c
+```C
 #define U_DISABLE_CURL
 #define U_DISABLE_JANSSON
 #include <ulfius.h>
@@ -37,7 +37,7 @@ On your linker command, add ulfius as a dependency library, e.g. `-lulfius` for 
 ### Return values
 
 When specified, some functions return `U_OK` on success, and other values otherwise. `U_OK` is 0, other values are non-0 values. The defined return value list is the following:
-```c
+```C
 #define U_OK                 0 // No error
 #define U_ERROR              1 // Error
 #define U_ERROR_MEMORY       2 // Error in memory allocation
@@ -64,7 +64,7 @@ To run a webservice, you must initialize a `struct _u_instance` and add your end
 
 The `struct _u_instance` is defined as:
 
-```c
+```C
 /**
  * 
  * Structure of an instance
@@ -103,7 +103,7 @@ In the `struct _u_instance` structure, the element `port` must be set to the por
 
 You can use the functions `ulfius_init_instance` and `ulfius_clean_instance` to facilitate the manipulation of the structure:
 
-```c
+```C
 /**
  * ulfius_init_instance
  * 
@@ -122,7 +122,7 @@ void ulfius_clean_instance(struct _u_instance * u_instance);
 
 The `struct _u_endpoint` is defined as:
 
-```c
+```C
 /**
  * 
  * Structure of an endpoint
@@ -155,7 +155,7 @@ struct _u_endpoint {
 
 Some functions help you facilitate endpoints manipulation:
 
-```c
+```C
 /**
  * Add a struct _u_endpoint * to the specified u_instance
  * Can be done during the execution of the webservice for injection
@@ -263,7 +263,7 @@ To help passing parameters between callback functions of the same request, the v
 
 The starting point function are `ulfius_start_framework` or `ulfius_start_secure_framework`:
 
-```c
+```C
 /**
  * ulfius_start_framework
  * Initializes the framework and run the webservice based on the parameters given
@@ -292,7 +292,7 @@ In your program where you want to start the web server, simply execute the funct
 
 To stop the webservice, call the following function:
 
-```c
+```C
 /**
  * ulfius_stop_framework
  * 
@@ -309,7 +309,7 @@ The callback function is the function executed when a user calls an endpoint man
 
 The callback function has the following signature:
 
-```c
+```C
 int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
                           struct _u_response * response,     // Output parameters (set by the user)
                           void * user_data);
@@ -319,7 +319,7 @@ In the callback function definition, the variables `request` and `response` will
 
 The request variable is defined as:
 
-```c
+```C
 /**
  * 
  * Structure of request parameters
@@ -359,7 +359,7 @@ struct _u_request {
 
 The response variable is defined as:
 
-```c
+```C
 /**
  * 
  * Structure of response parameters
@@ -405,7 +405,7 @@ The user can set the `binary_body` before the return statement, or no response b
 
 Some functions are dedicated to handle the response:
 
-```c
+```C
 /**
  * ulfius_add_header_to_response
  * add a header to the response
@@ -461,7 +461,7 @@ $ make JANSSONFLAG=-DU_DISABLE_JANSSON
 
 if libjansson library is enabled, the following functions are available in Ulfius:
 
-```c
+```C
 /**
  * ulfius_get_json_body_request
  * Get JSON structure from the request body if the request is valid
@@ -487,7 +487,7 @@ The callback returned value can have the following values:
 
 In addition with manipulating the raw parameters of the structures, you can use the `_u_request` and `_u_response` structures by using specific functions designed to facilitate their use and memory management:
 
-```c
+```C
 /**
  * ulfius_init_request
  * Initialize a request structure by allocating inner elements
@@ -571,11 +571,15 @@ struct _u_response * ulfius_duplicate_response(const struct _u_response * respon
 
 The Ulfius framework will automatically free the variables referenced by the request and responses structures, except for `struct _u_response.shared_data`, so you must use dynamically allocated values for the response pointers.
 
+### Character encoding
+
+You may be careful with characters encoding if you use non UTF8 characters in your application or webservice, and especially if you use different encodings in the same application. Ulfius has not been fully tested in cases like that.
+
 ### Cookie management
 
 The map_cookie structure will contain a set of key/values for the cookies. The cookie structure is defined as
 
-```c
+```C
 /**
  * struct _u_cookie
  * the structure containing the response cookie parameters
@@ -594,7 +598,7 @@ struct _u_cookie {
 
 You can use the function `ulfius_add_cookie_to_response` in your callback function to facilitate cookies management. This function is defined as:
 
-```c
+```C
 /**
  * ulfius_add_cookie_to_header
  * add a cookie to the cookie map
@@ -622,7 +626,7 @@ You can use the function `ulfius_set_stream_response` to set those parameters.
 
 The prototype of the `stream_callback` function is the following:
 
-```c
+```C
 int stream_callback (void * stream_user_data, // Your predefined user_data
                     uint64_t offset,          // the position of the current data to send
                     char * out_buf,           // The output buffer to fill with data
@@ -637,7 +641,7 @@ If you want to close the stream from the server side, return `U_STREAM_END` in t
 
 While the `stream_callback_free` function is as simple as:
 
-```c
+```C
 void stream_callback_free (void * stream_user_data);
 ```
 
@@ -645,17 +649,158 @@ Check the program `stream_example` in the example folder.
 
 ### Websockets communication
 
-TBD
+Websocket communication is possible via callback functions defined in your program. The framework will handle sending and receiving messages with the clients, and your program will deal with high level functions to facilitate the communication process. The communication will respect the [RFC6455](https://tools.ietf.org/html/rfc6455) of the websocket protocol.
 
-### Character encoding
+#### Starting a websocket communication
 
-You may be careful with characters encoding if you use non UTF8 characters in your application or webservice, and especially if you use different encodings in the same application. Ulfius has not been fully tested in cases like that.
+To start a websocket communication between the client and your program, you must use the dedicated function `ulfius_start_websocket_cb` with proper values:
+
+```C
+/**
+ * Set a websocket in the response
+ * You must set at least websocket_manager_callback or websocket_incoming_message_callback
+ * @Parameters
+ * response: struct _u_response to send back the websocket initialization, mandatory
+ * websocket_protocol: list of protocols, separated by a comma, or NULL if all protocols are accepted
+ * websocket_extensions: list of extensions, separated by a comma, or NULL if all extensions are accepted
+ * websocket_manager_callback: callback function called right after the handshake acceptance, optional
+ * websocket_manager_user_data: any data that will be given to the websocket_manager_callback, optional
+ * websocket_incoming_message_callback: callback function called on each incoming complete message, optional
+ * websocket_incoming_user_data: any data that will be given to the websocket_incoming_message_callback, optional
+ * websocket_onclose_callback: callback function called right before closing the websocket, must be complete for the websocket to close
+ * websocket_onclose_user_data: any data that will be given to the websocket_onclose_callback, optional
+ * @Return value: U_OK on success
+ */
+int ulfius_set_websocket_response(struct _u_response * response,
+                                   const char * websocket_protocol,
+                                   const char * websocket_extensions, 
+                                   void (* websocket_manager_callback) (const struct _u_request * request,
+                                                                        struct _websocket_manager * websocket_manager,
+                                                                        void * websocket_manager_user_data),
+                                   void * websocket_manager_user_data,
+                                   void (* websocket_incoming_message_callback) (const struct _u_request * request,
+                                                                                 struct _websocket_manager * websocket_manager,
+                                                                                 const struct _websocket_message * message,
+                                                                                 void * websocket_incoming_user_data),
+                                   void * websocket_incoming_user_data,
+                                   void (* websocket_onclose_callback) (const struct _u_request * request,
+                                                                        struct _websocket_manager * websocket_manager,
+                                                                        void * websocket_onclose_user_data),
+                                   void * websocket_onclose_user_data);
+```
+
+According to the Websockets RFC, parameters `websocket_protocol` and `websocket_extensions` are specific for your application.
+
+In Ulfius Implementation, if you specify a list of protocols as a string of protocol names, separated by a comma, Ulfius will check each one and see if they match the list of protocols specified by the client. The resulting protocol list will be sent back to the client.
+If no protocol match your list, the connection will be closed by the framework and will return an error 400 to the client.
+If you set a `NULL` value, Ulfius will accept all protocols sent by the client.
+
+This behaviour is the same with websocket extension check.
+
+3 callback functions are available for the websocket implementation:
+
+- `websocket_manager_callback`: This function will be called in a separated thread, and the websocket will remain open as long as this callback function is not completed. In this function, your program will have access to the websocket status (connected or not), and the list of messages sent and received. When this function returns, the websocket will close itself automatically.
+- `websocket_incoming_message_callback`: This function will be called every time a new message is sent by the client. Although, it is in synchronous mode, which means that you won't have 2 different `websocket_incoming_message_callback` of the same websocket executed at the same time.
+- `websocket_onclose_callback`: This function will be called right after the websocket connection is closed, but before the websocket structure is cleaned.
+
+You must specify at least one of the callback functions `websocket_manager_callback` or `websocket_incoming_message_callback`.
+
+For each of these callback function, you can specify a `*_user_data` pointer containing any data you need.
+
+#### Manipulating websocket data structure
+
+The websocket manager data structure definition is the following:
+
+```C
+/**
+ * Websocket manager structure
+ * contains among other things the socket
+ * the status (open, closed), and the list of incoming and outcoming messages
+ * Used on public callback functions
+ */
+struct _websocket_manager {
+  struct _websocket_message_list * message_list_incoming;
+  struct _websocket_message_list * message_list_outcoming;
+  int connected;
+  int closing;
+  int manager_closed;
+  MHD_socket sock;
+  pthread_mutex_t read_lock;
+  pthread_mutex_t write_lock;
+};
+```
+
+The most important data you will need are `message_list_incoming`, `message_list_outcoming` and `connected`. The other ones are reserved for the framework, do not alterate them.
+
+The `connected` value will tell you wether the websocket is connected or not, `message_list_incoming`, `message_list_outcoming` will contain the message lists. These lists are updated in real time during the execution, do not try to update them directly.
+
+When an incoming message will arrive, the `message_list_incoming` table will be updated, and the `websocket_incoming_message_callback` function will be called too, depending on your application behaviour, use the method you prefer for incoming messages.
+
+#### Messages manipulation
+
+A message has the following structure:
+
+```C
+/**
+ * websocket message structure
+ * contains all the data of a websocket message
+ * and the timestamp of when it was sent of received
+ */
+struct _websocket_message {
+  time_t datestamp;
+  uint8_t opcode;
+  uint8_t has_mask;
+  uint8_t mask[4];
+  uint64_t data_len;
+  char * data;
+};
+```
+
+A message list has the following strucure:
+
+```C
+
+struct _websocket_message_list {
+  struct _websocket_message ** list;
+  size_t len;
+};
+```
+
+If you want to send a message to the client, you must use the dedicated function `ulfius_websocket_send_message`:
+
+```C
+/**
+ * Send a message in the websocket
+ * Return U_OK on success
+ */
+int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
+                                  const uint8_t opcode,
+                                  const uint64_t data_len,
+                                  const char * data);
+```
+
+You can also pop the first message of the incoming or outcoming if you need to with `ulfius_websocket_pop_first_message`, this will remove the first message of the list, and return it as a pointer. You can free a message using the function `ulfius_clear_websocket_message`:
+
+```C
+
+/**
+ * Return the first message of the message list
+ * Return NULL if message_list has no message
+ * Returned value must be cleared after use
+ */
+struct _websocket_message * ulfius_websocket_pop_first_message(struct _websocket_message_list * message_list);
+
+/**
+ * Clear data of a websocket message
+ */
+void ulfius_clear_websocket_message(struct _websocket_message * message);
+```
 
 ### struct _u_map API
 
 The `struct _u_map` is a simple key/value mapping API used in the requests and the response for setting parameters. The available functions to use this structure are:
 
-```c
+```C
 /**
  * initialize a struct _u_map
  * this function MUST be called after a declaration or allocation
@@ -850,7 +995,7 @@ Return value is `U_OK` on success.
 
 This functions are defined as:
 
-```c
+```C
 /**
  * ulfius_send_http_request
  * Send a HTTP request and store the result into a _u_response
@@ -881,7 +1026,7 @@ It's used to send emails (without attached files) via a smtp server.
 
 This function is defined as:
 
-```c
+```C
 /**
  * Send an email
  * host: smtp server host name

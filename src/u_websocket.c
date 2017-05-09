@@ -416,7 +416,7 @@ int ulfius_push_websocket_message(struct _websocket_message_list * message_list,
  * Return NULL if message_list has no message
  * Returned value must be cleared after use
  */
-struct _websocket_message * pop_first_message(struct _websocket_message_list * message_list) {
+struct _websocket_message * ulfius_websocket_pop_first_message(struct _websocket_message_list * message_list) {
   size_t len;
   struct _websocket_message * message = NULL;
   if (message_list != NULL && message_list->len > 0) {
