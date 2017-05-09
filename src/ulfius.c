@@ -205,7 +205,6 @@ int ulfius_start_framework(struct _u_instance * u_instance) {
       return U_ERROR_LIBMHD;
     } else {
       u_instance->status = U_STATUS_RUNNING;
-      u_instance->secure = 0;
       return U_OK;
     }
   } else {
@@ -234,7 +233,6 @@ int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * 
       return U_ERROR_LIBMHD;
     } else {
       u_instance->status = U_STATUS_RUNNING;
-      u_instance->secure = 1;
       return U_OK;
     }
   } else {

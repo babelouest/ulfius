@@ -252,7 +252,6 @@ struct _u_instance {
   size_t                        max_post_param_size;
   size_t                        max_post_body_size;
 #if !defined(U_DISABLE_WEBSOCKET)
-  int                           secure;
   size_t                        nb_websocket_active;
   struct _websocket          ** websocket_active;
 #endif
