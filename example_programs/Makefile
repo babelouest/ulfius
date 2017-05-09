@@ -22,6 +22,7 @@ INJECTION_EXAMPLE_LOCATION=./injection_example
 AUTH_EXAMPLE_LOCATION=./auth_example
 STREAM_EXAMPLE_LOCATION=./stream_example
 MULTIPLE_CALLBACKS_LOCATION=./multiple_callbacks_example
+WEBSOCKET_EXAMPLE_LOCATION=./websocket_example
 
 all: debug
 
@@ -35,6 +36,7 @@ debug:
 	cd $(STREAM_EXAMPLE_LOCATION) && $(MAKE) debug
 	cd $(TEST_U_MAP_LOCATION) && $(MAKE) debug
 	cd $(MULTIPLE_CALLBACKS_LOCATION) && $(MAKE) debug
+	cd $(WEBSOCKET_EXAMPLE_LOCATION) && $(MAKE) debug
 
 clean:
 	cd $(SIMPLE_EXAMPLE_LOCATION) && $(MAKE) clean
@@ -46,3 +48,4 @@ clean:
 	cd $(STREAM_EXAMPLE_LOCATION) && $(MAKE) clean
 	cd $(TEST_U_MAP_LOCATION) && $(MAKE) clean
 	cd $(MULTIPLE_CALLBACKS_LOCATION) && $(MAKE) clean
+	cd $(WEBSOCKET_EXAMPLE_LOCATION) && $(MAKE) clean

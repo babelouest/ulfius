@@ -11,7 +11,7 @@
   <input type="button" id="send" name="send" value="Send message">
   <input type="button" id="clear" name="clear" value="Clear messages"><br/>
   <hr>
-  <div style="width=100%; height=100%" id="receivedMessage"></div>
+  <div style="width=100%; height=100%" id="message"></div>
 </body>
 <script type="text/javascript">
   $(document).ready(function() {
@@ -23,13 +23,13 @@
         mySocket = new WebSocket("ws://localhost:9275/websocket", ["plop", "grut"]);
       }
       mySocket.onmessage = function (event) {
-        var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Message: </strong>" + event.data + "</p><hr>"
-        $("#receivedMessage").append(message);
+        var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Message received: </strong>" + event.data + "</p><hr>"
+        $("#message").append(message);
       };
       mySocket.onclose = function () {
         mySocket = false;
         var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Websocket closed</strong></p><hr>"
-        $("#receivedMessage").append(message);
+        $("#message").append(message);
         $("#connect").val("Connect websocket");
       };
     }
@@ -37,18 +37,19 @@
     $("#connect").click(function() {
       if (!mySocket) {
         connectSocket();
-        console.log("Start websocket: ", mySocket);
         $(this).val("Disconnect websocket");
+        var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Websocket connected</strong></p><hr>"
+        $("#message").append(message);
+        $("#connect").val("Disconnect websocket");
       } else {
         mySocket.close();
         mySocket = false;
-        console.log("Websocket closed");
         $(this).val("Connect websocket");
       }
     });
     
     $("#clear").click(function() {
-      $("#receivedMessage").text("");
+      $("#message").text("");
     });
     
     $("#send").click(function() {
@@ -57,7 +58,8 @@
           connectSocket();
         }
         mySocket.send($("#sendMessage").val());
-        console.log("message sent: ", $("#sendMessage").val());
+        var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Message sent: </strong>" + $("#sendMessage").val() + "</p><hr>"
+        $("#message").append(message);
       }
     });
   });

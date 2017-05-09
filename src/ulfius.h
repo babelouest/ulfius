@@ -844,7 +844,9 @@ int u_map_empty(struct _u_map * u_map);
 #define U_WEBSOCKET_OPCODE_CLOSE    0x08
 #define U_WEBSOCKET_OPCODE_PING     0x09
 #define U_WEBSOCKET_OPCODE_PONG     0x0A
-#define U_WEBSOCKET_OPCODE_ERROR    0xFF
+#define U_WEBSOCKET_OPCODE_CLOSED   0xFD
+#define U_WEBSOCKET_OPCODE_ERROR    0xFE
+#define U_WEBSOCKET_OPCODE_NONE     0xFF
 
 /**
  * Websocket manager structure
@@ -855,10 +857,12 @@ int u_map_empty(struct _u_map * u_map);
 struct _websocket_manager {
   struct _websocket_message_list * message_list_incoming;
   struct _websocket_message_list * message_list_outcoming;
-  int tls;
   int connected;
+  int closing;
+  int manager_closed;
   MHD_socket sock;
-  int closed;
+  pthread_mutex_t read_lock;
+  pthread_mutex_t write_lock;
 };
 
 /**
@@ -1103,7 +1107,13 @@ void ulfius_start_websocket_cb (void *cls,
 /**
  * Workaround to make sure a message, as long as it can be is complete sent
  */
-void send_all(MHD_socket sock, const uint8_t * data, size_t len);
+void ulfius_websocket_send_all(MHD_socket sock, const uint8_t * data, size_t len);
+
+/**
+ * Centralise socket reading in this function
+ * so if options or check must be done, it's done here instead of each read call
+ */
+size_t ulfius_websocket_recv_all(MHD_socket sock, uint8_t * data, size_t len);
 
 /**
  * Generates a handhshake answer from the key given in parameter
@@ -1120,7 +1130,7 @@ int ulfius_close_websocket(struct _websocket * websocket);
  * If match is NULL, then return source duplicate
  * Returned value must be free'd after use
  */
-char * check_list_match(const char * source, const char * match);
+char * ulfius_check_list_match(const char * source, const char * match);
 
 /**
  * Initialize a websocket message list
@@ -1142,12 +1152,12 @@ int ulfius_push_websocket_message(struct _websocket_message_list * message_list,
 /**
  * Clear data of a websocket
  */
-void clear_websocket(struct _websocket * websocket);
+int ulfius_clear_websocket(struct _websocket * websocket);
 
 /**
  * Clear data of a websocket_manager
  */
-void clear_websocket_manager(struct _websocket_manager * websocket_manager);
+void ulfius_clear_websocket_manager(struct _websocket_manager * websocket_manager);
 
 /**
  * Add a websocket in the list of active websockets of the instance
@@ -1161,20 +1171,24 @@ int ulfius_instance_remove_websocket_active(struct _u_instance * instance, struc
 
 /**
  * Read and parse a new message from the websocket
- * Return the opcode of the new websocket, or U_WEBSOCKET_OPCODE_ERROR on error
- * Sets the new message in the message variable
+ * Return the opcode of the new websocket, U_WEBSOCKET_OPCODE_NONE if no message arrived, or U_WEBSOCKET_OPCODE_ERROR on error
+ * Sets the new message in the message variable if available
  */
-int read_incoming_message(struct _websocket * websocket, struct _websocket_message ** message);
-
-/**
- * Close the websocket, then clear all data related to it
- */
-int shutdown_websocket(struct _websocket * websocket);
+int ulfius_read_incoming_message(struct _websocket_manager * websocket_manager, struct _websocket_message ** message);
 
 /**
  * Run the websocket manager in a separated detached thread
  */
-void * thread_websocket_manager_run(void * args);
+void * ulfius_thread_websocket_manager_run(void * args);
+
+/**
+ * Send a message in the websocket without lock
+ * Return U_OK on success
+ */
+int ulfius_websocket_send_message_nolock(struct _websocket_manager * websocket_manager,
+                                  const uint8_t opcode,
+                                  const uint64_t data_len,
+                                  const char * data);
 
 /**
  * Base64 encode and decode functions

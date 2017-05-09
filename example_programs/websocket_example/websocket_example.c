@@ -195,13 +195,6 @@ void websocket_manager_callback(const struct _u_request * request,
       break;
     }
   }
-  sleep(2);
-  if (websocket_manager != NULL && websocket_manager->connected) {
-    ret = ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_CLOSE, 0, NULL);
-    if (ret != U_OK) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "Error send close message");
-    }
-  }
   y_log_message(Y_LOG_LEVEL_DEBUG, "Closing websocket_manager_callback");
 }
 

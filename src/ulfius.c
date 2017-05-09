@@ -420,8 +420,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
             close_loop = 1;
 #if !defined(U_DISABLE_WEBSOCKET)
           } else if (response->websocket_manager_callback != NULL ||
-                     response->websocket_incoming_message_callback != NULL ||
-                     response->websocket_onclose_callback != NULL) {
+                     response->websocket_incoming_message_callback != NULL) {
             // if the session is a valid websocket request,
             // Initiate an UPGRADE session,
             // then run the websocket callback functions with initialized data
@@ -433,8 +432,8 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
                 NULL != o_strcasestr(u_map_get_case(con_info->request->map_header, "Connection"), "Upgrade") &&
                 0 == o_strcmp(con_info->request->http_verb, "GET")) {
               // Check websocket_protocol and websocket_extensions to match ours
-              char * extensions = check_list_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Extensions"), response->websocket_extensions),
-                   * protocol = check_list_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Protocol"), response->websocket_protocol);
+              char * extensions = ulfius_check_list_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Extensions"), response->websocket_extensions),
+                   * protocol = ulfius_check_list_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Protocol"), response->websocket_protocol);
               if (extensions != NULL && protocol != NULL) {
                 char websocket_accept[32] = {0};
                 if (ulfius_generate_handshake_answer(u_map_get(con_info->request->map_header, "Sec-WebSocket-Key"), websocket_accept)) {
@@ -687,13 +686,12 @@ int ulfius_stop_framework(struct _u_instance * u_instance) {
   if (u_instance != NULL && u_instance->mhd_daemon != NULL) {
 #if !defined(U_DISABLE_WEBSOCKET)
     int i;
-    // Loop in all active websockets and close them manually
+    // Loop in all active websockets and send close signal
     for (i=u_instance->nb_websocket_active-1; i>=0; i--) {
-      // TODO: close each websocket in a thread and watch for them to be closed
-      ulfius_close_websocket(u_instance->websocket_active[i]);
-      while (!u_instance->websocket_active[i]->websocket_manager->closed) {
-        usleep(50);
-      }
+      u_instance->websocket_active[i]->websocket_manager->closing = 1;
+    }
+    while (u_instance->nb_websocket_active > 0) {
+      usleep(50);
     }
 #endif
     MHD_stop_daemon (u_instance->mhd_daemon);
