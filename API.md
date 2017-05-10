@@ -705,6 +705,8 @@ This behaviour is the same with websocket extension check.
 
 You must specify at least one of the callback functions `websocket_manager_callback` or `websocket_incoming_message_callback`.
 
+When the function `ulfius_stop_framework` is called, it will wait for all running websockets to complete by themselves, there is no force close. So if you have a `websocket_manager_callback` function running, you *MUST* complete this function in order to make a clean stop of the http daemon.
+
 For each of these callback function, you can specify a `*_user_data` pointer containing any data you need.
 
 #### Manipulating websocket data structure
