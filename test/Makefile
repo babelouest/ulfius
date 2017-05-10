@@ -1,5 +1,5 @@
 #
-# Orcania library
+# Ulfius library
 #
 # Makefile used to build the tests
 #
