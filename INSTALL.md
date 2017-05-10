@@ -4,10 +4,10 @@
 
 ### External dependencies
 
-To install the external dependencies, for Debian based distributions (Debian, Ubuntu, Raspbian, etc.), run as root:
+To install all the external dependencies, for Debian based distributions (Debian, Ubuntu, Raspbian, etc.), run as root:
 
 ```shell
-# apt-get install libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev libssl-dev
+# apt-get install libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev libgnutls-dev
 ```
 
 ### Note
@@ -41,17 +41,23 @@ To disable libcurl functions, append the option `CURLFLAG=-DU_DISABLE_CURL` to t
 $ make CURLFLAG=-DU_DISABLE_CURL
 ```
 
+If libcurl functions are disabled, `libcurl4-gnutls-dev` is no longer mandatory for install.
+
 To disable libjansson functions, append the option `JANSSONFLAG=-DU_DISABLE_JANSSON` to the make command when you build Ulfius and Orcania:
 
 ```shell
 $ make JANSSONFLAG=-DU_DISABLE_JANSSON
 ```
 
+If libjansson functions are disabled, `libjansson-dev` is no longer mandatory for install.
+
 To disable websocket implementation and avoid installing libssl, append the option `WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET` to the make command when you build Ulfius:
 
 ```shell
 $ make WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET
 ```
+
+If websocket functions are disabled, `libgnutls-dev` is no longer mandatory for install.
 
 To disable two or more libraries, append options, example:
 

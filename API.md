@@ -22,7 +22,14 @@ If you have disabled `libjansson` during the build, define the macro `U_DISABLE_
 #include <ulfius.h>
 ```
 
-If you have disabled both `libcurl` and `libjansson`, define both macros before including `ulfius.h`:
+If you have disabled `libgnutls` during the build, define the macro `U_DISABLE_WEBSOCKET` before including `ulfius.h`:
+
+```C
+#define U_DISABLE_WEBSOCKET
+#include <ulfius.h>
+```
+
+If you have disabled more than one library, for example both `libcurl` and `libjansson`, define both macros before including `ulfius.h`:
 
 ```C
 #define U_DISABLE_CURL
@@ -33,6 +40,43 @@ If you have disabled both `libcurl` and `libjansson`, define both macros before 
 On your linker command, add ulfius as a dependency library, e.g. `-lulfius` for gcc.
 
 ## API Documentation
+
+### Update existing programs from Ulfius 1.x to 2.0
+
+If you already have programs that use Ulfius 1.x and want to update them to the brand new fresh Ulfius 2.0, it may require the following minor changes.
+
+#### Endpoints definitions
+
+Endpoints structure have change, `ulfius_add_endpoint_by_val` now requires only one callback function, but requires a priority number.
+
+If you don't use authentication callback functions, you can simply remove the `NULL, NULL, NULL` parameters corresponding to the former authentication callback function pointer, the authentication callback user data, and the realm value. Then add any number as a priority, 0 for example.
+
+If you use authentication callback functions, split your `ulfius_add_endpoint_by_val` call in 2 separate calls, one for the authentication function, one for the main callback function. For example:
+
+```C
+// An Ulfius 1.x call
+ulfius_add_endpoint_by_val(&instance, "GET", "/", NULL, &auth_callback, my_auth_data, "my realm", &main_callback, my_main_data);
+
+// The same behaviour with Ulfius 2.0
+ulfius_add_endpoint_by_val(&instance, "GET", "/", NULL, 0, &auth_callback, my_auth_data);
+ulfius_add_endpoint_by_val(&instance, "GET", "/", NULL, 1, &main_callback, my_main_data);
+// In this case, the realm value "my realm" must be specified in the response
+```
+
+#### Callback return value
+
+The return value for the callback functions must be adapted, instead of U_OK, U_ERROR or U_ERROR_UNAUTHORIZED, you must use one of the following:
+
+```C
+#define U_CALLBACK_CONTINUE     0 // Will replace U_OK
+#define U_CALLBACK_COMPLETE     1
+#define U_CALLBACK_UNAUTHORIZED 2 // Will replace U_ERROR_UNAUTHORIZED
+#define U_CALLBACK_ERROR        3 // Will replace U_ERROR
+```
+
+If you want more details on the multiple callback functions, check the [documentation](#callback-functions-return-value).
+
+Other functions may have change their name or signature, check the documentation for more information.
 
 ### Return values
 
@@ -477,6 +521,8 @@ int ulfius_set_json_response(struct _u_response * response, const uint status, c
 ```
 
 The `jansson` api documentation is available at the following address: [Jansson documentation](https://jansson.readthedocs.org/).
+
+#### Callback functions return value
 
 The callback returned value can have the following values:
 
