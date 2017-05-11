@@ -431,7 +431,7 @@ int ulfius_init_response(struct _u_response * response) {
 
 /**
  * create a new response based on the source elements
- * return value must be free'd
+ * return value must be free'd after use
  */
 struct _u_response * ulfius_duplicate_response(const struct _u_response * response) {
   struct _u_response * new_response = NULL;

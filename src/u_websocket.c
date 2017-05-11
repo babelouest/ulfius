@@ -583,7 +583,7 @@ size_t ulfius_websocket_recv_all(MHD_socket sock, uint8_t * data, size_t len) {
 /**
  * Return a match list between two list of items
  * If match is NULL, then return source duplicate
- * Returned value must be free'd after use
+ * Returned value must be u_free'd after use
  */
 char * ulfius_check_list_match(const char * source, const char * match) {
   char ** source_list = NULL, ** match_list = NULL;

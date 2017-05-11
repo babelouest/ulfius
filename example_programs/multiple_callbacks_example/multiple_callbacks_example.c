@@ -222,7 +222,7 @@ int callback_multiple_level_auth_check (const struct _u_request * request, struc
   y_log_message(Y_LOG_LEVEL_DEBUG, "basic auth user: %s", request->auth_basic_user);
   y_log_message(Y_LOG_LEVEL_DEBUG, "basic auth password: %s", request->auth_basic_password);
   if (request->auth_basic_user != NULL && request->auth_basic_password != NULL && 
-      0 == strcmp(request->auth_basic_user, USER) && 0 == strcmp(request->auth_basic_password, PASSWORD)) {
+      0 == o_strcmp(request->auth_basic_user, USER) && 0 == o_strcmp(request->auth_basic_password, PASSWORD)) {
     return U_CALLBACK_CONTINUE;
   } else {
     if (0 == o_strcmp("PUT", request->http_verb)) {

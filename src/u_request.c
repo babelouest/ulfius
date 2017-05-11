@@ -323,7 +323,7 @@ int ulfius_clean_request_full(struct _u_request * request) {
 
 /**
  * create a new request based on the source elements
- * returned value must be free'd
+ * returned value must be free'd after use
  */
 struct _u_request * ulfius_duplicate_request(const struct _u_request * request) {
   struct _u_request * new_request = NULL;

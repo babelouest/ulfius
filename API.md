@@ -100,6 +100,46 @@ void o_set_alloc_funcs(o_malloc_t malloc_fn, o_realloc_t realloc_fn, o_free_t fr
 void o_get_alloc_funcs(o_malloc_t * malloc_fn, o_realloc_t * realloc_fn, o_free_t * free_fn);
 ```
 
+Data structures allocated have their specific cleanup functions. To free pointer allocated, you should use the function `u_free` that is intended to use your memory management functions.
+
+```c
+/**
+ * ulfius_clean_instance
+ * 
+ * Clean memory allocated by a struct _u_instance *
+ */
+void ulfius_clean_instance(struct _u_instance * u_instance);
+
+/**
+ * ulfius_clean_request
+ * clean the specified request's inner elements
+ * user must free the parent pointer if needed after clean
+ * or use ulfius_clean_request_full
+ * return U_OK on success
+ */
+int ulfius_clean_request(struct _u_request * request);
+
+/**
+ * ulfius_clean_response
+ * clean the specified response's inner elements
+ * user must free the parent pointer if needed after clean
+ * or use ulfius_clean_response_full
+ * return U_OK on success
+ */
+int ulfius_clean_response(struct _u_response * response);
+
+/**
+ * free the struct _u_map's inner components
+ * return U_OK on success
+ */
+int u_map_clean(struct _u_map * u_map);
+
+/**
+ * free data allocated by ulfius functions
+ */
+void u_free(void * data);
+```
+
 ### Initialization
 
 When initialized, Ulfius runs a thread in background that will listen to the specified port and dispatch the calls to the specified functions. Ulfius allows adding and removing new endpoints during the instance execution.
@@ -602,13 +642,13 @@ int ulfius_copy_cookie(struct _u_cookie * dest, const struct _u_cookie * source)
 
 /**
  * create a new request based on the source elements
- * returned value must be free'd
+ * returned value must be free'd after use
  */
 struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
 
 /**
  * create a new response based on the source elements
- * return value must be free'd
+ * return value must be free'd after use
  */
 struct _u_response * ulfius_duplicate_response(const struct _u_response * response);
 ```

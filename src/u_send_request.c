@@ -536,13 +536,13 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
                     domain = o_strdup(elt);
                     break;
                   case 1:
-                    secure = (0==strcmp(elt, "TRUE"));
+                    secure = (0==o_strcmp(elt, "TRUE"));
                     break;
                   case 2:
                     path = o_strdup(elt);
                     break;
                   case 3:
-                    http_only = (0==strcmp(elt, "TRUE"));
+                    http_only = (0==o_strcmp(elt, "TRUE"));
                     break;
                   case 4:
                     expires = o_strdup(elt);

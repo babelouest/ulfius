@@ -728,7 +728,6 @@ int ulfius_is_valid_endpoint(const struct _u_endpoint * endpoint, int to_delete)
 /**
  * ulfius_copy_endpoint
  * return a copy of an endpoint with duplicate values
- * returned value must be free'd after use
  */
 int ulfius_copy_endpoint(struct _u_endpoint * dest, const struct _u_endpoint * source) {
   if (source != NULL && dest != NULL) {
@@ -1105,4 +1104,11 @@ int ulfius_set_default_endpoint(struct _u_instance * u_instance,
   } else {
     return U_ERROR_PARAMS;
   }
+}
+
+/**
+ * free data allocated by ulfius functions
+ */
+void u_free(void * data) {
+  o_free(data);
 }

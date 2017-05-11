@@ -419,7 +419,6 @@ const struct _u_endpoint * ulfius_empty_endpoint();
 /**
  * ulfius_copy_endpoint
  * return a copy of an endpoint with duplicate values
- * returned value must be free'd after use
  */
 int ulfius_copy_endpoint(struct _u_endpoint * dest, const struct _u_endpoint * source);
 
@@ -965,6 +964,11 @@ void ulfius_clear_websocket_message(struct _websocket_message * message);
 
 #endif
 
+/**
+ * free data allocated by ulfius functions
+ */
+void u_free(void * data);
+
 /**********************************
  * Internal functions declarations
  **********************************/
@@ -1015,7 +1019,7 @@ void mhd_request_completed (void *cls, struct MHD_Connection *connection,
 /**
  * ulfius_split_url
  * return an array of char based on the url words
- * returned value must be free'd after use
+ * returned value must be u_free'd after use
  */
 char ** ulfius_split_url(const char * prefix, const char * url);
 
@@ -1062,7 +1066,7 @@ int ulfius_set_response_cookie(struct MHD_Response * mhd_response, const struct 
 
 /**
  * Add a cookie in the cookie map as defined in the RFC 6265
- * Returned value must be free'd after use
+ * Returned value must be u_free'd after use
  */
 char * ulfius_get_cookie_header(const struct _u_cookie * cookie);
 
@@ -1127,7 +1131,7 @@ int ulfius_close_websocket(struct _websocket * websocket);
 /**
  * Return a match list between two list of items
  * If match is NULL, then return source duplicate
- * Returned value must be free'd after use
+ * Returned value must be u_free'd after use
  */
 char * ulfius_check_list_match(const char * source, const char * match);
 

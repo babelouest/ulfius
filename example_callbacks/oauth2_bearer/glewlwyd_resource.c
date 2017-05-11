@@ -41,13 +41,13 @@ int callback_check_glewlwyd_access_token (const struct _u_request * request, str
     switch (config->method) {
       case G_METHOD_HEADER:
         if (u_map_get(request->map_header, HEADER_AUTHORIZATION) != NULL) {
-          if (strstr(u_map_get(request->map_header, HEADER_AUTHORIZATION), HEADER_PREFIX_BEARER) == u_map_get(request->map_header, HEADER_AUTHORIZATION)) {
+          if (o_strstr(u_map_get(request->map_header, HEADER_AUTHORIZATION), HEADER_PREFIX_BEARER) == u_map_get(request->map_header, HEADER_AUTHORIZATION)) {
             token_value = u_map_get(request->map_header, HEADER_AUTHORIZATION) + strlen(HEADER_PREFIX_BEARER);
           }
         }
         break;
       case G_METHOD_BODY:
-        if (strstr(u_map_get(request->map_header, ULFIUS_HTTP_HEADER_CONTENT), MHD_HTTP_POST_ENCODING_FORM_URLENCODED) != NULL && u_map_get(request->map_post_body, BODY_URL_PARAMETER) != NULL) {
+        if (o_strstr(u_map_get(request->map_header, ULFIUS_HTTP_HEADER_CONTENT), MHD_HTTP_POST_ENCODING_FORM_URLENCODED) != NULL && u_map_get(request->map_post_body, BODY_URL_PARAMETER) != NULL) {
           token_value = u_map_get(request->map_post_body, BODY_URL_PARAMETER);
         }
         break;
