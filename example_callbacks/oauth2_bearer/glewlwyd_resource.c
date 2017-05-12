@@ -33,7 +33,7 @@
 int callback_check_glewlwyd_access_token (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _glewlwyd_resource_config * config = (struct _glewlwyd_resource_config *)user_data;
   json_t * j_access_token = NULL;
-  int res = U_ERROR_UNAUTHORIZED, res_scope, res_validity;
+  int res = U_CALLBACK_UNAUTHORIZED, res_scope, res_validity;
   const char * token_value = NULL;
   char * response_value = NULL;
   
@@ -70,7 +70,7 @@ int callback_check_glewlwyd_access_token (const struct _u_request * request, str
             u_map_put(response->map_header, HEADER_RESPONSE, response_value);
             o_free(response_value);
           } else {
-            res = U_OK;
+            res = U_CALLBACK_CONTINUE;
           }
         } else if (res_validity == G_ERROR_INVALID_TOKEN) {
           response_value = msprintf(HEADER_PREFIX_BEARER "%s%s%serror=\"invalid_request\",error_description=\"The access token is invalid\"", (config->realm!=NULL?"realm=":""), (config->realm!=NULL?config->realm:""), (config->realm!=NULL?",":""));
