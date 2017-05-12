@@ -63,7 +63,7 @@ int ulfius_validate_instance(const struct _u_instance * u_instance) {
   if (u_instance == NULL ||
       u_instance->port <= 0 ||
       u_instance->port >= 65536 ||
-      !ulfius_validate_endpoint_list(u_instance->endpoint_list, u_instance->nb_endpoints) == U_OK) {
+      ulfius_validate_endpoint_list(u_instance->endpoint_list, u_instance->nb_endpoints) != U_OK) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error, instance or has invalid parameters");
     return U_ERROR_PARAMS;
   }
