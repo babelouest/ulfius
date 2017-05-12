@@ -659,7 +659,7 @@ int ulfius_set_stream_response(struct _u_response * response,
  * Add a json_t binary_body to a response
  * return U_OK on success
  */
-int ulfius_set_json_response(struct _u_response * response, const uint status, const json_t * binary_body) {
+int ulfius_set_json_body_response(struct _u_response * response, const uint status, const json_t * binary_body) {
   if (response != NULL && binary_body != NULL) {
     // Free all the bodies available
     o_free(response->binary_body);
@@ -673,10 +673,24 @@ int ulfius_set_json_response(struct _u_response * response, const uint status, c
     }
     response->binary_body_length = strlen((char*)response->binary_body);
     response->status = status;
+    u_map_put(response->map_header, ULFIUS_HTTP_HEADER_CONTENT, ULFIUS_HTTP_ENCODING_JSON);
     return U_OK;
   } else {
     return U_ERROR_PARAMS;
   }
+}
+
+/**
+ * ulfius_get_json_body_response
+ * Get JSON structure from the request body if the request is valid
+ * request: struct _u_request used
+ * json_error: structure to store json_error_t if specified
+ */
+json_t * ulfius_get_json_body_response(struct _u_response * response, json_error_t * json_error) {
+  if (response != NULL && response->map_header != NULL && NULL != o_strstr(ULFIUS_HTTP_ENCODING_JSON, u_map_get_case(response->map_header, ULFIUS_HTTP_HEADER_CONTENT))) {
+    return json_loadb(response->binary_body, response->binary_body_length, JSON_DECODE_ANY, json_error);
+  }
+  return NULL;
 }
 #endif
 

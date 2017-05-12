@@ -636,10 +636,23 @@ json_t * ulfius_get_json_body_request(const struct _u_request * request, json_er
 
 /**
  * ulfius_set_json_response
+ * Add a json_t body to a request
+ * return U_OK on success
+ */
+int ulfius_set_json_body_request(struct _u_request * request, json_t * body);
+
+/**
+ * ulfius_set_json_response
  * Add a json_t body to a response
  * return U_OK on success
  */
-int ulfius_set_json_response(struct _u_response * response, const uint status, const json_t * body);
+int ulfius_set_json_body_response(struct _u_response * response, const uint status, const json_t * body);
+
+/**
+ * ulfius_get_json_response
+ * Get JSON structure from the response body if the request is valid
+ */
+json_t * ulfius_get_json_body_response(struct _u_response * response, json_error_t * json_error);
 #endif
 
 /************************************************************************
