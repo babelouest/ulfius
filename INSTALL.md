@@ -51,7 +51,7 @@ $ make JANSSONFLAG=-DU_DISABLE_JANSSON
 
 If libjansson functions are disabled, `libjansson-dev` is no longer mandatory for install.
 
-To disable websocket implementation and avoid installing libssl, append the option `WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET` to the make command when you build Ulfius:
+To disable websocket implementation and avoid installing libgnutls, append the option `WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET` to the make command when you build Ulfius:
 
 ```shell
 $ make WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET
