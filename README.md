@@ -126,7 +126,7 @@ the values `string_body` and `json_body` have been removed from the structures `
 
 Ulfius now allows websockets communication between the client and the server. Check the [API.md](API.md#websockets-communication) file for implementation details.
 
-Using websocket requires [libssl](https://www.openssl.org/source/). It also requires a recent version of [Libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/), at least 0.9.52.
+Using websocket requires [libgnutls](https://www.gnutls.org/). It also requires a recent version of [Libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/), at least 0.9.53.
 
 If you dont need or can't use this feature, you can disable it by adding the option `WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET` to the make command when you build Ulfius:
 
