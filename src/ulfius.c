@@ -135,9 +135,12 @@ void * ulfius_uri_logger (void * cls, const char * uri) {
  * 
  */
 struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem) {
-  uint mhd_flags = MHD_USE_THREAD_PER_CONNECTION | MHD_USE_INTERNAL_POLLING_THREAD | MHD_ALLOW_UPGRADE;
+  uint mhd_flags = MHD_USE_THREAD_PER_CONNECTION | MHD_USE_INTERNAL_POLLING_THREAD;
 #ifdef DEBUG
   mhd_flags |= MHD_USE_DEBUG;
+#endif
+#if !defined(U_DISABLE_WEBSOCKET)
+  mhd_flags |= MHD_ALLOW_UPGRADE;
 #endif
   
   if (u_instance->mhd_daemon == NULL) {
@@ -281,7 +284,10 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
 
   struct _u_endpoint * endpoint_list = ((struct _u_instance *)cls)->endpoint_list, ** current_endpoint_list = NULL, * current_endpoint = NULL;
   struct connection_info_struct * con_info = * con_cls;
-  int mhd_ret = MHD_NO, callback_ret = U_OK, i, close_loop = 0, inner_error = U_OK, upgrade_protocol = 0;
+  int mhd_ret = MHD_NO, callback_ret = U_OK, i, close_loop = 0, inner_error = U_OK;
+#if !defined(U_DISABLE_WEBSOCKET)
+  int upgrade_protocol = 0;
+#endif
   char * content_type, * auth_realm = NULL;
   struct _u_response * response = NULL;
   struct sockaddr * so_client;
@@ -592,10 +598,12 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
           mhd_ret = MHD_queue_basic_auth_fail_response (connection, auth_realm, mhd_response);
         } else if (inner_error == U_CALLBACK_UNAUTHORIZED) {
           mhd_ret = MHD_queue_response (connection, MHD_HTTP_UNAUTHORIZED, mhd_response);
+#if !defined(U_DISABLE_WEBSOCKET)
         } else if (upgrade_protocol) {
           mhd_ret = MHD_queue_response (connection,
                                     MHD_HTTP_SWITCHING_PROTOCOLS,
                                     mhd_response);
+#endif
         } else {
           mhd_ret = MHD_queue_response (connection, response->status, mhd_response);
         }
