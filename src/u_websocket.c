@@ -195,7 +195,7 @@ int ulfius_read_incoming_message(struct _websocket_manager * websocket_manager, 
   int message_complete = 0, message_error;
   uint8_t header[2], payload_len[8], masking_key[4];
   uint8_t * payload_data;
-  size_t msg_len;
+  size_t msg_len = 0;
   
   (*message) = NULL;
   do {
