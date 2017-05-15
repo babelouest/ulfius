@@ -455,18 +455,23 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
                     websocket->websocket_onclose_user_data = response->websocket_onclose_user_data;
                     websocket->tls = 0;
                     mhd_response = MHD_create_response_for_upgrade(ulfius_start_websocket_cb, websocket);
-                    MHD_add_response_header (mhd_response,
-                                             MHD_HTTP_HEADER_UPGRADE,
-                                             U_WEBSOCKET_UPGRADE_VALUE);
-                    MHD_add_response_header (mhd_response,
-                                             "Sec-WebSocket-Accept",
-                                             websocket_accept);
-                    if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
-                      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
+                    if (mhd_response == NULL) {
+                      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error MHD_create_response_for_upgrade");
                       mhd_ret = MHD_NO;
                     } else {
-                      ulfius_instance_add_websocket_active((struct _u_instance *)cls, websocket);
-                      upgrade_protocol = 1;
+                      MHD_add_response_header (mhd_response,
+                                               MHD_HTTP_HEADER_UPGRADE,
+                                               U_WEBSOCKET_UPGRADE_VALUE);
+                      MHD_add_response_header (mhd_response,
+                                               "Sec-WebSocket-Accept",
+                                               websocket_accept);
+                      if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
+                        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
+                        mhd_ret = MHD_NO;
+                      } else {
+                        ulfius_instance_add_websocket_active((struct _u_instance *)cls, websocket);
+                        upgrade_protocol = 1;
+                      }
                     }
                   } else {
                     // Error building struct _websocket, sending error 500
@@ -594,23 +599,25 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
             }
           }
         }
-        if (auth_realm != NULL && inner_error == U_CALLBACK_UNAUTHORIZED) {
-          mhd_ret = MHD_queue_basic_auth_fail_response (connection, auth_realm, mhd_response);
-        } else if (inner_error == U_CALLBACK_UNAUTHORIZED) {
-          mhd_ret = MHD_queue_response (connection, MHD_HTTP_UNAUTHORIZED, mhd_response);
-#if !defined(U_DISABLE_WEBSOCKET)
-        } else if (upgrade_protocol) {
-          mhd_ret = MHD_queue_response (connection,
-                                    MHD_HTTP_SWITCHING_PROTOCOLS,
-                                    mhd_response);
-#endif
-        } else {
-          mhd_ret = MHD_queue_response (connection, response->status, mhd_response);
+        if (mhd_response != NULL) {
+          if (auth_realm != NULL && inner_error == U_CALLBACK_UNAUTHORIZED) {
+            mhd_ret = MHD_queue_basic_auth_fail_response (connection, auth_realm, mhd_response);
+          } else if (inner_error == U_CALLBACK_UNAUTHORIZED) {
+            mhd_ret = MHD_queue_response (connection, MHD_HTTP_UNAUTHORIZED, mhd_response);
+  #if !defined(U_DISABLE_WEBSOCKET)
+          } else if (upgrade_protocol) {
+            mhd_ret = MHD_queue_response (connection,
+                                          MHD_HTTP_SWITCHING_PROTOCOLS,
+                                          mhd_response);
+  #endif
+          } else {
+            mhd_ret = MHD_queue_response (connection, response->status, mhd_response);
+          }
+          MHD_destroy_response (mhd_response);
+          // Free Response parameters
+          ulfius_clean_response_full(response);
+          response = NULL;
         }
-        MHD_destroy_response (mhd_response);
-        // Free Response parameters
-        ulfius_clean_response_full(response);
-        response = NULL;
       }
     } else {
       response_buffer = o_strdup(ULFIUS_HTTP_NOT_FOUND_BODY);
@@ -697,7 +704,7 @@ int ulfius_stop_framework(struct _u_instance * u_instance) {
       u_instance->websocket_active[i]->websocket_manager->closing = 1;
     }
     while (u_instance->nb_websocket_active > 0) {
-      usleep(50);
+      usleep(U_WEBSOCKET_USEC_WAIT);
     }
 #endif
     MHD_stop_daemon (u_instance->mhd_daemon);

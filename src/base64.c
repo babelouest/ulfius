@@ -4,7 +4,6 @@
  * Copyright (c) 2017, Nicolas Mora <mail@babelouest.org>
  *
  * This software may be distributed under the terms of the BSD license.
- * See README for more details.
  */
 
 #include <string.h>

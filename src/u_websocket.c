@@ -138,7 +138,7 @@ void ulfius_start_websocket_cb (void *cls,
         thread_detach_websocket_manager = pthread_detach(thread_websocket_manager);
         if (thread_ret_websocket_manager || thread_detach_websocket_manager) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Error creating or detaching websocket manager thread, return code: %d, detach code: %d",
-                      thread_ret_websocket_manager, thread_detach_websocket_manager);
+                        thread_ret_websocket_manager, thread_detach_websocket_manager);
           websocket->websocket_manager->connected = 0;
         }
       } else {
@@ -171,16 +171,20 @@ void ulfius_start_websocket_cb (void *cls,
         }
       }
       if (message != NULL) {
-        ulfius_push_websocket_message(websocket->websocket_manager->message_list_incoming, message);
+        if (ulfius_push_websocket_message(websocket->websocket_manager->message_list_incoming, message) != U_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Error pushing new websocket message in list");
+        }
       }
       pthread_mutex_unlock(&websocket->websocket_manager->read_lock);
-      usleep(50);
+      usleep(U_WEBSOCKET_USEC_WAIT);
     }
-  }
-  ulfius_close_websocket(websocket);
-  // Wait for thread manager to close
-  while (!websocket->websocket_manager->manager_closed) {
-    usleep(50);
+    if (ulfius_close_websocket(websocket) != U_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error closing websocket");
+    }
+    // Wait for thread manager to close
+    while (!websocket->websocket_manager->manager_closed) {
+      usleep(U_WEBSOCKET_USEC_WAIT);
+    }
   }
   ulfius_clear_websocket(websocket);
 }
@@ -455,12 +459,14 @@ int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
         message = NULL;
         ret_message = ulfius_read_incoming_message(websocket_manager, &message);
         if (message != NULL) {
-          ulfius_push_websocket_message(websocket_manager->message_list_incoming, message);
+          if (ulfius_push_websocket_message(websocket_manager->message_list_incoming, message) != U_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Error pushing new websocket message in list");
+          }
         }
         if (ret_message == U_WEBSOCKET_OPCODE_CLOSE) {
           break;
         }
-        usleep(50);
+        usleep(U_WEBSOCKET_USEC_WAIT);
       }
       websocket_manager->closing = 1;
       pthread_mutex_unlock(&websocket_manager->read_lock);
@@ -479,9 +485,9 @@ int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
  * Return U_OK on success
  */
 int ulfius_websocket_send_message_nolock(struct _websocket_manager * websocket_manager,
-                                  const uint8_t opcode,
-                                  const uint64_t data_len,
-                                  const char * data) {
+                                         const uint8_t opcode,
+                                         const uint64_t data_len,
+                                         const char * data) {
   size_t frame_data_len;
   uint8_t * sent_data;
   int off;
@@ -546,7 +552,9 @@ int ulfius_websocket_send_message_nolock(struct _websocket_manager * websocket_m
       }
       time(&my_message->datestamp);
       ulfius_websocket_send_all(websocket_manager->sock, sent_data, frame_data_len);
-      ulfius_push_websocket_message(websocket_manager->message_list_outcoming, my_message);
+      if (ulfius_push_websocket_message(websocket_manager->message_list_outcoming, my_message) != U_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error pushing new websocket message in list");
+      }
       o_free(sent_data);
       return U_OK;
     } else {

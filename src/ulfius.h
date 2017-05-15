@@ -845,6 +845,7 @@ int u_map_empty(struct _u_map * u_map);
 #define U_WEBSOCKET_MAGIC_STRING     "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 #define U_WEBSOCKET_UPGRADE_VALUE    "websocket"
 #define U_WEBSOCKET_BAD_REQUEST_BODY "Error in websocket handshake, wrong parameters"
+#define U_WEBSOCKET_USEC_WAIT        50
 
 #define U_WEBSOCKET_BIT_FIN         0x80
 #define U_WEBSOCKET_HAS_MASK        0x80
