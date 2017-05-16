@@ -469,7 +469,6 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
                         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
                         mhd_ret = MHD_NO;
                       } else {
-                        ulfius_instance_add_websocket_active((struct _u_instance *)cls, websocket);
                         upgrade_protocol = 1;
                       }
                     }
@@ -697,16 +696,6 @@ void mhd_request_completed (void *cls, struct MHD_Connection *connection,
  */
 int ulfius_stop_framework(struct _u_instance * u_instance) {
   if (u_instance != NULL && u_instance->mhd_daemon != NULL) {
-#if !defined(U_DISABLE_WEBSOCKET)
-    int i;
-    // Loop in all active websockets and send close signal
-    for (i=u_instance->nb_websocket_active-1; i>=0; i--) {
-      u_instance->websocket_active[i]->websocket_manager->closing = 1;
-    }
-    while (u_instance->nb_websocket_active > 0) {
-      usleep(U_WEBSOCKET_USEC_WAIT);
-    }
-#endif
     MHD_stop_daemon (u_instance->mhd_daemon);
     u_instance->mhd_daemon = NULL;
     u_instance->status = U_STATUS_STOP;
@@ -994,10 +983,6 @@ int ulfius_init_instance(struct _u_instance * u_instance, uint port, struct sock
     u_instance->default_endpoint = NULL;
     u_instance->max_post_param_size = 0;
     u_instance->max_post_body_size = 0;
-#if !defined(U_DISABLE_WEBSOCKET)
-    u_instance->nb_websocket_active = 0;
-    u_instance->websocket_active = NULL;
-#endif
     return U_OK;
   } else {
     return U_ERROR_PARAMS;
