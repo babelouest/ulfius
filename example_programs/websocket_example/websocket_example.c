@@ -118,8 +118,8 @@ int main(int argc, char ** argv) {
   
   // Start the framework
   if (argc > 3 && 0 == o_strcmp(argv[1], "-https")) {
-    key_file = read_file(argv[1]);
-    cert_file = read_file(argv[2]);
+    key_file = read_file(argv[2]);
+    cert_file = read_file(argv[3]);
     if (key_file == NULL || cert_file == NULL) {
       printf("Error reading https certificate files\n");
       ret = U_ERROR_PARAMS;

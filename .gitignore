@@ -23,3 +23,5 @@ test/*.o
 test/core
 test/u_map
 test/framework
+*.key
+*.pem
