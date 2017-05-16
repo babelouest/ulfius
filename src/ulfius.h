@@ -1207,12 +1207,6 @@ int ulfius_websocket_send_message_nolock(struct _websocket_manager * websocket_m
                                   const uint64_t data_len,
                                   const char * data);
 
-/**
- * Base64 encode and decode functions
- */
-int base64_encode(const unsigned char * src, size_t len, unsigned char * out, size_t * out_len);
-int base64_decode(const unsigned char *src, size_t len, unsigned char * out, size_t * out_len);
-
 #endif // U_DISABLE_WEBSOCKET
 
 #endif // __ULFIUS_H__

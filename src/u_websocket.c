@@ -93,59 +93,38 @@ int ulfius_set_websocket_response(struct _u_response * response,
 }
 
 /**
- * Websocket callback function for MHD
- * Starts the websocket manager if set,
+ * Run websocket in a separate thread
  * then sets a listening message loop
  * Complete the callback when the websocket is closed
  * The websocket can be closed by the client, the manager, the program, or on network disconnect
  */
-void ulfius_start_websocket_cb (void *cls,
-            struct MHD_Connection *connection,
-            void * con_cls,
-            const char * extra_in,
-            size_t extra_in_size,
-            MHD_socket sock,
-            struct MHD_UpgradeResponseHandle * urh) {
+void * ulfius_thread_websocket(void * data) {
   int opcode;
-  struct _websocket * websocket = (struct _websocket*)cls;
+  struct _websocket * websocket = (struct _websocket*)data;
   struct _websocket_message * message = NULL;
   pthread_t thread_websocket_manager;
   pthread_mutexattr_t mutexattr;
   int thread_ret_websocket_manager = 0, thread_detach_websocket_manager = 0;
   
-  if (websocket != NULL) {
-    websocket->urh = urh;
-    websocket->websocket_manager = o_malloc(sizeof(struct _websocket_manager));
-    // Run websocket manager in a thread if set
-    if (websocket->websocket_manager != NULL) {
-      websocket->websocket_manager->message_list_incoming = o_malloc(sizeof(struct _websocket_message_list));
-      websocket->websocket_manager->message_list_outcoming = o_malloc(sizeof(struct _websocket_message_list));
-      ulfius_init_websocket_message_list(websocket->websocket_manager->message_list_incoming);
-      ulfius_init_websocket_message_list(websocket->websocket_manager->message_list_outcoming);
-      websocket->websocket_manager->sock = sock;
-      websocket->websocket_manager->connected = 1;
-      websocket->websocket_manager->closing = 0;
-      pthread_mutexattr_init ( &mutexattr );
-      pthread_mutexattr_settype( &mutexattr, PTHREAD_MUTEX_RECURSIVE_NP );
-      if (pthread_mutex_init(&(websocket->websocket_manager->read_lock), &mutexattr) != 0 || pthread_mutex_init(&(websocket->websocket_manager->write_lock), &mutexattr) != 0) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Impossible to initialize Mutex Lock for websocket");
+  if (websocket != NULL && websocket->websocket_manager != NULL) {
+    pthread_mutexattr_init ( &mutexattr );
+    pthread_mutexattr_settype( &mutexattr, PTHREAD_MUTEX_RECURSIVE_NP );
+    if (pthread_mutex_init(&(websocket->websocket_manager->read_lock), &mutexattr) != 0 || pthread_mutex_init(&(websocket->websocket_manager->write_lock), &mutexattr) != 0) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Impossible to initialize Mutex Lock for websocket");
+      websocket->websocket_manager->connected = 0;
+    }
+    pthread_mutexattr_destroy( &mutexattr );
+    if (websocket->websocket_manager_callback != NULL && websocket->websocket_manager->connected) {
+      websocket->websocket_manager->manager_closed = 0;
+      thread_ret_websocket_manager = pthread_create(&thread_websocket_manager, NULL, ulfius_thread_websocket_manager_run, (void *)websocket);
+      thread_detach_websocket_manager = pthread_detach(thread_websocket_manager);
+      if (thread_ret_websocket_manager || thread_detach_websocket_manager) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error creating or detaching websocket manager thread, return code: %d, detach code: %d",
+                      thread_ret_websocket_manager, thread_detach_websocket_manager);
         websocket->websocket_manager->connected = 0;
       }
-      pthread_mutexattr_destroy( &mutexattr );
-      if (websocket->websocket_manager_callback != NULL && websocket->websocket_manager->connected) {
-        websocket->websocket_manager->manager_closed = 0;
-        thread_ret_websocket_manager = pthread_create(&thread_websocket_manager, NULL, ulfius_thread_websocket_manager_run, (void *)websocket);
-        thread_detach_websocket_manager = pthread_detach(thread_websocket_manager);
-        if (thread_ret_websocket_manager || thread_detach_websocket_manager) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Error creating or detaching websocket manager thread, return code: %d, detach code: %d",
-                        thread_ret_websocket_manager, thread_detach_websocket_manager);
-          websocket->websocket_manager->connected = 0;
-        }
-      } else {
-        websocket->websocket_manager->manager_closed = 1;
-      }
     } else {
-      websocket->websocket_manager->connected = 0;
+      websocket->websocket_manager->manager_closed = 1;
     }
     while (websocket->websocket_manager->connected && !websocket->websocket_manager->closing) {
       message = NULL;
@@ -185,8 +164,56 @@ void ulfius_start_websocket_cb (void *cls,
     while (!websocket->websocket_manager->manager_closed) {
       usleep(U_WEBSOCKET_USEC_WAIT);
     }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error websocket parameters");
   }
   ulfius_clear_websocket(websocket);
+  return NULL;
+}
+
+/**
+ * Websocket callback function for MHD
+ * Starts the websocket manager if set,
+ */
+void ulfius_start_websocket_cb (void *cls,
+            struct MHD_Connection *connection,
+            void * con_cls,
+            const char * extra_in,
+            size_t extra_in_size,
+            MHD_socket sock,
+            struct MHD_UpgradeResponseHandle * urh) {
+  struct _websocket * websocket = (struct _websocket*)cls;
+  pthread_t thread_websocket;
+  int thread_ret_websocket = 0, thread_detach_websocket = 0;
+  
+  if (websocket != NULL) {
+    websocket->urh = urh;
+    websocket->websocket_manager = o_malloc(sizeof(struct _websocket_manager));
+    // Run websocket manager in a thread if set
+    if (websocket->websocket_manager != NULL) {
+      websocket->websocket_manager->message_list_incoming = o_malloc(sizeof(struct _websocket_message_list));
+      websocket->websocket_manager->message_list_outcoming = o_malloc(sizeof(struct _websocket_message_list));
+      ulfius_init_websocket_message_list(websocket->websocket_manager->message_list_incoming);
+      ulfius_init_websocket_message_list(websocket->websocket_manager->message_list_outcoming);
+      websocket->websocket_manager->sock = sock;
+      websocket->websocket_manager->connected = 1;
+      websocket->websocket_manager->closing = 0;
+      thread_ret_websocket = pthread_create(&thread_websocket, NULL, ulfius_thread_websocket, (void *)websocket);
+      thread_detach_websocket = pthread_detach(thread_websocket);
+      if (thread_ret_websocket || thread_detach_websocket) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error creating or detaching websocket manager thread, return code: %d, detach code: %d",
+                      thread_ret_websocket, thread_detach_websocket);
+        ulfius_clear_websocket(websocket);
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for websocket_manager");
+      ulfius_clear_websocket(websocket);
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error websocket is NULL");
+    ulfius_clear_websocket(websocket);
+  }
+  return;
 }
 
 /**
@@ -346,8 +373,8 @@ int ulfius_generate_handshake_answer(const char * key, char * out_digest) {
   key_data.data = (unsigned char*)msprintf("%s%s", key, U_WEBSOCKET_MAGIC_STRING);
   key_data.size = strlen((const char *)key_data.data);
   
-  if (key != NULL && out_digest != NULL && (res = gnutls_fingerprint(GNUTLS_DIG_SHA1, &key_data, encoded_key, &encoded_key_size)) == GNUTLS_E_SUCCESS) {
-    if (base64_encode(encoded_key, encoded_key_size, (unsigned char *)out_digest, &encoded_key_size_base64)) {
+  if (key_data.data != NULL && out_digest != NULL && (res = gnutls_fingerprint(GNUTLS_DIG_SHA1, &key_data, encoded_key, &encoded_key_size)) == GNUTLS_E_SUCCESS) {
+    if (o_base64_encode(encoded_key, encoded_key_size, (unsigned char *)out_digest, &encoded_key_size_base64)) {
       to_return = 1;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error base64 encoding hashed key");
