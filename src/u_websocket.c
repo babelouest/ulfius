@@ -355,7 +355,6 @@ void * ulfius_thread_websocket_manager_run(void * args) {
   if (websocket != NULL && websocket->websocket_manager_callback != NULL && websocket->websocket_manager != NULL) {
     websocket->websocket_manager_callback(websocket->request, websocket->websocket_manager, websocket->websocket_manager_user_data);
     // Websocket manager callback complete, set close signal
-    y_log_message(Y_LOG_LEVEL_DEBUG, "close websocket_manager");
     websocket->websocket_manager->manager_closed = 1;
     websocket->websocket_manager->closing = 1;
   }
