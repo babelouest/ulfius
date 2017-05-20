@@ -336,6 +336,7 @@ int ulfius_clear_websocket(struct _websocket * websocket) {
     if (MHD_upgrade_action (websocket->urh, MHD_UPGRADE_ACTION_CLOSE) != MHD_YES) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error sending MHD_UPGRADE_ACTION_CLOSE frame to urh");
     }
+    ulfius_instance_remove_websocket_active(websocket->instance, websocket);
     ulfius_clear_websocket_manager(websocket->websocket_manager);
     o_free(websocket->websocket_manager);
     websocket->websocket_manager = NULL;
@@ -354,6 +355,7 @@ void * ulfius_thread_websocket_manager_run(void * args) {
   if (websocket != NULL && websocket->websocket_manager_callback != NULL && websocket->websocket_manager != NULL) {
     websocket->websocket_manager_callback(websocket->request, websocket->websocket_manager, websocket->websocket_manager_user_data);
     // Websocket manager callback complete, set close signal
+    y_log_message(Y_LOG_LEVEL_DEBUG, "close websocket_manager");
     websocket->websocket_manager->manager_closed = 1;
     websocket->websocket_manager->closing = 1;
   }
@@ -685,4 +687,53 @@ void ulfius_clear_websocket_manager(struct _websocket_manager * websocket_manage
   }
 }
 
+ /**
+ * Add a websocket in the list of active websockets of the instance
+ */
+int ulfius_instance_add_websocket_active(struct _u_instance * instance, struct _websocket * websocket) {
+  if (instance != NULL && websocket != NULL) {
+    instance->websocket_active = o_realloc(instance->websocket_active, (instance->nb_websocket_active+1)*sizeof(struct _websocket *));
+    if (instance->websocket_active != NULL) {
+      instance->websocket_active[instance->nb_websocket_active] = websocket;
+      instance->nb_websocket_active++;
+      return U_OK;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for instance->websocket_active");
+      return U_ERROR_MEMORY;
+    }
+  } else {
+    return U_ERROR_PARAMS;
+  }
+}
+
+/**
+ * Remove a websocket from the list of active websockets of the instance
+ */
+int ulfius_instance_remove_websocket_active(struct _u_instance * instance, struct _websocket * websocket) {
+  size_t i, j;
+  if (instance != NULL && instance->websocket_active != NULL && websocket != NULL) {
+    for (i=0; i<instance->nb_websocket_active; i++) {
+      if (instance->websocket_active[i] == websocket) {
+        if (instance->nb_websocket_active > 1) {
+          for (j=i; j<instance->nb_websocket_active-1; j++) {
+            instance->websocket_active[j] = instance->websocket_active[j+1];
+          }
+          instance->websocket_active = o_realloc(instance->websocket_active, (instance->nb_websocket_active-1)*sizeof(struct _websocket *));
+          if (instance->websocket_active == NULL) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for instance->websocket_active");
+            return U_ERROR_MEMORY;
+          }
+        } else {
+          o_free(instance->websocket_active);
+          instance->websocket_active = NULL;
+        }
+        instance->nb_websocket_active--;
+        return U_OK;
+      }
+    }
+    return U_ERROR_NOT_FOUND;
+  } else {
+    return U_ERROR_PARAMS;
+  }
+}
 #endif

@@ -251,6 +251,10 @@ struct _u_instance {
   struct _u_map               * default_headers;
   size_t                        max_post_param_size;
   size_t                        max_post_body_size;
+#if !defined(U_DISABLE_WEBSOCKET)
+  size_t                        nb_websocket_active;
+  struct _websocket          ** websocket_active;
+#endif 
 };
 
 /**
@@ -1193,6 +1197,15 @@ int ulfius_websocket_send_message_nolock(struct _websocket_manager * websocket_m
                                   const uint64_t data_len,
                                   const char * data);
 
+ /**
+ * Add a websocket in the list of active websockets of the instance
+ */
+int ulfius_instance_add_websocket_active(struct _u_instance * instance, struct _websocket * websocket);
+
+/**
+ * Remove a websocket from the list of active websockets of the instance
+ */
+int ulfius_instance_remove_websocket_active(struct _u_instance * instance, struct _websocket * websocket); 
 #endif // U_DISABLE_WEBSOCKET
 
 #endif // __ULFIUS_H__
