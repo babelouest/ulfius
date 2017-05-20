@@ -7,7 +7,7 @@
 To install all the external dependencies, for Debian based distributions (Debian, Ubuntu, Raspbian, etc.), run as root:
 
 ```shell
-# apt-get install libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev libgnutls-dev
+# apt-get install libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev libgnutls28-dev libgcrypt20-dev
 ```
 
 ### Note
@@ -17,6 +17,8 @@ Here libcurl4-gnutls-dev for the example, but any `libcurl*-dev` library should 
 Also, it seems that Debian Wheezy uses an old version of libjansson (2.3), you can either upgrade to jessie or download the latest version of libjansson from [github](https://github.com/akheron/jansson).
 
 As in version 2.0, libcurl and libjansson are no longer mandatory if you don't need one or both.
+
+If you want to use the websocket server functions, you need to install libmicrohttpd 0.9.53 minimum version.
 
 ## Installation
 
