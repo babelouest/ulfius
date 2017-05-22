@@ -3,7 +3,7 @@
 #
 # Makefile used to build the software
 #
-# Copyright 2015-2016 Nicolas Mora <mail@babelouest.org>
+# Copyright 2015-2017 Nicolas Mora <mail@babelouest.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public License
@@ -19,38 +19,50 @@
 # License along with this library.	If not, see <http://www.gnu.org/licenses/>.
 #
 
-# Uncomment the following lline if you want to disable ulfius_send_smtp_email as in libcurl < 7.20 for example (Centos 6.5)
-#SMTPFLAGS=-DULFIUS_IGNORE_SMTP
-
-LIBORCANIA_LOCATION=../lib/orcania
+LIBORCANIA_LOCATION=../lib/orcania/src
 LIBYDER_LOCATION=../lib/yder/src
 PREFIX=/usr/local
 CC=gcc
-CFLAGS=-c -fPIC -Wall -D_REENTRANT -I$(PREFIX)/include -I$(LIBORCANIA_LOCATION) -I$(LIBYDER_LOCATION) $(ADDITIONALFLAGS) $(SMTPFLAGS)
-LIBS=-L$(PREFIX)/lib -L$(LIBORCANIA_LOCATION) -L$(LIBYDER_LOCATION) -lc -lmicrohttpd -ljansson -lcurl -lyder -lorcania
+CFLAGS=-c -fPIC -Wall -D_REENTRANT -I$(PREFIX)/include -I$(LIBORCANIA_LOCATION) -I$(LIBYDER_LOCATION) $(ADDITIONALFLAGS) $(JANSSONFLAG) $(CURLFLAG) $(WEBSOCKETFLAG)
+LIBS=-L$(PREFIX)/lib -L$(LIBORCANIA_LOCATION) -L$(LIBYDER_LOCATION) -lc -lmicrohttpd -lyder -lorcania -lpthread
 OUTPUT=libulfius.so
-VERSION=1.0
+VERSION=2.0
+
+ifneq (($(JANSSONFLAG)),"")
+LJANSSON=-ljansson
+endif
+
+ifneq (($(CURLFLAG)),"")
+LCURL=-lcurl
+endif
+
+ifneq (($(WEBSOCKETFLAG)),"")
+LWEBSOCKET=-lgnutls
+endif
 
 all: release
 
-libulfius.so: ulfius.o u_map.o u_request.o u_response.o u_send_request.o
-	$(CC) -shared -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) ulfius.o u_map.o u_request.o u_response.o u_send_request.o $(LIBS_YDER) $(LIBS)
+libulfius.so: ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o
+	$(CC) -shared -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o $(LIBS) $(LJANSSON) $(LCURL) $(LWEBSOCKET)
 	ln -sf $(OUTPUT).$(VERSION) $(OUTPUT)
 
 ulfius.o: ulfius.h ulfius.c
-	$(CC) $(CFLAGS) $(FLAGS_YDER) ulfius.c
+	$(CC) $(CFLAGS) ulfius.c
 
 u_map.o: ulfius.h u_map.c
-	$(CC) $(CFLAGS) $(FLAGS_YDER) u_map.c
+	$(CC) $(CFLAGS) u_map.c
 
 u_request.o: ulfius.h u_request.c
-	$(CC) $(CFLAGS) $(FLAGS_YDER) u_request.c
+	$(CC) $(CFLAGS) u_request.c
 
 u_response.o: ulfius.h u_response.c
-	$(CC) $(CFLAGS) $(FLAGS_YDER) u_response.c
+	$(CC) $(CFLAGS) u_response.c
+
+u_websocket.o: ulfius.h u_websocket.c
+	$(CC) $(CFLAGS) u_websocket.c
 
 u_send_request.o: ulfius.h u_send_request.c
-	$(CC) $(CFLAGS) $(FLAGS_YDER) u_send_request.c
+	$(CC) $(CFLAGS) u_send_request.c
 
 clean:
 	rm -f *.o *.so $(OUTPUT) $(OUTPUT).*

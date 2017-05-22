@@ -4,9 +4,9 @@
  * 
  * REST framework library
  * 
- * ulfius.h: structures and functions declarations
+ * ulfius.h: public structures and functions declarations
  * 
- * Copyright 2015-2016 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2015-2017 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -28,31 +28,18 @@
 
 /** External dependencies **/
 #include <microhttpd.h>
-#include <jansson.h>
 
 /** Angharad libraries **/
 #include <yder.h>
 #include <orcania.h>
 
-/** Macro values **/
-#define ULFIUS_URL_SEPARATOR       "/"
-#define ULFIUS_HTTP_ENCODING_JSON  "application/json"
-#define ULFIUS_HTTP_HEADER_CONTENT "Content-Type"
-#define ULFIUS_HTTP_NOT_FOUND_BODY "Resource not found"
-#define ULFIUS_HTTP_ERROR_BODY     "Server Error"
-
-#define ULFIUS_COOKIE_ATTRIBUTE_EXPIRES  "Expires"
-#define ULFIUS_COOKIE_ATTRIBUTE_MAX_AGE  "Max-Age"
-#define ULFIUS_COOKIE_ATTRIBUTE_DOMAIN   "Domain"
-#define ULFIUS_COOKIE_ATTRIBUTE_PATH     "Path"
-#define ULFIUS_COOKIE_ATTRIBUTE_SECURE   "Secure"
-#define ULFIUS_COOKIE_ATTRIBUTE_HTTPONLY "HttpOnly"
-
-#define ULFIUS_POSTBUFFERSIZE 1024
+#ifndef U_DISABLE_JANSSON
+#include <jansson.h>
+#endif
 
 #define ULFIUS_STREAM_BLOCK_SIZE_DEFAULT 1024
-#define ULFIUS_STREAM_END MHD_CONTENT_READER_END_OF_STREAM
-#define ULFIUS_STREAM_ERROR MHD_CONTENT_READER_END_WITH_ERROR
+#define U_STREAM_END MHD_CONTENT_READER_END_OF_STREAM
+#define U_STREAM_ERROR MHD_CONTENT_READER_END_WITH_ERROR
 
 #define U_OK                 0 // No error
 #define U_ERROR              1 // Error
@@ -61,13 +48,20 @@
 #define U_ERROR_LIBMHD       4 // Error in libmicrohttpd execution
 #define U_ERROR_LIBCURL      5 // Error in libcurl execution
 #define U_ERROR_NOT_FOUND    6 // Something was not found
-#define U_ERROR_UNAUTHORIZED 7 // No authorization given
 
-#define U_STATUS_STOP     0
-#define U_STATUS_RUNNING  1
-#define U_STATUS_ERROR    2
+#define ULFIUS_VERSION 2.0
 
-#define ULFIUS_VERSION 1.0
+#define U_CALLBACK_CONTINUE     0
+#define U_CALLBACK_COMPLETE     1
+#define U_CALLBACK_UNAUTHORIZED 2
+#define U_CALLBACK_ERROR        3
+
+#if !defined(U_DISABLE_WEBSOCKET)
+  struct _websocket;
+  struct _websocket_manager;
+  struct _websocket_message;
+  struct _websocket_message_list;
+#endif
 
 /*************
  * Structures
@@ -103,6 +97,7 @@ struct _u_cookie {
  * Structure of request parameters
  * 
  * Contains request data
+ * http_protocol:             http protocol used (1.0 or 1.1)
  * http_verb:                 http method (GET, POST, PUT, DELETE, etc.), use '*' to match all http methods
  * http_url:                  url used to call this callback function or full url to call when used in a ulfius_send_http_request
  * check_server_certificate:  do not check server certificate and hostname if false (default true), used by ulfius_send_http_request
@@ -114,14 +109,12 @@ struct _u_cookie {
  * map_header:                map containing the header variables
  * map_cookie:                map containing the cookie variables
  * map_post_body:             map containing the post body variables (if available)
- * json_body:                 json_t * object containing the json body (if available)
- * json_error:                stack allocated json_error_t if json body was not parsed (if available)
- * json_has_error:            true if the json body was not parsed by jansson (if available)
  * binary_body:               pointer to raw body
  * binary_body_length:        length of raw body
  * 
  */
 struct _u_request {
+  char *               http_protocol;
   char *               http_verb;
   char *               http_url;
   int                  check_server_certificate;
@@ -133,9 +126,6 @@ struct _u_request {
   struct _u_map *      map_header;
   struct _u_map *      map_cookie;
   struct _u_map *      map_post_body;
-  json_t *             json_body;
-  json_error_t *       json_error;
-  int                  json_has_error;
   void *               binary_body;
   size_t               binary_body_length;
 };
@@ -145,20 +135,26 @@ struct _u_request {
  * Structure of response parameters
  * 
  * Contains response data that must be set by the user
- * status:               HTTP status code (200, 404, 500, etc)
- * protocol:             HTTP Protocol sent
- * map_header:           map containing the header variables
- * nb_cookies:           number of cookies sent
- * map_cookie:           array of cookies sent
- * string_body:          a char * containing the raw body response
- * json_body:            a json_t * object containing the json response
- * binary_body:          a void * containing a raw binary content
- * binary_body_length:   the length of the binary_body
- * stream_callback:      callback function to stream data in response body
- * stream_callback_free: callback function to free data allocated for streaming
- * stream_size:          size of the streamed data (-1 if unknown)
- * stream_block_size:    size of each block to be streamed, set according to your system
- * stream_user_data:     user defined data that will be available in your callback stream functions
+ * status:                              HTTP status code (200, 404, 500, etc)
+ * protocol:                            HTTP Protocol sent
+ * map_header:                          map containing the header variables
+ * nb_cookies:                          number of cookies sent
+ * map_cookie:                          array of cookies sent
+ * auth_realm:                          realm to send to the client on authenticationb failed
+ * binary_body:                         a void * containing a raw binary content
+ * binary_body_length:                  the length of the binary_body
+ * stream_callback:                     callback function to stream data in response body
+ * stream_callback_free:                callback function to free data allocated for streaming
+ * stream_size:                         size of the streamed data (-1 if unknown)
+ * stream_block_size:                   size of each block to be streamed, set according to your system
+ * stream_user_data:                    user defined data that will be available in your callback stream functions
+ * websocket_manager_callback:          callback function for working with the websocket
+ * websocket_manager_user_data:         user-defined data that will be handled to websocket_manager_callback
+ * websocket_incoming_message_callback: callback function that will be called every time a message arrives from the client in the websocket
+ * websocket_incoming_user_data:        user-defined data that will be handled to websocket_incoming_message_callback
+ * websocket_onclose_callback:          callback function that will be called if the websocket is open while the program calls ulfius_stop_framework
+ * websocket_onclose_user_data:         user-defined data that will be handled to websocket_onclose_callback
+ * shared_data:                         any data shared between callback functions, must be allocated and freed by the callback functions
  * 
  */
 struct _u_response {
@@ -167,8 +163,7 @@ struct _u_response {
   struct _u_map    * map_header;
   unsigned int       nb_cookies;
   struct _u_cookie * map_cookie;
-  char             * string_body;
-  json_t           * json_body;
+  char             * auth_realm;
   void             * binary_body;
   size_t             binary_body_length;
   ssize_t         (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max);
@@ -176,6 +171,24 @@ struct _u_response {
   size_t             stream_size;
   unsigned int       stream_block_size;
   void             * stream_user_data;
+#if !defined(U_DISABLE_WEBSOCKET)
+  char             * websocket_protocol;
+  char             * websocket_extensions;
+  void            (* websocket_manager_callback) (const struct _u_request * request,
+                                                  struct _websocket_manager * websocket_manager,
+                                                  void * websocket_manager_user_data);
+  void             * websocket_manager_user_data;
+  void            (* websocket_incoming_message_callback) (const struct _u_request * request,
+                                                           struct _websocket_manager * websocket_manager,
+                                                           const struct _websocket_message * message,
+                                                           void * websocket_incoming_user_data);
+  void             * websocket_incoming_user_data;
+  void            (* websocket_onclose_callback) (const struct _u_request * request,
+                                                  struct _websocket_manager * websocket_manager,
+                                                  void * websocket_onclose_user_data);
+  void             * websocket_onclose_user_data;
+#endif
+  void *             shared_data;
 };
 
 /**
@@ -190,12 +203,7 @@ struct _u_response {
  *                    to define a variable in the url, prefix it with @ or :
  *                    example: /test/resource/:name/elements
  *                    on an url_format that ends with '*', the rest of the url will not be tested
- * auth_function:     a pointer to a function used to check the client credentials (optional)
- *                    this function will be called prior to the callback function. If auth_function returned value is U_OK,
- *                    then the callback function will be called after. If auth_function is not U_OK, response status send will be
- *                    401 (Unauthorized), and callback_function will be skipped
- * auth_data:         a pointer to a data or a structure that will be available in auth_function
- * auth_realm:        realm value for authentication
+ * priority:          endpoint priority in descending order (0 is the higher priority)
  * callback_function: a pointer to a function that will be executed each time the endpoint is called
  *                    you must declare the function as described.
  * user_data:         a pointer to a data or a structure that will be available in callback_function
@@ -205,11 +213,7 @@ struct _u_endpoint {
   char * http_method;
   char * url_prefix;
   char * url_format;
-  int (* auth_function)(const struct _u_request * request, // Input parameters (set by the framework)
-                        struct _u_response * response,     // Output parameters (set by the user)
-                        void * auth_data);
-  void * auth_data;
-  char * auth_realm;
+  uint   priority;
   int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
                             struct _u_response * response,     // Output parameters (set by the user)
                             void * user_data);
@@ -227,18 +231,10 @@ struct _u_endpoint {
  * port:                  port number to listen to
  * bind_address:          ip address to listen to (optional)
  * nb_endpoints:          Number of available endpoints
+ * default_auth_realm:    Default realm on authentication error
  * endpoint_list:         List of available endpoints
  * default_endpoint:      Default endpoint if no other endpoint match the current url
  * default_headers:       Default headers that will be added to all response->map_header
- * default_auth_function: Default callback function used for authentication (optional)
- *                        a pointer to a function used to check the client credentials
- *                        this function will be called prior to the callback function. If default_auth_function returned value is U_OK,
- *                        then the callback function will be called after. If default_auth_function is not U_OK, response status send will be
- *                        401 (Unauthorized), and callback_function will be skipped
- *                        If an endpoint already has a auth_callback set, the default_auth_function will not be called
- *                        but the auth_callback function of the endpoint will
- * default_auth_data:     a pointer to a data or a structure that will be available in auth_function
- * default_auth_realm:    realm value for authentication
  * max_post_param_size:   maximum size for a post parameter, 0 means no limit, default 0
  * max_post_body_size:    maximum size for the entire post body, 0 means no limit, default 0
  * 
@@ -246,19 +242,19 @@ struct _u_endpoint {
 struct _u_instance {
   struct MHD_Daemon          *  mhd_daemon;
   int                           status;
-  int                           port;
+  uint                          port;
   struct sockaddr_in          * bind_address;
   int                           nb_endpoints;
+  char                        * default_auth_realm;
   struct _u_endpoint          * endpoint_list;
   struct _u_endpoint          * default_endpoint;
   struct _u_map               * default_headers;
-  int (* default_auth_function)(const struct _u_request * request, // Input parameters (set by the framework)
-                                struct _u_response * response,     // Output parameters (set by the user)
-                                void * auth_data);
-  void *                        default_auth_data;
-  char *                        default_auth_realm;
   size_t                        max_post_param_size;
   size_t                        max_post_body_size;
+#if !defined(U_DISABLE_WEBSOCKET)
+  size_t                        nb_websocket_active;
+  struct _websocket          ** websocket_active;
+#endif 
 };
 
 /**
@@ -270,6 +266,7 @@ struct connection_info_struct {
   int                        callback_first_iteration;
   struct _u_request *        request;
   size_t                     max_post_param_size;
+  struct _u_map              map_url_initial;
 };
 
 /**********************************
@@ -282,7 +279,7 @@ struct connection_info_struct {
  * Initialize a struct _u_instance * with default values
  * return U_OK on success
  */
-int ulfius_init_instance(struct _u_instance * u_instance, int port, struct sockaddr_in * bind_address);
+int ulfius_init_instance(struct _u_instance * u_instance, uint port, struct sockaddr_in * bind_address, const char * default_auth_realm);
 
 /**
  * ulfius_clean_instance
@@ -344,10 +341,7 @@ int ulfius_add_endpoint(struct _u_instance * u_instance, const struct _u_endpoin
  *                    to define a variable in the url, prefix it with @ or :
  *                    example: /test/resource/:name/elements
  *                    on an url_format that ends with '*', the rest of the url will not be tested
- * auth_function:     a pointer to a function that will be executed prior to the callback for authentication
- *                    you must declare the function as described.
- * auth_data:         a pointer to a data or a structure that will be available in auth_function
- * auth_realm:        realm value for authentication
+ * priority:          endpoint priority in descending order (0 is the higher priority)
  * callback_function: a pointer to a function that will be executed each time the endpoint is called
  *                    you must declare the function as described.
  * user_data:         a pointer to a data or a structure that will be available in callback_function
@@ -357,11 +351,7 @@ int ulfius_add_endpoint_by_val(struct _u_instance * u_instance,
                                const char * http_method,
                                const char * url_prefix,
                                const char * url_format,
-                               int (* auth_function)(const struct _u_request * request, // Input parameters (set by the framework)
-                                                     struct _u_response * response,     // Output parameters (set by the user)
-                                                     void * auth_data),
-                               void * auth_data,
-                               const char * auth_realm,
+                               uint priority,
                                int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
                                                          struct _u_response * response,     // Output parameters (set by the user)
                                                          void * user_data),
@@ -403,27 +393,8 @@ int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endp
  * return U_OK on success
  */
 int ulfius_set_default_endpoint(struct _u_instance * u_instance,
-                                         int (* auth_function)(const struct _u_request * request, struct _u_response * response, void * auth_data),
-                                         void * auth_data,
-                                         const char * auth_realm,
                                          int (* callback_function)(const struct _u_request * request, struct _u_response * response, void * user_data),
                                          void * user_data);
-
-/**
- * ulfius_set_default_auth_function
- * Set the default authentication function
- * This authentication function will be called if there is no auth_function attached to the endpoint
- * u_instance: pointer to a struct _u_instance that describe its port and bind address
- * auth_function:     a pointer to a function that will be executed prior to the callback for authentication
- *                    you must declare the function as described.
- * auth_data:         a pointer to a data or a structure that will be available in auth_function
- * auth_realm:        realm value for authentication
- * return U_OK on success
- */
-int ulfius_set_default_auth_function(struct _u_instance * u_instance,
-                                         int (* default_auth_function)(const struct _u_request * request, struct _u_response * response, void * auth_data),
-                                         void * default_auth_data,
-                                         const char * default_auth_realm);
 
 /**
  * Remove a struct _u_endpoint * from the specified u_instance
@@ -448,7 +419,6 @@ const struct _u_endpoint * ulfius_empty_endpoint();
 /**
  * ulfius_copy_endpoint
  * return a copy of an endpoint with duplicate values
- * returned value must be free'd after use
  */
 int ulfius_copy_endpoint(struct _u_endpoint * dest, const struct _u_endpoint * source);
 
@@ -477,6 +447,7 @@ void ulfius_clean_endpoint_list(struct _u_endpoint * endpoint_list);
  */
 int ulfius_equals_endpoints(const struct _u_endpoint * endpoint1, const struct _u_endpoint * endpoint2);
 
+#ifndef U_DISABLE_CURL
 /********************************************
  * Requests/Responses functions declarations
  ********************************************/
@@ -496,7 +467,6 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
  */
 int ulfius_send_http_streaming_request(const struct _u_request * request, struct _u_response * response, size_t (* write_body_function)(void * contents, size_t size, size_t nmemb, void * user_data), void * write_body_data);
 
-#ifndef ULFIUS_IGNORE_SMTP
 /**
  * ulfius_send_smtp_email
  * Send an email using libcurl
@@ -558,13 +528,6 @@ int ulfius_set_string_response(struct _u_response * response, const uint status,
  * return U_OK on success
  */
 int ulfius_set_binary_response(struct _u_response * response, const uint status, const char * body, const size_t length);
-
-/**
- * ulfius_set_json_response
- * Add a json_t body to a response
- * return U_OK on success
- */
-int ulfius_set_json_response(struct _u_response * response, const uint status, const json_t * body);
 
 /**
  * ulfius_set_empty_response
@@ -663,6 +626,34 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
  * return value must be cleaned after use
  */
 struct _u_response * ulfius_duplicate_response(const struct _u_response * response);
+
+#ifndef U_DISABLE_JANSSON
+/**
+ * ulfius_get_json_body_request
+ * Get JSON structure from the request body if the request is valid
+ */
+json_t * ulfius_get_json_body_request(const struct _u_request * request, json_error_t * json_error);
+
+/**
+ * ulfius_set_json_response
+ * Add a json_t body to a request
+ * return U_OK on success
+ */
+int ulfius_set_json_body_request(struct _u_request * request, json_t * body);
+
+/**
+ * ulfius_set_json_response
+ * Add a json_t body to a response
+ * return U_OK on success
+ */
+int ulfius_set_json_body_response(struct _u_response * response, const uint status, const json_t * body);
+
+/**
+ * ulfius_get_json_response
+ * Get JSON structure from the response body if the request is valid
+ */
+json_t * ulfius_get_json_body_response(struct _u_response * response, json_error_t * json_error);
+#endif
 
 /************************************************************************
  * _u_map declarations                                                  *  
@@ -828,17 +819,169 @@ int u_map_remove_at(struct _u_map * u_map, const int index);
 struct _u_map * u_map_copy(const struct _u_map * source);
 
 /**
- * Copy all key/values pairs of source into target
- * If key is already present in target, it's overwritten
+ * Copy all key/values pairs of source into dest
+ * If key is already present in dest, it's overwritten
  * return U_OK on success, error otherwise
  */
-int u_map_copy_into(const struct _u_map * source, struct _u_map * target);
+int u_map_copy_into(struct _u_map * dest, const struct _u_map * source);
 
 /**
  * Return the number of key/values pair in the specified struct _u_map
  * Return -1 on error
  */
 int u_map_count(const struct _u_map * source);
+
+/**
+ * Empty a struct u_map of all its elements
+ * return U_OK on success, error otherwise
+ */
+int u_map_empty(struct _u_map * u_map);
+
+#if !defined(U_DISABLE_WEBSOCKET)
+/**********************************
+ * Websocket functions declarations
+ **********************************/
+
+#define U_WEBSOCKET_MAGIC_STRING     "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+#define U_WEBSOCKET_UPGRADE_VALUE    "websocket"
+#define U_WEBSOCKET_BAD_REQUEST_BODY "Error in websocket handshake, wrong parameters"
+#define U_WEBSOCKET_USEC_WAIT        50
+
+#define U_WEBSOCKET_BIT_FIN         0x80
+#define U_WEBSOCKET_HAS_MASK        0x80
+#define U_WEBSOCKET_LEN_MASK        0x7F
+#define U_WEBSOCKET_OPCODE_CONTINUE 0x00
+#define U_WEBSOCKET_OPCODE_TEXT     0x01
+#define U_WEBSOCKET_OPCODE_BINARY   0x01
+#define U_WEBSOCKET_OPCODE_CLOSE    0x08
+#define U_WEBSOCKET_OPCODE_PING     0x09
+#define U_WEBSOCKET_OPCODE_PONG     0x0A
+#define U_WEBSOCKET_OPCODE_CLOSED   0xFD
+#define U_WEBSOCKET_OPCODE_ERROR    0xFE
+#define U_WEBSOCKET_OPCODE_NONE     0xFF
+
+/**
+ * Websocket manager structure
+ * contains among other things the socket
+ * the status (open, closed), and the list of incoming and outcoming messages
+ * Used on public callback functions
+ */
+struct _websocket_manager {
+  struct _websocket_message_list * message_list_incoming;
+  struct _websocket_message_list * message_list_outcoming;
+  int connected;
+  int closing;
+  int manager_closed;
+  MHD_socket sock;
+  pthread_mutex_t read_lock;
+  pthread_mutex_t write_lock;
+};
+
+/**
+ * websocket message structure
+ * contains all the data of a websocket message
+ * and the timestamp of when it was sent of received
+ */
+struct _websocket_message {
+  time_t datestamp;
+  uint8_t opcode;
+  uint8_t has_mask;
+  uint8_t mask[4];
+  uint64_t data_len;
+  char * data;
+};
+
+struct _websocket_message_list {
+  struct _websocket_message ** list;
+  size_t len;
+};
+
+/**
+ * websocket structure
+ * contains all the data of the websocket
+ */
+struct _websocket {
+  struct _u_instance               * instance;
+  struct _u_request                * request;
+  char                             * websocket_protocol;
+  char                             * websocket_extensions;
+  void                             (* websocket_manager_callback) (const struct _u_request * request,
+                                                                  struct _websocket_manager * websocket_manager,
+                                                                  void * websocket_manager_user_data);
+  void                             * websocket_manager_user_data;
+  void                             (* websocket_incoming_message_callback) (const struct _u_request * request,
+                                                                           struct _websocket_manager * websocket_manager,
+                                                                           const struct _websocket_message * message,
+                                                                           void * websocket_incoming_user_data);
+  void                             * websocket_incoming_user_data;
+  void                             (* websocket_onclose_callback) (const struct _u_request * request,
+                                                                  struct _websocket_manager * websocket_manager,
+                                                                  void * websocket_onclose_user_data);
+  void                             * websocket_onclose_user_data;
+  int                                tls;
+  struct _websocket_manager        * websocket_manager;
+  struct MHD_UpgradeResponseHandle * urh;
+};
+
+/**
+ * Set a websocket in the response
+ * You must set at least websocket_manager_callback or websocket_incoming_message_callback
+ * @Parameters
+ * response: struct _u_response to send back the websocket initialization, mandatory
+ * websocket_protocol: list of protocols, separated by a comma, or NULL if all protocols are accepted
+ * websocket_extensions: list of extensions, separated by a comma, or NULL if all extensions are accepted
+ * websocket_manager_callback: callback function called right after the handshake acceptance, optional
+ * websocket_manager_user_data: any data that will be given to the websocket_manager_callback, optional
+ * websocket_incoming_message_callback: callback function called on each incoming complete message, optional
+ * websocket_incoming_user_data: any data that will be given to the websocket_incoming_message_callback, optional
+ * websocket_onclose_callback: callback function called right before closing the websocket, must be complete for the websocket to close
+ * websocket_onclose_user_data: any data that will be given to the websocket_onclose_callback, optional
+ * @Return value: U_OK on success
+ */
+int ulfius_set_websocket_response(struct _u_response * response,
+                                   const char * websocket_protocol,
+                                   const char * websocket_extensions, 
+                                   void (* websocket_manager_callback) (const struct _u_request * request,
+                                                                        struct _websocket_manager * websocket_manager,
+                                                                        void * websocket_manager_user_data),
+                                   void * websocket_manager_user_data,
+                                   void (* websocket_incoming_message_callback) (const struct _u_request * request,
+                                                                                 struct _websocket_manager * websocket_manager,
+                                                                                 const struct _websocket_message * message,
+                                                                                 void * websocket_incoming_user_data),
+                                   void * websocket_incoming_user_data,
+                                   void (* websocket_onclose_callback) (const struct _u_request * request,
+                                                                        struct _websocket_manager * websocket_manager,
+                                                                        void * websocket_onclose_user_data),
+                                   void * websocket_onclose_user_data);
+
+/**
+ * Send a message in the websocket
+ * Return U_OK on success
+ */
+int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
+                                  const uint8_t opcode,
+                                  const uint64_t data_len,
+                                  const char * data);
+
+/**
+ * Return the first message of the message list
+ * Return NULL if message_list has no message
+ * Returned value must be cleared after use
+ */
+struct _websocket_message * ulfius_websocket_pop_first_message(struct _websocket_message_list * message_list);
+
+/**
+ * Clear data of a websocket message
+ */
+void ulfius_clear_websocket_message(struct _websocket_message * message);
+
+#endif
+
+/**
+ * free data allocated by ulfius functions
+ */
+void u_free(void * data);
 
 /**********************************
  * Internal functions declarations
@@ -890,16 +1033,22 @@ void mhd_request_completed (void *cls, struct MHD_Connection *connection,
 /**
  * ulfius_split_url
  * return an array of char based on the url words
- * returned value must be free'd after use
+ * returned value must be u_free'd after use
  */
 char ** ulfius_split_url(const char * prefix, const char * url);
 
 /**
- * ulfius_endpoint_match
- * return the endpoint matching the url called with the proper http method
- * return NULL if no endpoint is found
+ * Sort an array of struct _u_endpoint * using bubble sort algorithm
  */
-struct _u_endpoint * ulfius_endpoint_match(const char * method, const char * url, struct _u_endpoint * endpoint_list);
+void sort_endpoint_list (struct _u_endpoint ** endpoint_list, int length);
+
+/**
+ * ulfius_endpoint_match
+ * return the endpoint array matching the url called with the proper http method
+ * the returned array always has its last value to NULL
+ * return NULL on memory error
+ */
+struct _u_endpoint ** ulfius_endpoint_match(const char * method, const char * url, struct _u_endpoint * endpoint_list);
 
 /**
  * ulfius_url_format_match
@@ -931,8 +1080,132 @@ int ulfius_set_response_cookie(struct MHD_Response * mhd_response, const struct 
 
 /**
  * Add a cookie in the cookie map as defined in the RFC 6265
- * Returned value must be free'd after use
+ * Returned value must be u_free'd after use
  */
 char * ulfius_get_cookie_header(const struct _u_cookie * cookie);
+
+/** Macro values **/
+#define ULFIUS_URL_SEPARATOR       "/"
+#define ULFIUS_HTTP_ENCODING_JSON  "application/json"
+#define ULFIUS_HTTP_HEADER_CONTENT "Content-Type"
+#define ULFIUS_HTTP_NOT_FOUND_BODY "Resource not found"
+#define ULFIUS_HTTP_ERROR_BODY     "Server Error"
+
+#define ULFIUS_COOKIE_ATTRIBUTE_EXPIRES  "Expires"
+#define ULFIUS_COOKIE_ATTRIBUTE_MAX_AGE  "Max-Age"
+#define ULFIUS_COOKIE_ATTRIBUTE_DOMAIN   "Domain"
+#define ULFIUS_COOKIE_ATTRIBUTE_PATH     "Path"
+#define ULFIUS_COOKIE_ATTRIBUTE_SECURE   "Secure"
+#define ULFIUS_COOKIE_ATTRIBUTE_HTTPONLY "HttpOnly"
+
+#define ULFIUS_POSTBUFFERSIZE 1024
+
+#define U_STATUS_STOP     0
+#define U_STATUS_RUNNING  1
+#define U_STATUS_ERROR    2
+
+#if !defined(U_DISABLE_WEBSOCKET)
+
+/**
+ * Websocket callback function for MHD
+ * Starts the websocket manager if set,
+ * then sets a listening message loop
+ * Complete the callback when the websocket is closed
+ * The websocket can be closed by the client, the manager, the program, or on network disconnect
+ */
+void ulfius_start_websocket_cb (void *cls,
+            struct MHD_Connection *connection,
+            void *con_cls,
+            const char *extra_in,
+            size_t extra_in_size,
+            MHD_socket sock,
+            struct MHD_UpgradeResponseHandle *urh);
+
+/**
+ * Workaround to make sure a message, as long as it can be is complete sent
+ */
+void ulfius_websocket_send_all(MHD_socket sock, const uint8_t * data, size_t len);
+
+/**
+ * Centralise socket reading in this function
+ * so if options or check must be done, it's done here instead of each read call
+ */
+size_t ulfius_websocket_recv_all(MHD_socket sock, uint8_t * data, size_t len);
+
+/**
+ * Generates a handhshake answer from the key given in parameter
+ */
+int ulfius_generate_handshake_answer(const char * key, char * out_digest);
+
+/**
+ * Close the websocket
+ */
+int ulfius_close_websocket(struct _websocket * websocket);
+
+/**
+ * Return a match list between two list of items
+ * If match is NULL, then return source duplicate
+ * Returned value must be u_free'd after use
+ */
+char * ulfius_check_list_match(const char * source, const char * match);
+
+/**
+ * Initialize a websocket message list
+ * Return U_OK on success
+ */
+int ulfius_init_websocket_message_list(struct _websocket_message_list * message_list);
+
+/**
+ * Clear data of a websocket message list
+ */
+void ulfius_clear_websocket_message_list(struct _websocket_message_list * message_list);
+
+/**
+ * Append a message in a message list
+ * Return U_OK on success
+ */
+int ulfius_push_websocket_message(struct _websocket_message_list * message_list, struct _websocket_message * message);
+
+/**
+ * Clear data of a websocket
+ */
+int ulfius_clear_websocket(struct _websocket * websocket);
+
+/**
+ * Clear data of a websocket_manager
+ */
+void ulfius_clear_websocket_manager(struct _websocket_manager * websocket_manager);
+
+/**
+ * Read and parse a new message from the websocket
+ * Return the opcode of the new websocket, U_WEBSOCKET_OPCODE_NONE if no message arrived, or U_WEBSOCKET_OPCODE_ERROR on error
+ * Sets the new message in the message variable if available
+ */
+int ulfius_read_incoming_message(struct _websocket_manager * websocket_manager, struct _websocket_message ** message);
+
+/**
+ * Run the websocket manager in a separated detached thread
+ */
+void * ulfius_thread_websocket_manager_run(void * args);
+
+/**
+ * Send a message in the websocket without lock
+ * Return U_OK on success
+ */
+int ulfius_websocket_send_message_nolock(struct _websocket_manager * websocket_manager,
+                                  const uint8_t opcode,
+                                  const uint64_t data_len,
+                                  const char * data);
+
+ /**
+ * Add a websocket in the list of active websockets of the instance
+ */
+int ulfius_instance_add_websocket_active(struct _u_instance * instance, struct _websocket * websocket);
+
+/**
+ * Remove a websocket from the list of active websockets of the instance
+ */
+int ulfius_instance_remove_websocket_active(struct _u_instance * instance, struct _websocket * websocket); 
+#endif // U_DISABLE_WEBSOCKET
 
 #endif // __ULFIUS_H__
