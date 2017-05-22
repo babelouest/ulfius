@@ -195,7 +195,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
         }
       }
       
-      has_params = (strchr(copy_request->http_url, '?') != NULL);
+      has_params = (o_strchr(copy_request->http_url, '?') != NULL);
       if (copy_request->map_url != NULL && u_map_count(copy_request->map_url) > 0) {
         // Append url parameters
         keys = u_map_enum_keys(copy_request->map_url);
