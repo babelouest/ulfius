@@ -82,6 +82,10 @@ char * read_file(const char * filename) {
   }
 }
 
+/**
+ * main function
+ * open the wbservice on port 9275
+ */
 int main(int argc, char ** argv) {
   int ret;
   struct _u_instance instance;
@@ -150,7 +154,12 @@ int main(int argc, char ** argv) {
   return 0;
 }
 
-void websocket_onclose_callback (const struct _u_request * request,
+/**
+ * websocket_manager_callback
+ * onclose callback function
+ * Used to clear data after the websocket connection is closed
+ */
+void websocket_manager_callback (const struct _u_request * request,
                                 struct _websocket_manager * websocket_manager,
                                 void * websocket_onclose_user_data) {
   if (websocket_onclose_user_data != NULL) {
@@ -158,6 +167,10 @@ void websocket_onclose_callback (const struct _u_request * request,
   }
 }
 
+/**
+ * websocket_manager_callback
+ * send 5 text messages and 1 ping for 11 seconds, then closes the websocket
+ */
 void websocket_manager_callback(const struct _u_request * request,
                                struct _websocket_manager * websocket_manager,
                                void * websocket_manager_user_data) {
@@ -176,6 +189,15 @@ void websocket_manager_callback(const struct _u_request * request,
         y_log_message(Y_LOG_LEVEL_DEBUG, "Error send message");
         break;
       }
+      
+      if (i == 2) {
+        ret = ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_PING, 0, NULL);
+        if (ret != U_OK) {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "Error send ping message");
+          break;
+        }
+        sleep(1);
+      }
     } else {
       y_log_message(Y_LOG_LEVEL_DEBUG, "websocket not connected");
       break;
@@ -184,6 +206,10 @@ void websocket_manager_callback(const struct _u_request * request,
   y_log_message(Y_LOG_LEVEL_DEBUG, "Closing websocket_manager_callback");
 }
 
+/**
+ * websocket_incoming_message_callback
+ * Read incoming message and prints it on the console
+ */
 void websocket_incoming_message_callback (const struct _u_request * request,
                                          struct _websocket_manager * websocket_manager,
                                          const struct _websocket_message * last_message,
@@ -199,6 +225,9 @@ void websocket_incoming_message_callback (const struct _u_request * request,
   }
 }
 
+/**
+ * Ulfius main callback function that simplu calls the websocket manager and closes
+ */
 int callback_websocket (const struct _u_request * request, struct _u_response * response, void * user_data) {
   char * websocket_user_data = "my_user_data";
   if (ulfius_set_websocket_response(response, NULL, NULL, &websocket_manager_callback, websocket_user_data, &websocket_incoming_message_callback, websocket_user_data, &websocket_onclose_callback, websocket_user_data) == U_OK) {
