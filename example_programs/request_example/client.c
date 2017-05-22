@@ -84,16 +84,70 @@ int main (int argc, char **argv) {
   json_object_set_new(json_body, "param1", json_string("one"));
   json_object_set_new(json_body, "param2", json_string("two"));
   
-  struct _u_request req_list[] = {
-    {"GET", SERVER_URL_PREFIX "/get/", 0, 20, NULL, NULL, NULL, &url_params, NULL, NULL, NULL, NULL, 0},                                   // Parameters in url
-    {"DELETE", SERVER_URL_PREFIX "/delete/", 0, 20, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0},                                    // No parameters
-    {"POST", SERVER_URL_PREFIX "/post/param/", 0, 20, NULL, NULL, NULL, NULL, NULL, NULL, &post_params, string_body, strlen(string_body)}, // Parameters in post_map and string_body
-    {"POST", SERVER_URL_PREFIX "/post/plain/", 0, 20, NULL, NULL, NULL, NULL, &req_headers, NULL, NULL, string_body, strlen(string_body)}, // Paremeters in string body, header MHD_HTTP_POST_ENCODING_FORM_URLENCODED
-    {"POST", SERVER_URL_PREFIX "/post/json/", 0, 20, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0},                              // Parameters in json_body
-    {"PUT", SERVER_URL_PREFIX "/put/plain", 0, 20, NULL, NULL, NULL, NULL, &req_headers, NULL, NULL, string_body, strlen(string_body)},    // Paremeters in string body, header MHD_HTTP_POST_ENCODING_FORM_URLENCODED
-    {"PUT", SERVER_URL_PREFIX "/put/json", 0, 20, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0},                                 // Parameters in json_body
-    {"POST", SERVER_URL_PREFIX "/post/param/", 0, 20, NULL, NULL, NULL, NULL, NULL, NULL, &post_params, NULL, 0}                           // Parameters in post_map
-  };
+  struct _u_request req_list[8];
+  ulfius_init_request(&req_list[0]);
+  ulfius_init_request(&req_list[1]);
+  ulfius_init_request(&req_list[2]);
+  ulfius_init_request(&req_list[3]);
+  ulfius_init_request(&req_list[4]);
+  ulfius_init_request(&req_list[5]);
+  ulfius_init_request(&req_list[6]);
+  ulfius_init_request(&req_list[7]);
+  
+  // Parameters in url
+  req_list[0].http_verb = strdup("GET");
+  req_list[0].http_url = strdup(SERVER_URL_PREFIX "/get/");
+  req_list[0].timeout = 20;
+  u_map_copy_into(req_list[0].map_url, &url_params);
+  
+  // No parameters
+  req_list[1].http_verb = strdup("DELETE");
+  req_list[1].http_url = strdup(SERVER_URL_PREFIX "/delete/");
+  req_list[1].timeout = 20;
+  
+  // Parameters in post_map and string_body
+  req_list[2].http_verb = strdup("POST");
+  req_list[2].http_url = strdup(SERVER_URL_PREFIX "/post/param/");
+  req_list[2].timeout = 20;
+  u_map_copy_into(req_list[2].map_post_body, &post_params);
+  req_list[2].binary_body = strdup(string_body);
+  req_list[2].binary_body_length = strlen(string_body);
+  
+  // Paremeters in string body, header MHD_HTTP_POST_ENCODING_FORM_URLENCODED
+  req_list[3].http_verb = strdup("POST");
+  req_list[3].http_url = strdup(SERVER_URL_PREFIX "/post/plain/");
+  req_list[3].timeout = 20;
+  u_map_copy_into(req_list[3].map_header, &req_headers);
+  req_list[3].binary_body = strdup(string_body);
+  req_list[3].binary_body_length = strlen(string_body);
+  
+  // Parameters in json_body
+  req_list[4].http_verb = strdup("POST");
+  req_list[4].http_url = strdup(SERVER_URL_PREFIX "/post/json/");
+  req_list[4].timeout = 20;
+  u_map_copy_into(req_list[4].map_url, &url_params);
+  ulfius_set_json_body_request(&req_list[4], json_body);
+  
+  // Paremeters in string body, header MHD_HTTP_POST_ENCODING_FORM_URLENCODED
+  req_list[5].http_verb = strdup("PUT");
+  req_list[5].http_url = strdup(SERVER_URL_PREFIX "/put/plain/");
+  req_list[5].timeout = 20;
+  u_map_copy_into(req_list[5].map_header, &req_headers);
+  req_list[5].binary_body = strdup(string_body);
+  req_list[5].binary_body_length = strlen(string_body);
+  
+  // Parameters in json_body
+  req_list[6].http_verb = strdup("PUT");
+  req_list[6].http_url = strdup(SERVER_URL_PREFIX "/put/json/");
+  req_list[6].timeout = 20;
+  u_map_copy_into(req_list[6].map_url, &url_params);
+  ulfius_set_json_body_request(&req_list[6], json_body);
+  
+  // Parameters in post_map
+  req_list[7].http_verb = strdup("POST");
+  req_list[7].http_url = strdup(SERVER_URL_PREFIX "/post/param/");
+  req_list[7].timeout = 20;
+  u_map_copy_into(req_list[6].map_post_body, &post_params);
   
   printf("Press <enter> to run get test\n");
   getchar();
@@ -195,6 +249,14 @@ int main (int argc, char **argv) {
   u_map_clean(&url_params);
   u_map_clean(&post_params);
   u_map_clean(&req_headers);
+  ulfius_clean_request(&req_list[0]);
+  ulfius_clean_request(&req_list[1]);
+  ulfius_clean_request(&req_list[2]);
+  ulfius_clean_request(&req_list[3]);
+  ulfius_clean_request(&req_list[4]);
+  ulfius_clean_request(&req_list[5]);
+  ulfius_clean_request(&req_list[6]);
+  ulfius_clean_request(&req_list[7]);
   
   return 0;
 }

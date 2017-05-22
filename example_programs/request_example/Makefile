@@ -13,9 +13,9 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #
 CC=gcc
-CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS)
+CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS) -I$(ULFIUS_LOCATION)
 ULFIUS_LOCATION=../../src
-LIBS=-lc -lulfius -ljansson -lyder -lorcania -L$(ULFIUS_LOCATION)
+LIBS=-lc -ljansson -lyder -lorcania -lulfius -L$(ULFIUS_LOCATION)
 
 all: client server mail
 
