@@ -76,11 +76,13 @@ See [API.md](API.md) file for API documentation details
 
 ## Example programs source code
 
-Example programs are available to see the different functionalities available, see `example_programs` folder for detailed sample source codes and documentation.
+Example programs are available to see the different functionalities available, see [example_programs](example_programs) folder for detailed sample source codes and documentation.
 
 ## Example callback functions
 
-Example callback functions are available in the folder `example_callbacks`, see the [example_callbacks README.md](example_callbacks/README.md) file for detailed documentation.
+Example callback functions are available in the folder [example_callbacks](example_callbacks). The example callback functions available are:
+- static file server: to provide static files of a specific folder
+- oauth2 bearer: to check the validity of a Oauth2 bearer jwt token. Requires [libjwt](https://github.com/benmcollins/libjwt).
 
 ## Projects using Ulfius framework
 
