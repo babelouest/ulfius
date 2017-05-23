@@ -8,8 +8,6 @@ Used to facilitate creation of web applications in C programs with a small memor
 
 You can create webservices in HTTP or HTTPS mode, stream data, or implement server websockets.
 
-Warning! The branch 2.0 is still in development and doesn't have all the features, use it only for tests or development, or use the master branch.
-
 ## Hello World! example application
 
 The source code of a hello world using Ulfius is the following:
