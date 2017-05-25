@@ -155,11 +155,11 @@ int main(int argc, char ** argv) {
 }
 
 /**
- * websocket_manager_callback
+ * websocket_onclose_callback
  * onclose callback function
  * Used to clear data after the websocket connection is closed
  */
-void websocket_manager_callback (const struct _u_request * request,
+void websocket_onclose_callback (const struct _u_request * request,
                                 struct _websocket_manager * websocket_manager,
                                 void * websocket_onclose_user_data) {
   if (websocket_onclose_user_data != NULL) {
