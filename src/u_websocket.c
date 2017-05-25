@@ -22,14 +22,15 @@
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  * 
  */
+
+#include "ulfius.h"
+
 #if !defined(U_DISABLE_WEBSOCKET)
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <pthread.h>
 #include <gnutls/gnutls.h>
-
-#include "ulfius.h"
 
 /**
  * Set a websocket in the response

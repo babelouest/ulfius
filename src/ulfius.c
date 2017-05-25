@@ -135,12 +135,12 @@ void * ulfius_uri_logger (void * cls, const char * uri) {
  * 
  */
 struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem) {
-  uint mhd_flags = MHD_USE_THREAD_PER_CONNECTION | MHD_USE_INTERNAL_POLLING_THREAD;
+  uint mhd_flags = MHD_USE_THREAD_PER_CONNECTION;
 #ifdef DEBUG
   mhd_flags |= MHD_USE_DEBUG;
 #endif
 #if !defined(U_DISABLE_WEBSOCKET)
-  mhd_flags |= MHD_ALLOW_UPGRADE;
+  mhd_flags |= MHD_ALLOW_UPGRADE | MHD_USE_INTERNAL_POLLING_THREAD;
 #endif
   
   if (u_instance->mhd_daemon == NULL) {
