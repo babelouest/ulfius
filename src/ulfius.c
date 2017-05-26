@@ -139,7 +139,7 @@ struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance, const
 #ifdef DEBUG
   mhd_flags |= MHD_USE_DEBUG;
 #endif
-#if !defined(U_DISABLE_WEBSOCKET)
+#ifndef U_DISABLE_WEBSOCKET
   mhd_flags |= MHD_ALLOW_UPGRADE | MHD_USE_INTERNAL_POLLING_THREAD;
 #endif
   
@@ -285,7 +285,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
   struct _u_endpoint * endpoint_list = ((struct _u_instance *)cls)->endpoint_list, ** current_endpoint_list = NULL, * current_endpoint = NULL;
   struct connection_info_struct * con_info = * con_cls;
   int mhd_ret = MHD_NO, callback_ret = U_OK, i, close_loop = 0, inner_error = U_OK;
-#if !defined(U_DISABLE_WEBSOCKET)
+#ifndef U_DISABLE_WEBSOCKET
   int upgrade_protocol = 0;
 #endif
   char * content_type, * auth_realm = NULL;
@@ -422,7 +422,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
               mhd_ret = MHD_NO;
             }
             close_loop = 1;
-#if !defined(U_DISABLE_WEBSOCKET)
+#ifndef U_DISABLE_WEBSOCKET
           } else if (response->websocket_manager_callback != NULL ||
                      response->websocket_incoming_message_callback != NULL) {
             // if the session is a valid websocket request,
@@ -604,7 +604,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
             mhd_ret = MHD_queue_basic_auth_fail_response (connection, auth_realm, mhd_response);
           } else if (inner_error == U_CALLBACK_UNAUTHORIZED) {
             mhd_ret = MHD_queue_response (connection, MHD_HTTP_UNAUTHORIZED, mhd_response);
-  #if !defined(U_DISABLE_WEBSOCKET)
+  #ifndef U_DISABLE_WEBSOCKET
           } else if (upgrade_protocol) {
             mhd_ret = MHD_queue_response (connection,
                                           MHD_HTTP_SWITCHING_PROTOCOLS,
@@ -697,7 +697,7 @@ void mhd_request_completed (void *cls, struct MHD_Connection *connection,
  */
 int ulfius_stop_framework(struct _u_instance * u_instance) {
   if (u_instance != NULL && u_instance->mhd_daemon != NULL) {
-#if !defined(U_DISABLE_WEBSOCKET)
+#ifndef U_DISABLE_WEBSOCKET
     int i;
     // Loop in all active websockets and send close signal
     for (i=u_instance->nb_websocket_active-1; i>=0; i--) {
@@ -994,7 +994,7 @@ int ulfius_init_instance(struct _u_instance * u_instance, uint port, struct sock
     u_instance->default_endpoint = NULL;
     u_instance->max_post_param_size = 0;
     u_instance->max_post_body_size = 0;
-#if !defined(U_DISABLE_WEBSOCKET)
+#ifndef U_DISABLE_WEBSOCKET
     u_instance->nb_websocket_active = 0;
     u_instance->websocket_active = NULL;
 #endif 

@@ -29,6 +29,10 @@
 /** External dependencies **/
 #include <microhttpd.h>
 
+#if (MHD_VERSION < 0x00095300)
+  #define U_DISABLE_WEBSOCKET
+#endif
+
 /** Angharad libraries **/
 #include <yder.h>
 #include <orcania.h>
@@ -56,7 +60,7 @@
 #define U_CALLBACK_UNAUTHORIZED 2
 #define U_CALLBACK_ERROR        3
 
-#if !defined(U_DISABLE_WEBSOCKET)
+#ifndef U_DISABLE_WEBSOCKET
   struct _websocket;
   struct _websocket_manager;
   struct _websocket_message;
@@ -171,7 +175,7 @@ struct _u_response {
   size_t             stream_size;
   unsigned int       stream_block_size;
   void             * stream_user_data;
-#if !defined(U_DISABLE_WEBSOCKET)
+#ifndef U_DISABLE_WEBSOCKET
   char             * websocket_protocol;
   char             * websocket_extensions;
   void            (* websocket_manager_callback) (const struct _u_request * request,
@@ -251,7 +255,7 @@ struct _u_instance {
   struct _u_map               * default_headers;
   size_t                        max_post_param_size;
   size_t                        max_post_body_size;
-#if !defined(U_DISABLE_WEBSOCKET)
+#ifndef U_DISABLE_WEBSOCKET
   size_t                        nb_websocket_active;
   struct _websocket          ** websocket_active;
 #endif 
@@ -837,7 +841,7 @@ int u_map_count(const struct _u_map * source);
  */
 int u_map_empty(struct _u_map * u_map);
 
-#if !defined(U_DISABLE_WEBSOCKET)
+#ifndef U_DISABLE_WEBSOCKET
 /**********************************
  * Websocket functions declarations
  **********************************/
@@ -1104,7 +1108,7 @@ char * ulfius_get_cookie_header(const struct _u_cookie * cookie);
 #define U_STATUS_RUNNING  1
 #define U_STATUS_ERROR    2
 
-#if !defined(U_DISABLE_WEBSOCKET)
+#ifndef U_DISABLE_WEBSOCKET
 
 /**
  * Websocket callback function for MHD

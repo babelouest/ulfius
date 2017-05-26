@@ -25,7 +25,7 @@
 
 #include "ulfius.h"
 
-#if !defined(U_DISABLE_WEBSOCKET)
+#ifndef U_DISABLE_WEBSOCKET
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
