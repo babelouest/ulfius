@@ -27,7 +27,7 @@ debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 debug: injection_example
 
 libulfius.so:
-	cd $(ULFIUS_LOCATION) && $(MAKE) debug JANSSONFLAG=-DU_DISABLE_JANSSON CURLFLAG=-DU_DISABLE_CURL
+	cd $(ULFIUS_LOCATION) && $(MAKE) debug JANSSONFLAG=-DU_DISABLE_JANSSON CURLFLAG=-DU_DISABLE_CURL WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET
 
 injection_example.o: injection_example.c
 	$(CC) $(CFLAGS) injection_example.c -DDEBUG -g -O0

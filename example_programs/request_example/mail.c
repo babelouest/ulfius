@@ -11,6 +11,7 @@
  *
  */
 
+#define U_DISABLE_WEBSOCKET
 #include "../../src/ulfius.h"
 
 #define MAIL_SERVER "localhost"

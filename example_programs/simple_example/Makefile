@@ -29,7 +29,7 @@ debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 debug: simple_example
 
 libulfius.so:
-	cd $(ULFIUS_LOCATION) && $(MAKE) debug JANSSONFLAG=-DU_DISABLE_JANSSON CURLFLAG=-DU_DISABLE_CURL
+	cd $(ULFIUS_LOCATION) && $(MAKE) debug CURLFLAG=-DU_DISABLE_CURL WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET
 
 simple_example.o: simple_example.c
 	$(CC) $(CFLAGS) simple_example.c -DDEBUG -g -O0

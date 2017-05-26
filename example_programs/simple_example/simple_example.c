@@ -16,6 +16,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#define U_DISABLE_CURL
+#define U_DISABLE_WEBSOCKET
 #include "../../src/ulfius.h"
 
 #define PORT 8537

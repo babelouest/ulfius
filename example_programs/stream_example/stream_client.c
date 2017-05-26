@@ -10,8 +10,11 @@
  *
  */
 
+#include <stdio.h>
 #include <string.h>
 
+#define U_DISABLE_JANSSON
+#define U_DISABLE_WEBSOCKET
 #include "../../src/ulfius.h"
 
 #define URL "http://localhost:7876/stream"

@@ -16,9 +16,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <ulfius.h>
 #include <orcania.h>
 #include <yder.h>
+
+#define U_DISABLE_JANSSON
+#define U_DISABLE_CURL
+#include "../../src/ulfius.h"
+
 #include <static_file_callback.h>
 
 #define PORT 9275

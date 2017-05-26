@@ -14,6 +14,7 @@
 #include <string.h>
 #include <jansson.h>
 
+#define U_DISABLE_WEBSOCKET
 #include "../../src/ulfius.h"
 
 #define PORT 7778

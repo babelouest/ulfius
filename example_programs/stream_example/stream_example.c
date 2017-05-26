@@ -10,12 +10,16 @@
  *
  */
 
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <inttypes.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#define U_DISABLE_JANSSON
+#define U_DISABLE_CURL
+#define U_DISABLE_WEBSOCKET
 #include "../../src/ulfius.h"
 
 #define PORT 7876

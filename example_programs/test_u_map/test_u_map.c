@@ -13,6 +13,11 @@
 
 #include <string.h>
 #include <yder.h>
+#include <stdio.h>
+
+#define U_DISABLE_JANSSON
+#define U_DISABLE_CURL
+#define U_DISABLE_WEBSOCKET
 #include "../../src/ulfius.h"
 
 /**

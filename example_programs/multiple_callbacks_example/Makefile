@@ -29,7 +29,7 @@ debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 debug: multiple_callbacks_example
 
 libulfius.so:
-	cd $(ULFIUS_LOCATION) && $(MAKE) debug JANSSONFLAG=-DU_DISABLE_JANSSON CURLFLAG=-DU_DISABLE_CURL
+	cd $(ULFIUS_LOCATION) && $(MAKE) debug JANSSONFLAG=-DU_DISABLE_JANSSON CURLFLAG=-DU_DISABLE_CURL WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET
 
 multiple_callbacks_example.o: multiple_callbacks_example.c
 	$(CC) $(CFLAGS) multiple_callbacks_example.c -DDEBUG -g -O0

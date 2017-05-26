@@ -16,6 +16,8 @@
 #include <string.h>
 #include <jansson.h>
 
+#define U_DISABLE_CURL
+#define U_DISABLE_WEBSOCKET
 #include "../../src/ulfius.h"
 
 #define PORT 7437
@@ -164,7 +166,7 @@ int callback_sheep_counter_start (const struct _u_request * request, struct _u_r
   
   json_body = json_object();
   json_object_set_new(json_body, "nbsheep", json_integer(* nb_sheep));
-  ulfius_set_json_response(response, 200, json_body);
+  ulfius_set_json_body_response(response, 200, json_body);
   json_decref(json_nb_sheep);
   json_decref(json_body);
   return U_CALLBACK_CONTINUE;
@@ -185,7 +187,7 @@ int callback_sheep_counter_reset (const struct _u_request * request, struct _u_r
   
   json_body = json_object();
   json_object_set_new(json_body, "nbsheep", json_integer(0));
-  ulfius_set_json_response(response, 200, json_body);
+  ulfius_set_json_body_response(response, 200, json_body);
   json_decref(json_body);
   
   return U_CALLBACK_CONTINUE;
@@ -207,7 +209,7 @@ int callback_sheep_counter_add (const struct _u_request * request, struct _u_res
   
   json_body = json_object();
   json_object_set_new(json_body, "nbsheep", json_integer(*nb_sheep));
-  ulfius_set_json_response(response, 200, json_body);
+  ulfius_set_json_body_response(response, 200, json_body);
   json_decref(json_body);
   
   return U_CALLBACK_CONTINUE;

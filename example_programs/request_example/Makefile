@@ -27,7 +27,7 @@ debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 debug: client server mail
 
 libulfius.so:
-	cd $(ULFIUS_LOCATION) && $(MAKE) debug
+	cd $(ULFIUS_LOCATION) && $(MAKE) debug WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET
 
 client.o: client.c libulfius.so
 	$(CC) $(CFLAGS) client.c -DDEBUG -g -O0

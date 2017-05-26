@@ -27,7 +27,7 @@ debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 debug: test_u_map
 
 libulfius.so:
-	cd $(ULFIUS_LOCATION) && $(MAKE) debug
+	cd $(ULFIUS_LOCATION) && $(MAKE) debug JANSSONFLAG=-DU_DISABLE_JANSSON CURLFLAG=-DU_DISABLE_CURL WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET
 
 test_u_map.o: test_u_map.c
 	$(CC) $(CFLAGS) test_u_map.c -DDEBUG -g -O0
