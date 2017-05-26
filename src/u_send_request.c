@@ -22,14 +22,14 @@
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  * 
  */
+#include "ulfius.h"
+
 #ifndef U_DISABLE_CURL
 
 #include <stdlib.h>
 #include <ctype.h>
 #include <curl/curl.h>
 #include <string.h>
-
-#include "ulfius.h"
 
 /**
  * Internal structure used to store temporarly the response body
