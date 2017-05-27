@@ -29,7 +29,7 @@
 /** External dependencies **/
 #include <microhttpd.h>
 
-#if (MHD_VERSION < 0x00095300)
+#if (MHD_VERSION < 0x00095300) && !defined(U_DISABLE_WEBSOCKET)
   #define U_DISABLE_WEBSOCKET
 #endif
 
