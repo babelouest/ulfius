@@ -29,7 +29,7 @@ The source code of a hello world using Ulfius is the following:
  * Callback function for the web application on /helloworld url call
  */
 int callback_hello_world (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  ulfius_set_string_response(response, 200, "Hello World!");
+  ulfius_set_string_body_response(response, 200, "Hello World!");
   return U_CALLBACK_CONTINUE;
 }
 
@@ -76,11 +76,11 @@ See [API.md](API.md) file for API documentation details
 
 ## Example programs source code
 
-Example programs are available to see the different functionalities available, see [example_programs](example_programs) folder for detailed sample source codes and documentation.
+Example programs are available to understand the different functionalities available, see [example_programs](https://github.com/babelouest/ulfius/blob/master/example_programs) folder for detailed sample source codes and documentation.
 
 ## Example callback functions
 
-Example callback functions are available in the folder [example_callbacks](example_callbacks). The example callback functions available are:
+Example callback functions are available in the folder [example_callbacks](https://github.com/babelouest/ulfius/blob/master/example_callbacks). The example callback functions available are:
 - static file server: to provide static files of a specific folder
 - oauth2 bearer: to check the validity of a Oauth2 bearer jwt token. Requires [libjwt](https://github.com/benmcollins/libjwt).
 
@@ -114,13 +114,13 @@ Then if the client calls the url `GET` `/api/potato/myPotato`, the following cal
 - `potato_get_callback`
 - `gzip_body_callback`
 
-Warning: In this example, the url parameter `myPotato` will be availabe only in the `potato_get_callback` function, because the other endpoints did not defined a url parameter after `/potato`.
+*Warning:* In this example, the url parameter `myPotato` will be availabe only in the `potato_get_callback` function, because the other endpoints did not defined a url parameter after `/potato`.
 
 If you need to communicate between callback functions for any purpose, you can use the new parameter `struct _u_response.shared_data`. This is a `void *` pointer initialized to `NULL`. If you use it, remember to free it after use, because the framework won't.
 
 ### Keep only binary_body in struct _u_request and struct _u_response
 
-the values `string_body` and `json_body` have been removed from the structures `struct _u_request` and `struct _u_response`. This may be painless in the response if you used only the functions `ulfius_set_xxx_response`. Otherwise, you should make small arrangements to your code.
+the values `string_body` and `json_body` have been removed from the structures `struct _u_request` and `struct _u_response`. This may be painless in the response if you used only the functions `ulfius_set_xxx_body_response`. Otherwise, you should make small arrangements to your code.
 
 ### Websockets
 
@@ -152,21 +152,21 @@ This dependency allows to use the following functions:
 json_t * ulfius_get_json_body_request(const struct _u_request * request, json_error_t * json_error);
 
 /**
- * ulfius_set_json_response
+ * ulfius_set_json_body_request
  * Add a json_t body to a request
  * return U_OK on success
  */
 int ulfius_set_json_body_request(struct _u_request * request, json_t * body);
 
 /**
- * ulfius_set_json_response
+ * ulfius_set_json_body_response
  * Add a json_t body to a response
  * return U_OK on success
  */
 int ulfius_set_json_body_response(struct _u_response * response, const uint status, const json_t * body);
 
 /**
- * ulfius_get_json_response
+ * ulfius_get_json_body_response
  * Get JSON structure from the response body if the request is valid
  */
 json_t * ulfius_get_json_body_response(struct _u_response * response, json_error_t * json_error);
@@ -256,7 +256,7 @@ $ sudo make install
 
 ### Ready-to-use callback functions
 
-You can find some ready-to-use callback functions in the folder [example_callbacks](example_callbacks/).
+You can find some ready-to-use callback functions in the folder [example_callbacks](https://github.com/babelouest/ulfius/blob/master/example_callbacks).
 
 ## Questions, problems ?
 

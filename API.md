@@ -337,7 +337,7 @@ Ulfius allows multiple callbacks for the same endpoint. This is helpful when you
 
 The priority is in descending order, which means that it starts with 0 (highest priority) and priority decreases when priority number increases. There is no more signification to the priority number, which means you can use any incrementation of your choice.
 
-`Warning`: Having 2 callback functions with the same priority number will result in an undefined result.
+`Warning`: Having 2 callback functions with the same priority number will result in an undefined result for the callback functions execution order.
 
 To help passing parameters between callback functions of the same request, the value `struct _u_response.shared_data` can bse used. But it will not be allocated or freed by the framework, the program using this variable must free by itself.
 
@@ -372,6 +372,8 @@ int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * 
 
 In your program where you want to start the web server, simply execute the function `ulfius_start_framework(struct _u_instance * u_instance)` for a non-secure http connection or `ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem)` for a secure https connection, using a valid private key and a valid corresponding server certificate, see openssl documentation for certificate generation. Those function accept the previously declared `instance` as first parameter. You can reuse the same callback function as much as you want for different endpoints. On success, these functions returns `U_CALLBACK_CONTINUE` or `U_CALLBACK_COMPLETE`, otherwise an error code.
 
+Note: for security concerns, after running `ulfius_start_secure_framework`, you can free the parameters `key_pem` and `cert_pem` if you want to.
+
 #### Stop webservice
 
 To stop the webservice, call the following function:
@@ -399,7 +401,7 @@ int (* callback_function)(const struct _u_request * request, // Input parameters
                           void * user_data);
 ```
 
-In the callback function definition, the variables `request` and `response` will be set by the framework, and the `user_data` variable will be assigned to the user_data defined in your endpoint list definition.
+In the callback function definition, the variables `request` and `response` will be initialized by the framework, and the `user_data` variable will be assigned to the user_data defined in your endpoint list definition.
 
 The request variable is defined as:
 
@@ -498,12 +500,12 @@ Some functions are dedicated to handle the response:
 int ulfius_add_header_to_response(struct _u_response * response, const char * key, const char * value);
 
 /**
- * ulfius_set_string_response
+ * ulfius_set_string_body_response
  * Add a string body to a response
  * body must end with a '\0' character
  * return U_OK on success
  */
-int ulfius_set_string_response(struct _u_response * response, const uint status, const char * body);
+int ulfius_set_string_body_response(struct _u_response * response, const uint status, const char * body);
 
 /**
  * ulfius_set_binary_response
@@ -513,11 +515,11 @@ int ulfius_set_string_response(struct _u_response * response, const uint status,
 int ulfius_set_binary_response(struct _u_response * response, const uint status, const char * body, const size_t length);
 
 /**
- * ulfius_set_empty_response
+ * ulfius_set_empty_body_response
  * Set an empty response with only a status
  * return U_OK on success
  */
-int ulfius_set_empty_response(struct _u_response * response, const uint status);
+int ulfius_set_empty_body_response(struct _u_response * response, const uint status);
 
 /**
  * ulfius_set_stream_response
@@ -553,11 +555,24 @@ if libjansson library is enabled, the following functions are available in Ulfiu
 json_t * ulfius_get_json_body_request(const struct _u_request * request, json_error_t * json_error);
 
 /**
- * ulfius_set_json_response
+ * ulfius_set_json_body_request
+ * Add a json_t body to a request
+ * return U_OK on success
+ */
+int ulfius_set_json_body_request(struct _u_request * request, json_t * body);
+
+/**
+ * ulfius_set_json_body_response
  * Add a json_t body to a response
  * return U_OK on success
  */
-int ulfius_set_json_response(struct _u_response * response, const uint status, const json_t * body);
+int ulfius_set_json_body_response(struct _u_response * response, const uint status, const json_t * body);
+
+/**
+ * ulfius_get_json_body_response
+ * Get JSON structure from the response body if the request is valid
+ */
+json_t * ulfius_get_json_body_response(struct _u_response * response, json_error_t * json_error);
 ```
 
 The `jansson` api documentation is available at the following address: [Jansson documentation](https://jansson.readthedocs.org/).
@@ -566,10 +581,10 @@ The `jansson` api documentation is available at the following address: [Jansson 
 
 The callback returned value can have the following values:
 
-- `U_CALLBACK_CONTINUE`: The framework can pass the request and the response to the next callback function in priority order if there is one, or complete the transaction and send back the response to the client.
+- `U_CALLBACK_CONTINUE`: The framework can transfer the request and the response to the next callback function in priority order if there is one, or complete the transaction and send back the response to the client.
 - `U_CALLBACK_COMPLETE`: The framework must complete the transaction and send the response to the client without calling any further callback function.
-- `U_CALLBACK_UNAUTHORIZED`: The framework must complete the transaction and send an unauthorized response to the client with the status 401, the body specified and the `auth_realm` value if specified.
-- `U_CALLBACK_ERROR`: An error occured during execution, the framework must complete the transaction and send an error 500 to the client.
+- `U_CALLBACK_UNAUTHORIZED`: The framework must complete the transaction without calling any further callback function and send an unauthorized response to the client with the status 401, the body specified and the `auth_realm` value if specified.
+- `U_CALLBACK_ERROR`: An error occured during execution, the framework must complete the transaction without calling any further callback function and send an error 500 to the client.
 
 In addition with manipulating the raw parameters of the structures, you can use the `_u_request` and `_u_response` structures by using specific functions designed to facilitate their use and memory management:
 
@@ -714,16 +729,16 @@ The prototype of the `stream_callback` function is the following:
 
 ```C
 int stream_callback (void * stream_user_data, // Your predefined user_data
-                    uint64_t offset,          // the position of the current data to send
-                    char * out_buf,           // The output buffer to fill with data
-                    size_t max);              // the max size of data to be put in the out_buf
+                     uint64_t offset,          // the position of the current data to send
+                     char * out_buf,           // The output buffer to fill with data
+                     size_t max);              // the max size of data to be put in the out_buf
 ```
 
 The return value must be the size of the data put in `out_buf`.
 
 This function will be called over and over in loop as long as the client has the connection opened.
 
-If you want to close the stream from the server side, return `U_STREAM_END` in the `stream_callback` function. If you a problem occured, you can close the connection with a `U_STREAM_ERROR` return value.
+If you want to close the stream from the server side, return `U_STREAM_END` in the `stream_callback` function. If a problem occured, you can close the connection with a `U_STREAM_ERROR` return value.
 
 While the `stream_callback_free` function is as simple as:
 
@@ -785,13 +800,13 @@ This behaviour is the same with websocket extension check.
 
 3 callback functions are available for the websocket implementation:
 
-- `websocket_manager_callback`: This function will be called in a separated thread, and the websocket will remain open as long as this callback function is not completed. In this function, your program will have access to the websocket status (connected or not), and the list of messages sent and received. When this function returns, the websocket will close itself automatically.
+- `websocket_manager_callback`: This function will be called in a separate thread, and the websocket will remain open as long as this callback function is not completed. In this function, your program will have access to the websocket status (connected or not), and the list of messages sent and received. When this function ends, the websocket will close itself automatically.
 - `websocket_incoming_message_callback`: This function will be called every time a new message is sent by the client. Although, it is in synchronous mode, which means that you won't have 2 different `websocket_incoming_message_callback` of the same websocket executed at the same time.
 - `websocket_onclose_callback`: This function will be called right after the websocket connection is closed, but before the websocket structure is cleaned.
 
 You must specify at least one of the callback functions `websocket_manager_callback` or `websocket_incoming_message_callback`.
 
-When the function `ulfius_stop_framework` is called, it will wait for all running websockets to complete by themselves, there is no force close. So if you have a `websocket_manager_callback` function running, you *MUST* complete this function in order to make a clean stop of the http daemon.
+When the function `ulfius_stop_framework` is called, it will wait for all running websockets to end by themselves, there is no force close. So if you have a `websocket_manager_callback` function running, you *MUST* end this function in order to make a clean stop of the http daemon.
 
 For each of these callback function, you can specify a `*_user_data` pointer containing any data you need.
 
