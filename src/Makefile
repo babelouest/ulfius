@@ -26,7 +26,7 @@ CC=gcc
 CFLAGS=-c -fPIC -Wall -D_REENTRANT -I$(PREFIX)/include -I$(LIBORCANIA_LOCATION) -I$(LIBYDER_LOCATION) $(ADDITIONALFLAGS) $(JANSSONFLAG) $(CURLFLAG) $(WEBSOCKETFLAG)
 LIBS=-L$(PREFIX)/lib -L$(LIBORCANIA_LOCATION) -L$(LIBYDER_LOCATION) -lc -lmicrohttpd -lyder -lorcania -lpthread
 OUTPUT=libulfius.so
-VERSION=2.0
+VERSION=2.1
 
 ifneq (($(JANSSONFLAG)),"")
 LJANSSON=-ljansson
@@ -70,7 +70,7 @@ clean:
 install: all
 	cp $(OUTPUT).$(VERSION) $(PREFIX)/lib
 	cp ulfius.h $(PREFIX)/include
-	ldconfig -r $(PREFIX)
+	ldconfig
 
 uninstall:
 	rm -f $(PREFIX)/lib/$(OUTPUT)
