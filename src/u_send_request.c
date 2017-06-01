@@ -68,7 +68,7 @@ size_t ulfius_write_body(void * contents, size_t size, size_t nmemb, void * user
 static size_t write_header(void * buffer, size_t size, size_t nitems, void * user_data) {
   
   struct _u_response * response = (struct _u_response *) user_data;
-  char * header = (char *)buffer, * key, * value, * saveptr;
+  char * header = (char *)buffer, * key, * value, * saveptr, * tmp;
   
   if (strchr(header, ':') != NULL) {
     if (response->map_header != NULL) {
@@ -76,7 +76,15 @@ static size_t write_header(void * buffer, size_t size, size_t nitems, void * use
       key = trimwhitespace(strtok_r(header, ":", &saveptr));
       value = trimwhitespace(strtok_r(NULL, "", &saveptr));
       
-      u_map_put(response->map_header, key, value);
+      if (!u_map_has_key_case(response->map_header, key)) {
+        u_map_put(response->map_header, key, value);
+      } else {
+        tmp = msprintf("%s, %s", u_map_get_case(response->map_header, key), value);
+        if (u_map_remove_from_key_case(response->map_header, key) != U_OK || u_map_put(response->map_header, key, tmp)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting header value for name %s", key);
+        }
+        o_free(tmp);
+      }
     }
   } else if (strlen(trimwhitespace(header)) > 0) {
     // Expecting the HTTP/x.x header
