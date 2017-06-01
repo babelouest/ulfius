@@ -49,7 +49,7 @@ int callback_function_empty(const struct _u_request * request, struct _u_respons
 }
 
 int callback_function_return_url(const struct _u_request * request, struct _u_response * response, void * user_data) {
-  ulfius_set_string_response(response, 200, request->http_url);
+  ulfius_set_string_body_response(response, 200, request->http_url);
   return U_CALLBACK_CONTINUE;
 }
 
@@ -78,7 +78,7 @@ int callback_function_param(const struct _u_request * request, struct _u_respons
     param3 = o_strdup("");
   }
   body = msprintf("param1 is %s, param2 is %s%s", u_map_get(request->map_url, "param1"), u_map_get(request->map_url, "param2"), param3);
-  ulfius_set_string_response(response, 200, body);
+  ulfius_set_string_body_response(response, 200, body);
   o_free(body);
   o_free(param3);
   return U_CALLBACK_CONTINUE;
@@ -88,7 +88,7 @@ int callback_function_body_param(const struct _u_request * request, struct _u_re
   char * body;
   
   body = msprintf("param1 is %s, param2 is %s", u_map_get(request->map_post_body, "param1"), u_map_get(request->map_post_body, "param2"));
-  ulfius_set_string_response(response, 200, body);
+  ulfius_set_string_body_response(response, 200, body);
   o_free(body);
   return U_CALLBACK_CONTINUE;
 }
@@ -97,7 +97,7 @@ int callback_function_header_param(const struct _u_request * request, struct _u_
   char * body;
   
   body = msprintf("param1 is %s, param2 is %s", u_map_get(request->map_header, "param1"), u_map_get(request->map_header, "param2"));
-  ulfius_set_string_response(response, 200, body);
+  ulfius_set_string_body_response(response, 200, body);
   o_free(body);
   return U_CALLBACK_CONTINUE;
 }
@@ -106,7 +106,7 @@ int callback_function_cookie_param(const struct _u_request * request, struct _u_
   char * body;
   
   body = msprintf("param1 is %s", u_map_get(request->map_cookie, "param1"));
-  ulfius_set_string_response(response, 200, body);
+  ulfius_set_string_body_response(response, 200, body);
   ulfius_add_cookie_to_response(response, "param2", "value_cookie", NULL, 100, "localhost", "/cookie", 0, 1);
   o_free(body);
   return U_CALLBACK_CONTINUE;
@@ -115,10 +115,10 @@ int callback_function_cookie_param(const struct _u_request * request, struct _u_
 int callback_function_multiple_continue(const struct _u_request * request, struct _u_response * response, void * user_data) {
   if (response->binary_body != NULL) {
     char * body = msprintf("%.*s\n%s", response->binary_body_length, (char*)response->binary_body, request->http_url);
-    ulfius_set_string_response(response, 200, body);
+    ulfius_set_string_body_response(response, 200, body);
     o_free(body);
   } else {
-    ulfius_set_string_response(response, 200, request->http_url);
+    ulfius_set_string_body_response(response, 200, request->http_url);
   }
   return U_CALLBACK_CONTINUE;
 }
@@ -126,17 +126,17 @@ int callback_function_multiple_continue(const struct _u_request * request, struc
 int callback_function_multiple_complete(const struct _u_request * request, struct _u_response * response, void * user_data) {
   if (response->binary_body != NULL) {
     char * body = msprintf("%.*s\n%s", response->binary_body_length, (char*)response->binary_body, request->http_url);
-    ulfius_set_string_response(response, 200, body);
+    ulfius_set_string_body_response(response, 200, body);
     o_free(body);
   } else {
-    ulfius_set_string_response(response, 200, request->http_url);
+    ulfius_set_string_body_response(response, 200, request->http_url);
   }
   return U_CALLBACK_COMPLETE;
 }
 
 
 ssize_t stream_data (void * cls, uint64_t pos, char * buf, size_t max) {
-  sleep(1);
+  usleep(100);
   if (pos <= 100) {
       snprintf(buf, max, "%s %" PRIu64 "\n", (char *)cls, pos + 1);
       return strlen(buf);
@@ -521,7 +521,7 @@ static Suite *ulfius_suite(void)
 	TCase *tc_core;
 
 	s = suite_create("Ulfius struct _u_map function tests");
-	tc_core = tcase_create("test_ulfius_u_map");
+	tc_core = tcase_create("test_ulfius_framework");
 	tcase_add_test(tc_core, test_ulfius_simple_endpoint);
 	tcase_add_test(tc_core, test_ulfius_endpoint_parameters);
 	tcase_add_test(tc_core, test_ulfius_endpoint_injection);
