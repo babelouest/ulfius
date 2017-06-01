@@ -167,7 +167,7 @@ static Suite *ulfius_suite(void)
 	Suite *s;
 	TCase *tc_core;
 
-	s = suite_create("Ulfius struct _u_map function tests");
+	s = suite_create("Ulfius core function tests");
 	tc_core = tcase_create("test_ulfius_core");
 	tcase_add_test(tc_core, test_ulfius_init_instance);
 	tcase_add_test(tc_core, test_endpoint);
