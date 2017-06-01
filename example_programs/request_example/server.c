@@ -65,6 +65,8 @@ int callback (const struct _u_request * request, struct _u_response * response, 
                                   request->http_verb, request->http_url, url_params, cookies, headers, post_params, request_body, (char *)user_data);
   
   ulfius_add_cookie_to_response(response, "cook", "ie", NULL, 5000, NULL, NULL, 0, 0);
+  u_map_put(response->map_header, "multiple-key", "value 1");
+  u_map_put(response->map_header, "Multiple-Key", "value 2");
   o_free(url_params);
   o_free(headers);
   o_free(cookies);
