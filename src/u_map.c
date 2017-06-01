@@ -511,7 +511,7 @@ const char * u_map_get_case(const struct _u_map * u_map, const char * key) {
  * return -1 if no match found
  * search is case sensitive
  */
-size_t u_map_get_length(const struct _u_map * u_map, const const char * key) {
+ssize_t u_map_get_length(const struct _u_map * u_map, const const char * key) {
   int i;
   if (u_map != NULL && key != NULL) {
     for (i=0; u_map->keys[i] != NULL; i++) {
@@ -530,7 +530,7 @@ size_t u_map_get_length(const struct _u_map * u_map, const const char * key) {
  * return -1 if no match found
  * search is case insensitive
  */
-size_t u_map_get_case_length(const struct _u_map * u_map, const const char * key) {
+ssize_t u_map_get_case_length(const struct _u_map * u_map, const const char * key) {
   int i;
   if (u_map != NULL && key != NULL) {
     for (i=0; u_map->keys[i] != NULL; i++) {
