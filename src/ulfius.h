@@ -53,19 +53,12 @@
 #define U_ERROR_LIBCURL      5 // Error in libcurl execution
 #define U_ERROR_NOT_FOUND    6 // Something was not found
 
-#define ULFIUS_VERSION 2.0
+#define ULFIUS_VERSION 2.1
 
 #define U_CALLBACK_CONTINUE     0
 #define U_CALLBACK_COMPLETE     1
 #define U_CALLBACK_UNAUTHORIZED 2
 #define U_CALLBACK_ERROR        3
-
-#ifndef U_DISABLE_WEBSOCKET
-  struct _websocket;
-  struct _websocket_manager;
-  struct _websocket_message;
-  struct _websocket_message_list;
-#endif
 
 /*************
  * Structures
@@ -152,12 +145,7 @@ struct _u_request {
  * stream_size:                         size of the streamed data (-1 if unknown)
  * stream_block_size:                   size of each block to be streamed, set according to your system
  * stream_user_data:                    user defined data that will be available in your callback stream functions
- * websocket_manager_callback:          callback function for working with the websocket
- * websocket_manager_user_data:         user-defined data that will be handled to websocket_manager_callback
- * websocket_incoming_message_callback: callback function that will be called every time a message arrives from the client in the websocket
- * websocket_incoming_user_data:        user-defined data that will be handled to websocket_incoming_message_callback
- * websocket_onclose_callback:          callback function that will be called if the websocket is open while the program calls ulfius_stop_framework
- * websocket_onclose_user_data:         user-defined data that will be handled to websocket_onclose_callback
+ * websocket_handle:                    handle for websocket extension
  * shared_data:                         any data shared between callback functions, must be allocated and freed by the callback functions
  * 
  */
@@ -175,23 +163,7 @@ struct _u_response {
   size_t             stream_size;
   unsigned int       stream_block_size;
   void             * stream_user_data;
-#ifndef U_DISABLE_WEBSOCKET
-  char             * websocket_protocol;
-  char             * websocket_extensions;
-  void            (* websocket_manager_callback) (const struct _u_request * request,
-                                                  struct _websocket_manager * websocket_manager,
-                                                  void * websocket_manager_user_data);
-  void             * websocket_manager_user_data;
-  void            (* websocket_incoming_message_callback) (const struct _u_request * request,
-                                                           struct _websocket_manager * websocket_manager,
-                                                           const struct _websocket_message * message,
-                                                           void * websocket_incoming_user_data);
-  void             * websocket_incoming_user_data;
-  void            (* websocket_onclose_callback) (const struct _u_request * request,
-                                                  struct _websocket_manager * websocket_manager,
-                                                  void * websocket_onclose_user_data);
-  void             * websocket_onclose_user_data;
-#endif
+  void             * websocket_handle;
   void *             shared_data;
 };
 
@@ -255,10 +227,7 @@ struct _u_instance {
   struct _u_map               * default_headers;
   size_t                        max_post_param_size;
   size_t                        max_post_body_size;
-#ifndef U_DISABLE_WEBSOCKET
-  size_t                        nb_websocket_active;
-  struct _websocket          ** websocket_active;
-#endif 
+  void                        * websocket_handler;
 };
 
 /**
@@ -519,26 +488,26 @@ int ulfius_add_cookie_to_response(struct _u_response * response, const char * ke
 int ulfius_add_header_to_response(struct _u_response * response, const char * key, const char * value);
 
 /**
- * ulfius_set_string_response
+ * ulfius_set_string_body_response
  * Add a string body to a response
  * body must end with a '\0' character
  * return U_OK on success
  */
-int ulfius_set_string_response(struct _u_response * response, const uint status, const char * body);
+int ulfius_set_string_body_response(struct _u_response * response, const uint status, const char * body);
 
 /**
- * ulfius_set_binary_response
+ * ulfius_set_binary_body_response
  * Add a binary body to a response
  * return U_OK on success
  */
-int ulfius_set_binary_response(struct _u_response * response, const uint status, const char * body, const size_t length);
+int ulfius_set_binary_body_response(struct _u_response * response, const uint status, const char * body, const size_t length);
 
 /**
- * ulfius_set_empty_response
+ * ulfius_set_empty_body_response
  * Set an empty response with only a status
  * return U_OK on success
  */
-int ulfius_set_empty_response(struct _u_response * response, const uint status);
+int ulfius_set_empty_body_response(struct _u_response * response, const uint status);
 
 /**
  * ulfius_set_stream_response
@@ -639,21 +608,21 @@ struct _u_response * ulfius_duplicate_response(const struct _u_response * respon
 json_t * ulfius_get_json_body_request(const struct _u_request * request, json_error_t * json_error);
 
 /**
- * ulfius_set_json_response
+ * ulfius_set_json_body_request
  * Add a json_t body to a request
  * return U_OK on success
  */
 int ulfius_set_json_body_request(struct _u_request * request, json_t * body);
 
 /**
- * ulfius_set_json_response
+ * ulfius_set_json_body_response
  * Add a json_t body to a response
  * return U_OK on success
  */
 int ulfius_set_json_body_response(struct _u_response * response, const uint status, const json_t * body);
 
 /**
- * ulfius_get_json_response
+ * ulfius_get_json_body_response
  * Get JSON structure from the response body if the request is valid
  */
 json_t * ulfius_get_json_body_response(struct _u_response * response, json_error_t * json_error);
@@ -756,14 +725,14 @@ int u_map_put_binary(struct _u_map * u_map, const char * key, const char * value
  * return -1 if no match found
  * search is case sensitive
  */
-size_t u_map_get_length(const struct _u_map * u_map, const char * key);
+ssize_t u_map_get_length(const struct _u_map * u_map, const char * key);
 
 /**
  * get the value length corresponding to the specified key in the u_map
  * return -1 if no match found
  * search is case insensitive
  */
-size_t u_map_get_case_length(const struct _u_map * u_map, const char * key);
+ssize_t u_map_get_case_length(const struct _u_map * u_map, const char * key);
 
 /**
  * get the value corresponding to the specified key in the u_map
@@ -1109,6 +1078,37 @@ char * ulfius_get_cookie_header(const struct _u_cookie * cookie);
 #define U_STATUS_ERROR    2
 
 #ifndef U_DISABLE_WEBSOCKET
+
+/**
+ * websocket_manager_callback:          callback function for working with the websocket
+ * websocket_manager_user_data:         user-defined data that will be handled to websocket_manager_callback
+ * websocket_incoming_message_callback: callback function that will be called every time a message arrives from the client in the websocket
+ * websocket_incoming_user_data:        user-defined data that will be handled to websocket_incoming_message_callback
+ * websocket_onclose_callback:          callback function that will be called if the websocket is open while the program calls ulfius_stop_framework
+ * websocket_onclose_user_data:         user-defined data that will be handled to websocket_onclose_callback
+ */
+struct _websocket_handle {
+  char             * websocket_protocol;
+  char             * websocket_extensions;
+  void            (* websocket_manager_callback) (const struct _u_request * request,
+                                                  struct _websocket_manager * websocket_manager,
+                                                  void * websocket_manager_user_data);
+  void             * websocket_manager_user_data;
+  void            (* websocket_incoming_message_callback) (const struct _u_request * request,
+                                                           struct _websocket_manager * websocket_manager,
+                                                           const struct _websocket_message * message,
+                                                           void * websocket_incoming_user_data);
+  void             * websocket_incoming_user_data;
+  void            (* websocket_onclose_callback) (const struct _u_request * request,
+                                                  struct _websocket_manager * websocket_manager,
+                                                  void * websocket_onclose_user_data);
+  void             * websocket_onclose_user_data;
+};
+
+struct _websocket_handler {
+  size_t                        nb_websocket_active;
+  struct _websocket          ** websocket_active;
+};
 
 /**
  * Websocket callback function for MHD

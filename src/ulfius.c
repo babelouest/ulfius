@@ -423,8 +423,8 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
             }
             close_loop = 1;
 #ifndef U_DISABLE_WEBSOCKET
-          } else if (response->websocket_manager_callback != NULL ||
-                     response->websocket_incoming_message_callback != NULL) {
+          } else if (((struct _websocket_handle *)response->websocket_handle)->websocket_manager_callback != NULL ||
+                     ((struct _websocket_handle *)response->websocket_handle)->websocket_incoming_message_callback != NULL) {
             // if the session is a valid websocket request,
             // Initiate an UPGRADE session,
             // then run the websocket callback functions with initialized data
@@ -436,8 +436,8 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
                 NULL != o_strcasestr(u_map_get_case(con_info->request->map_header, "Connection"), "Upgrade") &&
                 0 == o_strcmp(con_info->request->http_verb, "GET")) {
               // Check websocket_protocol and websocket_extensions to match ours
-              char * extensions = ulfius_check_list_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Extensions"), response->websocket_extensions),
-                   * protocol = ulfius_check_list_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Protocol"), response->websocket_protocol);
+              char * extensions = ulfius_check_list_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Extensions"), ((struct _websocket_handle *)response->websocket_handle)->websocket_extensions),
+                   * protocol = ulfius_check_list_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Protocol"), ((struct _websocket_handle *)response->websocket_handle)->websocket_protocol);
               if (extensions != NULL && protocol != NULL) {
                 char websocket_accept[32] = {0};
                 if (ulfius_generate_handshake_answer(u_map_get(con_info->request->map_header, "Sec-WebSocket-Key"), websocket_accept)) {
@@ -445,14 +445,14 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
                   if (websocket != NULL) {
                     websocket->instance = (struct _u_instance *)cls;
                     websocket->request = con_info->request;
-                    websocket->websocket_protocol = response->websocket_protocol;
-                    websocket->websocket_extensions = response->websocket_extensions;
-                    websocket->websocket_manager_callback = response->websocket_manager_callback;
-                    websocket->websocket_manager_user_data = response->websocket_manager_user_data;
-                    websocket->websocket_incoming_message_callback = response->websocket_incoming_message_callback;
-                    websocket->websocket_incoming_user_data = response->websocket_incoming_user_data;
-                    websocket->websocket_onclose_callback = response->websocket_onclose_callback;
-                    websocket->websocket_onclose_user_data = response->websocket_onclose_user_data;
+                    websocket->websocket_protocol = ((struct _websocket_handle *)response->websocket_handle)->websocket_protocol;
+                    websocket->websocket_extensions = ((struct _websocket_handle *)response->websocket_handle)->websocket_extensions;
+                    websocket->websocket_manager_callback = ((struct _websocket_handle *)response->websocket_handle)->websocket_manager_callback;
+                    websocket->websocket_manager_user_data = ((struct _websocket_handle *)response->websocket_handle)->websocket_manager_user_data;
+                    websocket->websocket_incoming_message_callback = ((struct _websocket_handle *)response->websocket_handle)->websocket_incoming_message_callback;
+                    websocket->websocket_incoming_user_data = ((struct _websocket_handle *)response->websocket_handle)->websocket_incoming_user_data;
+                    websocket->websocket_onclose_callback = ((struct _websocket_handle *)response->websocket_handle)->websocket_onclose_callback;
+                    websocket->websocket_onclose_user_data = ((struct _websocket_handle *)response->websocket_handle)->websocket_onclose_user_data;
                     websocket->tls = 0;
                     mhd_response = MHD_create_response_for_upgrade(ulfius_start_websocket_cb, websocket);
                     if (mhd_response == NULL) {
@@ -469,7 +469,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
                         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
                         mhd_ret = MHD_NO;
                       } else {
-						ulfius_instance_add_websocket_active((struct _u_instance *)cls, websocket);
+                        ulfius_instance_add_websocket_active((struct _u_instance *)cls, websocket);
                         upgrade_protocol = 1;
                       }
                     }
@@ -700,10 +700,10 @@ int ulfius_stop_framework(struct _u_instance * u_instance) {
 #ifndef U_DISABLE_WEBSOCKET
     int i;
     // Loop in all active websockets and send close signal
-    for (i=u_instance->nb_websocket_active-1; i>=0; i--) {
-      u_instance->websocket_active[i]->websocket_manager->closing = 1;
+    for (i=((struct _websocket_handler *)u_instance->websocket_handler)->nb_websocket_active-1; i>=0; i--) {
+      ((struct _websocket_handler *)u_instance->websocket_handler)->websocket_active[i]->websocket_manager->closing = 1;
     }
-    while (u_instance->nb_websocket_active > 0) {
+    while (((struct _websocket_handler *)u_instance->websocket_handler)->nb_websocket_active > 0) {
       usleep(U_WEBSOCKET_USEC_WAIT);
     }
 #endif 
@@ -988,6 +988,7 @@ int ulfius_init_instance(struct _u_instance * u_instance, uint port, struct sock
     u_instance->default_headers = o_malloc(sizeof(struct _u_map));
     if (u_instance->default_headers == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for u_instance->default_headers");
+      ulfius_clean_instance(u_instance);
       return U_ERROR_MEMORY;
     }
     u_map_init(u_instance->default_headers);
@@ -995,9 +996,15 @@ int ulfius_init_instance(struct _u_instance * u_instance, uint port, struct sock
     u_instance->max_post_param_size = 0;
     u_instance->max_post_body_size = 0;
 #ifndef U_DISABLE_WEBSOCKET
-    u_instance->nb_websocket_active = 0;
-    u_instance->websocket_active = NULL;
-#endif 
+    u_instance->websocket_handler = o_malloc(sizeof(struct _websocket_handler));
+    if (u_instance->websocket_handler == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for u_instance->websocket_handler");
+      ulfius_clean_instance(u_instance);
+      return U_ERROR_MEMORY;
+    }
+    ((struct _websocket_handler *)u_instance->websocket_handler)->nb_websocket_active = 0;
+    ((struct _websocket_handler *)u_instance->websocket_handler)->websocket_active = NULL;
+#endif
     return U_OK;
   } else {
     return U_ERROR_PARAMS;
@@ -1060,6 +1067,10 @@ void ulfius_clean_instance(struct _u_instance * u_instance) {
     u_instance->default_auth_realm = NULL;
     u_instance->bind_address = NULL;
     u_instance->default_endpoint = NULL;
+#ifndef U_DISABLE_WEBSOCKET
+    o_free(u_instance->websocket_handler);
+    u_instance->websocket_handler = NULL;
+#endif
   }
 }
 

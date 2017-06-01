@@ -395,7 +395,7 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request) 
 
 #ifndef U_DISABLE_JANSSON
 /**
- * ulfius_set_json_response
+ * ulfius_set_json_body_request
  * Add a json_t binary_body to a response
  * return U_OK on success
  */
