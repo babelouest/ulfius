@@ -411,8 +411,10 @@ The request variable is defined as:
  * Structure of request parameters
  * 
  * Contains request data
+ * http_protocol:             http protocol used (1.0 or 1.1)
  * http_verb:                 http method (GET, POST, PUT, DELETE, etc.), use '*' to match all http methods
  * http_url:                  url used to call this callback function or full url to call when used in a ulfius_send_http_request
+ * proxy:                     proxy address to use for outgoing connections, used by ulfius_send_http_request
  * check_server_certificate:  do not check server certificate and hostname if false (default true), used by ulfius_send_http_request
  * timeout                    connection timeout used by ulfius_send_http_request, default is 0
  * client_address:            IP address of the client
@@ -427,8 +429,10 @@ The request variable is defined as:
  * 
  */
 struct _u_request {
+  char *               http_protocol;
   char *               http_verb;
   char *               http_url;
+	char *               proxy;
   int                  check_server_certificate;
   long                 timeout;
   struct sockaddr *    client_address;
@@ -451,20 +455,21 @@ The response variable is defined as:
  * Structure of response parameters
  * 
  * Contains response data that must be set by the user
- * status:               HTTP status code (200, 404, 500, etc)
- * protocol:             HTTP Protocol sent
- * map_header:           map containing the header variables
- * nb_cookies:           number of cookies sent
- * map_cookie:           array of cookies sent
- * auth_realm:           realm to send to the client on authenticationb failed
- * binary_body:          a void * containing a raw binary content
- * binary_body_length:   the length of the binary_body
- * stream_callback:      callback function to stream data in response body
- * stream_callback_free: callback function to free data allocated for streaming
- * stream_size:          size of the streamed data (-1 if unknown)
- * stream_block_size:    size of each block to be streamed, set according to your system
- * stream_user_data:     user defined data that will be available in your callback stream functions
- * shared_data:          any data shared between callback functions, must be allocated and freed by the callback functions
+ * status:                              HTTP status code (200, 404, 500, etc)
+ * protocol:                            HTTP Protocol sent
+ * map_header:                          map containing the header variables
+ * nb_cookies:                          number of cookies sent
+ * map_cookie:                          array of cookies sent
+ * auth_realm:                          realm to send to the client on authenticationb failed
+ * binary_body:                         a void * containing a raw binary content
+ * binary_body_length:                  the length of the binary_body
+ * stream_callback:                     callback function to stream data in response body
+ * stream_callback_free:                callback function to free data allocated for streaming
+ * stream_size:                         size of the streamed data (-1 if unknown)
+ * stream_block_size:                   size of each block to be streamed, set according to your system
+ * stream_user_data:                    user defined data that will be available in your callback stream functions
+ * websocket_handle:                    handle for websocket extension
+ * shared_data:                         any data shared between callback functions, must be allocated and freed by the callback functions
  * 
  */
 struct _u_response {
@@ -481,6 +486,7 @@ struct _u_response {
   size_t             stream_size;
   unsigned int       stream_block_size;
   void             * stream_user_data;
+  void             * websocket_handle;
   void *             shared_data;
 };
 ```
