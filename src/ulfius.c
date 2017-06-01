@@ -244,6 +244,41 @@ int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * 
   }
 }
 
+/**
+ * ulfius_stop_framework
+ * 
+ * Stop the webservice
+ * u_instance:    pointer to a struct _u_instance that describe its port and bind address
+ * return U_OK on success
+ */
+int ulfius_stop_framework(struct _u_instance * u_instance) {
+  if (u_instance != NULL && u_instance->mhd_daemon != NULL) {
+#ifndef U_DISABLE_WEBSOCKET
+    int i;
+    // Loop in all active websockets and send close signal
+    for (i=((struct _websocket_handler *)u_instance->websocket_handler)->nb_websocket_active-1; i>=0; i--) {
+      ((struct _websocket_handler *)u_instance->websocket_handler)->websocket_active[i]->websocket_manager->closing = 1;
+    }
+    while (((struct _websocket_handler *)u_instance->websocket_handler)->nb_websocket_active > 0) {
+      usleep(U_WEBSOCKET_USEC_WAIT);
+    }
+#endif 
+    MHD_stop_daemon (u_instance->mhd_daemon);
+    u_instance->mhd_daemon = NULL;
+    u_instance->status = U_STATUS_STOP;
+    return U_OK;
+  } else {
+    u_instance->status = U_STATUS_ERROR;
+    return U_ERROR_PARAMS;
+  }
+}
+
+/**
+ * ulfius_get_body_from_response
+ * Extract the body data from the response if any
+ * Copy it in newly allocated response_buffer and set the size in response_buffer_len
+ * return U_OK on success
+ */
 int ulfius_get_body_from_response(struct _u_response * response, void ** response_buffer, size_t * response_buffer_len) {
   if (response == NULL || response_buffer == NULL || response_buffer_len == NULL) {
     return U_ERROR_PARAMS;
@@ -689,35 +724,6 @@ void mhd_request_completed (void *cls, struct MHD_Connection *connection,
 }
 
 /**
- * ulfius_stop_framework
- * 
- * Stop the webservice
- * u_instance:    pointer to a struct _u_instance that describe its port and bind address
- * return U_OK on success
- */
-int ulfius_stop_framework(struct _u_instance * u_instance) {
-  if (u_instance != NULL && u_instance->mhd_daemon != NULL) {
-#ifndef U_DISABLE_WEBSOCKET
-    int i;
-    // Loop in all active websockets and send close signal
-    for (i=((struct _websocket_handler *)u_instance->websocket_handler)->nb_websocket_active-1; i>=0; i--) {
-      ((struct _websocket_handler *)u_instance->websocket_handler)->websocket_active[i]->websocket_manager->closing = 1;
-    }
-    while (((struct _websocket_handler *)u_instance->websocket_handler)->nb_websocket_active > 0) {
-      usleep(U_WEBSOCKET_USEC_WAIT);
-    }
-#endif 
-    MHD_stop_daemon (u_instance->mhd_daemon);
-    u_instance->mhd_daemon = NULL;
-    u_instance->status = U_STATUS_STOP;
-    return U_OK;
-  } else {
-    u_instance->status = U_STATUS_ERROR;
-    return U_ERROR_PARAMS;
-  }
-}
-
-/**
  * ulfius_is_valid_endpoint
  * return true if the endpoind has valid parameters
  */
@@ -968,50 +974,6 @@ int ulfius_equals_endpoints(const struct _u_endpoint * endpoint1, const struct _
 }
 
 /**
- * ulfius_init_instance
- * 
- * Initialize a struct _u_instance * with default values
- * port:               tcp port to bind to, must be between 1 and 65535
- * bind_address:       IP address to listen to, optional, the reference is borrowed, the structure isn't copied
- * default_auth_realm: default realm to send to the client on authentication error
- * return U_OK on success
- */
-int ulfius_init_instance(struct _u_instance * u_instance, uint port, struct sockaddr_in * bind_address, const char * default_auth_realm) {
-  if (u_instance != NULL && port > 0 && port < 65536) {
-    u_instance->mhd_daemon = NULL;
-    u_instance->status = U_STATUS_STOP;
-    u_instance->port = port;
-    u_instance->bind_address = bind_address;
-    u_instance->default_auth_realm = o_strdup(default_auth_realm);
-    u_instance->nb_endpoints = 0;
-    u_instance->endpoint_list = NULL;
-    u_instance->default_headers = o_malloc(sizeof(struct _u_map));
-    if (u_instance->default_headers == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for u_instance->default_headers");
-      ulfius_clean_instance(u_instance);
-      return U_ERROR_MEMORY;
-    }
-    u_map_init(u_instance->default_headers);
-    u_instance->default_endpoint = NULL;
-    u_instance->max_post_param_size = 0;
-    u_instance->max_post_body_size = 0;
-#ifndef U_DISABLE_WEBSOCKET
-    u_instance->websocket_handler = o_malloc(sizeof(struct _websocket_handler));
-    if (u_instance->websocket_handler == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for u_instance->websocket_handler");
-      ulfius_clean_instance(u_instance);
-      return U_ERROR_MEMORY;
-    }
-    ((struct _websocket_handler *)u_instance->websocket_handler)->nb_websocket_active = 0;
-    ((struct _websocket_handler *)u_instance->websocket_handler)->websocket_active = NULL;
-#endif
-    return U_OK;
-  } else {
-    return U_ERROR_PARAMS;
-  }
-}
-
-/**
  * Add a struct _u_endpoint * to the specified u_instance with its values specified
  * Can be done during the execution of the webservice for injection
  * u_instance: pointer to a struct _u_instance that describe its port and bind address
@@ -1048,29 +1010,6 @@ int ulfius_add_endpoint_by_val(struct _u_instance * u_instance,
     return ulfius_add_endpoint(u_instance, &endpoint);
   } else {
     return U_ERROR_PARAMS;
-  }
-}
-
-/**
- * ulfius_clean_instance
- * 
- * Clean memory allocated by a struct _u_instance *
- */
-void ulfius_clean_instance(struct _u_instance * u_instance) {
-  if (u_instance != NULL) {
-    ulfius_clean_endpoint_list(u_instance->endpoint_list);
-    u_map_clean_full(u_instance->default_headers);
-    o_free(u_instance->default_auth_realm);
-    o_free(u_instance->default_endpoint);
-    u_instance->endpoint_list = NULL;
-    u_instance->default_headers = NULL;
-    u_instance->default_auth_realm = NULL;
-    u_instance->bind_address = NULL;
-    u_instance->default_endpoint = NULL;
-#ifndef U_DISABLE_WEBSOCKET
-    o_free(u_instance->websocket_handler);
-    u_instance->websocket_handler = NULL;
-#endif
   }
 }
 
@@ -1126,6 +1065,75 @@ int ulfius_set_default_endpoint(struct _u_instance * u_instance,
     u_instance->default_endpoint->callback_function = callback_function;
     u_instance->default_endpoint->user_data = user_data;
     u_instance->default_endpoint->priority = 0;
+    return U_OK;
+  } else {
+    return U_ERROR_PARAMS;
+  }
+}
+
+/**
+ * ulfius_clean_instance
+ * 
+ * Clean memory allocated by a struct _u_instance *
+ */
+void ulfius_clean_instance(struct _u_instance * u_instance) {
+  if (u_instance != NULL) {
+    ulfius_clean_endpoint_list(u_instance->endpoint_list);
+    u_map_clean_full(u_instance->default_headers);
+    o_free(u_instance->default_auth_realm);
+    o_free(u_instance->default_endpoint);
+    u_instance->endpoint_list = NULL;
+    u_instance->default_headers = NULL;
+    u_instance->default_auth_realm = NULL;
+    u_instance->bind_address = NULL;
+    u_instance->default_endpoint = NULL;
+#ifndef U_DISABLE_WEBSOCKET
+    o_free(u_instance->websocket_handler);
+    u_instance->websocket_handler = NULL;
+#endif
+  }
+}
+
+/**
+ * ulfius_init_instance
+ * 
+ * Initialize a struct _u_instance * with default values
+ * port:               tcp port to bind to, must be between 1 and 65535
+ * bind_address:       IP address to listen to, optional, the reference is borrowed, the structure isn't copied
+ * default_auth_realm: default realm to send to the client on authentication error
+ * return U_OK on success
+ */
+int ulfius_init_instance(struct _u_instance * u_instance, uint port, struct sockaddr_in * bind_address, const char * default_auth_realm) {
+  if (u_instance != NULL && port > 0 && port < 65536) {
+    u_instance->mhd_daemon = NULL;
+    u_instance->status = U_STATUS_STOP;
+    u_instance->port = port;
+    u_instance->bind_address = bind_address;
+    u_instance->default_auth_realm = o_strdup(default_auth_realm);
+    u_instance->nb_endpoints = 0;
+    u_instance->endpoint_list = NULL;
+    u_instance->default_headers = o_malloc(sizeof(struct _u_map));
+    if (u_instance->default_headers == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for u_instance->default_headers");
+      ulfius_clean_instance(u_instance);
+      return U_ERROR_MEMORY;
+    }
+    u_map_init(u_instance->default_headers);
+    u_instance->default_endpoint = NULL;
+    u_instance->max_post_param_size = 0;
+    u_instance->max_post_body_size = 0;
+#ifndef U_DISABLE_WEBSOCKET
+    u_instance->websocket_handler = o_malloc(sizeof(struct _websocket_handler));
+    if (u_instance->websocket_handler == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for u_instance->websocket_handler");
+      ulfius_clean_instance(u_instance);
+      return U_ERROR_MEMORY;
+    }
+    ((struct _websocket_handler *)u_instance->websocket_handler)->nb_websocket_active = 0;
+    ((struct _websocket_handler *)u_instance->websocket_handler)->websocket_active = NULL;
+#else
+	  u_instance->websocket_handler = NULL;
+#endif
     return U_OK;
   } else {
     return U_ERROR_PARAMS;
