@@ -91,6 +91,9 @@ START_TEST(test_endpoint)
   ck_assert_int_eq(ulfius_set_default_endpoint(&u_instance, NULL, NULL), U_ERROR_PARAMS);
   ck_assert_int_eq(ulfius_set_default_endpoint(&u_instance, &callback_function_empty, NULL), U_OK);
   
+  o_free(endpoint.http_method);
+  o_free(endpoint.url_prefix);
+  o_free(endpoint.url_format);
   ulfius_clean_instance(&u_instance);
 }
 END_TEST
@@ -159,29 +162,16 @@ fYxFAheH3CjryHqqR9DD+d9396W8mqEaUp+plMwSjpcTDSR4rEQkUJg=\
 }
 END_TEST
 
-START_TEST(test_ulfius_base64)
-{
-  char * src = "source string", encoded[128], decoded[128];
-  size_t encoded_size, decoded_size;
-  ck_assert_int_eq(base64_encode((unsigned char *)src, strlen(src), (unsigned char *)encoded, &encoded_size), 1);
-  ck_assert_str_eq(encoded, "c291cmNlIHN0cmluZw==");
-  ck_assert_int_eq(base64_decode((unsigned char *)encoded, encoded_size, (unsigned char *)decoded, &decoded_size), 1);
-  ck_assert_str_eq(decoded, src);
-  ck_assert_int_eq(decoded_size, strlen(src));
-}
-END_TEST
-
 static Suite *ulfius_suite(void)
 {
 	Suite *s;
 	TCase *tc_core;
 
 	s = suite_create("Ulfius struct _u_map function tests");
-	tc_core = tcase_create("test_ulfius_u_map");
+	tc_core = tcase_create("test_ulfius_core");
 	tcase_add_test(tc_core, test_ulfius_init_instance);
 	tcase_add_test(tc_core, test_endpoint);
 	tcase_add_test(tc_core, test_ulfius_start_instance);
-	tcase_add_test(tc_core, test_ulfius_base64);
 	tcase_set_timeout(tc_core, 30);
 	suite_add_tcase(s, tc_core);
 
