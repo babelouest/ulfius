@@ -139,8 +139,11 @@ struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance, const
 #ifdef DEBUG
   mhd_flags |= MHD_USE_DEBUG;
 #endif
+#ifdef MHD_USE_INTERNAL_POLLING_THREAD
+  mhd_flags |= MHD_USE_INTERNAL_POLLING_THREAD;
+#endif
 #ifndef U_DISABLE_WEBSOCKET
-  mhd_flags |= MHD_ALLOW_UPGRADE | MHD_USE_INTERNAL_POLLING_THREAD;
+  mhd_flags |= MHD_ALLOW_UPGRADE;
 #endif
   
   if (u_instance->mhd_daemon == NULL) {
