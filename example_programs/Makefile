@@ -13,6 +13,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #
 
+ULFIUS_LOCATION=../src
 SIMPLE_EXAMPLE_LOCATION=./simple_example
 SHEEP_COUNTER_LOCATION=./sheep_counter
 PROXY_EXAMPLE_LOCATION=./proxy_example
@@ -27,6 +28,7 @@ WEBSOCKET_EXAMPLE_LOCATION=./websocket_example
 all: debug
 
 debug:
+	cd $(ULFIUS_LOCATION) && $(MAKE) debug
 	cd $(SIMPLE_EXAMPLE_LOCATION) && $(MAKE) debug
 	cd $(SHEEP_COUNTER_LOCATION) && $(MAKE) debug
 	cd $(PROXY_EXAMPLE_LOCATION) && $(MAKE) debug
