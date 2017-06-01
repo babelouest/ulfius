@@ -12,6 +12,7 @@
  */
 
 #include <string.h>
+#include <stdio.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -144,7 +145,7 @@ int main (int argc, char **argv) {
  * Callback function of level zero
  */
 int callback_multiple_level_zero (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  ulfius_set_string_response(response, 200, "Level zero");
+  ulfius_set_string_body_response(response, 200, "Level zero");
   response->shared_data = o_strdup("shared from level zero");
   return U_CALLBACK_CONTINUE;
 }
@@ -158,7 +159,7 @@ int callback_multiple_level_one (const struct _u_request * request, struct _u_re
   memcpy(old_body, response->binary_body, response->binary_body_length);
   old_body[response->binary_body_length] = '\0';
   new_body = msprintf("%s\n%s", old_body, "Level one");
-  ulfius_set_string_response(response, 200, new_body);
+  ulfius_set_string_body_response(response, 200, new_body);
   o_free(new_body);
   y_log_message(Y_LOG_LEVEL_DEBUG, "shared_data is %s", response->shared_data);
   return U_CALLBACK_CONTINUE;
@@ -173,7 +174,7 @@ int callback_multiple_level_one_complete (const struct _u_request * request, str
   memcpy(old_body, response->binary_body, response->binary_body_length);
   old_body[response->binary_body_length] = '\0';
   new_body = msprintf("%s\n%s", old_body, "Level one");
-  ulfius_set_string_response(response, 200, new_body);
+  ulfius_set_string_body_response(response, 200, new_body);
   o_free(new_body);
   y_log_message(Y_LOG_LEVEL_DEBUG, "shared_data is %s", response->shared_data);
   o_free(response->shared_data);
@@ -189,7 +190,7 @@ int callback_multiple_level_two (const struct _u_request * request, struct _u_re
   memcpy(old_body, response->binary_body, response->binary_body_length);
   old_body[response->binary_body_length] = '\0';
   new_body = msprintf("%s\n%s", old_body, "Level two");
-  ulfius_set_string_response(response, 200, new_body);
+  ulfius_set_string_body_response(response, 200, new_body);
   o_free(new_body);
   y_log_message(Y_LOG_LEVEL_DEBUG, "shared_data is %s", response->shared_data);
   return U_CALLBACK_CONTINUE;
@@ -204,7 +205,7 @@ int callback_multiple_level_three (const struct _u_request * request, struct _u_
   memcpy(old_body, response->binary_body, response->binary_body_length);
   old_body[response->binary_body_length] = '\0';
   new_body = msprintf("%s\n%s", old_body, "Level three");
-  ulfius_set_string_response(response, 200, new_body);
+  ulfius_set_string_body_response(response, 200, new_body);
   o_free(new_body);
   y_log_message(Y_LOG_LEVEL_DEBUG, "shared_data is %s", response->shared_data);
   return U_CALLBACK_CONTINUE;
@@ -231,7 +232,7 @@ int callback_multiple_level_auth_check (const struct _u_request * request, struc
     if (0 == o_strcmp("PUT", request->http_verb)) {
       response->auth_realm = o_strdup(SPECIFIC_REALM);
     }
-    ulfius_set_string_response(response, 401, "Error authentication");
+    ulfius_set_string_body_response(response, 401, "Error authentication");
     return U_CALLBACK_UNAUTHORIZED;
   }
 }
@@ -240,7 +241,7 @@ int callback_multiple_level_auth_check (const struct _u_request * request, struc
  * Send Hello World!
  */
 int callback_multiple_level_auth_data (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  ulfius_set_string_response(response, 200, "Hello World!");
+  ulfius_set_string_body_response(response, 200, "Hello World!");
   return U_CALLBACK_CONTINUE;
 }
 
@@ -248,6 +249,6 @@ int callback_multiple_level_auth_data (const struct _u_request * request, struct
  * Default callback function called if no endpoint has a match
  */
 int callback_default (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  ulfius_set_string_response(response, 404, "Page not found, do what you want");
+  ulfius_set_string_body_response(response, 404, "Page not found, do what you want");
   return U_CALLBACK_CONTINUE;
 }

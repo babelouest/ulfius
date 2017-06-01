@@ -89,7 +89,7 @@ int main (int argc, char **argv) {
  * Callback callback_first
  */
 int callback_first (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  ulfius_set_string_response(response, 200, "Hello World from callback_first!");
+  ulfius_set_string_body_response(response, 200, "Hello World from callback_first!");
   return U_CALLBACK_CONTINUE;
 }
 
@@ -97,7 +97,7 @@ int callback_first (const struct _u_request * request, struct _u_response * resp
  * Callback callback_second
  */
 int callback_second (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  ulfius_set_string_response(response, 200, "Hello World from callback_second!");
+  ulfius_set_string_body_response(response, 200, "Hello World from callback_second!");
   return U_CALLBACK_CONTINUE;
 }
 
@@ -105,7 +105,7 @@ int callback_second (const struct _u_request * request, struct _u_response * res
  * Callback callback_third
  */
 int callback_third (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  ulfius_set_string_response(response, 200, "Hello World from callback_third!");
+  ulfius_set_string_body_response(response, 200, "Hello World from callback_third!");
   return U_CALLBACK_CONTINUE;
 }
 
@@ -113,7 +113,7 @@ int callback_third (const struct _u_request * request, struct _u_response * resp
  * Callback callback_fourth
  */
 int callback_fourth (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  ulfius_set_string_response(response, 200, "Hello World from callback_fourth!");
+  ulfius_set_string_body_response(response, 200, "Hello World from callback_fourth!");
   return U_CALLBACK_CONTINUE;
 }
 
@@ -121,6 +121,6 @@ int callback_fourth (const struct _u_request * request, struct _u_response * res
  * Callback callback_fifth
  */
 int callback_fifth (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  ulfius_set_string_response(response, 200, "Hello World from callback_fifth!");
+  ulfius_set_string_body_response(response, 200, "Hello World from callback_fifth!");
   return U_CALLBACK_CONTINUE;
 }
