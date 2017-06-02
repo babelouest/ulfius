@@ -493,7 +493,7 @@ struct _u_response {
   char             * auth_realm;
   void             * binary_body;
   size_t             binary_body_length;
-  int             (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max);
+  ssize_t         (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max);
   void            (* stream_callback_free) (void * stream_user_data);
   uint64_t           stream_size;
   size_t             stream_block_size;
@@ -546,7 +546,7 @@ int ulfius_set_empty_body_response(struct _u_response * response, const uint sta
  */
 int ulfius_set_stream_response(struct _u_response * response, 
                                 const uint status,
-                                int (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max);
+                                ssize_t (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max);
                                 void (* stream_callback_free) (void * stream_user_data),
                                 uint64_t stream_size,
                                 size_t stream_block_size,
@@ -746,7 +746,7 @@ You can use the function `ulfius_set_stream_response` to set those parameters.
 The prototype of the `stream_callback` function is the following:
 
 ```C
-int stream_callback (void * stream_user_data,  // Your predefined user_data
+ssize_t stream_callback (void * stream_user_data,  // Your predefined user_data
                      uint64_t offset,          // the position of the current data to send
                      char * out_buf,           // The output buffer to fill with data
                      size_t max);              // the max size of data to be put in the out_buf
