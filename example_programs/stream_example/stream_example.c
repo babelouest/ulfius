@@ -80,7 +80,7 @@ int main (int argc, char **argv) {
  * Callback function
  */
 int callback_get_stream (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  ulfius_set_stream_response(response, 200, stream_data, free_stream_data, -1, 32 * 1024, o_strdup("stream test"));
+  ulfius_set_stream_response(response, 200, stream_data, free_stream_data, U_STREAM_SIZE_UNKOWN, 32 * 1024, o_strdup("stream test"));
   return U_CALLBACK_CONTINUE;
 }
 
@@ -111,7 +111,7 @@ int callback_get_audio_stream (const struct _u_request * request, struct _u_resp
   }
 }
 
-ssize_t stream_data (void * cls, uint64_t pos, char * buf, size_t max) {
+int stream_data (void * cls, uint64_t pos, char * buf, size_t max) {
   printf("stream data %" PRIu64 " %zu\n", pos, max);
   sleep(1);
   if (pos <= 100) {
@@ -122,7 +122,7 @@ ssize_t stream_data (void * cls, uint64_t pos, char * buf, size_t max) {
   }
 }
 
-ssize_t stream_audio_file (void * cls, uint64_t pos, char * buf, size_t max) {
+int stream_audio_file (void * cls, uint64_t pos, char * buf, size_t max) {
   FILE *file = cls;
 
   (void) fseek (file, pos, SEEK_SET);

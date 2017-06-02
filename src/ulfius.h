@@ -44,6 +44,7 @@
 #define ULFIUS_STREAM_BLOCK_SIZE_DEFAULT 1024
 #define U_STREAM_END MHD_CONTENT_READER_END_OF_STREAM
 #define U_STREAM_ERROR MHD_CONTENT_READER_END_WITH_ERROR
+#define U_STREAM_SIZE_UNKOWN MHD_SIZE_UNKNOWN
 
 #define U_OK                 0 // No error
 #define U_ERROR              1 // Error
@@ -144,7 +145,7 @@ struct _u_request {
  * binary_body_length:                  the length of the binary_body
  * stream_callback:                     callback function to stream data in response body
  * stream_callback_free:                callback function to free data allocated for streaming
- * stream_size:                         size of the streamed data (-1 if unknown)
+ * stream_size:                         size of the streamed data (U_STREAM_SIZE_UNKOWN if unknown)
  * stream_block_size:                   size of each block to be streamed, set according to your system
  * stream_user_data:                    user defined data that will be available in your callback stream functions
  * websocket_handle:                    handle for websocket extension
@@ -160,10 +161,10 @@ struct _u_response {
   char             * auth_realm;
   void             * binary_body;
   size_t             binary_body_length;
-  ssize_t         (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max);
+  int             (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max);
   void            (* stream_callback_free) (void * stream_user_data);
-  size_t             stream_size;
-  unsigned int       stream_block_size;
+  uint64_t           stream_size;
+  size_t             stream_block_size;
   void             * stream_user_data;
   void             * websocket_handle;
   void *             shared_data;
@@ -518,10 +519,10 @@ int ulfius_set_empty_body_response(struct _u_response * response, const uint sta
  */
 int ulfius_set_stream_response(struct _u_response * response, 
                                 const uint status,
-                                ssize_t (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max),
+                                int (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max),
                                 void (* stream_callback_free) (void * stream_user_data),
-                                size_t stream_size,
-                                unsigned int stream_block_size,
+                                uint64_t stream_size,
+                                size_t stream_block_size,
                                 void * stream_user_data);
 
 /**

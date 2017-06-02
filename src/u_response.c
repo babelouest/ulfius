@@ -642,10 +642,10 @@ int ulfius_set_empty_body_response(struct _u_response * response, const uint sta
  */
 int ulfius_set_stream_response(struct _u_response * response, 
                                 const uint status,
-                                ssize_t (* stream_callback) (void *stream_user_data, uint64_t offset, char * out_buf, size_t max),
-                                void (* stream_callback_free) (void *stream_user_data),
-                                size_t stream_size,
-                                unsigned int stream_block_size,
+                                ssize_t (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max),
+                                void (* stream_callback_free) (void * stream_user_data),
+                                uint64_t stream_size,
+                                size_t stream_block_size,
                                 void * stream_user_data) {
   if (response != NULL && stream_callback != NULL) {
     // Free all the bodies available

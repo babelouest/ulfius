@@ -139,7 +139,7 @@ struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance, const
 #ifdef DEBUG
   mhd_flags |= MHD_USE_DEBUG;
 #endif
-#ifdef MHD_USE_INTERNAL_POLLING_THREAD
+#if MHD_VERSION >= 0x00095300
   mhd_flags |= MHD_USE_INTERNAL_POLLING_THREAD;
 #endif
 #ifndef U_DISABLE_WEBSOCKET
@@ -451,7 +451,7 @@ int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection
           if (response->stream_callback != NULL) {
             // Call the stream_callback function to build the response binary_body
             // A stram_callback is always the last one
-            mhd_response = MHD_create_response_from_callback(response->stream_size, response->stream_block_size, (MHD_ContentReaderCallback)response->stream_callback, response->stream_user_data, response->stream_callback_free);
+            mhd_response = MHD_create_response_from_callback(response->stream_size, response->stream_block_size, response->stream_callback, response->stream_user_data, response->stream_callback_free);
             if (mhd_response == NULL) {
               y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error MHD_create_response_from_callback");
               mhd_ret = MHD_NO;
