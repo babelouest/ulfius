@@ -111,7 +111,7 @@ int callback_get_audio_stream (const struct _u_request * request, struct _u_resp
   }
 }
 
-int stream_data (void * cls, uint64_t pos, char * buf, size_t max) {
+ssize_t stream_data (void * cls, uint64_t pos, char * buf, size_t max) {
   printf("stream data %" PRIu64 " %zu\n", pos, max);
   sleep(1);
   if (pos <= 100) {
@@ -122,7 +122,7 @@ int stream_data (void * cls, uint64_t pos, char * buf, size_t max) {
   }
 }
 
-int stream_audio_file (void * cls, uint64_t pos, char * buf, size_t max) {
+ssize_t stream_audio_file (void * cls, uint64_t pos, char * buf, size_t max) {
   FILE *file = cls;
 
   (void) fseek (file, pos, SEEK_SET);

@@ -141,7 +141,7 @@ ssize_t stream_data (void * cls, uint64_t pos, char * buf, size_t max) {
       snprintf(buf, max, "%s %" PRIu64 "\n", (char *)cls, pos + 1);
       return strlen(buf);
   } else {
-    return U_STREAM_END;
+    return MHD_CONTENT_READER_END_OF_STREAM;
   }
 }
 
