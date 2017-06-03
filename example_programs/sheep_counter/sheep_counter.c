@@ -268,5 +268,6 @@ int callback_upload_file (const struct _u_request * request, struct _u_response 
   o_free(headers);
   o_free(cookies);
   o_free(post_params);
+  o_free(string_body);
   return U_CALLBACK_CONTINUE;
 }
