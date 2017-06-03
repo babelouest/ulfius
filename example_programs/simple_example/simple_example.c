@@ -119,10 +119,10 @@ int main (int argc, char **argv) {
   ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/empty", 0, &callback_get_empty_response, NULL);
   ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/multiple/:multiple/:multiple/:not_multiple", 0, &callback_all_test_foo, NULL);
   ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, NULL, 0, &callback_post_test, NULL);
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/:foo", 0, &callback_all_test_foo, "user data 1");
-  ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, "/:foo", 0, &callback_all_test_foo, "user data 2");
-  ulfius_add_endpoint_by_val(&instance, "PUT", PREFIX, "/:foo", 0, &callback_all_test_foo, "user data 3");
-  ulfius_add_endpoint_by_val(&instance, "DELETE", PREFIX, "/:foo", 0, &callback_all_test_foo, "user data 4");
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/param/:foo", 0, &callback_all_test_foo, "user data 1");
+  ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, "/param/:foo", 0, &callback_all_test_foo, "user data 2");
+  ulfius_add_endpoint_by_val(&instance, "PUT", PREFIX, "/param/:foo", 0, &callback_all_test_foo, "user data 3");
+  ulfius_add_endpoint_by_val(&instance, "DELETE", PREFIX, "/param/:foo", 0, &callback_all_test_foo, "user data 4");
   ulfius_add_endpoint_by_val(&instance, "GET", PREFIXCOOKIE, "/:lang/:extra", 0, &callback_get_cookietest, NULL);
   
   // default_endpoint declaration
