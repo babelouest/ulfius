@@ -540,20 +540,15 @@ int ulfius_copy_response(struct _u_response * dest, const struct _u_response * s
       memcpy(dest->binary_body, source->binary_body, source->binary_body_length);
     }
 #ifndef U_DISABLE_WEBSOCKET
-    if ((dest->websocket_handle = o_malloc(sizeof(struct _websocket_handle))) != NULL) {
-      if (source->websocket_handle != NULL) {
-        ((struct _websocket_handle *)dest->websocket_handle)->websocket_protocol = o_strdup(((struct _websocket_handle *)source->websocket_handle)->websocket_protocol);
-        ((struct _websocket_handle *)dest->websocket_handle)->websocket_extensions = o_strdup(((struct _websocket_handle *)source->websocket_handle)->websocket_extensions);
-        ((struct _websocket_handle *)dest->websocket_handle)->websocket_manager_callback = ((struct _websocket_handle *)source->websocket_handle)->websocket_manager_callback;
-        ((struct _websocket_handle *)dest->websocket_handle)->websocket_manager_user_data = ((struct _websocket_handle *)source->websocket_handle)->websocket_manager_user_data;
-        ((struct _websocket_handle *)dest->websocket_handle)->websocket_incoming_message_callback = ((struct _websocket_handle *)source->websocket_handle)->websocket_incoming_message_callback;
-        ((struct _websocket_handle *)dest->websocket_handle)->websocket_incoming_user_data = ((struct _websocket_handle *)source->websocket_handle)->websocket_incoming_user_data;
-        ((struct _websocket_handle *)dest->websocket_handle)->websocket_onclose_callback = ((struct _websocket_handle *)source->websocket_handle)->websocket_onclose_callback;
-        ((struct _websocket_handle *)dest->websocket_handle)->websocket_onclose_user_data = ((struct _websocket_handle *)source->websocket_handle)->websocket_onclose_user_data;
-      }
-    } else {
-      ulfius_clean_response(dest);
-      return U_ERROR_MEMORY;
+    if (source->websocket_handle != NULL) {
+      ((struct _websocket_handle *)dest->websocket_handle)->websocket_protocol = o_strdup(((struct _websocket_handle *)source->websocket_handle)->websocket_protocol);
+      ((struct _websocket_handle *)dest->websocket_handle)->websocket_extensions = o_strdup(((struct _websocket_handle *)source->websocket_handle)->websocket_extensions);
+      ((struct _websocket_handle *)dest->websocket_handle)->websocket_manager_callback = ((struct _websocket_handle *)source->websocket_handle)->websocket_manager_callback;
+      ((struct _websocket_handle *)dest->websocket_handle)->websocket_manager_user_data = ((struct _websocket_handle *)source->websocket_handle)->websocket_manager_user_data;
+      ((struct _websocket_handle *)dest->websocket_handle)->websocket_incoming_message_callback = ((struct _websocket_handle *)source->websocket_handle)->websocket_incoming_message_callback;
+      ((struct _websocket_handle *)dest->websocket_handle)->websocket_incoming_user_data = ((struct _websocket_handle *)source->websocket_handle)->websocket_incoming_user_data;
+      ((struct _websocket_handle *)dest->websocket_handle)->websocket_onclose_callback = ((struct _websocket_handle *)source->websocket_handle)->websocket_onclose_callback;
+      ((struct _websocket_handle *)dest->websocket_handle)->websocket_onclose_user_data = ((struct _websocket_handle *)source->websocket_handle)->websocket_onclose_user_data;
     }
 #endif
     return U_OK;
