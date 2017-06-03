@@ -64,29 +64,29 @@ int ulfius_set_websocket_response(struct _u_response * response,
                                                                        void * websocket_onclose_user_data),
                                    void * websocket_onclose_user_data) {
   if (response != NULL && (websocket_manager_callback != NULL || websocket_incoming_message_callback)) {
-    if (response->websocket_protocol != NULL) {
-      o_free(response->websocket_protocol);
+    if (((struct _websocket_handle *)response->websocket_handle)->websocket_protocol != NULL) {
+      o_free(((struct _websocket_handle *)response->websocket_handle)->websocket_protocol);
     }
-    response->websocket_protocol = o_strdup(websocket_protocol);
-    if (response->websocket_protocol == NULL && websocket_protocol != NULL) {
+    ((struct _websocket_handle *)response->websocket_handle)->websocket_protocol = o_strdup(websocket_protocol);
+    if (((struct _websocket_handle *)response->websocket_handle)->websocket_protocol == NULL && websocket_protocol != NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for response->websocket_protocol");
       return U_ERROR_MEMORY;
     }
-    if (response->websocket_extensions != NULL) {
-      o_free(response->websocket_extensions);
+    if (((struct _websocket_handle *)response->websocket_handle)->websocket_extensions != NULL) {
+      o_free(((struct _websocket_handle *)response->websocket_handle)->websocket_extensions);
     }
-    response->websocket_extensions = o_strdup(websocket_extensions);
-    if (response->websocket_extensions == NULL && websocket_extensions != NULL) {
+    ((struct _websocket_handle *)response->websocket_handle)->websocket_extensions = o_strdup(websocket_extensions);
+    if (((struct _websocket_handle *)response->websocket_handle)->websocket_extensions == NULL && websocket_extensions != NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for response->websocket_extensions");
-      o_free(response->websocket_protocol);
+      o_free(((struct _websocket_handle *)response->websocket_handle)->websocket_protocol);
       return U_ERROR_MEMORY;
     }
-    response->websocket_manager_callback = websocket_manager_callback;
-    response->websocket_manager_user_data = websocket_manager_user_data;
-    response->websocket_incoming_message_callback = websocket_incoming_message_callback;
-    response->websocket_incoming_user_data = websocket_incoming_user_data;
-    response->websocket_onclose_callback = websocket_onclose_callback;
-    response->websocket_onclose_user_data = websocket_onclose_user_data;
+    ((struct _websocket_handle *)response->websocket_handle)->websocket_manager_callback = websocket_manager_callback;
+    ((struct _websocket_handle *)response->websocket_handle)->websocket_manager_user_data = websocket_manager_user_data;
+    ((struct _websocket_handle *)response->websocket_handle)->websocket_incoming_message_callback = websocket_incoming_message_callback;
+    ((struct _websocket_handle *)response->websocket_handle)->websocket_incoming_user_data = websocket_incoming_user_data;
+    ((struct _websocket_handle *)response->websocket_handle)->websocket_onclose_callback = websocket_onclose_callback;
+    ((struct _websocket_handle *)response->websocket_handle)->websocket_onclose_user_data = websocket_onclose_user_data;
     return U_OK;
   } else {
     return U_ERROR_PARAMS;
@@ -692,13 +692,13 @@ void ulfius_clear_websocket_manager(struct _websocket_manager * websocket_manage
  */
 int ulfius_instance_add_websocket_active(struct _u_instance * instance, struct _websocket * websocket) {
   if (instance != NULL && websocket != NULL) {
-    instance->websocket_active = o_realloc(instance->websocket_active, (instance->nb_websocket_active+1)*sizeof(struct _websocket *));
-    if (instance->websocket_active != NULL) {
-      instance->websocket_active[instance->nb_websocket_active] = websocket;
-      instance->nb_websocket_active++;
+    ((struct _websocket_handler *)instance->websocket_handler)->websocket_active = o_realloc(((struct _websocket_handler *)instance->websocket_handler)->websocket_active, (((struct _websocket_handler *)instance->websocket_handler)->nb_websocket_active+1)*sizeof(struct _websocket *));
+    if (((struct _websocket_handler *)instance->websocket_handler)->websocket_active != NULL) {
+      ((struct _websocket_handler *)instance->websocket_handler)->websocket_active[((struct _websocket_handler *)instance->websocket_handler)->nb_websocket_active] = websocket;
+      ((struct _websocket_handler *)instance->websocket_handler)->nb_websocket_active++;
       return U_OK;
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for instance->websocket_active");
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for instance->websocket_handler->websocket_active");
       return U_ERROR_MEMORY;
     }
   } else {
@@ -711,23 +711,23 @@ int ulfius_instance_add_websocket_active(struct _u_instance * instance, struct _
  */
 int ulfius_instance_remove_websocket_active(struct _u_instance * instance, struct _websocket * websocket) {
   size_t i, j;
-  if (instance != NULL && instance->websocket_active != NULL && websocket != NULL) {
-    for (i=0; i<instance->nb_websocket_active; i++) {
-      if (instance->websocket_active[i] == websocket) {
-        if (instance->nb_websocket_active > 1) {
-          for (j=i; j<instance->nb_websocket_active-1; j++) {
-            instance->websocket_active[j] = instance->websocket_active[j+1];
+  if (instance != NULL && ((struct _websocket_handler *)instance->websocket_handler)->websocket_active != NULL && websocket != NULL) {
+    for (i=0; i<((struct _websocket_handler *)instance->websocket_handler)->nb_websocket_active; i++) {
+      if (((struct _websocket_handler *)instance->websocket_handler)->websocket_active[i] == websocket) {
+        if (((struct _websocket_handler *)instance->websocket_handler)->nb_websocket_active > 1) {
+          for (j=i; j<((struct _websocket_handler *)instance->websocket_handler)->nb_websocket_active-1; j++) {
+            ((struct _websocket_handler *)instance->websocket_handler)->websocket_active[j] = ((struct _websocket_handler *)instance->websocket_handler)->websocket_active[j+1];
           }
-          instance->websocket_active = o_realloc(instance->websocket_active, (instance->nb_websocket_active-1)*sizeof(struct _websocket *));
-          if (instance->websocket_active == NULL) {
+          ((struct _websocket_handler *)instance->websocket_handler)->websocket_active = o_realloc(((struct _websocket_handler *)instance->websocket_handler)->websocket_active, (((struct _websocket_handler *)instance->websocket_handler)->nb_websocket_active-1)*sizeof(struct _websocket *));
+          if (((struct _websocket_handler *)instance->websocket_handler)->websocket_active == NULL) {
             y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for instance->websocket_active");
             return U_ERROR_MEMORY;
           }
         } else {
-          o_free(instance->websocket_active);
-          instance->websocket_active = NULL;
+          o_free(((struct _websocket_handler *)instance->websocket_handler)->websocket_active);
+          ((struct _websocket_handler *)instance->websocket_handler)->websocket_active = NULL;
         }
-        instance->nb_websocket_active--;
+        ((struct _websocket_handler *)instance->websocket_handler)->nb_websocket_active--;
         return U_OK;
       }
     }

@@ -15,7 +15,7 @@
 CC=gcc
 CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS)
 ULFIUS_LOCATION=../../src
-LIBS=-lc -lorcania -lulfius -L$(ULFIUS_LOCATION)
+LIBS=-lc -lorcania -lulfius -lyder -L$(ULFIUS_LOCATION)
 
 all: stream_example stream_client
 

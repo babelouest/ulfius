@@ -119,10 +119,10 @@ int main (int argc, char **argv) {
   ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/empty", 0, &callback_get_empty_response, NULL);
   ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/multiple/:multiple/:multiple/:not_multiple", 0, &callback_all_test_foo, NULL);
   ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, NULL, 0, &callback_post_test, NULL);
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/:foo", 0, &callback_all_test_foo, "user data 1");
-  ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, "/:foo", 0, &callback_all_test_foo, "user data 2");
-  ulfius_add_endpoint_by_val(&instance, "PUT", PREFIX, "/:foo", 0, &callback_all_test_foo, "user data 3");
-  ulfius_add_endpoint_by_val(&instance, "DELETE", PREFIX, "/:foo", 0, &callback_all_test_foo, "user data 4");
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/param/:foo", 0, &callback_all_test_foo, "user data 1");
+  ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, "/param/:foo", 0, &callback_all_test_foo, "user data 2");
+  ulfius_add_endpoint_by_val(&instance, "PUT", PREFIX, "/param/:foo", 0, &callback_all_test_foo, "user data 3");
+  ulfius_add_endpoint_by_val(&instance, "DELETE", PREFIX, "/param/:foo", 0, &callback_all_test_foo, "user data 4");
   ulfius_add_endpoint_by_val(&instance, "GET", PREFIXCOOKIE, "/:lang/:extra", 0, &callback_get_cookietest, NULL);
   
   // default_endpoint declaration
@@ -162,7 +162,7 @@ int main (int argc, char **argv) {
  * Callback function that put a "Hello World!" string in the response
  */
 int callback_get_test (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  ulfius_set_string_response(response, 200, "Hello World!");
+  ulfius_set_string_body_response(response, 200, "Hello World!");
   return U_CALLBACK_CONTINUE;
 }
 
@@ -179,7 +179,7 @@ int callback_get_empty_response (const struct _u_request * request, struct _u_re
 int callback_post_test (const struct _u_request * request, struct _u_response * response, void * user_data) {
   char * post_params = print_map(request->map_post_body);
   char * response_body = msprintf("Hello World!\n%s", post_params);
-  ulfius_set_string_response(response, 200, response_body);
+  ulfius_set_string_body_response(response, 200, response_body);
   o_free(response_body);
   o_free(post_params);
   return U_CALLBACK_CONTINUE;
@@ -193,7 +193,7 @@ int callback_all_test_foo (const struct _u_request * request, struct _u_response
         * post_params = print_map(request->map_post_body);
   char * response_body = msprintf("Hello World!\n\n  method is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n  user data is %s\n\nclient address is %s\n\n",
                                   request->http_verb, request->http_url, url_params, cookies, headers, post_params, (char *)user_data, inet_ntoa(((struct sockaddr_in *)request->client_address)->sin_addr));
-  ulfius_set_string_response(response, 200, response_body);
+  ulfius_set_string_body_response(response, 200, response_body);
   o_free(url_params);
   o_free(headers);
   o_free(cookies);
@@ -222,7 +222,7 @@ int callback_get_cookietest (const struct _u_request * request, struct _u_respon
   ulfius_add_cookie_to_response(response, "lang", lang, NULL, 0, NULL, NULL, 0, 0);
   ulfius_add_cookie_to_response(response, "extra", extra, NULL, 0, NULL, NULL, 0, 0);
   ulfius_add_cookie_to_response(response, "counter", new_counter, NULL, 0, NULL, NULL, 0, 0);
-  ulfius_set_string_response(response, 200, "Cookies set!");
+  ulfius_set_string_body_response(response, 200, "Cookies set!");
   
   return U_CALLBACK_CONTINUE;
 }
@@ -231,6 +231,6 @@ int callback_get_cookietest (const struct _u_request * request, struct _u_respon
  * Default callback function called if no endpoint has a match
  */
 int callback_default (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  ulfius_set_string_response(response, 404, "Page not found, do what you want");
+  ulfius_set_string_body_response(response, 404, "Page not found, do what you want");
   return U_CALLBACK_CONTINUE;
 }

@@ -17,6 +17,7 @@ LIBULFIUS_LOCATION=./src
 LIBORCANIA_LOCATION=lib/orcania/src
 LIBYDER_LOCATION=lib/yder/src
 EXAMPLES_LOCATION=./example_programs
+TESTS_LOCATION=./test
 
 ifeq (($(JANSSONFLAG)),"")
 ADD_JANSSONFLAG="JANSSONFLAG=-DU_DISABLE_JANSSON"
@@ -40,6 +41,7 @@ clean:
 	cd $(LIBYDER_LOCATION) && $(MAKE) clean
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) clean
 	cd $(EXAMPLES_LOCATION) && $(MAKE) clean
+	cd $(TESTS_LOCATION) && $(MAKE) clean
 
 install:
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) install

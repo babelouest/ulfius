@@ -41,6 +41,18 @@ On your linker command, add ulfius as a dependency library, e.g. `-lulfius` for 
 
 ## API Documentation
 
+### Update existing programs from Ulfius 2.0 to 2.1
+
+- An annoying bug has been fixed that made streaming data a little buggy when used on raspbian. Now if you don't know the data size you're sending, use the macro U_STREAM_SIZE_UNKOWN instead of the previous value -1.  There is some updates in the stream callback function parameter types. Check the [streaming data documentation](#streaming-data).
+- The websocket data structures are no longer available directly in `struct _u_response` or `struct _u_instance`. But you shouldn't use them like this anyway so it won't be a problem.
+- Unify and update functions name `ulfius_set_*_body_response`. You may have to update your legacy code.
+The new functions names are:
+```c
+int ulfius_set_string_body_response(struct _u_response * response, const uint status, const char * body);
+int ulfius_set_binary_body_response(struct _u_response * response, const uint status, const char * body, const size_t length);
+int ulfius_set_empty_body_response(struct _u_response * response, const uint status);
+```
+
 ### Update existing programs from Ulfius 1.x to 2.0
 
 If you already have programs that use Ulfius 1.x and want to update them to the brand new fresh Ulfius 2.0, it may require the following minor changes.
@@ -411,8 +423,10 @@ The request variable is defined as:
  * Structure of request parameters
  * 
  * Contains request data
+ * http_protocol:             http protocol used (1.0 or 1.1)
  * http_verb:                 http method (GET, POST, PUT, DELETE, etc.), use '*' to match all http methods
  * http_url:                  url used to call this callback function or full url to call when used in a ulfius_send_http_request
+ * proxy:                     proxy address to use for outgoing connections, used by ulfius_send_http_request
  * check_server_certificate:  do not check server certificate and hostname if false (default true), used by ulfius_send_http_request
  * timeout                    connection timeout used by ulfius_send_http_request, default is 0
  * client_address:            IP address of the client
@@ -427,8 +441,10 @@ The request variable is defined as:
  * 
  */
 struct _u_request {
+  char *               http_protocol;
   char *               http_verb;
   char *               http_url;
+	char *               proxy;
   int                  check_server_certificate;
   long                 timeout;
   struct sockaddr *    client_address;
@@ -451,20 +467,21 @@ The response variable is defined as:
  * Structure of response parameters
  * 
  * Contains response data that must be set by the user
- * status:               HTTP status code (200, 404, 500, etc)
- * protocol:             HTTP Protocol sent
- * map_header:           map containing the header variables
- * nb_cookies:           number of cookies sent
- * map_cookie:           array of cookies sent
- * auth_realm:           realm to send to the client on authenticationb failed
- * binary_body:          a void * containing a raw binary content
- * binary_body_length:   the length of the binary_body
- * stream_callback:      callback function to stream data in response body
- * stream_callback_free: callback function to free data allocated for streaming
- * stream_size:          size of the streamed data (-1 if unknown)
- * stream_block_size:    size of each block to be streamed, set according to your system
- * stream_user_data:     user defined data that will be available in your callback stream functions
- * shared_data:          any data shared between callback functions, must be allocated and freed by the callback functions
+ * status:                              HTTP status code (200, 404, 500, etc)
+ * protocol:                            HTTP Protocol sent
+ * map_header:                          map containing the header variables
+ * nb_cookies:                          number of cookies sent
+ * map_cookie:                          array of cookies sent
+ * auth_realm:                          realm to send to the client on authenticationb failed
+ * binary_body:                         a void * containing a raw binary content
+ * binary_body_length:                  the length of the binary_body
+ * stream_callback:                     callback function to stream data in response body
+ * stream_callback_free:                callback function to free data allocated for streaming
+ * stream_size:                         size of the streamed data (U_STREAM_SIZE_UNKOWN if unknown)
+ * stream_block_size:                   size of each block to be streamed, set according to your system
+ * stream_user_data:                    user defined data that will be available in your callback stream functions
+ * websocket_handle:                    handle for websocket extension
+ * shared_data:                         any data shared between callback functions, must be allocated and freed by the callback functions
  * 
  */
 struct _u_response {
@@ -478,9 +495,10 @@ struct _u_response {
   size_t             binary_body_length;
   ssize_t         (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max);
   void            (* stream_callback_free) (void * stream_user_data);
-  size_t             stream_size;
-  unsigned int       stream_block_size;
+  uint64_t           stream_size;
+  size_t             stream_block_size;
   void             * stream_user_data;
+  void             * websocket_handle;
   void *             shared_data;
 };
 ```
@@ -528,10 +546,10 @@ int ulfius_set_empty_body_response(struct _u_response * response, const uint sta
  */
 int ulfius_set_stream_response(struct _u_response * response, 
                                 const uint status,
-                                int (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max),
+                                ssize_t (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max);
                                 void (* stream_callback_free) (void * stream_user_data),
-                                size_t stream_size,
-                                unsigned int stream_block_size,
+                                uint64_t stream_size,
+                                size_t stream_block_size,
                                 void * stream_user_data);
 ```
 
@@ -721,14 +739,14 @@ See `examples/sheep_counter` for a file upload example.
 
 If you need to stream data, i.e. send a variable and potentially large amount of data, you can define and use `stream_callback_function` in the `struct _u_response`.
 
-Not that if you stream data to the client, any data that was in the `response->binary_body` will be ignored. You must at least set the function pointer `struct _u_response.stream_callback` to stream data. Set `stream_size` to -1 if you don't know the size of the data you need to send, like in audio stream for example. Set `stream_block_size` according to you system resources to avoid out of memory errors, also, set `stream_callback_free` with a pointer to a function that will free values allocated by your stream callback function, as a `close()` file for example, and finally, you can set `stream_user_data` to a pointer.
+Not that if you stream data to the client, any data that was in the `response->binary_body` will be ignored. You must at least set the function pointer `struct _u_response.stream_callback` to stream data. Set `stream_size` to U_STREAM_SIZE_UNKOWN if you don't know the size of the data you need to send, like in audio stream for example. Set `stream_block_size` according to you system resources to avoid out of memory errors, also, set `stream_callback_free` with a pointer to a function that will free values allocated by your stream callback function, as a `close()` file for example, and finally, you can set `stream_user_data` to a pointer.
 
 You can use the function `ulfius_set_stream_response` to set those parameters.
 
 The prototype of the `stream_callback` function is the following:
 
 ```C
-int stream_callback (void * stream_user_data, // Your predefined user_data
+ssize_t stream_callback (void * stream_user_data,  // Your predefined user_data
                      uint64_t offset,          // the position of the current data to send
                      char * out_buf,           // The output buffer to fill with data
                      size_t max);              // the max size of data to be put in the out_buf

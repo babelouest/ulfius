@@ -261,6 +261,7 @@ int ulfius_init_request(struct _u_request * request) {
     request->http_protocol = NULL;
     request->http_verb = NULL;
     request->http_url = NULL;
+    request->proxy = NULL;
     request->timeout = 0L;
     request->check_server_certificate = 1;
     request->client_address = NULL;
@@ -284,6 +285,7 @@ int ulfius_clean_request(struct _u_request * request) {
     o_free(request->http_protocol);
     o_free(request->http_verb);
     o_free(request->http_url);
+    o_free(request->proxy);
     o_free(request->auth_basic_user);
     o_free(request->auth_basic_password);
     o_free(request->client_address);
@@ -295,6 +297,7 @@ int ulfius_clean_request(struct _u_request * request) {
     request->http_protocol = NULL;
     request->http_verb = NULL;
     request->http_url = NULL;
+    request->proxy = NULL;
     request->client_address = NULL;
     request->map_url = NULL;
     request->map_header = NULL;
@@ -337,8 +340,10 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request) 
       new_request->http_protocol = o_strdup(request->http_protocol);
       new_request->http_verb = o_strdup(request->http_verb);
       new_request->http_url = o_strdup(request->http_url);
+      new_request->proxy = o_strdup(request->proxy);
       if ((new_request->http_verb == NULL && request->http_verb != NULL) ||
           (new_request->http_url == NULL && request->http_url != NULL) ||
+          (new_request->proxy == NULL && request->proxy != NULL) ||
           (new_request->http_protocol == NULL && request->http_protocol != NULL)) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for ulfius_duplicate_request");
         ulfius_clean_request_full(new_request);
@@ -395,7 +400,7 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request) 
 
 #ifndef U_DISABLE_JANSSON
 /**
- * ulfius_set_json_response
+ * ulfius_set_json_body_request
  * Add a json_t binary_body to a response
  * return U_OK on success
  */

@@ -36,7 +36,7 @@ int auth_basic (const struct _u_request * request, struct _u_response * response
       0 == o_strcmp(request->auth_basic_user, USER) && 0 == o_strcmp(request->auth_basic_password, PASSWORD)) {
     return U_CALLBACK_CONTINUE;
   } else {
-    ulfius_set_string_response(response, 401, "Error authentication");
+    ulfius_set_string_body_response(response, 401, "Error authentication");
     return U_CALLBACK_UNAUTHORIZED;
   }
 }
@@ -45,7 +45,7 @@ int auth_basic (const struct _u_request * request, struct _u_response * response
  * Callback function for basic authentication
  */
 int callback_auth_basic (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  ulfius_set_string_response(response, 200, "Basic auth callback");
+  ulfius_set_string_body_response(response, 200, "Basic auth callback");
   return U_CALLBACK_CONTINUE;
 }
 

@@ -263,10 +263,11 @@ int callback_upload_file (const struct _u_request * request, struct _u_response 
 
   char * string_body = msprintf("Upload file\n\n  method is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n",
                                   request->http_verb, request->http_url, url_params, cookies, headers, post_params);
-  ulfius_set_string_response(response, 200, string_body);
+  ulfius_set_string_body_response(response, 200, string_body);
   o_free(url_params);
   o_free(headers);
   o_free(cookies);
   o_free(post_params);
+  o_free(string_body);
   return U_CALLBACK_CONTINUE;
 }

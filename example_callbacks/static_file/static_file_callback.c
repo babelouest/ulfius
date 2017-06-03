@@ -93,11 +93,11 @@ int callback_static_file (const struct _u_request * request, struct _u_response 
         response->binary_body_length = length;
         u_map_put(response->map_header, "Content-Type", content_type);
       } else {
-        ulfius_set_string_response(response, 500, "Error processing static file");
+        ulfius_set_string_body_response(response, 500, "Error processing static file");
         y_log_message(Y_LOG_LEVEL_ERROR, "Static File Server - Internal error in %s", request->http_url);
       }
     } else {
-      ulfius_set_string_response(response, 404, "File not found");
+      ulfius_set_string_body_response(response, 404, "File not found");
     }
     o_free(file_path);
     o_free(file_requested);

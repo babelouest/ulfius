@@ -91,6 +91,19 @@ Example callback functions are available in the folder [example_callbacks](https
 - [Hutch](https://github.com/babelouest/hutch), a safe locker for passwords and other secrets, using encryption on the client side only
 - [Taulas Raspberry Pi Serial interface](https://github.com/babelouest/taulas/tree/master/taulas_raspberrypi_serial), an interface for Arduino devices that implent [Taulas](https://github.com/babelouest/taulas/) protocol, a house automation protocol
 
+## What's new in Ulfius 2.1 ?
+
+I know it wasn't long since Ulfius 2.0 was released. But after some review and tests, I realized some adjustments had to be made to avoid bugs and to clean the framework a little bit more.
+
+Some of the adjustments made in the new release:
+- An annoying bug has been fixed that made streaming data a little buggy when used on raspbian. Now if you don't know the data size you're sending, use the macro U_STREAM_SIZE_UNKOWN instead of the previous value -1. There is some updates in the stream callback function parameter types. Check the [streaming data documentation](API.md#streaming-data).
+- Fix bug on `ulfius_send_http_request` that didn't send back all headers value with the same name (#19)
+- Fix websocket declaration structures to have them outside of the `ulfius.h`, because it could lead to horrifying bugs when you compile ulfius with websocket but add `#define U_DISABLE_WEBSOCKET` in your application.
+- Add proxy value for outgoing requests (#18)
+- Unify and update functions name `ulfius_set_[string|json|binary]_body`. You may have to update your legacy code.
+
+The minor version number has been incremented, from 2.0 to 2.1 because some of the changes may require changes in your own code.
+
 ## What's new in Ulfius 2.0 ?
 
 Ulfius 2.0 brings several changes that make the library incompatible with Ulfius 1.0.x branch. The goal of making Ulfius 2.0 is to make a spring cleaning of some functions, remove what is apparently useless, and should bring bugs and memory loss. The main new features are multiple callback functions and websockets implementation.

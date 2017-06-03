@@ -13,6 +13,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <yder.h>
+
 #define U_DISABLE_JANSSON
 #define U_DISABLE_WEBSOCKET
 #include "../../src/ulfius.h"
@@ -35,46 +37,53 @@ int main(void) {
   struct _u_request request;
   struct _u_response response;
   int res;
+	
+	y_init_logs("stream_example client", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting stream_example");
   
   ulfius_init_response(&response);
   ulfius_init_request(&request);
   request.http_verb = o_strdup("GET");
   request.http_url = o_strdup(URL);
   
-  printf("Press <enter> to run stream test\n");
+  y_log_message(Y_LOG_LEVEL_DEBUG, "Press <enter> to run stream test");
   getchar();
   res = ulfius_send_http_streaming_request(&request, &response, my_write_body, NULL);
   if (res == U_OK) {
-    printf("ulfius_send_http_streaming_request OK\n");
+    y_log_message(Y_LOG_LEVEL_DEBUG, "ulfius_send_http_streaming_request OK");
   } else {
-    printf("Error in http request: %d\n", res);
+    y_log_message(Y_LOG_LEVEL_DEBUG, "Error in http request: %d", res);
   }
   ulfius_clean_response(&response);
   
-  printf("Press <enter> to run stream audio test\n");
+  y_log_message(Y_LOG_LEVEL_DEBUG, "Press <enter> to run stream audio test");
+  ulfius_init_response(&response);
   o_free(request.http_url);
   request.http_url = o_strdup(URL "/audio");
   getchar();
   res = ulfius_send_http_streaming_request(&request, &response, my_write_meta_body, NULL);
   if (res == U_OK) {
-    printf("ulfius_send_http_streaming_request OK\n");
+    y_log_message(Y_LOG_LEVEL_DEBUG, "ulfius_send_http_streaming_request OK");
   } else {
-    printf("Error in http request: %d\n", res);
+    y_log_message(Y_LOG_LEVEL_DEBUG, "Error in http request: %d", res);
   }
   ulfius_clean_response(&response);
   
-  printf("Press <enter> to run no stream test\n");
+  y_log_message(Y_LOG_LEVEL_DEBUG, "Press <enter> to run no stream test");
+  ulfius_init_response(&response);
   o_free(request.http_url);
   request.http_url = o_strdup("http://www.w3.org/");
   getchar();
   res = ulfius_send_http_request(&request, &response);
   if (res == U_OK) {
-    printf("ulfius_send_http_request OK\n");
+    y_log_message(Y_LOG_LEVEL_DEBUG, "ulfius_send_http_request OK");
   } else {
-    printf("Error in http request: %d\n", res);
+    y_log_message(Y_LOG_LEVEL_DEBUG, "Error in http request: %d", res);
   }
   ulfius_clean_response(&response);
   
   ulfius_clean_request(&request);
+	
+	y_close_logs();
+	
   return 0;
 }
