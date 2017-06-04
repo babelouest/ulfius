@@ -27,6 +27,7 @@
 #define __ULFIUS_H__
 
 /** External dependencies **/
+#include <sys/poll.h>
 #include <microhttpd.h>
 
 #if (MHD_VERSION < 0x00095300) && !defined(U_DISABLE_WEBSOCKET)
@@ -822,6 +823,7 @@ int u_map_empty(struct _u_map * u_map);
 #define U_WEBSOCKET_UPGRADE_VALUE    "websocket"
 #define U_WEBSOCKET_BAD_REQUEST_BODY "Error in websocket handshake, wrong parameters"
 #define U_WEBSOCKET_USEC_WAIT        50
+#define WEBSOCKET_MAX_CLOSE_TRY      10
 
 #define U_WEBSOCKET_BIT_FIN         0x80
 #define U_WEBSOCKET_HAS_MASK        0x80
@@ -851,6 +853,7 @@ struct _websocket_manager {
   MHD_socket sock;
   pthread_mutex_t read_lock;
   pthread_mutex_t write_lock;
+  struct pollfd fds;
 };
 
 /**
