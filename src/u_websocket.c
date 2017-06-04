@@ -728,6 +728,9 @@ int ulfius_instance_remove_websocket_active(struct _u_instance * instance, struc
           ((struct _websocket_handler *)instance->websocket_handler)->websocket_active = NULL;
         }
         ((struct _websocket_handler *)instance->websocket_handler)->nb_websocket_active--;
+        pthread_mutex_lock(&((struct _websocket_handler *)instance->websocket_handler)->websocket_close_lock);
+        pthread_cond_signal(&((struct _websocket_handler *)instance->websocket_handler)->websocket_close_cond);
+        pthread_mutex_unlock(&((struct _websocket_handler *)instance->websocket_handler)->websocket_close_lock);
         return U_OK;
       }
     }

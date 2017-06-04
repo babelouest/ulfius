@@ -25,6 +25,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <pthread.h>
 #include "ulfius.h"
 
 /**
@@ -262,9 +263,11 @@ int ulfius_stop_framework(struct _u_instance * u_instance) {
     for (i=((struct _websocket_handler *)u_instance->websocket_handler)->nb_websocket_active-1; i>=0; i--) {
       ((struct _websocket_handler *)u_instance->websocket_handler)->websocket_active[i]->websocket_manager->closing = 1;
     }
+    pthread_mutex_lock(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_lock);
     while (((struct _websocket_handler *)u_instance->websocket_handler)->nb_websocket_active > 0) {
-      usleep(U_WEBSOCKET_USEC_WAIT);
+      pthread_cond_wait(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_cond, &((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_lock);
     }
+    pthread_mutex_unlock(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_lock);
 #endif 
     MHD_stop_daemon (u_instance->mhd_daemon);
     u_instance->mhd_daemon = NULL;
@@ -1091,6 +1094,8 @@ void ulfius_clean_instance(struct _u_instance * u_instance) {
     u_instance->bind_address = NULL;
     u_instance->default_endpoint = NULL;
 #ifndef U_DISABLE_WEBSOCKET
+    pthread_mutex_destroy(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_lock);
+    pthread_cond_destroy(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_cond);
     o_free(u_instance->websocket_handler);
     u_instance->websocket_handler = NULL;
 #endif
@@ -1134,6 +1139,8 @@ int ulfius_init_instance(struct _u_instance * u_instance, uint port, struct sock
     }
     ((struct _websocket_handler *)u_instance->websocket_handler)->nb_websocket_active = 0;
     ((struct _websocket_handler *)u_instance->websocket_handler)->websocket_active = NULL;
+    pthread_mutex_init(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_lock, NULL);
+    pthread_cond_init (&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_cond, NULL);
 #else
 	  u_instance->websocket_handler = NULL;
 #endif

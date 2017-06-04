@@ -1111,6 +1111,8 @@ struct _websocket_handle {
 struct _websocket_handler {
   size_t                        nb_websocket_active;
   struct _websocket          ** websocket_active;
+  pthread_mutex_t               websocket_close_lock;
+  pthread_cond_t                websocket_close_cond;
 };
 
 /**
