@@ -25,9 +25,7 @@ START_TEST(test_ulfius_init_instance)
   ck_assert_int_eq(ulfius_init_instance(&u_instance, 80, NULL, NULL), U_OK);
   ulfius_clean_instance(&u_instance);
   ck_assert_int_eq(ulfius_init_instance(&u_instance, 0, NULL, NULL), U_ERROR_PARAMS);
-  ulfius_clean_instance(&u_instance);
   ck_assert_int_eq(ulfius_init_instance(&u_instance, 99999, NULL, NULL), U_ERROR_PARAMS);
-  ulfius_clean_instance(&u_instance);
 
   ck_assert_int_eq(ulfius_init_instance(&u_instance, 80, &listen, NULL), U_OK);
   ulfius_clean_instance(&u_instance);
