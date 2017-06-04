@@ -105,7 +105,7 @@ void * ulfius_thread_websocket(void * data) {
   struct _websocket_message * message = NULL;
   pthread_t thread_websocket_manager;
   pthread_mutexattr_t mutexattr;
-  int thread_ret_websocket_manager = 0, thread_detach_websocket_manager = 0;
+  int thread_ret_websocket_manager = 0;
   
   if (websocket != NULL && websocket->websocket_manager != NULL) {
     pthread_mutexattr_init ( &mutexattr );
@@ -118,10 +118,8 @@ void * ulfius_thread_websocket(void * data) {
     if (websocket->websocket_manager_callback != NULL && websocket->websocket_manager->connected) {
       websocket->websocket_manager->manager_closed = 0;
       thread_ret_websocket_manager = pthread_create(&thread_websocket_manager, NULL, ulfius_thread_websocket_manager_run, (void *)websocket);
-      thread_detach_websocket_manager = pthread_detach(thread_websocket_manager);
-      if (thread_ret_websocket_manager || thread_detach_websocket_manager) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Error creating or detaching websocket manager thread, return code: %d, detach code: %d",
-                      thread_ret_websocket_manager, thread_detach_websocket_manager);
+      if (thread_ret_websocket_manager) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error creating websocket manager thread, return code: %d", thread_ret_websocket_manager);
         websocket->websocket_manager->connected = 0;
       }
     } else {
@@ -162,9 +160,7 @@ void * ulfius_thread_websocket(void * data) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error closing websocket");
     }
     // Wait for thread manager to close
-    while (!websocket->websocket_manager->manager_closed) {
-      usleep(U_WEBSOCKET_USEC_WAIT);
-    }
+    pthread_join(thread_websocket_manager, NULL);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error websocket parameters");
   }
@@ -359,7 +355,7 @@ void * ulfius_thread_websocket_manager_run(void * args) {
     websocket->websocket_manager->manager_closed = 1;
     websocket->websocket_manager->closing = 1;
   }
-  return NULL;
+  pthread_exit(NULL);
 }
 
 /**
