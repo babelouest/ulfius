@@ -1094,8 +1094,11 @@ void ulfius_clean_instance(struct _u_instance * u_instance) {
     u_instance->bind_address = NULL;
     u_instance->default_endpoint = NULL;
 #ifndef U_DISABLE_WEBSOCKET
-    pthread_mutex_destroy(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_lock);
-    pthread_cond_destroy(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_cond);
+    if (((struct _websocket_handler *)u_instance->websocket_handler)->pthread_init && 
+        (pthread_mutex_destroy(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_lock) ||
+        pthread_cond_destroy(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_cond))) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error destroying websocket_close_lock or websocket_close_cond");
+    }
     o_free(u_instance->websocket_handler);
     u_instance->websocket_handler = NULL;
 #endif
@@ -1137,13 +1140,19 @@ int ulfius_init_instance(struct _u_instance * u_instance, uint port, struct sock
       ulfius_clean_instance(u_instance);
       return U_ERROR_MEMORY;
     }
+    ((struct _websocket_handler *)u_instance->websocket_handler)->pthread_init = 0;
     ((struct _websocket_handler *)u_instance->websocket_handler)->nb_websocket_active = 0;
     ((struct _websocket_handler *)u_instance->websocket_handler)->websocket_active = NULL;
-    pthread_mutex_init(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_lock, NULL);
-    pthread_cond_init (&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_cond, NULL);
+    if (pthread_mutex_init(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_lock, NULL) || 
+        pthread_cond_init(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_cond, NULL)) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error initializing websocket_close_lock or websocket_close_cond");
+      ulfius_clean_instance(u_instance);
+      return U_ERROR_MEMORY;
+    }
 #else
 	  u_instance->websocket_handler = NULL;
 #endif
+    ((struct _websocket_handler *)u_instance->websocket_handler)->pthread_init = 1;
     return U_OK;
   } else {
     return U_ERROR_PARAMS;

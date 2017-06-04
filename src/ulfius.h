@@ -1116,6 +1116,7 @@ struct _websocket_handler {
   struct _websocket          ** websocket_active;
   pthread_mutex_t               websocket_close_lock;
   pthread_cond_t                websocket_close_cond;
+  int                           pthread_init;
 };
 
 /**
