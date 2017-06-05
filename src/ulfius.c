@@ -1149,10 +1149,10 @@ int ulfius_init_instance(struct _u_instance * u_instance, uint port, struct sock
       ulfius_clean_instance(u_instance);
       return U_ERROR_MEMORY;
     }
+    ((struct _websocket_handler *)u_instance->websocket_handler)->pthread_init = 1;
 #else
 	  u_instance->websocket_handler = NULL;
 #endif
-    ((struct _websocket_handler *)u_instance->websocket_handler)->pthread_init = 1;
     return U_OK;
   } else {
     return U_ERROR_PARAMS;
