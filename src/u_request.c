@@ -22,6 +22,7 @@
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  * 
  */
+#include <stdlib.h>
 #include <string.h>
 
 #include "ulfius.h"
@@ -86,20 +87,18 @@ char ** ulfius_split_url(const char * prefix, const char * url) {
 }
 
 /**
- * Sort an array of struct _u_endpoint * using bubble sort algorithm
+ * Compare two endoints by their priorities
+ * Used by qsort to compare endpoints
  */
-void sort_endpoint_list (struct _u_endpoint ** endpoint_list, int length) {
-  int i, j;
-  struct _u_endpoint * temp;
-
-  for (i = 0; i < length; i++) {
-    for (j = 0; j < length - 1; j++) {
-      if (endpoint_list[j + 1]->priority < endpoint_list[j]->priority) {
-        temp = endpoint_list[j];
-        endpoint_list[j] = endpoint_list[j + 1];
-        endpoint_list[j + 1] = temp;
-      }
-    }
+int compare_endpoint_priorities(const void * a, const void * b) {
+  struct _u_endpoint * e1 = *(struct _u_endpoint **)a, * e2 = *(struct _u_endpoint **)b;
+  
+  if (e1->priority < e2->priority) {
+    return -1;
+  } else if (e1->priority > e2->priority) {
+    return 1;
+  } else {
+    return 0;
   }
 }
 
@@ -113,7 +112,8 @@ void sort_endpoint_list (struct _u_endpoint ** endpoint_list, int length) {
 struct _u_endpoint ** ulfius_endpoint_match(const char * method, const char * url, struct _u_endpoint * endpoint_list) {
   char ** splitted_url, ** splitted_url_format;
   struct _u_endpoint ** endpoint_returned = o_malloc(sizeof(struct _u_endpoint *));
-  int i, count = 0;
+  int i;
+  size_t count = 0;
   
   if (endpoint_returned == NULL) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for endpoint_returned");
@@ -144,7 +144,7 @@ struct _u_endpoint ** ulfius_endpoint_match(const char * method, const char * ur
       splitted_url = NULL;
     }
   }
-  sort_endpoint_list(endpoint_returned, count);
+  qsort(endpoint_returned, count, sizeof(struct endpoint_list *), &compare_endpoint_priorities);
   return endpoint_returned;
 }
 
