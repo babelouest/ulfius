@@ -694,7 +694,7 @@ int ulfius_set_json_body_response(struct _u_response * response, const uint stat
  * json_error: structure to store json_error_t if specified
  */
 json_t * ulfius_get_json_body_response(struct _u_response * response, json_error_t * json_error) {
-  if (response != NULL && response->map_header != NULL && NULL != o_strstr(ULFIUS_HTTP_ENCODING_JSON, u_map_get_case(response->map_header, ULFIUS_HTTP_HEADER_CONTENT))) {
+  if (response != NULL && response->map_header != NULL && NULL != o_strstr(u_map_get_case(response->map_header, ULFIUS_HTTP_HEADER_CONTENT), ULFIUS_HTTP_ENCODING_JSON)) {
     return json_loadb(response->binary_body, response->binary_body_length, JSON_DECODE_ANY, json_error);
   }
   return NULL;
