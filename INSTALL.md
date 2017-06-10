@@ -37,6 +37,20 @@ $ make
 $ sudo make install
 ```
 
+If you update Ulfius from a previous version, you must install the corresponding version of the submodules as well:
+
+```shell
+$ cd ulfius/
+$ git submodule update
+$ cd lib/orcania
+$ make && sudo make install
+$ cd ../yder
+$ make && sudo make install
+$ cd ../..
+$ make
+$ sudo make install
+```
+
 To disable libcurl functions, append the option `CURLFLAG=-DU_DISABLE_CURL` to the make command when you build Ulfius:
 
 ```shell
