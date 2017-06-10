@@ -41,6 +41,7 @@ If you update Ulfius from a previous version, you must install the corresponding
 
 ```shell
 $ cd ulfius/
+$ git pull # Or git checkout <the version you need>
 $ git submodule update
 $ cd lib/orcania
 $ make && sudo make install
