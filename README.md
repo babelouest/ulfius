@@ -19,9 +19,8 @@ The source code of a hello world using Ulfius is the following:
  * to compile with gcc, run the following command
  * gcc -o test test.c -lulfius
  */
-#include <ulfius.h>
-#include <string.h>
 #include <stdio.h>
+#include <ulfius.h>
 
 #define PORT 8080
 
