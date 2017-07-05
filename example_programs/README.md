@@ -1,4 +1,4 @@
-# Ulfius Franework example programs
+# Ulfius Framework example programs
 
 Those programs require ulfius to be installed with its dependencies. To do so, in the root folder, run `make && sudo make install` to compile and install the library. Refer to the `README.md` for more information.
 
