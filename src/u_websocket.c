@@ -23,6 +23,7 @@
  * 
  */
 
+#include "u_private.h"
 #include "ulfius.h"
 
 #ifndef U_DISABLE_WEBSOCKET

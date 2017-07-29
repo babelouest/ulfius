@@ -22,6 +22,7 @@
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  * 
  */
+#include "u_private.h"
 #include "ulfius.h"
 
 #ifndef U_DISABLE_CURL
@@ -43,7 +44,7 @@ typedef struct _body {
  * ulfius_write_body
  * Internal function used to write the body response into a _body structure
  */
-size_t ulfius_write_body(void * contents, size_t size, size_t nmemb, void * user_data) {
+static size_t ulfius_write_body(void * contents, size_t size, size_t nmemb, void * user_data) {
   size_t realsize = size * nmemb;
   body * body_data = (body *) user_data;
  
@@ -340,8 +341,8 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
               curl_easy_cleanup(curl_handle);
               return U_ERROR_MEMORY;
             }
-            memcpy(copy_request->binary_body + copy_request->binary_body_length, np, 1);
-            memcpy(copy_request->binary_body + copy_request->binary_body_length + 1, param, strlen(param));
+            memcpy((char*)copy_request->binary_body + copy_request->binary_body_length, np, 1);
+            memcpy((char*)copy_request->binary_body + copy_request->binary_body_length + 1, param, strlen(param));
             copy_request->binary_body_length = len;
           }
           

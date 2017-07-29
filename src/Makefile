@@ -23,7 +23,7 @@ LIBORCANIA_LOCATION=../lib/orcania/src
 LIBYDER_LOCATION=../lib/yder/src
 PREFIX=/usr/local
 CC=gcc
-CFLAGS=-c -fPIC -Wall -D_REENTRANT -I$(PREFIX)/include -I$(LIBORCANIA_LOCATION) -I$(LIBYDER_LOCATION) $(ADDITIONALFLAGS) $(JANSSONFLAG) $(CURLFLAG) $(WEBSOCKETFLAG)
+CFLAGS=-c -pedantic -std=gnu99 -fPIC -Wall -D_REENTRANT -I$(PREFIX)/include -I$(LIBORCANIA_LOCATION) -I$(LIBYDER_LOCATION) $(ADDITIONALFLAGS) $(JANSSONFLAG) $(CURLFLAG) $(WEBSOCKETFLAG)
 LIBS=-L$(PREFIX)/lib -L$(LIBORCANIA_LOCATION) -L$(LIBYDER_LOCATION) -lc -lmicrohttpd -lyder -lorcania -lpthread
 OUTPUT=libulfius.so
 VERSION=2.1
@@ -46,22 +46,22 @@ libulfius.so: ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_webso
 	$(CC) -shared -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o $(LIBS) $(LJANSSON) $(LCURL) $(LWEBSOCKET)
 	ln -sf $(OUTPUT).$(VERSION) $(OUTPUT)
 
-ulfius.o: ulfius.h ulfius.c
+ulfius.o: ulfius.h u_private.h ulfius.c
 	$(CC) $(CFLAGS) ulfius.c
 
-u_map.o: ulfius.h u_map.c
+u_map.o: ulfius.h u_private.h u_map.c
 	$(CC) $(CFLAGS) u_map.c
 
-u_request.o: ulfius.h u_request.c
+u_request.o: ulfius.h u_private.h u_request.c
 	$(CC) $(CFLAGS) u_request.c
 
-u_response.o: ulfius.h u_response.c
+u_response.o: ulfius.h u_private.h u_response.c
 	$(CC) $(CFLAGS) u_response.c
 
-u_websocket.o: ulfius.h u_websocket.c
+u_websocket.o: ulfius.h u_private.h u_websocket.c
 	$(CC) $(CFLAGS) u_websocket.c
 
-u_send_request.o: ulfius.h u_send_request.c
+u_send_request.o: ulfius.h u_private.h u_send_request.c
 	$(CC) $(CFLAGS) u_send_request.c
 
 clean:

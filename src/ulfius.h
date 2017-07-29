@@ -28,6 +28,7 @@
 
 /** External dependencies **/
 #include <sys/poll.h>
+#include <pthread.h>
 #include <microhttpd.h>
 
 #if (MHD_VERSION < 0x00095300) && !defined(U_DISABLE_WEBSOCKET)
@@ -84,7 +85,7 @@ struct _u_cookie {
   char * key;
   char * value;
   char * expires;
-  uint   max_age;
+  unsigned int   max_age;
   char * domain;
   char * path;
   int    secure;
@@ -193,7 +194,7 @@ struct _u_endpoint {
   char * http_method;
   char * url_prefix;
   char * url_format;
-  uint   priority;
+  unsigned int   priority;
   int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
                             struct _u_response * response,     // Output parameters (set by the user)
                             void * user_data);
@@ -222,7 +223,7 @@ struct _u_endpoint {
 struct _u_instance {
   struct MHD_Daemon          *  mhd_daemon;
   int                           status;
-  uint                          port;
+  unsigned int                          port;
   struct sockaddr_in          * bind_address;
   int                           nb_endpoints;
   char                        * default_auth_realm;
@@ -251,12 +252,17 @@ struct connection_info_struct {
  **********************************/
 
 /**
+ * free data allocated by ulfius functions
+ */
+void u_free(void * data);
+
+/**
  * ulfius_init_instance
  * 
  * Initialize a struct _u_instance * with default values
  * return U_OK on success
  */
-int ulfius_init_instance(struct _u_instance * u_instance, uint port, struct sockaddr_in * bind_address, const char * default_auth_realm);
+int ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, struct sockaddr_in * bind_address, const char * default_auth_realm);
 
 /**
  * ulfius_clean_instance
@@ -328,7 +334,7 @@ int ulfius_add_endpoint_by_val(struct _u_instance * u_instance,
                                const char * http_method,
                                const char * url_prefix,
                                const char * url_format,
-                               uint priority,
+                               unsigned int priority,
                                int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
                                                          struct _u_response * response,     // Output parameters (set by the user)
                                                          void * user_data),
@@ -481,7 +487,7 @@ int ulfius_send_smtp_email(const char * host,
  * add a cookie to the cookie map
  * return U_OK on success
  */
-int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const uint max_age, 
+int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age, 
                       const char * domain, const char * path, const int secure, const int http_only);
 
 /**
@@ -497,21 +503,21 @@ int ulfius_add_header_to_response(struct _u_response * response, const char * ke
  * body must end with a '\0' character
  * return U_OK on success
  */
-int ulfius_set_string_body_response(struct _u_response * response, const uint status, const char * body);
+int ulfius_set_string_body_response(struct _u_response * response, const unsigned int status, const char * body);
 
 /**
  * ulfius_set_binary_body_response
  * Add a binary body to a response
  * return U_OK on success
  */
-int ulfius_set_binary_body_response(struct _u_response * response, const uint status, const char * body, const size_t length);
+int ulfius_set_binary_body_response(struct _u_response * response, const unsigned int status, const char * body, const size_t length);
 
 /**
  * ulfius_set_empty_body_response
  * Set an empty response with only a status
  * return U_OK on success
  */
-int ulfius_set_empty_body_response(struct _u_response * response, const uint status);
+int ulfius_set_empty_body_response(struct _u_response * response, const unsigned int status);
 
 /**
  * ulfius_set_stream_response
@@ -519,7 +525,7 @@ int ulfius_set_empty_body_response(struct _u_response * response, const uint sta
  * return U_OK on success
  */
 int ulfius_set_stream_response(struct _u_response * response, 
-                                const uint status,
+                                const unsigned int status,
                                 ssize_t (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max),
                                 void (* stream_callback_free) (void * stream_user_data),
                                 uint64_t stream_size,
@@ -623,7 +629,7 @@ int ulfius_set_json_body_request(struct _u_request * request, json_t * body);
  * Add a json_t body to a response
  * return U_OK on success
  */
-int ulfius_set_json_body_response(struct _u_response * response, const uint status, const json_t * body);
+int ulfius_set_json_body_response(struct _u_response * response, const unsigned int status, const json_t * body);
 
 /**
  * ulfius_get_json_body_response
@@ -957,112 +963,6 @@ void ulfius_clear_websocket_message(struct _websocket_message * message);
 
 #endif
 
-/**
- * free data allocated by ulfius functions
- */
-void u_free(void * data);
-
-/**********************************
- * Internal functions declarations
- **********************************/
-
-/**
- * ulfius_validate_instance
- * return true if u_instance has valid parameters, false otherwise
- */
-int ulfius_validate_instance(const struct _u_instance * u_instance);
-/**
- * ulfius_is_valid_endpoint
- * return true if the endpoind has valid parameters
- */
-int ulfius_is_valid_endpoint(const struct _u_endpoint * endpoint, int to_delete);
-
-/**
- * ulfius_validate_endpoint_list
- * return true if endpoint_list has valid parameters, false otherwise
- */
-int ulfius_validate_endpoint_list(const struct _u_endpoint * endpoint_list, int nb_endpoints);
-
-/**
- * ulfius_webservice_dispatcher
- * function executed by libmicrohttpd every time an HTTP call is made
- * return MHD_NO on error
- */
-int ulfius_webservice_dispatcher (void *cls, struct MHD_Connection *connection,
-                                  const char *url, const char *method,
-                                  const char *version, const char *upload_data,
-                                  size_t *upload_data_size, void **con_cls);
-/**
- * mhd_iterate_post_data
- * function used to iterate post parameters
- * return MHD_NO on error
- */
-int mhd_iterate_post_data (void *coninfo_cls, enum MHD_ValueKind kind, const char *key,
-                      const char *filename, const char *content_type,
-                      const char *transfer_encoding, const char *data, uint64_t off,
-                      size_t size);
-
-/**
- * mhd_request_completed
- * function used to clean data allocated after a web call is complete
- */
-void mhd_request_completed (void *cls, struct MHD_Connection *connection,
-                        void **con_cls, enum MHD_RequestTerminationCode toe);
-
-/**
- * ulfius_split_url
- * return an array of char based on the url words
- * returned value must be u_free'd after use
- */
-char ** ulfius_split_url(const char * prefix, const char * url);
-
-/**
- * Sort an array of struct _u_endpoint * using bubble sort algorithm
- */
-void sort_endpoint_list (struct _u_endpoint ** endpoint_list, int length);
-
-/**
- * ulfius_endpoint_match
- * return the endpoint array matching the url called with the proper http method
- * the returned array always has its last value to NULL
- * return NULL on memory error
- */
-struct _u_endpoint ** ulfius_endpoint_match(const char * method, const char * url, struct _u_endpoint * endpoint_list);
-
-/**
- * ulfius_url_format_match
- * return true if splitted_url matches splitted_url_format
- * false otherwise
- */
-int ulfius_url_format_match(const char ** splitted_url, const char ** splitted_url_format);
-
-/**
- * ulfius_parse_url
- * fills map with the keys/values defined in the url that are described in the endpoint format url
- * return U_OK on success
- */
-int ulfius_parse_url(const char * url, const struct _u_endpoint * endpoint, struct _u_map * map);
-
-/**
- * ulfius_set_response_header
- * adds headers defined in the response_map_header to the response
- * return the number of added headers, -1 on error
- */
-int ulfius_set_response_header(struct MHD_Response * response, const struct _u_map * response_map_header);
-
-/**
- * ulfius_set_response_cookie
- * adds cookies defined in the response_map_cookie
- * return the number of added headers, -1 on error
- */
-int ulfius_set_response_cookie(struct MHD_Response * mhd_response, const struct _u_response * response);
-
-/**
- * Add a cookie in the cookie map as defined in the RFC 6265
- * Returned value must be u_free'd after use
- */
-char * ulfius_get_cookie_header(const struct _u_cookie * cookie);
-
 /** Macro values **/
 #define ULFIUS_URL_SEPARATOR       "/"
 #define ULFIUS_HTTP_ENCODING_JSON  "application/json"
@@ -1119,106 +1019,6 @@ struct _websocket_handler {
   int                           pthread_init;
 };
 
-/**
- * Websocket callback function for MHD
- * Starts the websocket manager if set,
- * then sets a listening message loop
- * Complete the callback when the websocket is closed
- * The websocket can be closed by the client, the manager, the program, or on network disconnect
- */
-void ulfius_start_websocket_cb (void *cls,
-            struct MHD_Connection *connection,
-            void *con_cls,
-            const char *extra_in,
-            size_t extra_in_size,
-            MHD_socket sock,
-            struct MHD_UpgradeResponseHandle *urh);
-
-/**
- * Workaround to make sure a message, as long as it can be is complete sent
- */
-void ulfius_websocket_send_all(MHD_socket sock, const uint8_t * data, size_t len);
-
-/**
- * Centralise socket reading in this function
- * so if options or check must be done, it's done here instead of each read call
- */
-size_t ulfius_websocket_recv_all(MHD_socket sock, uint8_t * data, size_t len);
-
-/**
- * Generates a handhshake answer from the key given in parameter
- */
-int ulfius_generate_handshake_answer(const char * key, char * out_digest);
-
-/**
- * Close the websocket
- */
-int ulfius_close_websocket(struct _websocket * websocket);
-
-/**
- * Return a match list between two list of items
- * If match is NULL, then return source duplicate
- * Returned value must be u_free'd after use
- */
-char * ulfius_check_list_match(const char * source, const char * match);
-
-/**
- * Initialize a websocket message list
- * Return U_OK on success
- */
-int ulfius_init_websocket_message_list(struct _websocket_message_list * message_list);
-
-/**
- * Clear data of a websocket message list
- */
-void ulfius_clear_websocket_message_list(struct _websocket_message_list * message_list);
-
-/**
- * Append a message in a message list
- * Return U_OK on success
- */
-int ulfius_push_websocket_message(struct _websocket_message_list * message_list, struct _websocket_message * message);
-
-/**
- * Clear data of a websocket
- */
-int ulfius_clear_websocket(struct _websocket * websocket);
-
-/**
- * Clear data of a websocket_manager
- */
-void ulfius_clear_websocket_manager(struct _websocket_manager * websocket_manager);
-
-/**
- * Read and parse a new message from the websocket
- * Return the opcode of the new websocket, U_WEBSOCKET_OPCODE_NONE if no message arrived, or U_WEBSOCKET_OPCODE_ERROR on error
- * Sets the new message in the message variable if available
- */
-int ulfius_read_incoming_message(struct _websocket_manager * websocket_manager, struct _websocket_message ** message);
-
-/**
- * Run the websocket manager in a separated detached thread
- */
-void * ulfius_thread_websocket_manager_run(void * args);
-
-/**
- * Send a message in the websocket without lock
- * Return U_OK on success
- */
-int ulfius_websocket_send_message_nolock(struct _websocket_manager * websocket_manager,
-                                  const uint8_t opcode,
-                                  const uint64_t data_len,
-                                  const char * data);
-
- /**
- * Add a websocket in the list of active websockets of the instance
- */
-int ulfius_instance_add_websocket_active(struct _u_instance * instance, struct _websocket * websocket);
-
-/**
- * Remove a websocket from the list of active websockets of the instance
- */
-int ulfius_instance_remove_websocket_active(struct _u_instance * instance, struct _websocket * websocket); 
 #endif // U_DISABLE_WEBSOCKET
 
 #endif // __ULFIUS_H__

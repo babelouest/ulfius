@@ -25,12 +25,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "u_private.h"
 #include "ulfius.h"
 
 /**
  * Splits the url to an array of char *
  */
-char ** ulfius_split_url(const char * prefix, const char * url) {
+static char ** ulfius_split_url(const char * prefix, const char * url) {
   char * saveptr = NULL, * cur_word = NULL, ** to_return = o_malloc(sizeof(char*)), * url_cpy = NULL, * url_cpy_addr = NULL;
   int counter = 1;
   
@@ -90,7 +91,7 @@ char ** ulfius_split_url(const char * prefix, const char * url) {
  * Compare two endoints by their priorities
  * Used by qsort to compare endpoints
  */
-int compare_endpoint_priorities(const void * a, const void * b) {
+static int compare_endpoint_priorities(const void * a, const void * b) {
   struct _u_endpoint * e1 = *(struct _u_endpoint **)a, * e2 = *(struct _u_endpoint **)b;
   
   if (e1->priority < e2->priority) {
@@ -100,6 +101,25 @@ int compare_endpoint_priorities(const void * a, const void * b) {
   } else {
     return 0;
   }
+}
+
+/**
+ * ulfius_url_format_match
+ * return true if splitted_url matches splitted_url_format
+ * false otherwise
+ */
+static int ulfius_url_format_match(const char ** splitted_url, const char ** splitted_url_format) {
+  int i;
+  
+  for (i=0; splitted_url_format[i] != NULL; i++) {
+    if (splitted_url_format[i][0] == '*' && splitted_url_format[i+1] == NULL) {
+      return 1;
+    }
+    if (splitted_url[i] == NULL || (splitted_url_format[i][0] != '@' && splitted_url_format[i][0] != ':' && 0 != o_strcmp(splitted_url_format[i], splitted_url[i]))) {
+      return 0;
+    }
+  }
+  return (splitted_url[i] == NULL && splitted_url_format[i] == NULL);
 }
 
 /**
@@ -146,25 +166,6 @@ struct _u_endpoint ** ulfius_endpoint_match(const char * method, const char * ur
   }
   qsort(endpoint_returned, count, sizeof(struct endpoint_list *), &compare_endpoint_priorities);
   return endpoint_returned;
-}
-
-/**
- * ulfius_url_format_match
- * return true if splitted_url matches splitted_url_format
- * false otherwise
- */
-int ulfius_url_format_match(const char ** splitted_url, const char ** splitted_url_format) {
-  int i;
-  
-  for (i=0; splitted_url_format[i] != NULL; i++) {
-    if (splitted_url_format[i][0] == '*' && splitted_url_format[i+1] == NULL) {
-      return 1;
-    }
-    if (splitted_url[i] == NULL || (splitted_url_format[i][0] != '@' && splitted_url_format[i][0] != ':' && 0 != o_strcmp(splitted_url_format[i], splitted_url[i]))) {
-      return 0;
-    }
-  }
-  return (splitted_url[i] == NULL && splitted_url_format[i] == NULL);
 }
 
 /**

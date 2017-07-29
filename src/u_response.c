@@ -24,147 +24,14 @@
  */
 #include <string.h>
 
+#include "u_private.h"
 #include "ulfius.h"
-
-/**
- * ulfius_set_response_header
- * adds headers defined in the response_map_header to the response
- * return the number of added headers, -1 on error
- */
-int ulfius_set_response_header(struct MHD_Response * response, const struct _u_map * response_map_header) {
-  const char ** header_keys = u_map_enum_keys(response_map_header);
-  const char * header_value;
-  int i = -1, ret;
-  if (header_keys != NULL && response != NULL && response_map_header != NULL) {
-    for (i=0; header_keys != NULL && header_keys[i] != NULL; i++) {
-      header_value = u_map_get(response_map_header, header_keys[i]);
-      if (header_value != NULL) {
-        ret = MHD_add_response_header (response, header_keys[i], header_value);
-        if (ret == MHD_NO) {
-          i = -1;
-          break;
-        }
-      }
-    }
-  }
-  return i;
-}
-
-/**
- * ulfius_set_response_cookie
- * adds cookies defined in the response_map_cookie
- * return the number of added headers, -1 on error
- */
-int ulfius_set_response_cookie(struct MHD_Response * mhd_response, const struct _u_response * response) {
-  int i, ret;
-  char * header;
-  if (mhd_response != NULL && response != NULL) {
-    for (i=0; i<response->nb_cookies; i++) {
-      header = ulfius_get_cookie_header(&response->map_cookie[i]);
-      if (header != NULL) {
-        ret = MHD_add_response_header (mhd_response, MHD_HTTP_HEADER_SET_COOKIE, header);
-        o_free(header);
-        if (ret == MHD_NO) {
-          i = -1;
-          break;
-        }
-      } else {
-        i = -1;
-        break;
-      }
-    }
-    return i;
-  } else {
-    return -1;
-  }
-}
-
-/**
- * ulfius_add_cookie_to_header
- * add a cookie to the cookie map
- * return U_OK on success
- */
-int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const uint max_age, 
-                                  const char * domain, const char * path, const int secure, const int http_only) {
-  int i;
-  if (response != NULL && key != NULL) {
-    // Look for cookies with the same key
-    for (i=0; i<response->nb_cookies; i++) {
-      if (0 == o_strcmp(response->map_cookie[i].key, key)) {
-        // Key found, replace cookie
-        o_free(response->map_cookie[i].value);
-        o_free(response->map_cookie[i].expires);
-        o_free(response->map_cookie[i].domain);
-        o_free(response->map_cookie[i].path);
-        response->map_cookie[i].value = o_strdup(value!=NULL?value:"");
-        response->map_cookie[i].expires = o_strdup(expires);
-        response->map_cookie[i].domain = o_strdup(domain);
-        response->map_cookie[i].path = o_strdup(path);
-        response->map_cookie[i].max_age = max_age;
-        response->map_cookie[i].secure = secure;
-        response->map_cookie[i].http_only = http_only;
-        if ((value != NULL && response->map_cookie[i].value == NULL) ||
-            (expires != NULL && response->map_cookie[i].expires == NULL) ||
-            (domain != NULL && response->map_cookie[i].domain == NULL) ||
-            (path != NULL && response->map_cookie[i].path == NULL)) {
-          ulfius_clean_cookie(&response->map_cookie[i]);
-          o_free(response->map_cookie[i].value);
-          o_free(response->map_cookie[i].expires);
-          o_free(response->map_cookie[i].domain);
-          o_free(response->map_cookie[i].path);
-          return U_ERROR_MEMORY;
-        } else {
-          return U_OK;
-        }
-      }
-    }
-    
-    // Key not found, inserting a new cookie
-    if (response->nb_cookies == 0) {
-      response->map_cookie = o_malloc(sizeof(struct _u_cookie));
-      if (response->map_cookie == NULL) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->map_cookie");
-        return U_ERROR_MEMORY;
-      }
-    } else {
-      response->map_cookie = o_realloc(response->map_cookie, (response->nb_cookies + 1) * sizeof(struct _u_cookie));
-      if (response->map_cookie == NULL) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->map_cookie");
-        return U_ERROR_MEMORY;
-      }
-    }
-    response->map_cookie[response->nb_cookies].key = o_strdup(key);
-    response->map_cookie[response->nb_cookies].value = o_strdup(value!=NULL?value:"");
-    response->map_cookie[response->nb_cookies].expires = o_strdup(expires);
-    response->map_cookie[response->nb_cookies].max_age = max_age;
-    response->map_cookie[response->nb_cookies].domain = o_strdup(domain);
-    response->map_cookie[response->nb_cookies].path = o_strdup(path);
-    response->map_cookie[response->nb_cookies].secure = secure;
-    response->map_cookie[response->nb_cookies].http_only = http_only;
-    if ((key != NULL && response->map_cookie[response->nb_cookies].key == NULL) || (value != NULL && response->map_cookie[response->nb_cookies].value == NULL) || 
-        (expires != NULL && response->map_cookie[response->nb_cookies].expires == NULL) || (domain != NULL && response->map_cookie[response->nb_cookies].domain == NULL) ||
-        (path != NULL && response->map_cookie[response->nb_cookies].path == NULL)) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for ulfius_add_cookie_to_response");
-      ulfius_clean_cookie(&response->map_cookie[response->nb_cookies]);
-      o_free(response->map_cookie[response->nb_cookies].key);
-      o_free(response->map_cookie[response->nb_cookies].value);
-      o_free(response->map_cookie[response->nb_cookies].expires);
-      o_free(response->map_cookie[response->nb_cookies].domain);
-      o_free(response->map_cookie[response->nb_cookies].path);
-      return U_ERROR_MEMORY;
-    }
-    response->nb_cookies++;
-    return U_OK;
-  } else {
-    return U_ERROR_PARAMS;
-  }
-}
 
 /**
  * Add a cookie in the cookie map as defined in the RFC 6265
  * Returned value must be free'd after use
  */
-char * ulfius_get_cookie_header(const struct _u_cookie * cookie) {
+static char * ulfius_get_cookie_header(const struct _u_cookie * cookie) {
   char * attr_expires = NULL, * attr_max_age = NULL, * attr_domain = NULL, * attr_path = NULL;
   char * attr_secure = NULL, * attr_http_only = NULL, * cookie_header_value = NULL;
 
@@ -277,6 +144,140 @@ char * ulfius_get_cookie_header(const struct _u_cookie * cookie) {
     return cookie_header_value;
   } else {
     return NULL;
+  }
+}
+
+/**
+ * ulfius_set_response_header
+ * adds headers defined in the response_map_header to the response
+ * return the number of added headers, -1 on error
+ */
+int ulfius_set_response_header(struct MHD_Response * response, const struct _u_map * response_map_header) {
+  const char ** header_keys = u_map_enum_keys(response_map_header);
+  const char * header_value;
+  int i = -1, ret;
+  if (header_keys != NULL && response != NULL && response_map_header != NULL) {
+    for (i=0; header_keys != NULL && header_keys[i] != NULL; i++) {
+      header_value = u_map_get(response_map_header, header_keys[i]);
+      if (header_value != NULL) {
+        ret = MHD_add_response_header (response, header_keys[i], header_value);
+        if (ret == MHD_NO) {
+          i = -1;
+          break;
+        }
+      }
+    }
+  }
+  return i;
+}
+
+/**
+ * ulfius_set_response_cookie
+ * adds cookies defined in the response_map_cookie
+ * return the number of added headers, -1 on error
+ */
+int ulfius_set_response_cookie(struct MHD_Response * mhd_response, const struct _u_response * response) {
+  int i, ret;
+  char * header;
+  if (mhd_response != NULL && response != NULL) {
+    for (i=0; i<response->nb_cookies; i++) {
+      header = ulfius_get_cookie_header(&response->map_cookie[i]);
+      if (header != NULL) {
+        ret = MHD_add_response_header (mhd_response, MHD_HTTP_HEADER_SET_COOKIE, header);
+        o_free(header);
+        if (ret == MHD_NO) {
+          i = -1;
+          break;
+        }
+      } else {
+        i = -1;
+        break;
+      }
+    }
+    return i;
+  } else {
+    return -1;
+  }
+}
+
+/**
+ * ulfius_add_cookie_to_header
+ * add a cookie to the cookie map
+ * return U_OK on success
+ */
+int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age, 
+                                  const char * domain, const char * path, const int secure, const int http_only) {
+  int i;
+  if (response != NULL && key != NULL) {
+    // Look for cookies with the same key
+    for (i=0; i<response->nb_cookies; i++) {
+      if (0 == o_strcmp(response->map_cookie[i].key, key)) {
+        // Key found, replace cookie
+        o_free(response->map_cookie[i].value);
+        o_free(response->map_cookie[i].expires);
+        o_free(response->map_cookie[i].domain);
+        o_free(response->map_cookie[i].path);
+        response->map_cookie[i].value = o_strdup(value!=NULL?value:"");
+        response->map_cookie[i].expires = o_strdup(expires);
+        response->map_cookie[i].domain = o_strdup(domain);
+        response->map_cookie[i].path = o_strdup(path);
+        response->map_cookie[i].max_age = max_age;
+        response->map_cookie[i].secure = secure;
+        response->map_cookie[i].http_only = http_only;
+        if ((value != NULL && response->map_cookie[i].value == NULL) ||
+            (expires != NULL && response->map_cookie[i].expires == NULL) ||
+            (domain != NULL && response->map_cookie[i].domain == NULL) ||
+            (path != NULL && response->map_cookie[i].path == NULL)) {
+          ulfius_clean_cookie(&response->map_cookie[i]);
+          o_free(response->map_cookie[i].value);
+          o_free(response->map_cookie[i].expires);
+          o_free(response->map_cookie[i].domain);
+          o_free(response->map_cookie[i].path);
+          return U_ERROR_MEMORY;
+        } else {
+          return U_OK;
+        }
+      }
+    }
+    
+    // Key not found, inserting a new cookie
+    if (response->nb_cookies == 0) {
+      response->map_cookie = o_malloc(sizeof(struct _u_cookie));
+      if (response->map_cookie == NULL) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->map_cookie");
+        return U_ERROR_MEMORY;
+      }
+    } else {
+      response->map_cookie = o_realloc(response->map_cookie, (response->nb_cookies + 1) * sizeof(struct _u_cookie));
+      if (response->map_cookie == NULL) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->map_cookie");
+        return U_ERROR_MEMORY;
+      }
+    }
+    response->map_cookie[response->nb_cookies].key = o_strdup(key);
+    response->map_cookie[response->nb_cookies].value = o_strdup(value!=NULL?value:"");
+    response->map_cookie[response->nb_cookies].expires = o_strdup(expires);
+    response->map_cookie[response->nb_cookies].max_age = max_age;
+    response->map_cookie[response->nb_cookies].domain = o_strdup(domain);
+    response->map_cookie[response->nb_cookies].path = o_strdup(path);
+    response->map_cookie[response->nb_cookies].secure = secure;
+    response->map_cookie[response->nb_cookies].http_only = http_only;
+    if ((key != NULL && response->map_cookie[response->nb_cookies].key == NULL) || (value != NULL && response->map_cookie[response->nb_cookies].value == NULL) || 
+        (expires != NULL && response->map_cookie[response->nb_cookies].expires == NULL) || (domain != NULL && response->map_cookie[response->nb_cookies].domain == NULL) ||
+        (path != NULL && response->map_cookie[response->nb_cookies].path == NULL)) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for ulfius_add_cookie_to_response");
+      ulfius_clean_cookie(&response->map_cookie[response->nb_cookies]);
+      o_free(response->map_cookie[response->nb_cookies].key);
+      o_free(response->map_cookie[response->nb_cookies].value);
+      o_free(response->map_cookie[response->nb_cookies].expires);
+      o_free(response->map_cookie[response->nb_cookies].domain);
+      o_free(response->map_cookie[response->nb_cookies].path);
+      return U_ERROR_MEMORY;
+    }
+    response->nb_cookies++;
+    return U_OK;
+  } else {
+    return U_ERROR_PARAMS;
   }
 }
 
@@ -563,7 +564,7 @@ int ulfius_copy_response(struct _u_response * dest, const struct _u_response * s
  * binary_body must end with a '\0' character
  * return U_OK on success
  */
-int ulfius_set_string_body_response(struct _u_response * response, const uint status, const char * binary_body) {
+int ulfius_set_string_body_response(struct _u_response * response, const unsigned int status, const char * binary_body) {
   if (response != NULL && binary_body != NULL) {
     size_t binary_body_length = strlen(binary_body);
     // Free the binary_body available
@@ -589,7 +590,7 @@ int ulfius_set_string_body_response(struct _u_response * response, const uint st
  * Add a binary binary_body to a response
  * return U_OK on success
  */
-int ulfius_set_binary_body_response(struct _u_response * response, const uint status, const char * binary_body, const size_t length) {
+int ulfius_set_binary_body_response(struct _u_response * response, const unsigned int status, const char * binary_body, const size_t length) {
   if (response != NULL && binary_body != NULL && length > 0) {
     // Free all the bodies available
     o_free(response->binary_body);
@@ -615,7 +616,7 @@ int ulfius_set_binary_body_response(struct _u_response * response, const uint st
  * Set an empty response with only a status
  * return U_OK on success
  */
-int ulfius_set_empty_body_response(struct _u_response * response, const uint status) {
+int ulfius_set_empty_body_response(struct _u_response * response, const unsigned int status) {
   if (response != NULL) {
     // Free all the bodies available
     response->binary_body = NULL;
@@ -636,7 +637,7 @@ int ulfius_set_empty_body_response(struct _u_response * response, const uint sta
  * return U_OK on success
  */
 int ulfius_set_stream_response(struct _u_response * response, 
-                                const uint status,
+                                const unsigned int status,
                                 ssize_t (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max),
                                 void (* stream_callback_free) (void * stream_user_data),
                                 uint64_t stream_size,
@@ -666,7 +667,7 @@ int ulfius_set_stream_response(struct _u_response * response,
  * Add a json_t binary_body to a response
  * return U_OK on success
  */
-int ulfius_set_json_body_response(struct _u_response * response, const uint status, const json_t * binary_body) {
+int ulfius_set_json_body_response(struct _u_response * response, const unsigned int status, const json_t * binary_body) {
   if (response != NULL && binary_body != NULL) {
     // Free all the bodies available
     o_free(response->binary_body);
