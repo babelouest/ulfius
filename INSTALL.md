@@ -22,6 +22,8 @@ If you want to use the websocket server functions, you need to install libmicroh
 
 ## Installation
 
+### Install Ulfius as a shared library
+
 Download Ulfius source code from Github, get the submodules, compile and install each submodule, then compile and install ulfius:
 
 ```shell
@@ -37,6 +39,8 @@ $ make
 $ sudo make install
 ```
 
+### Update Ulfius
+
 If you update Ulfius from a previous version, you must install the corresponding version of the submodules as well:
 
 ```shell
@@ -51,6 +55,8 @@ $ cd ../..
 $ make
 $ sudo make install
 ```
+
+### Disable dependencies
 
 To disable libcurl functions, append the option `CURLFLAG=-DU_DISABLE_CURL` to the make command when you build Ulfius:
 
@@ -82,7 +88,15 @@ To disable two or more libraries, append options, example:
 $ make CURLFLAG=-DU_DISABLE_CURL JANSSONFLAG=-DU_DISABLE_JANSSON
 ```
 
+### Installation directory target
+
 By default, the shared libraries and the header files will be installed in the `/usr/local` location. To change this setting, you can modify the `PREFIX` value in the `src/Makefile`, `lib/orcania/src/Makefile` and `lib/yder/src/Makefile` files.
+
+```shell
+$ make PREFIX=/tmp install # ton install ulfius in /tmp/lib for example
+```
+
+### Install from a `.zip` archive
 
 If you download Ulfius as a `.zip` or `.tar.gz` file via github release tab, you must initiaize the submodules prior to the compilaton with the following command:
 
@@ -90,3 +104,17 @@ If you download Ulfius as a `.zip` or `.tar.gz` file via github release tab, you
 $ cd ulfius/
 $ git submodule update --init
 ```
+
+### Install as a static archive
+
+To install Ulfius library as a static archive, `libulfius.a`, use the make commands `make static*`:
+
+The archives `liborcania.a` and `libyder.a` must previously be installed in the $(PREFIX) directory.
+
+```shell
+$ cd ulfius/src
+$ make static && sudo make static-install # or make PREFIX=/tmp static-install if you want to install in `/tmp/lib`
+```
+
+The example program `example_program/simple_example` has a static make command to test and validate building a program with the archive.
+

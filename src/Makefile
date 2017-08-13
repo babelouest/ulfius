@@ -46,6 +46,9 @@ libulfius.so: ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_webso
 	$(CC) -shared -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o $(LIBS) $(LJANSSON) $(LCURL) $(LWEBSOCKET)
 	ln -sf $(OUTPUT).$(VERSION) $(OUTPUT)
 
+libulfius.a: ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o
+	ar rcs libulfius.a ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o
+
 ulfius.o: ulfius.h u_private.h ulfius.c
 	$(CC) $(CFLAGS) ulfius.c
 
@@ -65,15 +68,19 @@ u_send_request.o: ulfius.h u_private.h u_send_request.c
 	$(CC) $(CFLAGS) u_send_request.c
 
 clean:
-	rm -f *.o *.so $(OUTPUT) $(OUTPUT).*
+	rm -f *.o *.so *.a $(OUTPUT) $(OUTPUT).*
 
 install: all
 	cp $(OUTPUT).$(VERSION) $(PREFIX)/lib
 	cp ulfius.h $(PREFIX)/include
 	ldconfig
 
+static-install: static
+	cp libulfius.a $(PREFIX)/lib
+	cp ulfius.h $(PREFIX)/include
+
 uninstall:
-	rm -f $(PREFIX)/lib/$(OUTPUT)
+	rm -f $(PREFIX)/lib/$(OUTPUT) libulfius.a
 	rm -f $(PREFIX)/lib/$(OUTPUT).*
 	rm -f $(PREFIX)/include/ulfius.h
 
@@ -84,3 +91,11 @@ debug: libulfius.so
 release: ADDITIONALFLAGS=-O3
 
 release: libulfius.so
+
+static: ADDITIONALFLAGS=-O3
+
+static: libulfius.a
+
+static-debug: ADDITIONALFLAGS=-DDEBUG -g -O0
+
+static-debug: libulfius.a

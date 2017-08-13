@@ -8,6 +8,14 @@ Run a simple webservice that listen on port 8537.
 $ make test
 ```
 
+## Compile with Ulfius built as a static archive
+
+Ulfius must be built as a static archive and installed in the $(PREFIX) directory.
+
+```bash
+$ make static
+```
+
 ### https connection
 
 If you want this program to listen to a secure (https) connection, create a certificate with its certificate and private keys in to separate files, and run the program with the options `-secure <key_file> <cert_file>`.
