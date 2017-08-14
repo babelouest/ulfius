@@ -88,13 +88,17 @@ To disable two or more libraries, append options, example:
 $ make CURLFLAG=-DU_DISABLE_CURL JANSSONFLAG=-DU_DISABLE_JANSSON
 ```
 
-### Installation directory target
+### Installation directory
 
 By default, the shared libraries and the header files will be installed in the `/usr/local` location. To change this setting, you can modify the `PREFIX` value in the `src/Makefile`, `lib/orcania/src/Makefile` and `lib/yder/src/Makefile` files.
 
 ```shell
-$ make PREFIX=/tmp install # ton install ulfius in /tmp/lib for example
+$ make PREFIX=/tmp install # to install ulfius in /tmp/lib for example
 ```
+
+You can install Ulfius without root permission if your user has write access to `$(PREFIX)`.
+A `ldconfig` command is executed at the end of the install, it will probably fail if you don't have root permission, but this is harmless.
+If you choose to install Ulfius in another directory, you must set your environment variable `LD_LIBRARY_PATH` properly.
 
 ### Install from a `.zip` archive
 
