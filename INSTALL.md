@@ -1,8 +1,18 @@
 # Install Ulfius
 
-## Prerequisites
+## Debian package
 
-### External dependencies
+Ulfius is now available in Debian Buster (testing), and Debian sid. To install it on your device, use the following command as root:
+
+```shell
+# apt install libulfius-dev # Or apt install libulfius.1 if you don't need the development files
+```
+
+## Manual install
+
+### Prerequisites
+
+#### External dependencies
 
 To install all the external dependencies, for Debian based distributions (Debian, Ubuntu, Raspbian, etc.), run as root:
 
@@ -10,7 +20,7 @@ To install all the external dependencies, for Debian based distributions (Debian
 # apt-get install libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev libgnutls28-dev libgcrypt20-dev
 ```
 
-### Note
+#### Note
 
 Here libcurl4-gnutls-dev for the example, but any `libcurl*-dev` library should be sufficent, depending on your needs and configuration. Note that gnutls is mandatory for websocket management and https support.
 
@@ -20,9 +30,9 @@ As in version 2.0, libcurl and libjansson are no longer mandatory if you don't n
 
 If you want to use the websocket server functions, you need to install libmicrohttpd 0.9.53 minimum version.
 
-## Installation
+### Installation
 
-### Install Ulfius as a shared library
+#### Install Ulfius as a shared library
 
 Download Ulfius source code from Github, get the submodules, compile and install each submodule, then compile and install ulfius:
 
@@ -39,7 +49,7 @@ $ make
 $ sudo make install
 ```
 
-### Update Ulfius
+#### Update Ulfius
 
 If you update Ulfius from a previous version, you must install the corresponding version of the submodules as well:
 
@@ -56,7 +66,7 @@ $ make
 $ sudo make install
 ```
 
-### Disable dependencies
+#### Disable dependencies
 
 To disable libcurl functions, append the option `CURLFLAG=-DU_DISABLE_CURL` to the make command when you build Ulfius:
 
@@ -88,7 +98,7 @@ To disable two or more libraries, append options, example:
 $ make CURLFLAG=-DU_DISABLE_CURL JANSSONFLAG=-DU_DISABLE_JANSSON
 ```
 
-### Installation directory
+#### Installation directory
 
 By default, the shared libraries and the header files will be installed in the `/usr/local` location. To change this setting, you can modify the `PREFIX` value in the `src/Makefile`, `lib/orcania/src/Makefile` and `lib/yder/src/Makefile` files.
 
@@ -100,7 +110,7 @@ You can install Ulfius without root permission if your user has write access to 
 A `ldconfig` command is executed at the end of the install, it will probably fail if you don't have root permission, but this is harmless.
 If you choose to install Ulfius in another directory, you must set your environment variable `LD_LIBRARY_PATH` properly.
 
-### Install from a `.zip` archive
+#### Install from a `.zip` archive
 
 If you download Ulfius as a `.zip` or `.tar.gz` file via github release tab, you must initiaize the submodules prior to the compilaton with the following command:
 
@@ -109,7 +119,7 @@ $ cd ulfius/
 $ git submodule update --init
 ```
 
-### Install as a static archive
+#### Install as a static archive
 
 To install Ulfius library as a static archive, `libulfius.a`, use the make commands `make static*`:
 
