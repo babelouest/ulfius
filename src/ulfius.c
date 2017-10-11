@@ -29,6 +29,23 @@
 #include "u_private.h"
 #include "ulfius.h"
 
+int ulfius_set_upload_file_callback_function(struct _u_instance * u_instance, int (* file_upload_callback) (const struct _u_request * request, 
+																											 const char * key, 
+																											 const char * filename, 
+																											 const char * content_type, 
+																											 const char * transfer_encoding, 
+																											 const char * data, 
+																											 uint64_t off, 
+																											 size_t size, 
+																											 void * cls), void * cls) {
+  if (u_instance != NULL && file_upload_callback != NULL) {
+		u_instance->file_upload_callback = file_upload_callback;
+		u_instance->file_upload_cls = cls;
+		return U_OK;
+	} else {
+		return U_ERROR_PARAMS;
+	}
+}
 /**
  * Fill a map with the key/values specified
  */
@@ -127,6 +144,7 @@ static void * ulfius_uri_logger (void * cls, const char * uri) {
   struct connection_info_struct * con_info = o_malloc (sizeof (struct connection_info_struct));
   if (con_info != NULL) {
     con_info->callback_first_iteration = 1;
+		con_info->u_instance = NULL;
     con_info->request = o_malloc(sizeof(struct _u_request));
     if (con_info->request == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for con_info->request");
@@ -220,23 +238,32 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
   
   struct connection_info_struct * con_info = coninfo_cls;
   size_t cur_size = size;
-  char * data_dup = o_strndup(data, size); // Force value to end with a NULL character
+  char * data_dup;
   
-  if (con_info->max_post_param_size > 0) {
-    if (off > con_info->max_post_param_size) {
-      return MHD_YES;
-    } else if (off + size > con_info->max_post_param_size) {
-      cur_size = con_info->max_post_param_size - off;
-    }
-  }
-  
-  if (cur_size > 0 && data_dup != NULL && u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data_dup, off, cur_size + 1) == U_OK) {
-    o_free(data_dup);
-    return MHD_YES;
-  } else {
-    o_free(data_dup);
-    return MHD_NO;
-  }
+	if (filename != NULL && con_info->u_instance != NULL && con_info->u_instance->file_upload_callback != NULL) {
+		if (con_info->u_instance->file_upload_callback(con_info->request, key, filename, content_type, transfer_encoding, data, off, size, con_info->u_instance->file_upload_cls) == U_OK) {
+			return MHD_YES;
+		} else {
+			return MHD_NO;
+		}
+	} else {
+		data_dup = o_strndup(data, size); // Force value to end with a NULL character
+		if (con_info->max_post_param_size > 0) {
+			if (off > con_info->max_post_param_size) {
+				return MHD_YES;
+			} else if (off + size > con_info->max_post_param_size) {
+				cur_size = con_info->max_post_param_size - off;
+			}
+		}
+		
+		if (cur_size > 0 && data_dup != NULL && u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data_dup, off, cur_size + 1) == U_OK) {
+			o_free(data_dup);
+			return MHD_YES;
+		} else {
+			o_free(data_dup);
+			return MHD_NO;
+		}
+	}
 }
 
 /**
@@ -271,6 +298,11 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error con_info is NULL");
     return MHD_NO;
   }
+	
+	if (con_info->u_instance == NULL) {
+		con_info->u_instance = (struct _u_instance *)cls;
+	
+	}
   
   if (con_info->callback_first_iteration) {
     con_info->callback_first_iteration = 0;
@@ -1134,6 +1166,8 @@ int ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, str
     u_instance->default_endpoint = NULL;
     u_instance->max_post_param_size = 0;
     u_instance->max_post_body_size = 0;
+    u_instance->file_upload_callback = NULL;
+    u_instance->file_upload_cls = NULL;
 #ifndef U_DISABLE_WEBSOCKET
     u_instance->websocket_handler = o_malloc(sizeof(struct _websocket_handler));
     if (u_instance->websocket_handler == NULL) {

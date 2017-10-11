@@ -233,16 +233,27 @@ struct _u_instance {
   size_t                        max_post_param_size;
   size_t                        max_post_body_size;
   void                        * websocket_handler;
+	int                        (* file_upload_callback) (const struct _u_request * request, 
+																											 const char * key, 
+																											 const char * filename, 
+																											 const char * content_type, 
+																											 const char * transfer_encoding, 
+																											 const char * data, 
+																											 uint64_t off, 
+																											 size_t size, 
+																											 void * cls);
+	void                        * file_upload_cls;
 };
 
 /**
  * Structures used to facilitate data manipulations (internal)
  */
 struct connection_info_struct {
+	struct _u_instance       * u_instance;
   struct MHD_PostProcessor * post_processor;
   int                        has_post_processor;
   int                        callback_first_iteration;
-  struct _u_request *        request;
+  struct _u_request        * request;
   size_t                     max_post_param_size;
   struct _u_map              map_url_initial;
 };
@@ -299,6 +310,16 @@ int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * 
  * return U_OK on success
  */
 int ulfius_stop_framework(struct _u_instance * u_instance);
+
+int ulfius_set_upload_file_callback_function(struct _u_instance * u_instance, int (* file_upload_callback) (const struct _u_request * request, 
+																											 const char * key, 
+																											 const char * filename, 
+																											 const char * content_type, 
+																											 const char * transfer_encoding, 
+																											 const char * data, 
+																											 uint64_t off, 
+																											 size_t size, 
+																											 void * cls), void * cls);
 
 /***********************************
  * Endpoints functions declarations
