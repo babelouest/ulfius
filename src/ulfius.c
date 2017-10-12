@@ -30,21 +30,21 @@
 #include "ulfius.h"
 
 int ulfius_set_upload_file_callback_function(struct _u_instance * u_instance, int (* file_upload_callback) (const struct _u_request * request, 
-																											 const char * key, 
-																											 const char * filename, 
-																											 const char * content_type, 
-																											 const char * transfer_encoding, 
-																											 const char * data, 
-																											 uint64_t off, 
-																											 size_t size, 
-																											 void * cls), void * cls) {
+                                                       const char * key, 
+                                                       const char * filename, 
+                                                       const char * content_type, 
+                                                       const char * transfer_encoding, 
+                                                       const char * data, 
+                                                       uint64_t off, 
+                                                       size_t size, 
+                                                       void * cls), void * cls) {
   if (u_instance != NULL && file_upload_callback != NULL) {
-		u_instance->file_upload_callback = file_upload_callback;
-		u_instance->file_upload_cls = cls;
-		return U_OK;
-	} else {
-		return U_ERROR_PARAMS;
-	}
+    u_instance->file_upload_callback = file_upload_callback;
+    u_instance->file_upload_cls = cls;
+    return U_OK;
+  } else {
+    return U_ERROR_PARAMS;
+  }
 }
 /**
  * Fill a map with the key/values specified
@@ -144,7 +144,7 @@ static void * ulfius_uri_logger (void * cls, const char * uri) {
   struct connection_info_struct * con_info = o_malloc (sizeof (struct connection_info_struct));
   if (con_info != NULL) {
     con_info->callback_first_iteration = 1;
-		con_info->u_instance = NULL;
+    con_info->u_instance = NULL;
     con_info->request = o_malloc(sizeof(struct _u_request));
     if (con_info->request == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for con_info->request");
@@ -238,32 +238,40 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
   
   struct connection_info_struct * con_info = coninfo_cls;
   size_t cur_size = size;
-  char * data_dup;
+  char * data_dup, * filename_param;
   
-	if (filename != NULL && con_info->u_instance != NULL && con_info->u_instance->file_upload_callback != NULL) {
-		if (con_info->u_instance->file_upload_callback(con_info->request, key, filename, content_type, transfer_encoding, data, off, size, con_info->u_instance->file_upload_cls) == U_OK) {
-			return MHD_YES;
-		} else {
-			return MHD_NO;
-		}
-	} else {
-		data_dup = o_strndup(data, size); // Force value to end with a NULL character
-		if (con_info->max_post_param_size > 0) {
-			if (off > con_info->max_post_param_size) {
-				return MHD_YES;
-			} else if (off + size > con_info->max_post_param_size) {
-				cur_size = con_info->max_post_param_size - off;
-			}
-		}
-		
-		if (cur_size > 0 && data_dup != NULL && u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data_dup, off, cur_size + 1) == U_OK) {
-			o_free(data_dup);
-			return MHD_YES;
-		} else {
-			o_free(data_dup);
-			return MHD_NO;
-		}
-	}
+  if (filename != NULL && con_info->u_instance != NULL && con_info->u_instance->file_upload_callback != NULL) {
+    if (con_info->u_instance->file_upload_callback(con_info->request, key, filename, content_type, transfer_encoding, data, off, size, con_info->u_instance->file_upload_cls) == U_OK) {
+      return MHD_YES;
+    } else {
+      return MHD_NO;
+    }
+  } else {
+    data_dup = o_strndup(data, size); // Force value to end with a NULL character
+    if (con_info->max_post_param_size > 0) {
+      if (off > con_info->max_post_param_size) {
+        return MHD_YES;
+      } else if (off + size > con_info->max_post_param_size) {
+        cur_size = con_info->max_post_param_size - off;
+      }
+    }
+    
+    if (filename != NULL) {
+      filename_param = msprintf("%s_filename", key);
+      if (u_map_put((struct _u_map *)con_info->request->map_post_body, filename_param, filename) != U_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "ulfius - Error u_map_put filename value");
+      }
+      o_free(filename_param);
+    }
+    
+    if (cur_size > 0 && data_dup != NULL && u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data_dup, off, cur_size + 1) == U_OK) {
+      o_free(data_dup);
+      return MHD_YES;
+    } else {
+      o_free(data_dup);
+      return MHD_NO;
+    }
+  }
 }
 
 /**
@@ -298,11 +306,11 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error con_info is NULL");
     return MHD_NO;
   }
-	
-	if (con_info->u_instance == NULL) {
-		con_info->u_instance = (struct _u_instance *)cls;
-	
-	}
+  
+  if (con_info->u_instance == NULL) {
+    con_info->u_instance = (struct _u_instance *)cls;
+  
+  }
   
   if (con_info->callback_first_iteration) {
     con_info->callback_first_iteration = 0;
@@ -354,19 +362,18 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
         memcpy((char*)con_info->request->binary_body + con_info->request->binary_body_length, upload_data, upload_data_size_current);
         con_info->request->binary_body_length += upload_data_size_current;
         *upload_data_size = 0;
+        // Handles request binary_body
+        const char * content_type = u_map_get_case(con_info->request->map_header, ULFIUS_HTTP_HEADER_CONTENT);
+        if (0 == o_strncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) || 
+            0 == o_strncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA))) {
+          MHD_post_process (con_info->post_processor, upload_data, *upload_data_size);
+        }
         return MHD_YES;
       }
     } else {
       return MHD_YES;
     }
   } else {
-    // Handles request binary_body
-    const char * content_type = u_map_get_case(con_info->request->map_header, ULFIUS_HTTP_HEADER_CONTENT);
-    if (0 == o_strncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) || 
-        0 == o_strncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA))) {
-      MHD_post_process (con_info->post_processor, con_info->request->binary_body, con_info->request->binary_body_length);
-    }
-    
     // Check if the endpoint has one or more matches
     current_endpoint_list = ulfius_endpoint_match(method, url, endpoint_list);
     
@@ -603,12 +610,12 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
             mhd_ret = MHD_queue_basic_auth_fail_response (connection, auth_realm, mhd_response);
           } else if (inner_error == U_CALLBACK_UNAUTHORIZED) {
             mhd_ret = MHD_queue_response (connection, MHD_HTTP_UNAUTHORIZED, mhd_response);
-  #ifndef U_DISABLE_WEBSOCKET
+#ifndef U_DISABLE_WEBSOCKET
           } else if (upgrade_protocol) {
             mhd_ret = MHD_queue_response (connection,
                                           MHD_HTTP_SWITCHING_PROTOCOLS,
                                           mhd_response);
-  #endif
+#endif
           } else {
             mhd_ret = MHD_queue_response (connection, response->status, mhd_response);
           }
@@ -1186,7 +1193,7 @@ int ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, str
     }
     ((struct _websocket_handler *)u_instance->websocket_handler)->pthread_init = 1;
 #else
-	  u_instance->websocket_handler = NULL;
+    u_instance->websocket_handler = NULL;
 #endif
     return U_OK;
   } else {
