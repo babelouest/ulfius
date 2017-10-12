@@ -28,15 +28,15 @@ LIBS=-L$(PREFIX)/lib -L$(LIBORCANIA_LOCATION) -L$(LIBYDER_LOCATION) -lc -lmicroh
 OUTPUT=libulfius.so
 VERSION=2.1
 
-ifneq (($(JANSSONFLAG)),"")
+ifndef JANSSONFLAG
 LJANSSON=-ljansson
 endif
 
-ifneq (($(CURLFLAG)),"")
+ifndef CURLFLAG
 LCURL=-lcurl
 endif
 
-ifneq (($(WEBSOCKETFLAG)),"")
+ifndef WEBSOCKETFLAG
 LWEBSOCKET=-lgnutls
 endif
 
