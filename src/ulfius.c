@@ -345,7 +345,6 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
     }
     return MHD_YES;
   } else if (*upload_data_size != 0) {
-
     size_t body_len = con_info->request->binary_body_length + *upload_data_size, upload_data_size_current = *upload_data_size;
     
     if (((struct _u_instance *)cls)->max_post_body_size > 0 && con_info->request->binary_body_length + *upload_data_size > ((struct _u_instance *)cls)->max_post_body_size) {
@@ -361,13 +360,13 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
       } else {
         memcpy((char*)con_info->request->binary_body + con_info->request->binary_body_length, upload_data, upload_data_size_current);
         con_info->request->binary_body_length += upload_data_size_current;
-        *upload_data_size = 0;
         // Handles request binary_body
         const char * content_type = u_map_get_case(con_info->request->map_header, ULFIUS_HTTP_HEADER_CONTENT);
         if (0 == o_strncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) || 
             0 == o_strncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA))) {
           MHD_post_process (con_info->post_processor, upload_data, *upload_data_size);
         }
+        *upload_data_size = 0;
         return MHD_YES;
       }
     } else {
