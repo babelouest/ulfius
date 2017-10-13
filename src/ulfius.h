@@ -311,15 +311,36 @@ int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * 
  */
 int ulfius_stop_framework(struct _u_instance * u_instance);
 
-int ulfius_set_upload_file_callback_function(struct _u_instance * u_instance, int (* file_upload_callback) (const struct _u_request * request, 
-                                                       const char * key, 
-                                                       const char * filename, 
-                                                       const char * content_type, 
-                                                       const char * transfer_encoding, 
-                                                       const char * data, 
-                                                       uint64_t off, 
-                                                       size_t size, 
-                                                       void * cls), void * cls);
+/**
+ * ulfius_set_upload_file_callback_function
+ * 
+ * Set the callback function to handle file upload
+ * Used to facilitate large files upload management
+ * The callback function file_upload_callback will be called
+ * multiple times, with the uploaded file in striped in parts
+ * 
+ * Warning: If this function is used, all the uploaded files
+ * for the instance will be managed via this function, and they
+ * will no longer be available in the struct _u_request in the
+ * ulfius callback function afterwards.
+ * 
+ * Thanks to Thad Phetteplace for the help on this feature
+ * 
+ * u_instance:    pointer to a struct _u_instance that describe its port and bind address
+ * file_upload_callback: Pointer to a callback function that will handle all file uploads
+ * cls: a pointer that will be passed to file_upload_callback each tim it's called
+ */
+int ulfius_set_upload_file_callback_function(struct _u_instance * u_instance,
+                                             int (* file_upload_callback) (const struct _u_request * request, 
+                                                                           const char * key, 
+                                                                           const char * filename, 
+                                                                           const char * content_type, 
+                                                                           const char * transfer_encoding, 
+                                                                           const char * data, 
+                                                                           uint64_t off, 
+                                                                           size_t size, 
+                                                                           void * cls),
+                                             void * cls);
 
 /***********************************
  * Endpoints functions declarations
