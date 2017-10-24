@@ -1,8 +1,8 @@
 # Install Ulfius
 
-## Debian package
+## Debian/Ubuntu package
 
-Ulfius is now available in Debian Buster (testing), and Debian sid. To install it on your device, use the following command as root:
+Ulfius is now available in Debian Buster (testing), Debian sid and since Ubuntu 17.10 "The Artful Aardvark". To install it on your device, use the following command as root:
 
 ```shell
 # apt install libulfius-dev # Or apt install libulfius.1 if you don't need the development files
