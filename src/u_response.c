@@ -572,7 +572,7 @@ int ulfius_set_string_body_response(struct _u_response * response, const unsigne
     response->binary_body = o_malloc(binary_body_length);
     
     if (response->binary_body == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for dest->binary_body");
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->binary_body");
       return U_ERROR_MEMORY;
     } else {
       response->status = status;
@@ -599,7 +599,7 @@ int ulfius_set_binary_body_response(struct _u_response * response, const unsigne
 
     response->binary_body = o_malloc(length);
     if (response->binary_body == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for dest->binary_body");
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->binary_body");
       return U_ERROR_MEMORY;
     }
     memcpy(response->binary_body, binary_body, length);
@@ -676,7 +676,7 @@ int ulfius_set_json_body_response(struct _u_response * response, const unsigned 
 
     response->binary_body = (void*) json_dumps(binary_body, JSON_COMPACT);
     if (response->binary_body == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for dest->binary_body");
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->binary_body");
       return U_ERROR_MEMORY;
     }
     response->binary_body_length = strlen((char*)response->binary_body);
