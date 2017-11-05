@@ -127,6 +127,7 @@ static void * ulfius_uri_logger (void * cls, const char * uri) {
   struct connection_info_struct * con_info = o_malloc (sizeof (struct connection_info_struct));
   if (con_info != NULL) {
     con_info->callback_first_iteration = 1;
+    con_info->u_instance = NULL;
     con_info->request = o_malloc(sizeof(struct _u_request));
     if (con_info->request == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for con_info->request");
@@ -220,22 +221,39 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
   
   struct connection_info_struct * con_info = coninfo_cls;
   size_t cur_size = size;
-  char * data_dup = o_strndup(data, size); // Force value to end with a NULL character
+  char * data_dup, * filename_param;
   
-  if (con_info->max_post_param_size > 0) {
-    if (off > con_info->max_post_param_size) {
+  if (filename != NULL && con_info->u_instance != NULL && con_info->u_instance->file_upload_callback != NULL) {
+    if (con_info->u_instance->file_upload_callback(con_info->request, key, filename, content_type, transfer_encoding, data, off, size, con_info->u_instance->file_upload_cls) == U_OK) {
       return MHD_YES;
-    } else if (off + size > con_info->max_post_param_size) {
-      cur_size = con_info->max_post_param_size - off;
+    } else {
+      return MHD_NO;
     }
-  }
-  
-  if (cur_size > 0 && data_dup != NULL && u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data_dup, off, cur_size + 1) == U_OK) {
-    o_free(data_dup);
-    return MHD_YES;
   } else {
-    o_free(data_dup);
-    return MHD_NO;
+    data_dup = o_strndup(data, size); // Force value to end with a NULL character
+    if (con_info->max_post_param_size > 0) {
+      if (off > con_info->max_post_param_size) {
+        return MHD_YES;
+      } else if (off + size > con_info->max_post_param_size) {
+        cur_size = con_info->max_post_param_size - off;
+      }
+    }
+    
+    if (filename != NULL) {
+      filename_param = msprintf("%s_filename", key);
+      if (u_map_put((struct _u_map *)con_info->request->map_post_body, filename_param, filename) != U_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "ulfius - Error u_map_put filename value");
+      }
+      o_free(filename_param);
+    }
+    
+    if (cur_size > 0 && data_dup != NULL && u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data_dup, off, cur_size + 1) == U_OK) {
+      o_free(data_dup);
+      return MHD_YES;
+    } else {
+      o_free(data_dup);
+      return MHD_NO;
+    }
   }
 }
 
@@ -272,6 +290,11 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
     return MHD_NO;
   }
   
+  if (con_info->u_instance == NULL) {
+    con_info->u_instance = (struct _u_instance *)cls;
+  
+  }
+  
   if (con_info->callback_first_iteration) {
     con_info->callback_first_iteration = 0;
     so_client = MHD_get_connection_info (connection, MHD_CONNECTION_INFO_CLIENT_ADDRESS)->client_addr;
@@ -305,7 +328,6 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
     }
     return MHD_YES;
   } else if (*upload_data_size != 0) {
-
     size_t body_len = con_info->request->binary_body_length + *upload_data_size, upload_data_size_current = *upload_data_size;
     
     if (((struct _u_instance *)cls)->max_post_body_size > 0 && con_info->request->binary_body_length + *upload_data_size > ((struct _u_instance *)cls)->max_post_body_size) {
@@ -321,6 +343,12 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
       } else {
         memcpy((char*)con_info->request->binary_body + con_info->request->binary_body_length, upload_data, upload_data_size_current);
         con_info->request->binary_body_length += upload_data_size_current;
+        // Handles request binary_body
+        const char * content_type = u_map_get_case(con_info->request->map_header, ULFIUS_HTTP_HEADER_CONTENT);
+        if (0 == o_strncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) || 
+            0 == o_strncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA))) {
+          MHD_post_process (con_info->post_processor, upload_data, *upload_data_size);
+        }
         *upload_data_size = 0;
         return MHD_YES;
       }
@@ -328,13 +356,6 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
       return MHD_YES;
     }
   } else {
-    // Handles request binary_body
-    const char * content_type = u_map_get_case(con_info->request->map_header, ULFIUS_HTTP_HEADER_CONTENT);
-    if (0 == o_strncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) || 
-        0 == o_strncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA))) {
-      MHD_post_process (con_info->post_processor, con_info->request->binary_body, con_info->request->binary_body_length);
-    }
-    
     // Check if the endpoint has one or more matches
     current_endpoint_list = ulfius_endpoint_match(method, url, endpoint_list);
     
@@ -571,12 +592,12 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
             mhd_ret = MHD_queue_basic_auth_fail_response (connection, auth_realm, mhd_response);
           } else if (inner_error == U_CALLBACK_UNAUTHORIZED) {
             mhd_ret = MHD_queue_response (connection, MHD_HTTP_UNAUTHORIZED, mhd_response);
-  #ifndef U_DISABLE_WEBSOCKET
+#ifndef U_DISABLE_WEBSOCKET
           } else if (upgrade_protocol) {
             mhd_ret = MHD_queue_response (connection,
                                           MHD_HTTP_SWITCHING_PROTOCOLS,
                                           mhd_response);
-  #endif
+#endif
           } else {
             mhd_ret = MHD_queue_response (connection, response->status, mhd_response);
           }
@@ -1079,6 +1100,45 @@ int ulfius_set_default_endpoint(struct _u_instance * u_instance,
 }
 
 /**
+ * ulfius_set_upload_file_callback_function
+ * 
+ * Set the callback function to handle file upload
+ * Used to facilitate large files upload management
+ * The callback function file_upload_callback will be called
+ * multiple times, with the uploaded file in striped in parts
+ * 
+ * Warning: If this function is used, all the uploaded files
+ * for the instance will be managed via this function, and they
+ * will no longer be available in the struct _u_request in the
+ * ulfius callback function afterwards.
+ * 
+ * Thanks to Thad Phetteplace for the help on this feature
+ * 
+ * u_instance:    pointer to a struct _u_instance that describe its port and bind address
+ * file_upload_callback: Pointer to a callback function that will handle all file uploads
+ * cls: a pointer that will be passed to file_upload_callback each tim it's called
+ */
+int ulfius_set_upload_file_callback_function(struct _u_instance * u_instance,
+                                             int (* file_upload_callback) (const struct _u_request * request, 
+                                                                           const char * key, 
+                                                                           const char * filename, 
+                                                                           const char * content_type, 
+                                                                           const char * transfer_encoding, 
+                                                                           const char * data, 
+                                                                           uint64_t off, 
+                                                                           size_t size, 
+                                                                           void * cls),
+                                             void * cls) {
+  if (u_instance != NULL && file_upload_callback != NULL) {
+    u_instance->file_upload_callback = file_upload_callback;
+    u_instance->file_upload_cls = cls;
+    return U_OK;
+  } else {
+    return U_ERROR_PARAMS;
+  }
+}
+
+/**
  * ulfius_clean_instance
  * 
  * Clean memory allocated by a struct _u_instance *
@@ -1134,6 +1194,8 @@ int ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, str
     u_instance->default_endpoint = NULL;
     u_instance->max_post_param_size = 0;
     u_instance->max_post_body_size = 0;
+    u_instance->file_upload_callback = NULL;
+    u_instance->file_upload_cls = NULL;
 #ifndef U_DISABLE_WEBSOCKET
     u_instance->websocket_handler = o_malloc(sizeof(struct _websocket_handler));
     if (u_instance->websocket_handler == NULL) {
@@ -1152,7 +1214,7 @@ int ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, str
     }
     ((struct _websocket_handler *)u_instance->websocket_handler)->pthread_init = 1;
 #else
-	  u_instance->websocket_handler = NULL;
+    u_instance->websocket_handler = NULL;
 #endif
     return U_OK;
   } else {

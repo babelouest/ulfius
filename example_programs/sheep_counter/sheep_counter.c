@@ -40,6 +40,16 @@ int callback_sheep_counter_add (const struct _u_request * request, struct _u_res
 // Callback function used to upload file
 int callback_upload_file (const struct _u_request * request, struct _u_response * response, void * user_data);
 
+// File upload callback function
+int file_upload_callback (const struct _u_request * request, 
+                          const char * key, 
+                          const char * filename, 
+                          const char * content_type, 
+                          const char * transfer_encoding, 
+                          const char * data, 
+                          uint64_t off, 
+                          size_t size, 
+                          void * user_data);
 /**
  * decode a u_map into a string
  */
@@ -51,9 +61,9 @@ char * print_map(const struct _u_map * map) {
     keys = u_map_enum_keys(map);
     for (i=0; keys[i] != NULL; i++) {
       value = u_map_get(map, keys[i]);
-      len = snprintf(NULL, 0, "key is %s, length is %ld, value is %.*s", keys[i], u_map_get_length(map, keys[i]), (int)u_map_get_length(map, keys[i]), value);
+      len = snprintf(NULL, 0, "key is %s, length is %zu, value is %.*s", keys[i], u_map_get_length(map, keys[i]), (int)u_map_get_length(map, keys[i]), value);
       line = o_malloc((len+1)*sizeof(char));
-      snprintf(line, (len+1), "key is %s, length is %ld, value is %.*s", keys[i], u_map_get_length(map, keys[i]), (int)u_map_get_length(map, keys[i]), value);
+      snprintf(line, (len+1), "key is %s, length is %zu, value is %.*s", keys[i], u_map_get_length(map, keys[i]), (int)u_map_get_length(map, keys[i]), value);
       if (to_return != NULL) {
         len = strlen(to_return) + strlen(line) + 1;
         to_return = o_realloc(to_return, (len+1)*sizeof(char));
@@ -97,6 +107,8 @@ int main (int argc, char **argv) {
   // Initialize the instance
   struct _u_instance instance;
   
+  y_init_logs("sheep_counter", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting sheep_counter");
+  
   if (ulfius_init_instance(&instance, PORT, NULL, NULL) != U_OK) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_init_instance, abort");
     return(1);
@@ -104,6 +116,10 @@ int main (int argc, char **argv) {
   
   // Max post param size is 16 Kb, which means an uploaded file is no more than 16 Kb
   instance.max_post_param_size = 16*1024;
+  
+  if (ulfius_set_upload_file_callback_function(&instance, &file_upload_callback, "my cls") != U_OK) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_set_upload_file_callback_function");
+  }
   
   // MIME types that will define the static files
   struct _u_map mime_types;
@@ -141,6 +157,8 @@ int main (int argc, char **argv) {
   printf("End framework\n");
   ulfius_stop_framework(&instance);
   ulfius_clean_instance(&instance);
+  
+  y_close_logs();
   
   return 0;
 }
@@ -270,4 +288,20 @@ int callback_upload_file (const struct _u_request * request, struct _u_response 
   o_free(post_params);
   o_free(string_body);
   return U_CALLBACK_CONTINUE;
+}
+
+/**
+ * File upload callback function
+ */
+int file_upload_callback (const struct _u_request * request, 
+                          const char * key, 
+                          const char * filename, 
+                          const char * content_type, 
+                          const char * transfer_encoding, 
+                          const char * data, 
+                          uint64_t off, 
+                          size_t size, 
+                          void * cls) {
+  y_log_message(Y_LOG_LEVEL_DEBUG, "Got from file '%s' of the key '%s', offset %llu, size %zu, cls is '%s'", filename, key, off, size, cls);
+  return U_OK;
 }
