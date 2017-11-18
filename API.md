@@ -733,6 +733,45 @@ Ulifius allows file upload to the server. Beware that an uploaded file will be s
 
 If you want to limit the size of a post parameter, if you want to limit the file size for example, set the value `struct _u_instance.max_post_param_size`. Files or post data exceeding this size will be truncated to the size `struct _u_instance.max_post_param_size`. If this parameter is 0, then no limit is set. Default value is 0.
 
+If you want to handle file upload yourself, you can intercept the file upload process with your own callback function. Before running the webservice with `ulfius_start_framework`, you must call the function `ulfius_set_upload_file_callback_function` with a pointer to your file upload callback function. By using this method, the specified callback function will be executed as much as needed with a chunk of the file upload each time.
+
+This function `ulfius_set_upload_file_callback_function` has the following prototype:
+
+```C
+/**
+ * ulfius_set_upload_file_callback_function
+ * 
+ * Set the callback function to handle file upload
+ * Used to facilitate large files upload management
+ * The callback function file_upload_callback will be called
+ * multiple times, with the uploaded file in striped in parts
+ * 
+ * Warning: If this function is used, all the uploaded files
+ * for the instance will be managed via this function, and they
+ * will no longer be available in the struct _u_request in the
+ * ulfius callback function afterwards.
+ * 
+ * Thanks to Thad Phetteplace for the help on this feature
+ * 
+ * u_instance:    pointer to a struct _u_instance that describe its port and bind address
+ * file_upload_callback: Pointer to a callback function that will handle all file uploads
+ * cls: a pointer that will be passed to file_upload_callback each tim it's called
+ */
+int ulfius_set_upload_file_callback_function(struct _u_instance * u_instance,
+                                             int (* file_upload_callback) (const struct _u_request * request, 
+                                                                           const char * key, 
+                                                                           const char * filename, 
+                                                                           const char * content_type, 
+                                                                           const char * transfer_encoding, 
+                                                                           const char * data, 
+                                                                           uint64_t off, 
+                                                                           size_t size, 
+                                                                           void * cls),
+                                             void * cls);
+```
+
+This callback function will be called before all the other callback functions, and be aware that not all parameters, especially url parameters, will be present during the file upload callback function executions.
+
 See `examples/sheep_counter` for a file upload example.
 
 ### Streaming data
@@ -1014,21 +1053,21 @@ int u_map_put_binary(struct _u_map * u_map, const char * key, const char * value
  * return -1 if no match found
  * search is case sensitive
  */
-size_t u_map_get_length(const struct _u_map * u_map, const const char * key);
+size_t u_map_get_length(const struct _u_map * u_map, const char * key);
 
 /**
  * get the value length corresponding to the specified key in the u_map
  * return -1 if no match found
  * search is case insensitive
  */
-size_t u_map_get_case_length(const struct _u_map * u_map, const const char * key);
+size_t u_map_get_case_length(const struct _u_map * u_map, const char * key);
 
 /**
  * get the value corresponding to the specified key in the u_map
  * return NULL if no match found
  * search is case sensitive
  */
-const char * u_map_get(const struct _u_map * u_map, const const char * key);
+const char * u_map_get(const struct _u_map * u_map, const char * key);
 
 /**
  * get the value corresponding to the specified key in the u_map
