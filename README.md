@@ -90,7 +90,11 @@ Example callback functions are available in the folder [example_callbacks](https
 - [Hutch](https://github.com/babelouest/hutch), a safe locker for passwords and other secrets, using encryption on the client side only
 - [Taulas Raspberry Pi Serial interface](https://github.com/babelouest/taulas/tree/master/taulas_raspberrypi_serial), an interface for Arduino devices that implent [Taulas](https://github.com/babelouest/taulas/) protocol, a house automation protocol
 
-## What's new in Ulfius 2.1 ?
+## What's new in Ulfius 2.2?
+
+Allow to use your own callback function when uploading files with `ulfius_set_upload_file_callback_function`, so a large file can be uploaded, even with the option `struct _u_instance.max_post_param_size` set.
+
+## What's new in Ulfius 2.1?
 
 I know it wasn't long since Ulfius 2.0 was released. But after some review and tests, I realized some adjustments had to be made to avoid bugs and to clean the framework a little bit more.
 
@@ -103,7 +107,7 @@ Some of the adjustments made in the new release:
 
 The minor version number has been incremented, from 2.0 to 2.1 because some of the changes may require changes in your own code.
 
-## What's new in Ulfius 2.0 ?
+## What's new in Ulfius 2.0?
 
 Ulfius 2.0 brings several changes that make the library incompatible with Ulfius 1.0.x branch. The goal of making Ulfius 2.0 is to make a spring cleaning of some functions, remove what is apparently useless, and should bring bugs and memory loss. The main new features are multiple callback functions and websockets implementation.
 
