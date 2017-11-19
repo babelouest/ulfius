@@ -1,6 +1,6 @@
 # Install Ulfius
 
-## Debian/Ubuntu package
+## Debian-ish packages
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/ulfius.svg)](https://repology.org/metapackage/ulfius)
 
