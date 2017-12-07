@@ -430,10 +430,27 @@ int ulfius_set_json_body_request(struct _u_request * request, json_t * body) {
  * Get JSON structure from the request body if the request is valid
  * request: struct _u_request used
  * json_error: structure to store json_error_t if specified
- */
+ */  
 json_t * ulfius_get_json_body_request(const struct _u_request * request, json_error_t * json_error) {
   if (request != NULL && request->map_header != NULL && NULL != o_strstr(u_map_get_case(request->map_header, ULFIUS_HTTP_HEADER_CONTENT), ULFIUS_HTTP_ENCODING_JSON)) {
     return json_loadb(request->binary_body, request->binary_body_length, JSON_DECODE_ANY, json_error);
+  }
+  else {
+    json_error->line     = 1;
+    json_error->position = 1;
+    sprintf(json_error->source, "ulfius_get_json_body_request");
+    if (NULL == request) {
+      json_error->column = 7;
+      sprintf(json_error->text, "Request not set.");
+    }
+    else if (NULL == request->map_header) {
+      json_error->column = 26;
+      sprintf(json_error->text, "Request header not set.");
+    }
+    else if (NULL == o_strstr(u_map_get_case(request->map_header, ULFIUS_HTTP_HEADER_CONTENT))) {
+      json_error->column = 57;
+      sprintf(json_error->text, "HEADER content not valid. Expected '%s' - received '%s'", ULFIUS_HTTP_ENCODING_JSON, u_map_get_case(request->map_header, ULFIUS_HTTP_HEADER_CONTENT));
+    }
   }
   return NULL;
 }
