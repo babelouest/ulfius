@@ -664,17 +664,17 @@ int ulfius_set_stream_response(struct _u_response * response,
 #ifndef U_DISABLE_JANSSON
 /**
  * ulfius_set_json_body_response
- * Add a json_t binary_body to a response
+ * Add a json_t j_body to a response
  * return U_OK on success
  */
-int ulfius_set_json_body_response(struct _u_response * response, const unsigned int status, const json_t * binary_body) {
-  if (response != NULL && binary_body != NULL) {
+int ulfius_set_json_body_response(struct _u_response * response, const unsigned int status, const json_t * j_body) {
+  if (response != NULL && j_body != NULL && (json_is_array(j_body) || json_is_object(j_body))) {
     // Free all the bodies available
     o_free(response->binary_body);
     response->binary_body = NULL;
     response->binary_body_length = 0;
 
-    response->binary_body = (void*) json_dumps(binary_body, JSON_COMPACT);
+    response->binary_body = (void*) json_dumps(j_body, JSON_COMPACT);
     if (response->binary_body == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->binary_body");
       return U_ERROR_MEMORY;

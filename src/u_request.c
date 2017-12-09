@@ -402,17 +402,17 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request) 
 #ifndef U_DISABLE_JANSSON
 /**
  * ulfius_set_json_body_request
- * Add a json_t binary_body to a response
+ * Add a json_t j_body to a response
  * return U_OK on success
  */
-int ulfius_set_json_body_request(struct _u_request * request, json_t * body) {
-  if (request != NULL && body != NULL) {
+int ulfius_set_json_body_request(struct _u_request * request, json_t * j_body) {
+  if (request != NULL && j_body != NULL && (json_is_array(j_body) || json_is_object(j_body))) {
     // Free all the bodies available
     o_free(request->binary_body);
     request->binary_body = NULL;
     request->binary_body_length = 0;
 
-    request->binary_body = (void*) json_dumps(body, JSON_COMPACT);
+    request->binary_body = (void*) json_dumps(j_body, JSON_COMPACT);
     if (request->binary_body == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for request->binary_body");
       return U_ERROR_MEMORY;

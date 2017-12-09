@@ -661,17 +661,17 @@ json_t * ulfius_get_json_body_request(const struct _u_request * request, json_er
 
 /**
  * ulfius_set_json_body_request
- * Add a json_t body to a request
+ * Add a json_t j_body to a request
  * return U_OK on success
  */
-int ulfius_set_json_body_request(struct _u_request * request, json_t * body);
+int ulfius_set_json_body_request(struct _u_request * request, json_t * j_body);
 
 /**
  * ulfius_set_json_body_response
- * Add a json_t body to a response
+ * Add a json_t j_body to a response
  * return U_OK on success
  */
-int ulfius_set_json_body_response(struct _u_response * response, const unsigned int status, const json_t * body);
+int ulfius_set_json_body_response(struct _u_response * response, const unsigned int status, const json_t * j_body);
 
 /**
  * ulfius_get_json_body_response
