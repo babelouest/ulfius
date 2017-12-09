@@ -48,4 +48,4 @@ int callback_check_glewlwyd_access_token (const struct _u_request * request, str
 json_t * access_token_check_signature(struct _glewlwyd_resource_config * config, const char * token_value);
 json_t * access_token_get_payload(const char * token_value);
 int access_token_check_validity(struct _glewlwyd_resource_config * config, json_t * j_access_token);
-int access_token_check_scope(struct _glewlwyd_resource_config * config, json_t * j_access_token);
+json_t * access_token_check_scope(struct _glewlwyd_resource_config * config, json_t * j_access_token);

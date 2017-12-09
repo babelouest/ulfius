@@ -39,18 +39,52 @@ const char * get_filename_ext(const char *path) {
 }
 
 /**
+ * Streaming callback function to ease sending large files
+ */
+static ssize_t callback_static_file_stream(void * cls, uint64_t pos, char * buf, size_t max) {
+  if (cls != NULL) {
+    return fread (buf, 1, max, (FILE *)cls);
+  } else {
+    return U_STREAM_END;
+  }
+}
+
+/**
+ * Cleanup FILE* structure when streaming is complete
+ */
+static void callback_static_file_stream_free(void * cls) {
+  if (cls != NULL) {
+    fclose((FILE *)cls);
+  }
+}
+
+/**
  * static file callback endpoint
  */
 int callback_static_file (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  void * buffer = NULL;
-  size_t length, res;
+  size_t length;
   FILE * f;
-  char * file_requested;
-  char * file_path;
+  char * file_requested, * file_path, * url_dup_save;
   const char * content_type;
 
-  if (user_data != NULL && ((struct static_file_config *)user_data)->files_path != NULL) {
-    file_requested = o_strdup((request->http_url + (((struct static_file_config *)user_data)->url_prefix!=NULL?strlen(((struct static_file_config *)user_data)->url_prefix):0)));
+  /*
+   * Comment this if statement if you put static files url not in root, like /app
+   */
+  if (response->shared_data != NULL) {
+    return U_CALLBACK_CONTINUE;
+  }
+  
+  if (user_data != NULL && ((struct _static_file_config *)user_data)->files_path != NULL) {
+    file_requested = o_strdup(request->http_url);
+    url_dup_save = file_requested;
+    
+    while (file_requested[0] == '/') {
+      file_requested++;
+    }
+    file_requested += o_strlen(((struct _static_file_config *)user_data)->url_prefix);
+    while (file_requested[0] == '/') {
+      file_requested++;
+    }
     
     if (strchr(file_requested, '#') != NULL) {
       *strchr(file_requested, '#') = '\0';
@@ -60,12 +94,12 @@ int callback_static_file (const struct _u_request * request, struct _u_response 
       *strchr(file_requested, '?') = '\0';
     }
     
-    if (file_requested == NULL || strlen(file_requested) == 0 || 0 == o_strcmp("/", file_requested)) {
-      o_free(file_requested);
-      file_requested = o_strdup("index.html");
+    if (file_requested == NULL || o_strlen(file_requested) == 0 || 0 == o_strcmp("/", file_requested)) {
+      o_free(url_dup_save);
+      url_dup_save = file_requested = o_strdup("index.html");
     }
     
-    file_path = msprintf("%s/%s", ((struct static_file_config *)user_data)->files_path, file_requested);
+    file_path = msprintf("%s/%s", ((struct _static_file_config *)user_data)->files_path, file_requested);
 
     if (access(file_path, F_OK) != -1) {
       f = fopen (file_path, "rb");
@@ -73,34 +107,24 @@ int callback_static_file (const struct _u_request * request, struct _u_response 
         fseek (f, 0, SEEK_END);
         length = ftell (f);
         fseek (f, 0, SEEK_SET);
-        buffer = o_malloc(length*sizeof(void));
-        if (buffer) {
-          res = fread (buffer, 1, length, f);
-          if (res != length) {
-            y_log_message(Y_LOG_LEVEL_WARNING, "callback_angharad_static_file - fread warning, reading %ld while expecting %ld", res, length);
-          }
-        }
-        fclose (f);
-      }
-
-      if (buffer) {
-        content_type = u_map_get_case(&((struct static_file_config *)user_data)->mime_types, get_filename_ext(file_requested));
+        
+        content_type = u_map_get_case(((struct _static_file_config *)user_data)->mime_types, get_filename_ext(file_requested));
         if (content_type == NULL) {
-          content_type = u_map_get(&((struct static_file_config *)user_data)->mime_types, "*");
+          content_type = u_map_get(((struct _static_file_config *)user_data)->mime_types, "*");
           y_log_message(Y_LOG_LEVEL_WARNING, "Static File Server - Unknown mime type for extension %s", get_filename_ext(file_requested));
         }
-        response->binary_body = buffer;
-        response->binary_body_length = length;
         u_map_put(response->map_header, "Content-Type", content_type);
-      } else {
-        ulfius_set_string_body_response(response, 500, "Error processing static file");
-        y_log_message(Y_LOG_LEVEL_ERROR, "Static File Server - Internal error in %s", request->http_url);
+        u_map_put(response->map_header, "Cache-Control", "public, max-age=31536000");
+        
+        if (ulfius_set_stream_response(response, 200, callback_static_file_stream, callback_static_file_stream_free, length, STATIC_FILE_CHUNK, f) != U_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_static_file - Error ulfius_set_stream_response");
+        }
       }
     } else {
       ulfius_set_string_body_response(response, 404, "File not found");
     }
     o_free(file_path);
-    o_free(file_requested);
+    o_free(url_dup_save);
     return U_CALLBACK_CONTINUE;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "Static File Server - Error, user_data is NULL or inconsistent");

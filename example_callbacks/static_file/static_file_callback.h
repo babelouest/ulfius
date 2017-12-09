@@ -1,4 +1,3 @@
-
 /**
  * struct static_file_config must be initialized with proper values
  * files_path: path (relative or absolute) to the DocumentRoot folder
@@ -52,10 +51,19 @@
  * }
  * 
  */
-struct static_file_config {
-  char *        files_path;
-  char *        url_prefix;
-  struct _u_map mime_types;
+
+#ifndef _STATIC_FILE
+#define _STATIC_FILE
+
+#define STATIC_FILE_CHUNK 256
+
+struct _static_file_config {
+  char          * files_path;
+  char          * url_prefix;
+  struct _u_map * mime_types;
 };
 
 int callback_static_file (const struct _u_request * request, struct _u_response * response, void * user_data);
+const char * get_filename_ext(const char *path);
+
+#endif
