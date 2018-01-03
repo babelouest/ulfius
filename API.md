@@ -59,7 +59,7 @@ If you already have programs that use Ulfius 1.x and want to update them to the 
 
 #### Endpoints definitions
 
-Endpoints structure have change, `ulfius_add_endpoint_by_val` now requires only one callback function, but requires a priority number.
+Endpoints structure have changed, `ulfius_add_endpoint_by_val` now requires only one callback function, but requires a priority number.
 
 If you don't use authentication callback functions, you can simply remove the `NULL, NULL, NULL` parameters corresponding to the former authentication callback function pointer, the authentication callback user data, and the realm value. Then add any number as a priority, 0 for example.
 

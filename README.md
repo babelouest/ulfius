@@ -87,7 +87,7 @@ Example callback functions are available in the folder [example_callbacks](https
 
 - [Angharad](https://github.com/babelouest/angharad), House automation system for ZWave and other types of devices
 - [Glewlwyd](https://github.com/babelouest/glewlwyd), a lightweight OAuth2 authentication server that provides [JSON Web Tokens](https://jwt.io/)
-- [Hutch](https://github.com/babelouest/hutch), a safe locker for passwords and other secrets, using encryption on the client side only
+- [Hutch](https://github.com/babelouest/hutch), a safe locker for passwords and other secrets, using client side encryption only
 - [Taliesin](https://github.com/babelouest/taliesin), a lightweight audio streaming server
 - [Taulas Raspberry Pi Serial interface](https://github.com/babelouest/taulas/tree/master/taulas_raspberrypi_serial), an interface for Arduino devices that implent [Taulas](https://github.com/babelouest/taulas/) protocol, a house automation protocol
 
