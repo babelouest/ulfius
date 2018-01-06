@@ -344,6 +344,7 @@ int ulfius_clear_websocket(struct _websocket * websocket) {
     }
     ulfius_instance_remove_websocket_active(websocket->instance, websocket);
     ulfius_clear_websocket_manager(websocket->websocket_manager);
+		ulfius_clean_request_full(websocket->request);
     o_free(websocket->websocket_manager);
     websocket->websocket_manager = NULL;
     o_free(websocket);
@@ -735,7 +736,7 @@ int ulfius_instance_remove_websocket_active(struct _u_instance * instance, struc
         }
         ((struct _websocket_handler *)instance->websocket_handler)->nb_websocket_active--;
         pthread_mutex_lock(&((struct _websocket_handler *)instance->websocket_handler)->websocket_close_lock);
-        pthread_cond_signal(&((struct _websocket_handler *)instance->websocket_handler)->websocket_close_cond);
+        pthread_cond_broadcast(&((struct _websocket_handler *)instance->websocket_handler)->websocket_close_cond);
         pthread_mutex_unlock(&((struct _websocket_handler *)instance->websocket_handler)->websocket_close_lock);
         return U_OK;
       }

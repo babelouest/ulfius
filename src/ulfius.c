@@ -431,36 +431,50 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                 if (ulfius_generate_handshake_answer(u_map_get(con_info->request->map_header, "Sec-WebSocket-Key"), websocket_accept)) {
                   struct _websocket * websocket = o_malloc(sizeof(struct _websocket));
                   if (websocket != NULL) {
-                    websocket->instance = (struct _u_instance *)cls;
-                    websocket->request = con_info->request;
-                    websocket->websocket_protocol = ((struct _websocket_handle *)response->websocket_handle)->websocket_protocol;
-                    websocket->websocket_extensions = ((struct _websocket_handle *)response->websocket_handle)->websocket_extensions;
-                    websocket->websocket_manager_callback = ((struct _websocket_handle *)response->websocket_handle)->websocket_manager_callback;
-                    websocket->websocket_manager_user_data = ((struct _websocket_handle *)response->websocket_handle)->websocket_manager_user_data;
-                    websocket->websocket_incoming_message_callback = ((struct _websocket_handle *)response->websocket_handle)->websocket_incoming_message_callback;
-                    websocket->websocket_incoming_user_data = ((struct _websocket_handle *)response->websocket_handle)->websocket_incoming_user_data;
-                    websocket->websocket_onclose_callback = ((struct _websocket_handle *)response->websocket_handle)->websocket_onclose_callback;
-                    websocket->websocket_onclose_user_data = ((struct _websocket_handle *)response->websocket_handle)->websocket_onclose_user_data;
-                    websocket->tls = 0;
-                    mhd_response = MHD_create_response_for_upgrade(ulfius_start_websocket_cb, websocket);
-                    if (mhd_response == NULL) {
-                      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error MHD_create_response_for_upgrade");
-                      mhd_ret = MHD_NO;
-                    } else {
-                      MHD_add_response_header (mhd_response,
-                                               MHD_HTTP_HEADER_UPGRADE,
-                                               U_WEBSOCKET_UPGRADE_VALUE);
-                      MHD_add_response_header (mhd_response,
-                                               "Sec-WebSocket-Accept",
-                                               websocket_accept);
-                      if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
-                        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
-                        mhd_ret = MHD_NO;
-                      } else {
-                        ulfius_instance_add_websocket_active((struct _u_instance *)cls, websocket);
-                        upgrade_protocol = 1;
-                      }
-                    }
+                    websocket->request = ulfius_duplicate_request(con_info->request);
+										if (websocket->request != NULL) {
+											websocket->instance = (struct _u_instance *)cls;
+											websocket->websocket_protocol = ((struct _websocket_handle *)response->websocket_handle)->websocket_protocol;
+											websocket->websocket_extensions = ((struct _websocket_handle *)response->websocket_handle)->websocket_extensions;
+											websocket->websocket_manager_callback = ((struct _websocket_handle *)response->websocket_handle)->websocket_manager_callback;
+											websocket->websocket_manager_user_data = ((struct _websocket_handle *)response->websocket_handle)->websocket_manager_user_data;
+											websocket->websocket_incoming_message_callback = ((struct _websocket_handle *)response->websocket_handle)->websocket_incoming_message_callback;
+											websocket->websocket_incoming_user_data = ((struct _websocket_handle *)response->websocket_handle)->websocket_incoming_user_data;
+											websocket->websocket_onclose_callback = ((struct _websocket_handle *)response->websocket_handle)->websocket_onclose_callback;
+											websocket->websocket_onclose_user_data = ((struct _websocket_handle *)response->websocket_handle)->websocket_onclose_user_data;
+											websocket->tls = 0;
+											mhd_response = MHD_create_response_for_upgrade(ulfius_start_websocket_cb, websocket);
+											if (mhd_response == NULL) {
+												y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error MHD_create_response_for_upgrade");
+												mhd_ret = MHD_NO;
+											} else {
+												MHD_add_response_header (mhd_response,
+																								 MHD_HTTP_HEADER_UPGRADE,
+																								 U_WEBSOCKET_UPGRADE_VALUE);
+												MHD_add_response_header (mhd_response,
+																								 "Sec-WebSocket-Accept",
+																								 websocket_accept);
+												if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
+													y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
+													mhd_ret = MHD_NO;
+												} else {
+													ulfius_instance_add_websocket_active((struct _u_instance *)cls, websocket);
+													upgrade_protocol = 1;
+												}
+											}
+										} else {
+											o_free(websocket);
+											// Error building struct _websocket, sending error 500
+											response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
+											response_buffer = o_strdup(ULFIUS_HTTP_ERROR_BODY);
+											if (response_buffer == NULL) {
+												y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for websocket->request");
+												mhd_ret = MHD_NO;
+											} else {
+												response_buffer_len = strlen(ULFIUS_HTTP_ERROR_BODY);
+												mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
+											}
+										}
                   } else {
                     // Error building struct _websocket, sending error 500
                     response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
