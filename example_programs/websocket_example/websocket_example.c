@@ -93,23 +93,24 @@ char * read_file(const char * filename) {
 int main(int argc, char ** argv) {
   int ret;
   struct _u_instance instance;
-  struct static_file_config file_config;
+  struct _static_file_config file_config;
   char * cert_file = NULL, * key_file = NULL;
   
   y_init_logs("websocket_example", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting websocket_example");
   
-  u_map_init(&file_config.mime_types);
-  u_map_put(&file_config.mime_types, ".html", "text/html");
-  u_map_put(&file_config.mime_types, ".css", "text/css");
-  u_map_put(&file_config.mime_types, ".js", "application/javascript");
-  u_map_put(&file_config.mime_types, ".png", "image/png");
-  u_map_put(&file_config.mime_types, ".jpg", "image/jpeg");
-  u_map_put(&file_config.mime_types, ".jpeg", "image/jpeg");
-  u_map_put(&file_config.mime_types, ".ttf", "font/ttf");
-  u_map_put(&file_config.mime_types, ".woff", "font/woff");
-  u_map_put(&file_config.mime_types, ".woff2", "font/woff2");
-  u_map_put(&file_config.mime_types, ".map", "application/octet-stream");
-  u_map_put(&file_config.mime_types, "*", "application/octet-stream");
+  file_config.mime_types = o_malloc(sizeof(struct _u_map));
+  u_map_init(file_config.mime_types);
+  u_map_put(file_config.mime_types, ".html", "text/html");
+  u_map_put(file_config.mime_types, ".css", "text/css");
+  u_map_put(file_config.mime_types, ".js", "application/javascript");
+  u_map_put(file_config.mime_types, ".png", "image/png");
+  u_map_put(file_config.mime_types, ".jpg", "image/jpeg");
+  u_map_put(file_config.mime_types, ".jpeg", "image/jpeg");
+  u_map_put(file_config.mime_types, ".ttf", "font/ttf");
+  u_map_put(file_config.mime_types, ".woff", "font/woff");
+  u_map_put(file_config.mime_types, ".woff2", "font/woff2");
+  u_map_put(file_config.mime_types, ".map", "application/octet-stream");
+  u_map_put(file_config.mime_types, "*", "application/octet-stream");
   file_config.files_path = "static";
   file_config.url_prefix = PREFIX_STATIC;
   
@@ -152,7 +153,7 @@ int main(int argc, char ** argv) {
   
   ulfius_stop_framework(&instance);
   ulfius_clean_instance(&instance);
-  u_map_clean(&file_config.mime_types);
+  u_map_clean_full(file_config.mime_types);
   y_close_logs();
   
   return 0;

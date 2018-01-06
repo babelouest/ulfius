@@ -31,10 +31,10 @@ libulfius.so:
 	cd $(ULFIUS_LOCATION) && $(MAKE) debug JANSSONFLAG=-DU_DISABLE_JANSSON CURLFLAG=-DU_DISABLE_CURL
 
 static_file_callback.o: $(STATIC_FILE_LOCATION)/static_file_callback.c
-	$(CC) $(CFLAGS) $(STATIC_FILE_LOCATION)/static_file_callback.c -DDEBUG -g -O0
+	$(CC) $(CFLAGS) $(STATIC_FILE_LOCATION)/static_file_callback.c
 
 websocket_example.o: websocket_example.c
-	$(CC) $(CFLAGS) websocket_example.c -DDEBUG -g -O0
+	$(CC) $(CFLAGS) websocket_example.c
 
 websocket_example: libulfius.so static_file_callback.o websocket_example.o
 	$(CC) -o websocket_example websocket_example.o static_file_callback.o $(LIBS)
