@@ -51,6 +51,10 @@ $ make
 $ sudo make install
 ```
 
+#### Install Ulfius as a shared library on Windows 32/64 bits (MinGW-w64)
+
+[In progress ...](https://github.com/babelouest/ulfius/issues/36)
+
 #### Update Ulfius
 
 If you update Ulfius from a previous version, you must install the corresponding version of the submodules as well:
