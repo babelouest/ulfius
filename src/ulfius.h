@@ -26,14 +26,20 @@
 #ifndef __ULFIUS_H__
 #define __ULFIUS_H__
 
+#if defined(__MINGW32__) || defined(__CYGWIN__)
+# define WIN
+#endif
+
+#if ((MHD_VERSION < 0x00095300) && !defined(U_DISABLE_WEBSOCKET)) || defined(WIN) // TODO: implement WS on Windows!
+#define U_DISABLE_WEBSOCKET
+#endif
+
 /** External dependencies **/
+#ifndef U_DISABLE_WEBSOCKET
 #include <sys/poll.h>
+#endif
 #include <pthread.h>
 #include <microhttpd.h>
-
-#if (MHD_VERSION < 0x00095300) && !defined(U_DISABLE_WEBSOCKET)
-  #define U_DISABLE_WEBSOCKET
-#endif
 
 /** Angharad libraries **/
 #include <yder.h>
