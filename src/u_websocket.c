@@ -32,7 +32,6 @@
 #include <fcntl.h>
 #include <pthread.h>
 #include <unistd.h>
-#include <sys/poll.h>
 #include <gnutls/gnutls.h>
 
 /**
