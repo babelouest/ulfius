@@ -27,7 +27,7 @@
 #define __ULFIUS_H__
 
 /** External dependencies **/
-#include <sys/poll.h>
+#include <poll.h>
 #include <pthread.h>
 #include <microhttpd.h>
 
@@ -56,7 +56,7 @@
 #define U_ERROR_LIBCURL      5 // Error in libcurl execution
 #define U_ERROR_NOT_FOUND    6 // Something was not found
 
-#define ULFIUS_VERSION 2.2.2
+#define ULFIUS_VERSION 2.2.3
 
 #define U_CALLBACK_CONTINUE     0
 #define U_CALLBACK_COMPLETE     1

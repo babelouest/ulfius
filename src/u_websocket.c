@@ -112,7 +112,7 @@ void * ulfius_thread_websocket(void * data) {
   
   if (websocket != NULL && websocket->websocket_manager != NULL) {
     pthread_mutexattr_init ( &mutexattr );
-    pthread_mutexattr_settype( &mutexattr, PTHREAD_MUTEX_RECURSIVE_NP );
+    pthread_mutexattr_settype( &mutexattr, PTHREAD_MUTEX_RECURSIVE );
     if (pthread_mutex_init(&(websocket->websocket_manager->read_lock), &mutexattr) != 0 || pthread_mutex_init(&(websocket->websocket_manager->write_lock), &mutexattr) != 0) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Impossible to initialize Mutex Lock for websocket");
       websocket->websocket_manager->connected = 0;
