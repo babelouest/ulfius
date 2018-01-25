@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "u_private.h"
-#include "ulfius.h"
+#include "../include/ulfius.h"
 
 /**
  * initialize a struct _u_map

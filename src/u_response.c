@@ -25,7 +25,7 @@
 #include <string.h>
 
 #include "u_private.h"
-#include "ulfius.h"
+#include "../include/ulfius.h"
 
 /**
  * Add a cookie in the cookie map as defined in the RFC 6265
@@ -177,7 +177,8 @@ int ulfius_set_response_header(struct MHD_Response * response, const struct _u_m
  * return the number of added headers, -1 on error
  */
 int ulfius_set_response_cookie(struct MHD_Response * mhd_response, const struct _u_response * response) {
-  int i, ret;
+  int ret;
+	unsigned int i;
   char * header;
   if (mhd_response != NULL && response != NULL) {
     for (i=0; i<response->nb_cookies; i++) {
@@ -207,7 +208,7 @@ int ulfius_set_response_cookie(struct MHD_Response * mhd_response, const struct 
  */
 int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age, 
                                   const char * domain, const char * path, const int secure, const int http_only) {
-  int i;
+  unsigned int i;
   if (response != NULL && key != NULL) {
     // Look for cookies with the same key
     for (i=0; i<response->nb_cookies; i++) {
@@ -340,7 +341,7 @@ int ulfius_copy_cookie(struct _u_cookie * dest, const struct _u_cookie * source)
  * return U_OK on success
  */
 int ulfius_clean_response(struct _u_response * response) {
-  int i;
+  unsigned int i;
   if (response != NULL) {
     o_free(response->protocol);
     response->protocol = NULL;
@@ -434,7 +435,7 @@ int ulfius_init_response(struct _u_response * response) {
  */
 struct _u_response * ulfius_duplicate_response(const struct _u_response * response) {
   struct _u_response * new_response = NULL;
-  int i;
+  unsigned int i;
   if (response != NULL) {
     new_response = o_malloc(sizeof(struct _u_response));
     if (new_response == NULL) {
@@ -504,7 +505,7 @@ struct _u_response * ulfius_duplicate_response(const struct _u_response * respon
  * return U_OK on success
  */
 int ulfius_copy_response(struct _u_response * dest, const struct _u_response * source) {
-  int i;
+  unsigned int i;
   if (dest != NULL && source != NULL) {
     dest->status = source->status;
     dest->protocol = o_strdup(source->protocol);
