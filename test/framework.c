@@ -9,7 +9,7 @@
 #include <inttypes.h>
 
 #include <check.h>
-#include "../src/ulfius.h"
+#include "../include/ulfius.h"
 
 /**
  * decode a u_map into a string

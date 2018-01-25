@@ -9,7 +9,7 @@
 #include <jansson.h>
 
 #include <check.h>
-#include "../src/ulfius.h"
+#include "../include/ulfius.h"
 
 int callback_function_empty(const struct _u_request * request, struct _u_response * response, void * user_data) {
   return U_CALLBACK_CONTINUE;
