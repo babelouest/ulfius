@@ -30,11 +30,11 @@
 #include <pthread.h>
 #include <microhttpd.h>
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(U_DISABLE_WEBSOCKET)
   #define U_DISABLE_WEBSOCKET
 #endif
 
-#if (MHD_VERSION < 0x00095300)
+#if (MHD_VERSION < 0x00095300) && !defined(U_DISABLE_WEBSOCKET)
   #define U_DISABLE_WEBSOCKET
 #endif
 
