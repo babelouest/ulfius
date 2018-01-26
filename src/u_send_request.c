@@ -649,7 +649,11 @@ static size_t smtp_payload_source(void * ptr, size_t size, size_t nmemb, void * 
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for MAIL_DATE\n");
       return 0;
     } else {
+#ifdef _WIN32
+      strftime(data, 128, "Date: %a, %d %b %Y %H:%M:%S %z\r\n", gmtime(&now));
+#else
       strftime(data, 128, "Date: %a, %d %b %Y %T %z\r\n", gmtime(&now));
+#endif
       len = strlen(data);
     }
   } else if (upload_ctx->lines_read == MAIL_TO) {
