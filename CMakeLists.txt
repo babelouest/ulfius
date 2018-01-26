@@ -94,7 +94,6 @@ if (WITH_CURL)
 	include(FindCURL)
 	find_package(CURL REQUIRED)
 	if (CURL_FOUND)
-	message("CURL LIB " ${CURL_LIBRARIES})
 			set(LIBS ${LIBS} ${CURL_LIBRARIES})
 	endif ()
 else ()
@@ -114,7 +113,18 @@ else ()
     add_definitions(-DU_DISABLE_JANSSON)
 endif ()
 
-message("LIBS ARE " ${LIBS})
+# websocket support
+
+option(INSTALL_WEBSOCKET "Websocket support" ON)
+
+if (WIN32)
+	set(INSTALL_WEBSOCKET OFF)
+endif ()
+
+if (!INSTALL_WEBSOCKET)
+	add_definitions(-DU_DISABLE_WEBSOCKET)
+endif ()
+
 # static library
 
 option(BUILD_STATIC "Build static library." OFF)
@@ -207,6 +217,7 @@ install(TARGETS ${TARGETS}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif ()
+
 # uninstall target
 
 if (NOT TARGET uninstall)
@@ -246,3 +257,73 @@ include(CPack)
 
 add_custom_target(dist
         COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
+
+option(WITH_EXAMPLES "Build Ulfius Examples" ON)
+
+if (WITH_EXAMPLES)
+
+	# examples
+
+	set(EXAMPLE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/example_programs)
+	set(STATIC_CALLBACK_DIR ${CMAKE_CURRENT_SOURCE_DIR}/example_callbacks/static_file/)
+	set(LIBS ${LIBS} ulfius)
+  
+	add_executable(simple_example ${EXAMPLE_DIR}/simple_example/simple_example.c)
+	target_link_libraries(simple_example ${LIBS})
+  add_dependencies(simple_example ulfius)
+
+	add_executable(auth_client ${EXAMPLE_DIR}/auth_example/auth_client.c)
+	target_link_libraries(auth_client ${LIBS})
+  add_dependencies(auth_client ulfius)
+
+	add_executable(auth_server ${EXAMPLE_DIR}/auth_example/auth_server.c)
+	target_link_libraries(auth_server ${LIBS})
+  add_dependencies(auth_server ulfius)
+
+	add_executable(injection_example ${EXAMPLE_DIR}/injection_example/injection_example.c)
+	target_link_libraries(injection_example ${LIBS})
+  add_dependencies(injection_example ulfius)
+
+	add_executable(multiple_callbacks_example ${EXAMPLE_DIR}/multiple_callbacks_example/multiple_callbacks_example.c)
+	target_link_libraries(multiple_callbacks_example ${LIBS})
+  add_dependencies(multiple_callbacks_example ulfius)
+
+	add_executable(proxy_example ${EXAMPLE_DIR}/proxy_example/proxy.c)
+	target_link_libraries(proxy_example ${LIBS})
+  add_dependencies(proxy_example ulfius)
+
+	add_executable(request_client ${EXAMPLE_DIR}/request_example/client.c)
+	target_link_libraries(request_client ${LIBS})
+  add_dependencies(request_client ulfius)
+
+	add_executable(request_server ${EXAMPLE_DIR}/request_example/server.c)
+	target_link_libraries(request_server ${LIBS})
+  add_dependencies(request_server ulfius)
+
+	add_executable(request_mail ${EXAMPLE_DIR}/request_example/mail.c)
+	target_link_libraries(request_mail ${LIBS})
+  add_dependencies(request_mail ulfius)
+
+	add_executable(sheep_counter ${EXAMPLE_DIR}/sheep_counter/sheep_counter.c)
+	target_link_libraries(sheep_counter ${LIBS})
+  add_dependencies(sheep_counter ulfius)
+
+	add_executable(stream_client ${EXAMPLE_DIR}/stream_example/stream_client.c)
+	target_link_libraries(stream_client ${LIBS})
+  add_dependencies(stream_client ulfius)
+
+	add_executable(stream_example ${EXAMPLE_DIR}/stream_example/stream_example.c)
+	target_link_libraries(stream_example ${LIBS})
+  add_dependencies(stream_example ulfius)
+
+	add_executable(test_u_map ${EXAMPLE_DIR}/test_u_map/test_u_map.c)
+	target_link_libraries(test_u_map ${LIBS})
+  add_dependencies(test_u_map ulfius)
+
+	if (INSTALL_WEBSOCKET)
+		add_executable(websocket_example ${EXAMPLE_DIR}/websocket_example/websocket_example.c ${STATIC_CALLBACK_DIR}/static_file_callback.c)
+		target_link_libraries(websocket_example ${LIBS})
+    add_dependencies(websocket_example ulfius)
+	endif ()
+
+endif ()
