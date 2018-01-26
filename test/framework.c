@@ -5,7 +5,11 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
-#include <netinet/in.h>
+#ifndef _WIN32
+	#include <netinet/in.h>
+#else
+	#include <unistd.h>
+#endif
 #include <inttypes.h>
 
 #include <check.h>

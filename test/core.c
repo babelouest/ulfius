@@ -5,7 +5,9 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
+#ifndef _WIN32
 #include <netinet/in.h>
+#endif
 #include <jansson.h>
 
 #include <check.h>
@@ -15,6 +17,7 @@ int callback_function_empty(const struct _u_request * request, struct _u_respons
   return U_CALLBACK_CONTINUE;
 }
 
+#ifndef _WIN32
 START_TEST(test_ulfius_init_instance)
 {
   struct _u_instance u_instance;
@@ -33,6 +36,21 @@ START_TEST(test_ulfius_init_instance)
   ulfius_clean_instance(&u_instance);
 }
 END_TEST
+#else
+START_TEST(test_ulfius_init_instance)
+{
+  struct _u_instance u_instance;
+
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 80, NULL, NULL), U_OK);
+  ulfius_clean_instance(&u_instance);
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 0, NULL, NULL), U_ERROR_PARAMS);
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 99999, NULL, NULL), U_ERROR_PARAMS);
+
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 80, NULL, "test_ulfius"), U_OK);
+  ulfius_clean_instance(&u_instance);
+}
+END_TEST
+#endif
 
 START_TEST(test_endpoint)
 {
