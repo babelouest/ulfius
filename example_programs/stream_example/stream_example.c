@@ -20,7 +20,7 @@
 #define U_DISABLE_JANSSON
 #define U_DISABLE_CURL
 #define U_DISABLE_WEBSOCKET
-#include "../../src/ulfius.h"
+#include "../../include/ulfius.h"
 
 #define PORT 7876
 #define PREFIX "/stream"

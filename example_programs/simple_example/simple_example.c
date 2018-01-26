@@ -12,13 +12,16 @@
  */
 
 #include <string.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+
+#ifndef _WIN32
+	#include <sys/socket.h>
+	#include <netinet/in.h>
+	#include <arpa/inet.h>
+#endif
 
 #define U_DISABLE_CURL
 #define U_DISABLE_WEBSOCKET
-#include "../../src/ulfius.h"
+#include "../../include/ulfius.h"
 
 #define PORT 8537
 #define PREFIX "/test"
@@ -191,8 +194,13 @@ int callback_post_test (const struct _u_request * request, struct _u_response * 
 int callback_all_test_foo (const struct _u_request * request, struct _u_response * response, void * user_data) {
   char * url_params = print_map(request->map_url), * headers = print_map(request->map_header), * cookies = print_map(request->map_cookie), 
         * post_params = print_map(request->map_post_body);
+#ifndef _WIN32
   char * response_body = msprintf("Hello World!\n\n  method is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n  user data is %s\n\nclient address is %s\n\n",
                                   request->http_verb, request->http_url, url_params, cookies, headers, post_params, (char *)user_data, inet_ntoa(((struct sockaddr_in *)request->client_address)->sin_addr));
+#else
+  char * response_body = msprintf("Hello World!\n\n  method is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n  user data is %s\n\n",
+                                  request->http_verb, request->http_url, url_params, cookies, headers, post_params, (char *)user_data);
+#endif
   ulfius_set_string_body_response(response, 200, response_body);
   o_free(url_params);
   o_free(headers);

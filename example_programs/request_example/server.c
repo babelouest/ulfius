@@ -15,7 +15,7 @@
 #include <jansson.h>
 
 #define U_DISABLE_WEBSOCKET
-#include "../../src/ulfius.h"
+#include "../../include/ulfius.h"
 
 #define PORT 7778
 #define PREFIX "/curl"

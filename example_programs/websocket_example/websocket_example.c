@@ -21,9 +21,9 @@
 
 #define U_DISABLE_JANSSON
 #define U_DISABLE_CURL
-#include "../../src/ulfius.h"
+#include "../../include/ulfius.h"
 
-#include <static_file_callback.h>
+#include "../../example_callbacks/static_file/static_file_callback.h"
 
 #define PORT 9275
 #define PREFIX_WEBSOCKET "/websocket"
