@@ -12,53 +12,49 @@ Ulfius is now available in Debian Buster (testing) and some Debian based distrib
 
 ## Manual install
 
-### Prerequisites
-
-#### External dependencies
-
-To install all the external dependencies, for Debian based distributions (Debian, Ubuntu, Raspbian, etc.), run as root:
-
-```shell
-# apt-get install libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev libgnutls28-dev libgcrypt20-dev
-```
-
-#### Note
-
-Here libcurl4-gnutls-dev for the example, but any `libcurl*-dev` library should be sufficent, depending on your needs and configuration. Note that gnutls is mandatory for websocket management and https support.
-
-Also, it seems that Debian Wheezy uses an old version of libjansson (2.3), you can either upgrade to jessie or download the latest version of libjansson from [github](https://github.com/akheron/jansson).
-
-As in version 2.0, libcurl and libjansson are no longer mandatory if you don't need one or both.
-
-If you want to use the websocket server functions, you need to install libmicrohttpd 0.9.53 minimum version.
-
-### Installation
-
-#### Install Ulfius as a shared library
-
 Download Ulfius source code from Github, get the submodules, compile and install each submodule, then compile and install ulfius:
 
 ```shell
 $ git clone https://github.com/babelouest/ulfius.git
 $ cd ulfius/
 $ git submodule update --init
-$ cd lib/orcania
-$ make && sudo make install
-$ cd ../yder
-$ make && sudo make install
-$ cd ../..
-$ make
-$ sudo make install
 ```
 
-#### Update Ulfius
+### Prerequisites
 
-If you update Ulfius from a previous version, you must install the corresponding version of the submodules as well:
+#### External dependencies
+
+Ulfius requires the following dependencies
+
+- libmicrohttpd (required), minimum 0.9.53 if you require Websockets support
+- libjansson (optional), minimum 2.4, required for json support
+- libgnutls, libgcrypt (optional), required for Websockets and https support
+- libcurl (optional), required to send http/smtp requests
+
+For example, to install all the external dependencies on Debian Stretch, run as root:
 
 ```shell
-$ cd ulfius/
-$ git pull # Or git checkout <the version you need>
-$ git submodule update
+# apt-get install libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev libgnutls28-dev libgcrypt20-dev
+```
+
+### CMake build
+
+You can build Ulfius library using cmake, example:
+
+```shell
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make && sudo make install
+```
+
+### Good ol' Makefile
+
+#### Install Ulfius as a shared library
+
+Ulfius is still available to install via the traditional Makefile
+
+```shell
 $ cd lib/orcania
 $ make && sudo make install
 $ cd ../yder
