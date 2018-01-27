@@ -6,6 +6,6 @@ includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
 Name: @PROJECT_NAME@
 Description: @PROJECT_DESCRIPTION@
 URL: @PROJECT_BUGREPORT_PATH@
-Version: @PROJECT_VERSION@
-Libs: -L${libdir} -lyder
+Version: @LIBRARY_VERSION@
+Libs: -L${libdir} -lulfius
 Cflags: -I${includedir}
