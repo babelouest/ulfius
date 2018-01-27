@@ -23,7 +23,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 
 # library info
 
-set(PROJECT_DESCRIPTION "Logging library for C applications")
+set(PROJECT_DESCRIPTION "HTTP Framework for REST API in C, using JSON or not, with websockets or not, with streaming data or not")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/ulfius/issues")
 
 set(LIBRARY_VERSION_MAJOR "1")
@@ -73,16 +73,43 @@ set(LIB_SRC
 
 include(FindOrcania)
 set(ORCANIA_MIN_VERSION "1.1.1")
-find_package(Orcania ${ORCANIA_MIN_VERSION} REQUIRED)
-set(LIBS ${ORCANIA_LIBRARIES})
+find_package(Orcania ${ORCANIA_MIN_VERSION})
+if (ORCANIA_FOUND)
+  set(LIBS ${ORCANIA_LIBRARIES})
+else ()
+  # TODO Add Orcania automatically
+endif ()
 
 include(FindYder)
 set(YDER_MIN_VERSION "1.1.1")
-find_package(Yder ${YDER_MIN_VERSION} REQUIRED)
-set(LIBS ${LIBS} ${YDER_LIBRARIES})
+find_package(Yder ${YDER_MIN_VERSION})
+if (ORCANIA_FOUND)
+  set(LIBS ${LIBS} ${YDER_LIBRARIES})
+else ()
+  # TODO Add Yder automatically
+endif ()
+
+# websocket support
+
+option(WITH_WEBSOCKET "Websocket support" ON)
+
+if (WIN32)
+	set(WITH_WEBSOCKET OFF)
+endif ()
+
+if (!WITH_WEBSOCKET)
+	add_definitions(-DU_DISABLE_WEBSOCKET)
+  set(MHD_MIN_VERSION 0.9.51)
+else ()
+  set(MHD_MIN_VERSION 0.9.53)
+	include(FindGnuTLS)
+	find_package(GnuTLS REQUIRED)
+	if (GNUTLS_FOUND)
+			set(LIBS ${LIBS} ${GNUTLS_LIBRARIES})
+	endif ()
+endif ()
 
 include(FindMHD)
-set(MHD_MIN_VERSION 0.9.53)
 find_package(MHD ${MHD_MIN_VERSION} REQUIRED)
 if (MHD_FOUND)
 		set(LIBS ${LIBS} ${MHD_LIBRARIES})
@@ -113,18 +140,6 @@ else ()
     add_definitions(-DU_DISABLE_JANSSON)
 endif ()
 
-# websocket support
-
-option(INSTALL_WEBSOCKET "Websocket support" ON)
-
-if (WIN32)
-	set(INSTALL_WEBSOCKET OFF)
-endif ()
-
-if (!INSTALL_WEBSOCKET)
-	add_definitions(-DU_DISABLE_WEBSOCKET)
-endif ()
-
 # static library
 
 option(BUILD_STATIC "Build static library." OFF)
@@ -151,11 +166,11 @@ target_link_libraries(ulfius ${LIBS})
 
 # tests
 
-option(BUILD_TESTING "Build the testing tree." OFF) # because we don not use include(CTest)
+option(BUILD_TESTING "Build the testing tree." OFF) # because we do not use include(CTest)
 
 if (BUILD_TESTING)
     include(FindCheck)
-    find_package(Check)
+    find_package(Check REQUIRED)
     if (CHECK_FOUND)
         if (NOT WIN32)
             include(FindSubunit)
@@ -245,8 +260,11 @@ endif ()
 set(PACKAGE_IGNORED_FILES
         "${CMAKE_CURRENT_BINARY_DIR}/;/.git/;.gitignore;~$;${CPACK_SOURCE_IGNORE_FILES}")
 
-set(CPACK_GENERATOR "TGZ;DEB;RPM")
+set(CPACK_GENERATOR "TGZ;DEB")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "mail@babelouest.org")
+set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "HTTP Framework for REST API in C, using JSON or not, with websockets or not, with streaming data or not")
+set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "http://babelouest.github.io/ulfius/")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.4), libcurl3-gnutls (>= 7.16.2), libgnutls30 (>= 3.5.0), libjansson4 (>= 2.1), libmicrohttpd12 (>= 0.9.53), liborcania, libyder")
 set(CPACK_PACKAGE_FILE_NAME ${PACKAGE_FILE_NAME})
 
 set(CPACK_SOURCE_GENERATOR "TGZ")
@@ -257,73 +275,3 @@ include(CPack)
 
 add_custom_target(dist
         COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
-
-option(WITH_EXAMPLES "Build Ulfius Examples" ON)
-
-if (WITH_EXAMPLES)
-
-	# examples
-
-	set(EXAMPLE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/example_programs)
-	set(STATIC_CALLBACK_DIR ${CMAKE_CURRENT_SOURCE_DIR}/example_callbacks/static_file/)
-	set(LIBS ${LIBS} ulfius)
-  
-	add_executable(simple_example ${EXAMPLE_DIR}/simple_example/simple_example.c)
-	target_link_libraries(simple_example ${LIBS})
-  add_dependencies(simple_example ulfius)
-
-	add_executable(auth_client ${EXAMPLE_DIR}/auth_example/auth_client.c)
-	target_link_libraries(auth_client ${LIBS})
-  add_dependencies(auth_client ulfius)
-
-	add_executable(auth_server ${EXAMPLE_DIR}/auth_example/auth_server.c)
-	target_link_libraries(auth_server ${LIBS})
-  add_dependencies(auth_server ulfius)
-
-	add_executable(injection_example ${EXAMPLE_DIR}/injection_example/injection_example.c)
-	target_link_libraries(injection_example ${LIBS})
-  add_dependencies(injection_example ulfius)
-
-	add_executable(multiple_callbacks_example ${EXAMPLE_DIR}/multiple_callbacks_example/multiple_callbacks_example.c)
-	target_link_libraries(multiple_callbacks_example ${LIBS})
-  add_dependencies(multiple_callbacks_example ulfius)
-
-	add_executable(proxy_example ${EXAMPLE_DIR}/proxy_example/proxy.c)
-	target_link_libraries(proxy_example ${LIBS})
-  add_dependencies(proxy_example ulfius)
-
-	add_executable(request_client ${EXAMPLE_DIR}/request_example/client.c)
-	target_link_libraries(request_client ${LIBS})
-  add_dependencies(request_client ulfius)
-
-	add_executable(request_server ${EXAMPLE_DIR}/request_example/server.c)
-	target_link_libraries(request_server ${LIBS})
-  add_dependencies(request_server ulfius)
-
-	add_executable(request_mail ${EXAMPLE_DIR}/request_example/mail.c)
-	target_link_libraries(request_mail ${LIBS})
-  add_dependencies(request_mail ulfius)
-
-	add_executable(sheep_counter ${EXAMPLE_DIR}/sheep_counter/sheep_counter.c)
-	target_link_libraries(sheep_counter ${LIBS})
-  add_dependencies(sheep_counter ulfius)
-
-	add_executable(stream_client ${EXAMPLE_DIR}/stream_example/stream_client.c)
-	target_link_libraries(stream_client ${LIBS})
-  add_dependencies(stream_client ulfius)
-
-	add_executable(stream_example ${EXAMPLE_DIR}/stream_example/stream_example.c)
-	target_link_libraries(stream_example ${LIBS})
-  add_dependencies(stream_example ulfius)
-
-	add_executable(test_u_map ${EXAMPLE_DIR}/test_u_map/test_u_map.c)
-	target_link_libraries(test_u_map ${LIBS})
-  add_dependencies(test_u_map ulfius)
-
-	if (INSTALL_WEBSOCKET)
-		add_executable(websocket_example ${EXAMPLE_DIR}/websocket_example/websocket_example.c ${STATIC_CALLBACK_DIR}/static_file_callback.c)
-		target_link_libraries(websocket_example ${LIBS})
-    add_dependencies(websocket_example ulfius)
-	endif ()
-
-endif ()
