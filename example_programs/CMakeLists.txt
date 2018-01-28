@@ -129,14 +129,8 @@ target_link_libraries(auth_client ${LIBS})
 add_executable(auth_server ${CMAKE_CURRENT_SOURCE_DIR}/auth_example/auth_server.c)
 target_link_libraries(auth_server ${LIBS})
 
-add_executable(injection_example ${CMAKE_CURRENT_SOURCE_DIR}/injection_example/injection_example.c)
-target_link_libraries(injection_example ${LIBS})
-
 add_executable(multiple_callbacks_example ${CMAKE_CURRENT_SOURCE_DIR}/multiple_callbacks_example/multiple_callbacks_example.c)
 target_link_libraries(multiple_callbacks_example ${LIBS})
-
-add_executable(sheep_counter ${CMAKE_CURRENT_SOURCE_DIR}/sheep_counter/sheep_counter.c)
-target_link_libraries(sheep_counter ${LIBS})
 
 add_executable(stream_client ${CMAKE_CURRENT_SOURCE_DIR}/stream_example/stream_client.c)
 target_link_libraries(stream_client ${LIBS})
@@ -147,7 +141,15 @@ target_link_libraries(stream_example ${LIBS})
 add_executable(test_u_map ${CMAKE_CURRENT_SOURCE_DIR}/test_u_map/test_u_map.c)
 target_link_libraries(test_u_map ${LIBS})
 
-if (WITH_CURL)
+if (WITH_JANSSON)
+  add_executable(injection_example ${CMAKE_CURRENT_SOURCE_DIR}/injection_example/injection_example.c)
+  target_link_libraries(injection_example ${LIBS})
+
+  add_executable(sheep_counter ${CMAKE_CURRENT_SOURCE_DIR}/sheep_counter/sheep_counter.c)
+  target_link_libraries(sheep_counter ${LIBS})
+endif ()
+
+if (WITH_CURL AND WITH_JANSSON)
   add_executable(proxy_example ${CMAKE_CURRENT_SOURCE_DIR}/proxy_example/proxy.c)
   target_link_libraries(proxy_example ${LIBS})
 
