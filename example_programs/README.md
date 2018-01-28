@@ -17,3 +17,37 @@ The example programs were developped to help implementing the functionnalities o
 - `request_example`: send http and smtp requests
 - `test_u_map`: struct _u_map tests
 - `multiple_callbacks_example`: Test new feature in Ulfius 2.0 where you can access multiple callback functions on a single endpoint, one after the other
+
+## Build
+
+### CMake - Multi architecture
+
+You can build Ulfius example programs using cmake, example:
+
+```shell
+$ cd example_programs
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make
+$ ./simple_example
+```
+
+The available options for cmake are:
+- `-DWITH_JANSSON=[on|off]` (default `on`): Build example programs with Jansson dependency
+- `-DWITH_CURL=[on|off]` (default `on`): Build example programs with libcurl dependency
+- `-DWITH_WEBSOCKET=[on|off]` (default `on`): Build example program with websocket functions, not available for Windows, requires libmicrohttpd 0.9.53 minimum and GnuTLS installed.
+
+### Good ol' Makefile
+
+You can either use the `Makefile` available in the `example_programs` folder or each `Makefile` in each subfolders.
+
+```shell
+$ # Build all example programs
+$ cd example_programs
+$ make
+$ ./simple_example/simple_example
+$ # Build only simple_example
+$ cd example_programs/simple_example
+$ make && make test
+```

@@ -37,7 +37,7 @@ For example, to install all the external dependencies on Debian Stretch, run as 
 # apt-get install libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev libgnutls28-dev libgcrypt20-dev
 ```
 
-### CMake build
+### CMake - Multi architecture
 
 You can build Ulfius library using cmake, example:
 
@@ -48,11 +48,20 @@ $ cmake ..
 $ make && sudo make install
 ```
 
+The available options for cmake are:
+- `-DWITH_JANSSON=[on|off]` (default `on`): Build with Jansson dependency
+- `-DWITH_CURL=[on|off]` (default `on`): Build with libcurl dependency
+- `-DWITH_WEBSOCKET=[on|off]` (default `on`): Build with websocket functions, not available for Windows, requires libmicrohttpd 0.9.53 minimum and GnuTLS installed.
+- `-DBUILD_STATIC=[on|off]` (default `off`): Build the static archive in addition to the shared library
+- `-DBUILD_TESTING=[on|off]` (default `off`): Build unit tests
+- `-DINSTALL_HEADER=[on|off]` (default `on`): Install header file `ulfius.h`
+- `-DCMAKE_BUILD_TYPE=[Debug|Release]` (default `Release`): Compile with debugging symbols or not
+
 ### Good ol' Makefile
 
 #### Install Ulfius as a shared library
 
-Ulfius is still available to install via the traditional Makefile
+Ulfius can also be installed via the traditional Makefile
 
 ```shell
 $ cd lib/orcania
