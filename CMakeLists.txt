@@ -262,7 +262,7 @@ set(PACKAGE_IGNORED_FILES
 
 set(CPACK_GENERATOR "TGZ;DEB")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "mail@babelouest.org")
-set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "HTTP Framework for REST API in C, using JSON or not, with websockets or not, with streaming data or not")
+set(CPACK_DEBIAN_PACKAGE_DESCRIPTION ${PROJECT_DESCRIPTION})
 set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "http://babelouest.github.io/ulfius/")
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.4), libcurl3-gnutls (>= 7.16.2), libgnutls30 (>= 3.5.0), libjansson4 (>= 2.1), libmicrohttpd12 (>= 0.9.53), liborcania, libyder")
 set(CPACK_PACKAGE_FILE_NAME ${PACKAGE_FILE_NAME})
