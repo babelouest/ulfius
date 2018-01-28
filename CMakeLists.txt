@@ -31,6 +31,7 @@ set(LIBRARY_VERSION_MINOR "1")
 set(LIBRARY_VERSION_PATCH "1")
 set(LIBRARY_VERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}.${LIBRARY_VERSION_PATCH}")
 set(LIBRARY_SOVERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}")
+set(YDER_VERSION_DOWNLOAD "1.2.0-b")
 
 # cmake modules
 
@@ -70,24 +71,6 @@ set(LIB_SRC
         ${SRC_DIR}/u_send_request.c
         ${SRC_DIR}/u_websocket.c
         ${SRC_DIR}/ulfius.c)
-
-include(FindOrcania)
-set(ORCANIA_MIN_VERSION "1.1.1")
-find_package(Orcania ${ORCANIA_MIN_VERSION})
-if (ORCANIA_FOUND)
-  set(LIBS ${ORCANIA_LIBRARIES})
-else ()
-  # TODO Add Orcania automatically
-endif ()
-
-include(FindYder)
-set(YDER_MIN_VERSION "1.1.1")
-find_package(Yder ${YDER_MIN_VERSION})
-if (ORCANIA_FOUND)
-  set(LIBS ${LIBS} ${YDER_LIBRARIES})
-else ()
-  # TODO Add Yder automatically
-endif ()
 
 # websocket support
 
@@ -163,6 +146,26 @@ if (WIN32)
     set_target_properties(ulfius PROPERTIES SUFFIX "-${LIBRARY_VERSION_MAJOR}.dll")
 endif ()
 target_link_libraries(ulfius ${LIBS})
+
+# dependencies
+
+set(Yder_FIND_QUIETLY ON) # force to find Yder quietly
+include(FindYder)
+find_package(Yder 1.1 QUIET) # try to find Yder
+if (NOT YDER_FOUND)
+    include(DownloadProject)
+    download_project(PROJ yder # ... otherwise, download archive
+            URL "https://github.com/babelouest/yder/archive/v${YDER_VERSION_DOWNLOAD}.tar.gz"
+            QUIET)
+    add_subdirectory(${yder_SOURCE_DIR} ${yder_BINARY_DIR})
+    include_directories(${yder_SOURCE_DIR}/include)
+    include_directories(${orcania_SOURCE_DIR}/include)
+    add_dependencies(ulfius yder)
+    add_dependencies(ulfius orcania)
+    set(YDER_LIBRARIES yder orcania)
+endif ()
+
+target_link_libraries(ulfius ${LIBS} ${YDER_LIBRARIES})
 
 # tests
 
@@ -273,5 +276,5 @@ set(CPACK_SOURCE_IGNORE_FILES ${PACKAGE_IGNORED_FILES})
 
 include(CPack)
 
-add_custom_target(dist
+add_custom_target(dist_u
         COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
