@@ -131,6 +131,7 @@ static void * ulfius_uri_logger (void * cls, const char * uri) {
   if (con_info != NULL) {
     con_info->callback_first_iteration = 1;
     con_info->u_instance = NULL;
+    con_info->map_url_initial = NULL;
     con_info->request = o_malloc(sizeof(struct _u_request));
     if (con_info->request == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for con_info->request");
