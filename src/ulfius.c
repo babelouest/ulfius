@@ -131,7 +131,7 @@ static void * ulfius_uri_logger (void * cls, const char * uri) {
   if (con_info != NULL) {
     con_info->callback_first_iteration = 1;
     con_info->u_instance = NULL;
-    con_info->map_url_initial = NULL;
+    u_map_init(&con_info->map_url_initial);
     con_info->request = o_malloc(sizeof(struct _u_request));
     if (con_info->request == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for con_info->request");
@@ -309,7 +309,6 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
     so_client = MHD_get_connection_info (connection, MHD_CONNECTION_INFO_CLIENT_ADDRESS)->client_addr;
     con_info->has_post_processor = 0;
     con_info->max_post_param_size = ((struct _u_instance *)cls)->max_post_param_size;
-    u_map_init(&con_info->map_url_initial);
     con_info->request->http_protocol = o_strdup(version);
     con_info->request->http_verb = o_strdup(method);
     con_info->request->client_address = o_malloc(sizeof(struct sockaddr));
