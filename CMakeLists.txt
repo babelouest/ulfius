@@ -152,23 +152,27 @@ target_link_libraries(ulfius ${LIBS})
 
 # dependencies
 
-set(Yder_FIND_QUIETLY ON) # force to find Yder quietly
-include(FindYder)
-find_package(Yder 1.1 QUIET) # try to find Yder
-if (NOT YDER_FOUND)
-    include(DownloadProject)
-    download_project(PROJ yder # ... otherwise, download archive
-            URL "https://github.com/babelouest/yder/archive/v${YDER_VERSION_DOWNLOAD}.tar.gz"
-            QUIET)
-    add_subdirectory(${yder_SOURCE_DIR} ${yder_BINARY_DIR})
-    include_directories(${yder_SOURCE_DIR}/include)
-    include_directories(${orcania_SOURCE_DIR}/include)
-    add_dependencies(ulfius yder)
-    add_dependencies(ulfius orcania)
-    set(YDER_LIBRARIES yder orcania)
-endif ()
+option(CHECK_YDER "Check Yder library." ON)
 
-target_link_libraries(ulfius ${LIBS} ${YDER_LIBRARIES})
+if (CHECK_YDER)
+  set(Yder_FIND_QUIETLY ON) # force to find Yder quietly
+  include(FindYder)
+  find_package(Yder 1.1 QUIET) # try to find Yder
+  if (NOT YDER_FOUND)
+      include(DownloadProject)
+      download_project(PROJ yder # ... otherwise, download archive
+              URL "https://github.com/babelouest/yder/archive/v${YDER_VERSION_DOWNLOAD}.tar.gz"
+              QUIET)
+      add_subdirectory(${yder_SOURCE_DIR} ${yder_BINARY_DIR})
+      include_directories(${yder_SOURCE_DIR}/include)
+      include_directories(${orcania_SOURCE_DIR}/include)
+      add_dependencies(ulfius yder)
+      add_dependencies(ulfius orcania)
+      set(YDER_LIBRARIES yder orcania)
+  endif ()
+
+  target_link_libraries(ulfius ${LIBS} ${YDER_LIBRARIES})
+endif()
 
 # tests
 
