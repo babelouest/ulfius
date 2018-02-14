@@ -10,6 +10,10 @@ Ulfius is now available in Debian Buster (testing) and some Debian based distrib
 # apt install libulfius-dev # Or apt install libulfius.1 if you don't need the development files
 ```
 
+### Pre-compiled packages
+
+You can install Ulfius with a pre-compiled package available in the [release pages](https://github.com/babelouest/ulfius/releases/latest/). `jansson`, `libmicrohttpd`, `gnutls` and `libcurl-gnutls` development files packages are required to install Ulfius. The packages files `ulfius-dev-full_*` contain the libraries `orcania`, `yder` and `ulfius`.
+
 ## Manual install
 
 Download Ulfius source code from Github, get the submodules, compile and install each submodule, then compile and install ulfius:
