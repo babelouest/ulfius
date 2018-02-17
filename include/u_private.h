@@ -28,6 +28,9 @@
 
 #include "ulfius.h"
 
+/** Macro to avoid compiler warning when some parameters are unused and that's ok **/
+#define UNUSED(x) (void)(x)
+
 /**********************************
  * Internal functions declarations
  **********************************/

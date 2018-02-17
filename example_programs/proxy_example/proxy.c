@@ -16,7 +16,7 @@
 
 #define U_DISABLE_WEBSOCKET
 #define U_DISABLE_JANSSON
-#include "../../src/ulfius.h"
+#include "../../include/ulfius.h"
 
 #define PORT 7799
 #define PROXY_DEST "https://www.wikipedia.org"

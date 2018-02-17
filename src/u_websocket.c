@@ -24,7 +24,7 @@
  */
 
 #include "u_private.h"
-#include "ulfius.h"
+#include "../include/ulfius.h"
 
 #ifndef U_DISABLE_WEBSOCKET
 #include <string.h>
@@ -178,16 +178,20 @@ void * ulfius_thread_websocket(void * data) {
  * Websocket callback function for MHD
  * Starts the websocket manager if set,
  */
-void ulfius_start_websocket_cb (void *cls,
-            struct MHD_Connection *connection,
+void ulfius_start_websocket_cb (void * cls,
+            struct MHD_Connection * connection,
             void * con_cls,
             const char * extra_in,
             size_t extra_in_size,
             MHD_socket sock,
             struct MHD_UpgradeResponseHandle * urh) {
-  struct _websocket * websocket = (struct _websocket*)cls;
+  struct _websocket * websocket = (struct _websocket *)cls;
   pthread_t thread_websocket;
   int thread_ret_websocket = 0, thread_detach_websocket = 0;
+	UNUSED(connection);
+	UNUSED(con_cls);
+	UNUSED(extra_in);
+	UNUSED(extra_in_size);
   
   if (websocket != NULL) {
     websocket->urh = urh;
@@ -287,11 +291,11 @@ int ulfius_read_incoming_message(struct _websocket_manager * websocket_manager, 
             if (msg_len > 0) {
               payload_data = o_malloc(msg_len*sizeof(uint8_t));
               len = ulfius_websocket_recv_all(websocket_manager->sock, payload_data, msg_len);
-              if (len == msg_len) {
+              if ((unsigned int)len == msg_len) {
                 // If mask, decode message
                 if ((*message)->has_mask) {
                   (*message)->data = o_realloc((*message)->data, (msg_len+(*message)->data_len)*sizeof(uint8_t));
-                  for (i = (*message)->data_len; i < msg_len; i++) {
+                  for (i = (*message)->data_len; (unsigned int)i < msg_len; i++) {
                     (*message)->data[i] = payload_data[i-(*message)->data_len] ^ masking_key[(i-(*message)->data_len)%4];
                   }
                 } else {
@@ -605,7 +609,7 @@ int ulfius_websocket_send_message_nolock(struct _websocket_manager * websocket_m
 void ulfius_websocket_send_all(MHD_socket sock, const uint8_t * data, size_t len) {
   ssize_t ret = 0, off;
   if (data != NULL && len > 0) {
-    for (off = 0; off < len; off += ret) {
+    for (off = 0; (size_t)off < len; off += ret) {
       ret = send(sock, &data[off], len - off, MSG_NOSIGNAL);
       if (ret < 0) {
         break;

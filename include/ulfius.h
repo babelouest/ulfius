@@ -27,12 +27,19 @@
 #define __ULFIUS_H__
 
 /** External dependencies **/
-#include <poll.h>
 #include <pthread.h>
 #include <microhttpd.h>
 
+#if defined(_WIN32) && !defined(U_DISABLE_WEBSOCKET)
+  #define U_DISABLE_WEBSOCKET
+#endif
+
 #if (MHD_VERSION < 0x00095300) && !defined(U_DISABLE_WEBSOCKET)
   #define U_DISABLE_WEBSOCKET
+#endif
+
+#ifndef U_DISABLE_WEBSOCKET
+  #include <poll.h>
 #endif
 
 /** Angharad libraries **/

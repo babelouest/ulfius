@@ -5,11 +5,15 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
-#include <netinet/in.h>
+#ifndef _WIN32
+	#include <netinet/in.h>
+#else
+	#include <unistd.h>
+#endif
 #include <inttypes.h>
 
 #include <check.h>
-#include "../src/ulfius.h"
+#include "../include/ulfius.h"
 
 /**
  * decode a u_map into a string

@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include "u_private.h"
-#include "ulfius.h"
+#include "../include/ulfius.h"
 
 /**
  * Fill a map with the key/values specified
@@ -35,7 +35,8 @@
 static int ulfius_fill_map(void * cls, enum MHD_ValueKind kind, const char * key, const char * value) {
   char * tmp;
   int res;
-  
+  UNUSED(kind);
+	
   if (cls == NULL || key == NULL) {
     // Invalid parameters
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error invalid parameters for ulfius_fill_map");
@@ -125,9 +126,12 @@ static int ulfius_validate_instance(const struct _u_instance * u_instance) {
  */
 static void * ulfius_uri_logger (void * cls, const char * uri) {
   struct connection_info_struct * con_info = o_malloc (sizeof (struct connection_info_struct));
+	UNUSED(cls);
+	
   if (con_info != NULL) {
     con_info->callback_first_iteration = 1;
     con_info->u_instance = NULL;
+    u_map_init(&con_info->map_url_initial);
     con_info->request = o_malloc(sizeof(struct _u_request));
     if (con_info->request == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for con_info->request");
@@ -195,6 +199,10 @@ static int ulfius_get_body_from_response(struct _u_response * response, void ** 
 static void mhd_request_completed (void *cls, struct MHD_Connection *connection,
                         void **con_cls, enum MHD_RequestTerminationCode toe) {
   struct connection_info_struct *con_info = *con_cls;
+	UNUSED(toe);
+	UNUSED(connection);
+	UNUSED(cls);
+	
   if (NULL == con_info) {
     return;
   }
@@ -222,7 +230,8 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
   struct connection_info_struct * con_info = coninfo_cls;
   size_t cur_size = size;
   char * data_dup, * filename_param;
-  
+  UNUSED(kind);
+	
   if (filename != NULL && con_info->u_instance != NULL && con_info->u_instance->file_upload_callback != NULL) {
     if (con_info->u_instance->file_upload_callback(con_info->request, key, filename, content_type, transfer_encoding, data, off, size, con_info->u_instance->file_upload_cls) == U_OK) {
       return MHD_YES;
@@ -300,7 +309,6 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
     so_client = MHD_get_connection_info (connection, MHD_CONNECTION_INFO_CLIENT_ADDRESS)->client_addr;
     con_info->has_post_processor = 0;
     con_info->max_post_param_size = ((struct _u_instance *)cls)->max_post_param_size;
-    u_map_init(&con_info->map_url_initial);
     con_info->request->http_protocol = o_strdup(version);
     con_info->request->http_verb = o_strdup(method);
     con_info->request->client_address = o_malloc(sizeof(struct sockaddr));

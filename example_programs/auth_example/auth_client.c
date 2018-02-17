@@ -16,7 +16,7 @@
 
 #define U_DISABLE_JANSSON
 #define U_DISABLE_WEBSOCKET
-#include "../../src/ulfius.h"
+#include "../../include/ulfius.h"
 
 #define SERVER_URL "http://localhost:2884/auth/basic"
 #define SERVER_URL_DEFAULT "http://localhost:2884/auth/default"

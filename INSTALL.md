@@ -10,31 +10,24 @@ Ulfius is now available in Debian Buster (testing) and some Debian based distrib
 # apt install libulfius-dev # Or apt install libulfius.1 if you don't need the development files
 ```
 
-## Manual install
+### Pre-compiled packages
 
-### Prerequisites
+You can install Ulfius with a pre-compiled package available in the [release pages](https://github.com/babelouest/ulfius/releases/latest/). `jansson`, `libmicrohttpd`, `gnutls` and `libcurl-gnutls` development files packages are required to install Ulfius. The packages files `ulfius-dev-full_*` contain the libraries `orcania`, `yder` and `ulfius`.
 
-#### External dependencies
-
-To install all the external dependencies, for Debian based distributions (Debian, Ubuntu, Raspbian, etc.), run as root:
+For example, to install Ulfius with the `ulfius-dev-full_2.3.0_Debian_stretch_x86_64.tar.gz` package downloaded on the `releases` page, you must execute the following commands:
 
 ```shell
-# apt-get install libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev libgnutls28-dev libgcrypt20-dev
+$ sudo apt install -y libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev libgnutls28-dev libgcrypt20-dev
+$ wget https://github.com/babelouest/ulfius/releases/download/v2.3.0/ulfius-dev-full_2.3.0_Debian_stretch_x86_64.tar.gz
+$ tar xf ulfius-dev-full_2.3.0_Debian_stretch_x86_64.tar.gz
+$ sudo dpkg -i liborcania-dev_1.2.0_Debian_stretch_x86_64.deb
+$ sudo dpkg -i libyder-dev_1.2.0_Debian_stretch_x86_64.deb
+$ sudo dpkg -i libulfius-dev_2.3.0_Debian_stretch_x86_64.deb
 ```
 
-#### Note
+If there's no package available for your distribution, you can recompile it manually using `CMake` or `Makefile`.
 
-Here libcurl4-gnutls-dev for the example, but any `libcurl*-dev` library should be sufficent, depending on your needs and configuration. Note that gnutls is mandatory for websocket management and https support.
-
-Also, it seems that Debian Wheezy uses an old version of libjansson (2.3), you can either upgrade to jessie or download the latest version of libjansson from [github](https://github.com/akheron/jansson).
-
-As in version 2.0, libcurl and libjansson are no longer mandatory if you don't need one or both.
-
-If you want to use the websocket server functions, you need to install libmicrohttpd 0.9.53 minimum version.
-
-### Installation
-
-#### Install Ulfius as a shared library
+## Manual install
 
 Download Ulfius source code from Github, get the submodules, compile and install each submodule, then compile and install ulfius:
 
@@ -42,23 +35,52 @@ Download Ulfius source code from Github, get the submodules, compile and install
 $ git clone https://github.com/babelouest/ulfius.git
 $ cd ulfius/
 $ git submodule update --init
-$ cd lib/orcania
-$ make && sudo make install
-$ cd ../yder
-$ make && sudo make install
-$ cd ../..
-$ make
-$ sudo make install
 ```
 
-#### Update Ulfius
+### Prerequisites
 
-If you update Ulfius from a previous version, you must install the corresponding version of the submodules as well:
+#### External dependencies
+
+Ulfius requires the following dependencies
+
+- libmicrohttpd (required), minimum 0.9.53 if you require Websockets support
+- libjansson (optional), minimum 2.4, required for json support
+- libgnutls, libgcrypt (optional), required for Websockets and https support
+- libcurl (optional), required to send http/smtp requests
+
+For example, to install all the external dependencies on Debian Stretch, run as root:
 
 ```shell
-$ cd ulfius/
-$ git pull # Or git checkout <the version you need>
-$ git submodule update
+# apt-get install libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev libgnutls28-dev libgcrypt20-dev
+```
+
+### CMake - Multi architecture
+
+You can build Ulfius library using cmake, example:
+
+```shell
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make && sudo make install
+```
+
+The available options for cmake are:
+- `-DWITH_JANSSON=[on|off]` (default `on`): Build with Jansson dependency
+- `-DWITH_CURL=[on|off]` (default `on`): Build with libcurl dependency
+- `-DWITH_WEBSOCKET=[on|off]` (default `on`): Build with websocket functions, not available for Windows, requires libmicrohttpd 0.9.53 minimum and GnuTLS installed.
+- `-DBUILD_STATIC=[on|off]` (default `off`): Build the static archive in addition to the shared library
+- `-DBUILD_TESTING=[on|off]` (default `off`): Build unit tests
+- `-DINSTALL_HEADER=[on|off]` (default `on`): Install header file `ulfius.h`
+- `-DCMAKE_BUILD_TYPE=[Debug|Release]` (default `Release`): Compile with debugging symbols or not
+
+### Good ol' Makefile
+
+#### Install Ulfius as a shared library
+
+Ulfius can also be installed via the traditional Makefile
+
+```shell
 $ cd lib/orcania
 $ make && sudo make install
 $ cd ../yder
