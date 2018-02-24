@@ -21,13 +21,13 @@
 
 LIBORCANIA_LOCATION=../lib/orcania/src
 LIBYDER_LOCATION=../lib/yder/src
-ULFIUS_INCLUDE=../include/
+ULFIUS_INCLUDE=../include
 PREFIX=/usr/local
 CC=gcc
 CFLAGS=-c -pedantic -std=gnu99 -fPIC -Wall -D_REENTRANT -I$(PREFIX)/include -I$(ULFIUS_INCLUDE) -I$(LIBORCANIA_LOCATION) -I$(LIBYDER_LOCATION) $(ADDITIONALFLAGS) $(JANSSONFLAG) $(CURLFLAG) $(WEBSOCKETFLAG)
 LIBS=-L$(PREFIX)/lib -L$(LIBORCANIA_LOCATION) -L$(LIBYDER_LOCATION) -lc -lmicrohttpd -lyder -lorcania -lpthread
 OUTPUT=libulfius.so
-VERSION=2.2.4
+VERSION=2.3.1
 
 ifndef JANSSONFLAG
 LJANSSON=-ljansson
