@@ -73,7 +73,7 @@ clean:
 
 install: all
 	cp $(OUTPUT).$(VERSION) $(PREFIX)/lib
-	cp ulfius.h $(PREFIX)/include
+	cp $(ULFIUS_INCLUDE)/ulfius.h $(PREFIX)/include
 	-ldconfig
 
 static-install: static
