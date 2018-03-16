@@ -40,4 +40,4 @@ $ LD_LIBRARY_PATH=../../src: ./websocket_example -https cert.key cert.pem
 
 ## Test the websocket
 
-Open in your browser the url [http[s]://localhost:9275/static](http://localhost:9275/static), this will open an HTML page where you can test the websockets behaviour.
+Open in your browser the url [http[s]://localhost:9275/static/index.html](http://localhost:9275/static/index.html), this will open an HTML page where you can test the websockets behaviour.

@@ -18,20 +18,23 @@
     var mySocket = false;
     function connectSocket() {
       if (location.protocol === "https:") {
-        mySocket = new WebSocket("wss://" + location.hostname + ":" + location.port + "/websocket", ["plop", "grut"]);
+        mySocket = new WebSocket("wss://" + location.hostname + ":" + location.port + "/websocket", ["grut"]);
       } else {
-        mySocket = new WebSocket("ws://" + location.hostname + ":" + location.port + "/websocket", ["plop", "grut"]);
+        mySocket = new WebSocket("ws://" + location.hostname + ":" + location.port + "/websocket", ["grut"]);
       }
-      mySocket.onmessage = function (event) {
-        var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Message received: </strong>" + event.data + "</p><hr>"
-        $("#message").append(message);
-      };
-      mySocket.onclose = function () {
-        mySocket = false;
-        var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Websocket closed</strong></p><hr>"
-        $("#message").append(message);
-        $("#connect").val("Connect websocket");
-      };
+      if (mySocket) {
+        mySocket.onmessage = function (event) {
+          var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Message received: </strong>" + event.data + "</p><hr>"
+          $("#message").append(message);
+        };
+        mySocket.onclose = function () {
+          mySocket = false;
+          var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Websocket closed</strong></p><hr>"
+          $("#message").append(message);
+          $("#connect").val("Connect websocket");
+        };
+      }
+			console.log(mySocket);
     }
     
     $("#connect").click(function() {

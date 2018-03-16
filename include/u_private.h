@@ -102,7 +102,7 @@ int ulfius_generate_handshake_answer(const char * key, char * out_digest);
  * If match is NULL, then return source duplicate
  * Returned value must be u_free'd after use
  */
-char * ulfius_check_list_match(const char * source, const char * match);
+char * ulfius_check_list_match(const char * source, const char * match, const char * separator);
 
 /**
  * Initialize a websocket message list

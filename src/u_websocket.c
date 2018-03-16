@@ -631,7 +631,7 @@ size_t ulfius_websocket_recv_all(MHD_socket sock, uint8_t * data, size_t len) {
  * If match is NULL, then return source duplicate
  * Returned value must be u_free'd after use
  */
-char * ulfius_check_list_match(const char * source, const char * match) {
+char * ulfius_check_list_match(const char * source, const char * match, const char * separator) {
   char ** source_list = NULL, ** match_list = NULL;
   char * to_return = NULL;
   int i;
@@ -639,13 +639,13 @@ char * ulfius_check_list_match(const char * source, const char * match) {
     to_return = o_strdup(source);
   } else {
     if (source != NULL) {
-      if (split_string(source, ",", &source_list) > 0 && split_string(match, ",", &match_list) > 0) {
+      if (split_string(source, separator, &source_list) > 0 && split_string(match, ",", &match_list) > 0) {
         for (i=0; source_list[i] != NULL; i++) {
           if (string_array_has_trimmed_value((const char **)match_list, source_list[i])) {
             if (to_return == NULL) {
               to_return = o_strdup(trimwhitespace(source_list[i]));
             } else {
-              char * tmp = msprintf("%s, %s", to_return, trimwhitespace(source_list[i]));
+              char * tmp = msprintf("%s%s %s", to_return, separator, trimwhitespace(source_list[i]));
               o_free(to_return);
               to_return = tmp;
             }
