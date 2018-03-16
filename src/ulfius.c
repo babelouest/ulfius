@@ -434,7 +434,6 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
               // Check websocket_protocol and websocket_extensions to match ours
               char * extensions = ulfius_check_list_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Extensions"), ((struct _websocket_handle *)response->websocket_handle)->websocket_extensions, ";"),
                    * protocol = ulfius_check_list_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Protocol"), ((struct _websocket_handle *)response->websocket_handle)->websocket_protocol, ",");
-              y_log_message(Y_LOG_LEVEL_DEBUG, "check: %s %s", extensions, protocol);
               if (extensions != NULL && protocol != NULL) {
                 char websocket_accept[32] = {0};
                 if (ulfius_generate_handshake_answer(u_map_get(con_info->request->map_header, "Sec-WebSocket-Key"), websocket_accept)) {
