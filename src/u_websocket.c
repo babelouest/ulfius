@@ -639,7 +639,7 @@ char * ulfius_check_list_match(const char * source, const char * match, const ch
     to_return = o_strdup(source);
   } else {
     if (source != NULL) {
-      if (split_string(source, separator, &source_list) > 0 && split_string(match, ",", &match_list) > 0) {
+      if (split_string(source, separator, &source_list) > 0 && split_string(match, separator, &match_list) > 0) {
         for (i=0; source_list[i] != NULL; i++) {
           if (string_array_has_trimmed_value((const char **)match_list, source_list[i])) {
             if (to_return == NULL) {
@@ -648,6 +648,40 @@ char * ulfius_check_list_match(const char * source, const char * match, const ch
               char * tmp = msprintf("%s%s %s", to_return, separator, trimwhitespace(source_list[i]));
               o_free(to_return);
               to_return = tmp;
+            }
+          }
+        }
+        free_string_array(source_list);
+        free_string_array(match_list);
+      }
+    }
+  }
+  return to_return;
+}
+
+/**
+ * Return the first match between two list of items
+ * If match is NULL, then return the first element of source
+ * Returned value must be u_free'd after use
+ */
+char * ulfius_check_first_match(const char * source, const char * match, const char * separator) {
+  char ** source_list = NULL, ** match_list = NULL;
+  char * to_return = NULL;
+  int i;
+  if (match == NULL) {
+    if (source != NULL) {
+      if (split_string(source, separator, &source_list) > 0) {
+        to_return = o_strdup(trimwhitespace(source_list[0]));
+      }
+      free_string_array(source_list);
+    }
+  } else {
+    if (source != NULL) {
+      if (split_string(source, separator, &source_list) > 0 && split_string(match, separator, &match_list) > 0) {
+        for (i=0; source_list[i] != NULL && to_return == NULL; i++) {
+          if (string_array_has_trimmed_value((const char **)match_list, source_list[i])) {
+            if (to_return == NULL) {
+              to_return = o_strdup(trimwhitespace(source_list[i]));
             }
           }
         }

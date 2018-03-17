@@ -18,9 +18,9 @@
     var mySocket = false;
     function connectSocket() {
       if (location.protocol === "https:") {
-        mySocket = new WebSocket("wss://" + location.hostname + ":" + location.port + "/websocket", ["grut"]);
+        mySocket = new WebSocket("wss://" + location.hostname + ":" + location.port + "/websocket", ["grut", "plop"]);
       } else {
-        mySocket = new WebSocket("ws://" + location.hostname + ":" + location.port + "/websocket", ["grut"]);
+        mySocket = new WebSocket("ws://" + location.hostname + ":" + location.port + "/websocket", ["grut", "plop"]);
       }
       if (mySocket) {
         mySocket.onmessage = function (event) {
