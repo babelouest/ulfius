@@ -6,11 +6,13 @@ To use this file, you must create a `struct _glewlwyd_resource_config` with your
 
 ```C
 struct _glewlwyd_resource_config {
-  int       method;         // Values are G_METHOD_HEADER, G_METHOD_BODY or G_METHOD_URL for the access_token location, see https://tools.ietf.org/html/rfc6750
-  char *    oauth_scope;    // Scope values required by the resource, multiple values must be separated by a space character
-  char *    jwt_decode_key; // The key used to decode an access token
-  jwt_alg_t jwt_alg;        // The algorithm used to encode a token, see http://benmcollins.github.io/libjwt/
-  char *    realm;          // Optional, a realm value that will be sent back to the client
+  int            method;              // Values are G_METHOD_HEADER, G_METHOD_BODY or G_METHOD_URL for the access_token location, see https://tools.ietf.org/html/rfc6750
+  char *         oauth_scope;         // Scope values required by the resource, multiple values must be separated by a space character
+  char *         jwt_decode_key;      // The key used to decode an access token
+  jwt_alg_t      jwt_alg;             // The algorithm used to encode a token, see http://benmcollins.github.io/libjwt/
+  char *         realm;               // Optional, a realm value that will be sent back to the client
+  unsigned short accept_access_token; // required, accept type acces_token
+  unsigned short accept_client_token; // required, accept type client_token
 };
 ```
 
@@ -23,10 +25,9 @@ g_config.oauth_scope = "scope1";
 g_config.jwt_decode_key = "secret";
 g_config.jwt_alg = JWT_ALG_HS512;
 g_config.realm = "example";
+g_config.accept_access_token = 1;
+g_config.accept_client_token = 0;
 
-// First example, add an endpoint with the authentication callback callback_check_glewlwyd_access_token
-ulfius_add_endpoint_by_val(instance, "GET", "/api", "/resurce/:id", &callback_check_glewlwyd_access_token, (void*)g_config, NULL, &callback_get_resource, (void*)config);
-
-// Second example, use callback_check_glewlwyd_access_token as a default authentication callback
-ulfius_set_default_auth_function(instance, &callback_check_glewlwyd_access_token, (void*)g_config, NULL);
+// Example, add an authentication callback callback_check_glewlwyd_access_token for the endpoint GET "/api/resource/*"
+ulfius_add_endpoint_by_val(instance, "GET", "/api", "/resource/*", 0, &callback_check_glewlwyd_access_token, (void*)g_config);
 ```

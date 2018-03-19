@@ -2,7 +2,7 @@
  *
  * Glewlwyd OAuth2 Authorization token check
  *
- * Copyright 2016-2017 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2018 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -121,7 +121,7 @@ json_t * access_token_check_scope(struct _glewlwyd_resource_config * config, jso
           }
         }
         if (json_array_size(j_scope_final_list) > 0) {
-          j_res = json_pack("{siso}", "result", G_OK, "scope", json_copy(j_scope_final_list));
+          j_res = json_pack("{sisO}", "result", G_OK, "scope", j_scope_final_list);
         } else {
           j_res = json_pack("{si}", "result", G_ERROR_INSUFFICIENT_SCOPE);
         }
@@ -155,14 +155,24 @@ int access_token_check_validity(struct _glewlwyd_resource_config * config, json_
     // Token is valid, check type and expiration date
     time(&now);
     expiration = json_integer_value(json_object_get(j_access_token, "iat")) + json_integer_value(json_object_get(j_access_token, "expires_in"));
-    if (now < expiration && 
+    if (now < expiration &&
         json_object_get(j_access_token, "type") != NULL &&
-        json_is_string(json_object_get(j_access_token, "type")) &&
+        json_is_string(json_object_get(j_access_token, "type"))) {
+      if (config->accept_access_token &&
         0 == o_strcmp("access_token", json_string_value(json_object_get(j_access_token, "type"))) &&
         json_object_get(j_access_token, "username") != NULL &&
         json_is_string(json_object_get(j_access_token, "username")) &&
         json_string_length(json_object_get(j_access_token, "username")) > 0) {
-      res = G_OK;
+        res = G_OK;
+      } else if (config->accept_client_token &&
+        0 == o_strcmp("client_token", json_string_value(json_object_get(j_access_token, "type"))) &&
+        json_object_get(j_access_token, "client_id") != NULL &&
+        json_is_string(json_object_get(j_access_token, "client_id")) &&
+        json_string_length(json_object_get(j_access_token, "client_id")) > 0) {
+        res = G_OK;
+      } else {
+        res = G_ERROR_INVALID_REQUEST;
+      }
     } else {
       res = G_ERROR_INVALID_REQUEST;
     }
