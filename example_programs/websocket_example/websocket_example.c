@@ -172,6 +172,7 @@ void websocket_onclose_callback (const struct _u_request * request,
                                 void * websocket_onclose_user_data) {
   if (websocket_onclose_user_data != NULL) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_onclose_user_data is %s", websocket_onclose_user_data);
+    o_free(websocket_onclose_user_data);
   }
 }
 
@@ -237,8 +238,10 @@ void websocket_incoming_message_callback (const struct _u_request * request,
  * Ulfius main callback function that simplu calls the websocket manager and closes
  */
 int callback_websocket (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  char * websocket_user_data = "my_user_data";
-  if (ulfius_set_websocket_response(response, NULL, NULL, &websocket_manager_callback, websocket_user_data, &websocket_incoming_message_callback, websocket_user_data, &websocket_onclose_callback, websocket_user_data) == U_OK) {
+  char * websocket_user_data = o_strdup("my_user_data");
+  int ret;
+  
+  if ((ret = ulfius_set_websocket_response(response, "grut,gna", "permessage-deflate", &websocket_manager_callback, websocket_user_data, &websocket_incoming_message_callback, websocket_user_data, &websocket_onclose_callback, websocket_user_data)) == U_OK) {
     return U_CALLBACK_CONTINUE;
   } else {
     return U_CALLBACK_ERROR;

@@ -432,8 +432,8 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                 NULL != o_strcasestr(u_map_get_case(con_info->request->map_header, "Connection"), "Upgrade") &&
                 0 == o_strcmp(con_info->request->http_verb, "GET")) {
               // Check websocket_protocol and websocket_extensions to match ours
-              char * extensions = ulfius_check_list_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Extensions"), ((struct _websocket_handle *)response->websocket_handle)->websocket_extensions),
-                   * protocol = ulfius_check_list_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Protocol"), ((struct _websocket_handle *)response->websocket_handle)->websocket_protocol);
+              char * extensions = ulfius_check_list_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Extensions"), ((struct _websocket_handle *)response->websocket_handle)->websocket_extensions, ";"),
+                   * protocol = ulfius_check_first_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Protocol"), ((struct _websocket_handle *)response->websocket_handle)->websocket_protocol, ",");
               if (extensions != NULL && protocol != NULL) {
                 char websocket_accept[32] = {0};
                 if (ulfius_generate_handshake_answer(u_map_get(con_info->request->map_header, "Sec-WebSocket-Key"), websocket_accept)) {
@@ -462,6 +462,9 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
 												MHD_add_response_header (mhd_response,
 																								 "Sec-WebSocket-Accept",
 																								 websocket_accept);
+												MHD_add_response_header (mhd_response,
+																								 "Sec-WebSocket-Protocol",
+																								 protocol);
 												if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
 													y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
 													mhd_ret = MHD_NO;

@@ -1,5 +1,9 @@
 # Ulfius Changelog
 
+## 2.3.1
+
+- Fix websocket_example that worked for Firefox onky due to minor bugs in websocket management and misunderstanding the RFC
+
 ## 2.3
 
 - Add CMake installation script
