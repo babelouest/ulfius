@@ -124,13 +124,13 @@ $ make CURLFLAG=-DU_DISABLE_CURL JANSSONFLAG=-DU_DISABLE_JANSSON
 
 #### Installation directory
 
-By default, the shared libraries and the header files will be installed in the `/usr/local` location. To change this setting, you can modify the `PREFIX` value in the `src/Makefile`, `lib/orcania/src/Makefile` and `lib/yder/src/Makefile` files.
+By default, the shared libraries and the header files will be installed in the `/usr/local` location. To change this setting, you can modify the `DESTDIR` value in the `src/Makefile`, `lib/orcania/src/Makefile` and `lib/yder/src/Makefile` files.
 
 ```shell
-$ make PREFIX=/tmp install # to install ulfius in /tmp/lib for example
+$ make DESTDIR=/tmp install # to install ulfius in /tmp/lib for example
 ```
 
-You can install Ulfius without root permission if your user has write access to `$(PREFIX)`.
+You can install Ulfius without root permission if your user has write access to `$(DESTDIR)`.
 A `ldconfig` command is executed at the end of the install, it will probably fail if you don't have root permission, but this is harmless.
 If you choose to install Ulfius in another directory, you must set your environment variable `LD_LIBRARY_PATH` properly.
 
@@ -147,11 +147,11 @@ $ git submodule update --init
 
 To install Ulfius library as a static archive, `libulfius.a`, use the make commands `make static*`:
 
-The archives `liborcania.a` and `libyder.a` must previously be installed in the $(PREFIX) directory.
+The archives `liborcania.a` and `libyder.a` must previously be installed in the $(DESTDIR) directory.
 
 ```shell
 $ cd ulfius/src
-$ make static && sudo make static-install # or make PREFIX=/tmp static-install if you want to install in `/tmp/lib`
+$ make static && sudo make static-install # or make DESTDIR=/tmp static-install if you want to install in `/tmp/lib`
 ```
 
 The example program `example_program/simple_example` has a static make command to test and validate building a program with the archive.

@@ -22,12 +22,12 @@
 LIBORCANIA_LOCATION=../lib/orcania/src
 LIBYDER_LOCATION=../lib/yder/src
 ULFIUS_INCLUDE=../include
-PREFIX=/usr/local
+DESTDIR=/usr/local
 CC=gcc
-CFLAGS=-c -pedantic -std=gnu99 -fPIC -Wall -D_REENTRANT -I$(PREFIX)/include -I$(ULFIUS_INCLUDE) -I$(LIBORCANIA_LOCATION) -I$(LIBYDER_LOCATION) $(ADDITIONALFLAGS) $(JANSSONFLAG) $(CURLFLAG) $(WEBSOCKETFLAG)
-LIBS=-L$(PREFIX)/lib -L$(LIBORCANIA_LOCATION) -L$(LIBYDER_LOCATION) -lc -lmicrohttpd -lyder -lorcania -lpthread
+CFLAGS+=-c -pedantic -std=gnu99 -fPIC -Wall -D_REENTRANT -I$(DESTDIR)/include -I$(ULFIUS_INCLUDE) -I$(LIBORCANIA_LOCATION) -I$(LIBYDER_LOCATION) $(ADDITIONALFLAGS) $(JANSSONFLAG) $(CURLFLAG) $(WEBSOCKETFLAG) $(CPPFLAGS)
+LIBS=-L$(DESTDIR)/lib -L$(LIBORCANIA_LOCATION) -L$(LIBYDER_LOCATION) -lc -lmicrohttpd -lyder -lorcania -lpthread $(LDFLAGS)
 OUTPUT=libulfius.so
-VERSION=2.3.2
+VERSION=2.3.3
 
 ifndef JANSSONFLAG
 LJANSSON=-ljansson
@@ -44,7 +44,7 @@ endif
 all: release
 
 libulfius.so: ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o
-	$(CC) -shared -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o $(LIBS) $(LJANSSON) $(LCURL) $(LWEBSOCKET)
+	$(CC) -shared -Wl,-soname,$(OUTPUT).$(VERSION) -o $(OUTPUT).$(VERSION) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o $(LIBS) $(LJANSSON) $(LCURL) $(LWEBSOCKET)
 	ln -sf $(OUTPUT).$(VERSION) $(OUTPUT)
 
 libulfius.a: ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o
@@ -72,18 +72,18 @@ clean:
 	rm -f *.o *.so *.a $(OUTPUT) $(OUTPUT).*
 
 install: all
-	cp $(OUTPUT).$(VERSION) $(PREFIX)/lib
-	cp $(ULFIUS_INCLUDE)/ulfius.h $(PREFIX)/include
+	cp $(OUTPUT).$(VERSION) $(DESTDIR)/lib
+	cp $(ULFIUS_INCLUDE)/ulfius.h $(DESTDIR)/include
 	-ldconfig
 
 static-install: static
-	cp libulfius.a $(PREFIX)/lib
-	cp $(ULFIUS_INCLUDE)/ulfius.h $(PREFIX)/include
+	cp libulfius.a $(DESTDIR)/lib
+	cp $(ULFIUS_INCLUDE)/ulfius.h $(DESTDIR)/include
 
 uninstall:
-	rm -f $(PREFIX)/lib/$(OUTPUT) libulfius.a
-	rm -f $(PREFIX)/lib/$(OUTPUT).*
-	rm -f $(PREFIX)/include/ulfius.h
+	rm -f $(DESTDIR)/lib/$(OUTPUT) libulfius.a
+	rm -f $(DESTDIR)/lib/$(OUTPUT).*
+	rm -f $(DESTDIR)/include/ulfius.h
 
 debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 

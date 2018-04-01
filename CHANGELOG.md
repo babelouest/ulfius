@@ -1,8 +1,17 @@
 # Ulfius Changelog
 
-## 2.3.1
+## 2.3.3
+
+- Add Debian hardening patch on Makefile
+
+## 2.3.2
 
 - Fix websocket_example that worked for Firefox onky due to minor bugs in websocket management and misunderstanding the RFC
+- Update oauth2_bearer/glewlwyd_resource to handle client tokens
+
+## 2.3.1
+
+- Sync version number on all places it's located
 
 ## 2.3
 
