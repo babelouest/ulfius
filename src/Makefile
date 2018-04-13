@@ -81,7 +81,7 @@ static-install: static
 	cp $(ULFIUS_INCLUDE)/ulfius.h $(DESTDIR)/include
 
 uninstall:
-	rm -f $(DESTDIR)/lib/$(OUTPUT) libulfius.a
+	rm -f $(DESTDIR)/lib/$(OUTPUT) $(DESTDIR)/lib/libulfius.a
 	rm -f $(DESTDIR)/lib/$(OUTPUT).*
 	rm -f $(DESTDIR)/include/ulfius.h
 
