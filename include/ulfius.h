@@ -26,7 +26,7 @@
 #ifndef __ULFIUS_H__
 #define __ULFIUS_H__
 
-#define ULFIUS_VERSION 2.3.3
+#define ULFIUS_VERSION 2.3.4
 
 /** External dependencies **/
 #include <pthread.h>

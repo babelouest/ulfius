@@ -1,5 +1,9 @@
 # Ulfius Changelog
 
+## 2.3.4
+
+- Fix Makefile soname
+
 ## 2.3.3
 
 - Add Debian hardening patch on Makefile
