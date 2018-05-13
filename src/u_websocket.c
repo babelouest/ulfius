@@ -108,6 +108,8 @@ void * ulfius_thread_websocket(void * data) {
   pthread_t thread_websocket_manager;
   pthread_mutexattr_t mutexattr;
   int thread_ret_websocket_manager = 0, poll_ret;
+  int error = 0;
+  socklen_t len = sizeof (error);
   
   if (websocket != NULL && websocket->websocket_manager != NULL) {
     pthread_mutexattr_init ( &mutexattr );
@@ -132,31 +134,46 @@ void * ulfius_thread_websocket(void * data) {
       if (pthread_mutex_lock(&websocket->websocket_manager->read_lock)) {
         websocket->websocket_manager->connected = 0;
       }
-      poll_ret = poll(&websocket->websocket_manager->fds, 1, U_WEBSOCKET_USEC_WAIT);
-      if (poll_ret == -1) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Error poll websocket read");
-      } else if (poll_ret > 0) {
-        opcode = ulfius_read_incoming_message(websocket->websocket_manager, &message);
-        if (opcode == U_WEBSOCKET_OPCODE_CLOSE) {
-          // Send close command back, then close the socket
-          if (ulfius_websocket_send_message(websocket->websocket_manager, U_WEBSOCKET_OPCODE_CLOSE, 0, NULL) != U_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Error sending close command");
-          }
-          websocket->websocket_manager->closing = 1;
-        } else if (opcode == U_WEBSOCKET_OPCODE_PING) {
-          // Send pong command
-          if (ulfius_websocket_send_message(websocket->websocket_manager, U_WEBSOCKET_OPCODE_PONG, 0, NULL) != U_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Error sending pong command");
-          }
-        } else if (opcode != U_WEBSOCKET_OPCODE_NONE && message != NULL) {
-          if (websocket->websocket_incoming_message_callback != NULL) {
-            // TODO: run in thread
-            websocket->websocket_incoming_message_callback(websocket->request, websocket->websocket_manager, message, websocket->websocket_incoming_user_data);
-          }
-        }
-        if (message != NULL) {
-          if (ulfius_push_websocket_message(websocket->websocket_manager->message_list_incoming, message) != U_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Error pushing new websocket message in list");
+      error = 0;
+      poll_ret = getsockopt(websocket->websocket_manager->sock, SOL_SOCKET, SO_ERROR, &error, &len);
+      if (poll_ret != 0) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error getsockopt");
+        websocket->websocket_manager->connected = 0;
+      } else {
+        if (error != 0) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Socket not good enough");
+          websocket->websocket_manager->connected = 0;
+        } else {
+          poll_ret = poll(&websocket->websocket_manager->fds, 1, U_WEBSOCKET_USEC_WAIT);
+          if (poll_ret == -1) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Error poll websocket read");
+            websocket->websocket_manager->connected = 0;
+          } else if (websocket->websocket_manager->fds.revents & (POLLRDHUP|POLLERR|POLLHUP|POLLNVAL)) {
+            websocket->websocket_manager->connected = 0;
+          } else if (poll_ret > 0) {
+            opcode = ulfius_read_incoming_message(websocket->websocket_manager, &message);
+            if (opcode == U_WEBSOCKET_OPCODE_CLOSE) {
+              // Send close command back, then close the socket
+              if (ulfius_websocket_send_message(websocket->websocket_manager, U_WEBSOCKET_OPCODE_CLOSE, 0, NULL) != U_OK) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "Error sending close command");
+              }
+              websocket->websocket_manager->closing = 1;
+            } else if (opcode == U_WEBSOCKET_OPCODE_PING) {
+              // Send pong command
+              if (ulfius_websocket_send_message(websocket->websocket_manager, U_WEBSOCKET_OPCODE_PONG, 0, NULL) != U_OK) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "Error sending pong command");
+              }
+            } else if (opcode != U_WEBSOCKET_OPCODE_NONE && message != NULL) {
+              if (websocket->websocket_incoming_message_callback != NULL) {
+                // TODO: run in thread
+                websocket->websocket_incoming_message_callback(websocket->request, websocket->websocket_manager, message, websocket->websocket_incoming_user_data);
+              }
+            }
+            if (message != NULL) {
+              if (ulfius_push_websocket_message(websocket->websocket_manager->message_list_incoming, message) != U_OK) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "Error pushing new websocket message in list");
+              }
+            }
           }
         }
       }
@@ -204,7 +221,7 @@ void ulfius_start_websocket_cb (void * cls,
       ulfius_init_websocket_message_list(websocket->websocket_manager->message_list_outcoming);
       websocket->websocket_manager->sock = sock;
       websocket->websocket_manager->fds.fd = sock;
-      websocket->websocket_manager->fds.events = POLLIN;
+      websocket->websocket_manager->fds.events = POLLIN | POLLRDHUP;
       websocket->websocket_manager->connected = 1;
       websocket->websocket_manager->closing = 0;
       thread_ret_websocket = pthread_create(&thread_websocket, NULL, ulfius_thread_websocket, (void *)websocket);
@@ -496,7 +513,7 @@ int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
       poll_ret = poll(&websocket_manager->fds, 1, U_WEBSOCKET_USEC_WAIT);
       if (poll_ret == -1) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Error poll websocket read for close signal");
-      } else if (poll_ret > 0) {
+      } else if (!(websocket_manager->fds.revents & (POLLRDHUP|POLLERR|POLLHUP|POLLNVAL)) && poll_ret > 0) {
         do {
           ret_message = ulfius_read_incoming_message(websocket_manager, &message);
           if (message != NULL) {

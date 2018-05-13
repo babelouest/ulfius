@@ -26,9 +26,16 @@
 #ifndef __ULFIUS_H__
 #define __ULFIUS_H__
 
-#define ULFIUS_VERSION 2.3.4
+#define ULFIUS_VERSION 2.3.5
 
 /** External dependencies **/
+
+#ifndef U_DISABLE_WEBSOCKET
+  #ifndef _GNU_SOURCE
+    #define _GNU_SOURCE
+  #endif
+  #include <poll.h>
+#endif
 #include <pthread.h>
 #include <microhttpd.h>
 
@@ -38,10 +45,6 @@
 
 #if (MHD_VERSION < 0x00095300) && !defined(U_DISABLE_WEBSOCKET)
   #define U_DISABLE_WEBSOCKET
-#endif
-
-#ifndef U_DISABLE_WEBSOCKET
-  #include <poll.h>
 #endif
 
 /** Angharad libraries **/

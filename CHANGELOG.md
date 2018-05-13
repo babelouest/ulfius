@@ -1,5 +1,9 @@
 # Ulfius Changelog
 
+## 2.3.5
+
+- Fix websocket bug that kept some connections open after being unproperly closed by the client
+
 ## 2.3.4
 
 - Fix Makefile soname
