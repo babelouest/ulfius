@@ -666,6 +666,9 @@ struct _u_response * ulfius_duplicate_response(const struct _u_response * respon
 /**
  * ulfius_get_json_body_request
  * Get JSON structure from the request body if the request is valid
+ * In case of an error in getting or parsing JSON data in the request,
+ * the structure json_error_t * json_error will be filled with an error
+ * message if json_error is not NULL
  */
 json_t * ulfius_get_json_body_request(const struct _u_request * request, json_error_t * json_error);
 
@@ -677,17 +680,20 @@ json_t * ulfius_get_json_body_request(const struct _u_request * request, json_er
 int ulfius_set_json_body_request(struct _u_request * request, json_t * j_body);
 
 /**
+ * ulfius_get_json_body_response
+ * Get JSON structure from the response body if the request is valid
+ * In case of an error in getting or parsing JSON data in the request,
+ * the structure json_error_t * json_error will be filled with an error
+ * message if json_error is not NULL
+ */
+json_t * ulfius_get_json_body_response(struct _u_response * response, json_error_t * json_error);
+
+/**
  * ulfius_set_json_body_response
  * Add a json_t j_body to a response
  * return U_OK on success
  */
 int ulfius_set_json_body_response(struct _u_response * response, const unsigned int status, const json_t * j_body);
-
-/**
- * ulfius_get_json_body_response
- * Get JSON structure from the response body if the request is valid
- */
-json_t * ulfius_get_json_body_response(struct _u_response * response, json_error_t * json_error);
 #endif
 
 /************************************************************************
