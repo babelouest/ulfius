@@ -1,5 +1,11 @@
 # Ulfius Changelog
 
+## 2.3.6
+
+- Fix websocket bug that did not close a websocket properly after wrongly closed connections
+- Add last example_callbacks versions
+- Improve documentation on ulfius_get_json_body_request and ulfius_get_json_body_response
+
 ## 2.3.5
 
 - Fix websocket bug that kept some connections open after being unproperly closed by the client
