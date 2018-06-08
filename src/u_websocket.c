@@ -715,7 +715,7 @@ char * ulfius_check_first_match(const char * source, const char * match, const c
  */
 int ulfius_close_websocket(struct _websocket * websocket) {
   if (websocket != NULL && websocket->websocket_manager != NULL) {
-    if (websocket->websocket_onclose_callback != NULL && websocket->websocket_manager->connected) {
+    if (websocket->websocket_onclose_callback != NULL) {
       // Call websocket_onclose_callback if set
       websocket->websocket_onclose_callback(websocket->request, websocket->websocket_manager, websocket->websocket_onclose_user_data);
     }
