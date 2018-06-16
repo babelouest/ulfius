@@ -1,13 +1,14 @@
 # Install Ulfius
 
-## Debian-ish packages
+### Distribution packages
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/ulfius.svg)](https://repology.org/metapackage/ulfius)
 
-Ulfius is now available in Debian Buster (testing) and some Debian based distributions. To install it on your device, use the following command as root:
+Ulfius is available in multiple distributions as official package. Check out your distribution documentation to install the package automatically.
 
 ```shell
-# apt install libulfius-dev # Or apt install libulfius.1 if you don't need the development files
+$ # Example for Debian testing
+$ sudo apt install libulfius-dev # Or apt install libulfius2.3 if you don't need the development files
 ```
 
 ### Pre-compiled packages
@@ -17,7 +18,7 @@ You can install Ulfius with a pre-compiled package available in the [release pag
 For example, to install Ulfius with the `ulfius-dev-full_2.3.0_Debian_stretch_x86_64.tar.gz` package downloaded on the `releases` page, you must execute the following commands:
 
 ```shell
-$ sudo apt install -y libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev libgnutls28-dev libgcrypt20-dev
+$ sudo apt install -y libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev libgnutls28-dev libgcrypt20-dev libsystemd-dev
 $ wget https://github.com/babelouest/ulfius/releases/download/v2.3.0/ulfius-dev-full_2.3.0_Debian_stretch_x86_64.tar.gz
 $ tar xf ulfius-dev-full_2.3.0_Debian_stretch_x86_64.tar.gz
 $ sudo dpkg -i liborcania-dev_1.2.0_Debian_stretch_x86_64.deb
@@ -47,6 +48,7 @@ Ulfius requires the following dependencies
 - libjansson (optional), minimum 2.4, required for json support
 - libgnutls, libgcrypt (optional), required for Websockets and https support
 - libcurl (optional), required to send http/smtp requests
+- libsystemd (optional), required for [yder](https://github.com/babelouest/yder) to log messages in journald
 
 For example, to install all the external dependencies on Debian Stretch, run as root:
 
@@ -90,7 +92,7 @@ $ make
 $ sudo make install
 ```
 
-#### Disable dependencies
+#### Disable Ulfius dependencies
 
 To disable libcurl functions, append the option `CURLFLAG=-DU_DISABLE_CURL` to the make command when you build Ulfius:
 
