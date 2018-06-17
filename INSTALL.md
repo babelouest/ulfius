@@ -3,6 +3,7 @@
 ### Distribution packages
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/ulfius.svg)](https://repology.org/metapackage/ulfius)
+[![Packaging status](https://repology.org/badge/vertical-allrepos/libulfius.svg)](https://repology.org/metapackage/libulfius)
 
 Ulfius is available in multiple distributions as official package. Check out your distribution documentation to install the package automatically.
 
