@@ -178,7 +178,7 @@ int ulfius_set_response_header(struct MHD_Response * response, const struct _u_m
  */
 int ulfius_set_response_cookie(struct MHD_Response * mhd_response, const struct _u_response * response) {
   int ret;
-	unsigned int i;
+  unsigned int i;
   char * header;
   if (mhd_response != NULL && response != NULL) {
     for (i=0; i<response->nb_cookies; i++) {
@@ -414,14 +414,14 @@ int ulfius_init_response(struct _u_response * response) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->websocket_handle");
       return U_ERROR_MEMORY;
     }
-		((struct _websocket_handle *)response->websocket_handle)->websocket_protocol = NULL;
-		((struct _websocket_handle *)response->websocket_handle)->websocket_extensions = NULL;
-		((struct _websocket_handle *)response->websocket_handle)->websocket_manager_callback = NULL;
-		((struct _websocket_handle *)response->websocket_handle)->websocket_manager_user_data = NULL;
-		((struct _websocket_handle *)response->websocket_handle)->websocket_incoming_message_callback = NULL;
-		((struct _websocket_handle *)response->websocket_handle)->websocket_incoming_user_data = NULL;
-		((struct _websocket_handle *)response->websocket_handle)->websocket_onclose_callback = NULL;
-		((struct _websocket_handle *)response->websocket_handle)->websocket_onclose_user_data = NULL;
+    ((struct _websocket_handle *)response->websocket_handle)->websocket_protocol = NULL;
+    ((struct _websocket_handle *)response->websocket_handle)->websocket_extensions = NULL;
+    ((struct _websocket_handle *)response->websocket_handle)->websocket_manager_callback = NULL;
+    ((struct _websocket_handle *)response->websocket_handle)->websocket_manager_user_data = NULL;
+    ((struct _websocket_handle *)response->websocket_handle)->websocket_incoming_message_callback = NULL;
+    ((struct _websocket_handle *)response->websocket_handle)->websocket_incoming_user_data = NULL;
+    ((struct _websocket_handle *)response->websocket_handle)->websocket_onclose_callback = NULL;
+    ((struct _websocket_handle *)response->websocket_handle)->websocket_onclose_user_data = NULL;
 #endif
     return U_OK;
   } else {

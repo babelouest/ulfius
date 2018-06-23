@@ -205,10 +205,10 @@ void ulfius_start_websocket_cb (void * cls,
   struct _websocket * websocket = (struct _websocket *)cls;
   pthread_t thread_websocket;
   int thread_ret_websocket = 0, thread_detach_websocket = 0;
-	UNUSED(connection);
-	UNUSED(con_cls);
-	UNUSED(extra_in);
-	UNUSED(extra_in_size);
+  UNUSED(connection);
+  UNUSED(con_cls);
+  UNUSED(extra_in);
+  UNUSED(extra_in_size);
   
   if (websocket != NULL) {
     websocket->urh = urh;
@@ -364,7 +364,7 @@ int ulfius_clear_websocket(struct _websocket * websocket) {
     }
     ulfius_instance_remove_websocket_active(websocket->instance, websocket);
     ulfius_clear_websocket_manager(websocket->websocket_manager);
-		ulfius_clean_request_full(websocket->request);
+    ulfius_clean_request_full(websocket->request);
     o_free(websocket->websocket_manager);
     websocket->websocket_manager = NULL;
     o_free(websocket);

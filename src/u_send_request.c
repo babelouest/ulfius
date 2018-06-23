@@ -203,16 +203,16 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
           return U_ERROR_LIBCURL;
         }
       }
-			
-			// Set proxy if defined
-			if (copy_request->proxy != NULL) {
-				if (curl_easy_setopt(curl_handle, CURLOPT_PROXY, copy_request->proxy) != CURLE_OK) {
+      
+      // Set proxy if defined
+      if (copy_request->proxy != NULL) {
+        if (curl_easy_setopt(curl_handle, CURLOPT_PROXY, copy_request->proxy) != CURLE_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting proxy option");
           ulfius_clean_request_full(copy_request);
           curl_easy_cleanup(curl_handle);
           return U_ERROR_LIBCURL;
-				}
-			}
+        }
+      }
       
       has_params = (o_strchr(copy_request->http_url, '?') != NULL);
       if (copy_request->map_url != NULL && u_map_count(copy_request->map_url) > 0) {

@@ -37,8 +37,8 @@ int main(void) {
   struct _u_request request;
   struct _u_response response;
   int res;
-	
-	y_init_logs("stream_example client", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting stream_example");
+  
+  y_init_logs("stream_example client", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting stream_example");
   
   ulfius_init_response(&response);
   ulfius_init_request(&request);
@@ -82,8 +82,8 @@ int main(void) {
   ulfius_clean_response(&response);
   
   ulfius_clean_request(&request);
-	
-	y_close_logs();
-	
+  
+  y_close_logs();
+  
   return 0;
 }
