@@ -1,6 +1,13 @@
 # Install Ulfius
 
-### Distribution packages
+- [Distribution packages](#distribution-packages)
+- [Pre-compiled packages](#pre-compiled-packages)
+- [Manual install](#manual-install)
+  - [Prerequisites](#prerequisites)
+  - [CMake - Multi architecture](#cmake---multi-architecture)
+  - [Good ol' Makefile](#good-ol-makefile)
+
+## Distribution packages
 
 [![Packaging status](https://repology.org/badge/vertical-allrepos/ulfius.svg)](https://repology.org/metapackage/ulfius)
 
@@ -11,7 +18,7 @@ $ # Example for Debian testing
 $ sudo apt install libulfius-dev # Or apt install libulfius2.3 if you don't need the development files
 ```
 
-### Pre-compiled packages
+## Pre-compiled packages
 
 You can install Ulfius with a pre-compiled package available in the [release pages](https://github.com/babelouest/ulfius/releases/latest/). `jansson`, `libmicrohttpd`, `gnutls` and `libcurl-gnutls` development files packages are required to install Ulfius. The packages files `ulfius-dev-full_*` contain the libraries `orcania`, `yder` and `ulfius`.
 
@@ -39,8 +46,6 @@ $ git submodule update --init
 ```
 
 ### Prerequisites
-
-#### External dependencies
 
 Ulfius requires the following dependencies
 

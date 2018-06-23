@@ -1,5 +1,85 @@
 # Ulfius API Documentation
 
+- [Update existing programs from Ulfius 2.0 to 2.1](#update-existing-programs-from-ulfius-20-to-21)
+- [Update existing programs from Ulfius 1.x to 2.0](#update-existing-programs-from-ulfius-1x-to-20)
+- [Header file](#header-file)
+- [Return values](#return-values)
+- [Memory management](#memory-management)
+- [Webservice initialization](#webservice-initialization)
+  - [Instance structure](#instance-structure)
+  - [Endpoint structure](#endpoint-structure)
+  - [Multiple callback functions](#multiple-callback-functions)
+- [Start and stop webservice](#start-and-stop-webservice)
+- [Callback functions management](#callback-functions-management)
+  - [Get request data](#get-request-data)
+  - [Set response data](#set-response-data)
+  - [Callback functions return value](#callback-functions-return-value)
+  - [Use JSON in request and response body](#use-json-in-request-and-response-body)
+  - [Additional functions](#additional-functions)
+  - [Memory management](#memory-management)
+  - [Character encoding](#character-encoding)
+  - [Cookie management](#cookie-management)
+  - [File upload](#file-upload)
+  - [Streaming data](#streaming-data)
+  - [Websockets communication](#websockets-communication)
+    - [Starting a websocket communication](#starting-a-websocket-communication)
+    - [Manipulating websocket data structure](#manipulating-websocket-data-structure)
+    - [Messages manipulation](#messages-manipulation)
+- [struct _u_map API](#struct-_u_map-api)
+- [Outgoing request functions](#outgoing-request-functions)
+- [Send HTTP request API](#send-http-request-api)
+- [Send SMTP request API](#send-http-request-api)
+
+## Update existing programs from Ulfius 2.0 to 2.1
+
+- An annoying bug has been fixed that made streaming data a little buggy when used on raspbian. Now if you don't know the data size you're sending, use the macro U_STREAM_SIZE_UNKOWN instead of the previous value -1.
+- There are some updates in the stream callback function parameter types. Check the [streaming data documentation](#streaming-data).
+- The websocket data structures are no longer available directly in `struct _u_response` or `struct _u_instance`. But you shouldn't use them like this anyway so it won't be a problem.
+- Unify and update functions name `ulfius_set_*_body_response`. You may have to update your legacy code.
+The new functions names are:
+```c
+int ulfius_set_string_body_response(struct _u_response * response, const uint status, const char * body);
+int ulfius_set_binary_body_response(struct _u_response * response, const uint status, const char * body, const size_t length);
+int ulfius_set_empty_body_response(struct _u_response * response, const uint status);
+```
+
+## Update existing programs from Ulfius 1.x to 2.0
+
+If you already have programs that use Ulfius 1.x and want to update them to the brand new fresh Ulfius 2.0, it may require the following minor changes.
+
+### Endpoints definitions
+
+Endpoints structure have changed, `ulfius_add_endpoint_by_val` now requires only one callback function, but requires a priority number.
+
+If you don't use authentication callback functions, you can simply remove the `NULL, NULL, NULL` parameters corresponding to the former authentication callback function pointer, the authentication callback user data, and the realm value. Then add any number as a priority, 0 for example.
+
+If you use authentication callback functions, split your `ulfius_add_endpoint_by_val` call in 2 separate calls, one for the authentication function, one for the main callback function. For example:
+
+```C
+// An Ulfius 1.x call
+ulfius_add_endpoint_by_val(&instance, "GET", "/", NULL, &auth_callback, my_auth_data, "my realm", &main_callback, my_main_data);
+
+// The same behaviour with Ulfius 2.0
+ulfius_add_endpoint_by_val(&instance, "GET", "/", NULL, 0, &auth_callback, my_auth_data);
+ulfius_add_endpoint_by_val(&instance, "GET", "/", NULL, 1, &main_callback, my_main_data);
+// In this case, the realm value "my realm" must be specified in the response
+```
+
+### Callback return value
+
+The return value for the callback functions must be adapted, instead of U_OK, U_ERROR or U_ERROR_UNAUTHORIZED, you must use one of the following:
+
+```C
+#define U_CALLBACK_CONTINUE     0 // Will replace U_OK
+#define U_CALLBACK_COMPLETE     1
+#define U_CALLBACK_UNAUTHORIZED 2 // Will replace U_ERROR_UNAUTHORIZED
+#define U_CALLBACK_ERROR        3 // Will replace U_ERROR
+```
+
+If you want more details on the multiple callback functions, check the [documentation](#callback-functions-return-value).
+
+Other functions may have change their name or signature, check the documentation for more information.
+
 ## Header file
 
 Include file `ulfius.h` in your source file:
@@ -39,57 +119,6 @@ If you have disabled more than one library, for example both `libcurl` and `libj
 
 On your linker command, add ulfius as a dependency library, e.g. `-lulfius` for gcc.
 
-## API Documentation
-
-### Update existing programs from Ulfius 2.0 to 2.1
-
-- An annoying bug has been fixed that made streaming data a little buggy when used on raspbian. Now if you don't know the data size you're sending, use the macro U_STREAM_SIZE_UNKOWN instead of the previous value -1.  There is some updates in the stream callback function parameter types. Check the [streaming data documentation](#streaming-data).
-- The websocket data structures are no longer available directly in `struct _u_response` or `struct _u_instance`. But you shouldn't use them like this anyway so it won't be a problem.
-- Unify and update functions name `ulfius_set_*_body_response`. You may have to update your legacy code.
-The new functions names are:
-```c
-int ulfius_set_string_body_response(struct _u_response * response, const uint status, const char * body);
-int ulfius_set_binary_body_response(struct _u_response * response, const uint status, const char * body, const size_t length);
-int ulfius_set_empty_body_response(struct _u_response * response, const uint status);
-```
-
-### Update existing programs from Ulfius 1.x to 2.0
-
-If you already have programs that use Ulfius 1.x and want to update them to the brand new fresh Ulfius 2.0, it may require the following minor changes.
-
-#### Endpoints definitions
-
-Endpoints structure have changed, `ulfius_add_endpoint_by_val` now requires only one callback function, but requires a priority number.
-
-If you don't use authentication callback functions, you can simply remove the `NULL, NULL, NULL` parameters corresponding to the former authentication callback function pointer, the authentication callback user data, and the realm value. Then add any number as a priority, 0 for example.
-
-If you use authentication callback functions, split your `ulfius_add_endpoint_by_val` call in 2 separate calls, one for the authentication function, one for the main callback function. For example:
-
-```C
-// An Ulfius 1.x call
-ulfius_add_endpoint_by_val(&instance, "GET", "/", NULL, &auth_callback, my_auth_data, "my realm", &main_callback, my_main_data);
-
-// The same behaviour with Ulfius 2.0
-ulfius_add_endpoint_by_val(&instance, "GET", "/", NULL, 0, &auth_callback, my_auth_data);
-ulfius_add_endpoint_by_val(&instance, "GET", "/", NULL, 1, &main_callback, my_main_data);
-// In this case, the realm value "my realm" must be specified in the response
-```
-
-#### Callback return value
-
-The return value for the callback functions must be adapted, instead of U_OK, U_ERROR or U_ERROR_UNAUTHORIZED, you must use one of the following:
-
-```C
-#define U_CALLBACK_CONTINUE     0 // Will replace U_OK
-#define U_CALLBACK_COMPLETE     1
-#define U_CALLBACK_UNAUTHORIZED 2 // Will replace U_ERROR_UNAUTHORIZED
-#define U_CALLBACK_ERROR        3 // Will replace U_ERROR
-```
-
-If you want more details on the multiple callback functions, check the [documentation](#callback-functions-return-value).
-
-Other functions may have change their name or signature, check the documentation for more information.
-
 ### Return values
 
 When specified, some functions return `U_OK` on success, and other values otherwise. `U_OK` is 0, other values are non-0 values. The defined return value list is the following:
@@ -105,7 +134,7 @@ When specified, some functions return `U_OK` on success, and other values otherw
 
 ### Memory management
 
-Ulfius uses memory allocation functions `malloc/realloc/free` by default, but you can overwrite this and use any other memory allocation functions of your choice. Use Orcania's functions `o_set_alloc_funcs` and `o_get_alloc_funcs` to set and get memory allocation functions.
+Ulfius uses the memory allocation functions `malloc/realloc/calloc/free` by default, but you can overwrite this and use any other memory allocation functions of your choice. Use Orcania's functions `o_set_alloc_funcs` and `o_get_alloc_funcs` to set and get memory allocation functions.
 
 ```C
 void o_set_alloc_funcs(o_malloc_t malloc_fn, o_realloc_t realloc_fn, o_free_t free_fn);
@@ -152,11 +181,13 @@ int u_map_clean(struct _u_map * u_map);
 void u_free(void * data);
 ```
 
-### Initialization
+### Webservice initialization
 
-When initialized, Ulfius runs a thread in background that will listen to the specified port and dispatch the calls to the specified functions. Ulfius allows adding and removing new endpoints during the instance execution.
+Ulfius framework runs as an async task in the background. When initialized, a thread is executed in the background. This thread will listen to the specified port and dispatch the calls to the specified callback functions. Ulfius allows adding and removing new endpoints during the instance execution.
 
 To run a webservice, you must initialize a `struct _u_instance` and add your endpoints.
+
+#### Instance structure
 
 The `struct _u_instance` is defined as:
 
@@ -215,6 +246,8 @@ int ulfius_init_instance(struct _u_instance * u_instance, int port, struct socka
  */
 void ulfius_clean_instance(struct _u_instance * u_instance);
 ```
+
+#### Endpoint structure
 
 The `struct _u_endpoint` is defined as:
 
@@ -337,19 +370,21 @@ int ulfius_set_default_callback_function(struct _u_instance * u_instance,
                                          void * user_data);
 ```
 
-HTTP Method can be an existing or not existing method, or * for any method, you must specify a url_prefix, a url_format or both, callback_function is mandatory, user_data is optional.
+HTTP Method can be an existing or not existing method, or `*` for any method. You must specify a url_prefix, a url_format or both, callback_function is mandatory, user_data is optional.
 
-Your `struct _u_endpoint` array **MUST** end with an empty `struct _u_endpoint`.
+If you fill your array of endoints manually, your `struct _u_endpoint` array **MUST** end with an empty `struct _u_endpoint`.
 
-You can manually declare an endpoint or use the dedicated functions as `int ulfius_add_endpoint` or `int ulfius_add_endpoint_by_val`.
+You can manually declare an endpoint or use the dedicated functions as `int ulfius_add_endpoint` or `int ulfius_add_endpoint_by_val`. It's recommended to use the dedicated functions to fill this array though.
 
-If you manipulate the attribute `u_instance.endpoint_list`, you must end the list with an empty endpoint (see `const struct _u_endpoint * ulfius_empty_endpoint()`), and you must set the attribute `u_instance.nb_endpoints` accordingly. Also, you must use dynamically allocated values for attributes `http_method`, `url_prefix` and `url_format`.
+If you manipulate the attribute `u_instance.endpoint_list`, you must end the list with an empty endpoint (see `const struct _u_endpoint * ulfius_empty_endpoint()`), and you must set the attribute `u_instance.nb_endpoints` accordingly. Also, you must use dynamically allocated values (`malloc`) for attributes `http_method`, `url_prefix` and `url_format`.
+
+#### Multiple callback functions
 
 Ulfius allows multiple callbacks for the same endpoint. This is helpful when you need to execute several actions in sequence, for example check authentication, get resource, set cookie, then gzip response body. That's also why a priority must be set for each callback.
 
 The priority is in descending order, which means that it starts with 0 (highest priority) and priority decreases when priority number increases. There is no more signification to the priority number, which means you can use any incrementation of your choice.
 
-`Warning`: Having 2 callback functions with the same priority number will result in an undefined result for the callback functions execution order.
+`Warning`: Having 2 callback functions with the same priority number will result in an undefined execution order result.
 
 To help passing parameters between callback functions of the same request, the value `struct _u_response.shared_data` can bse used. But it will not be allocated or freed by the framework, the program using this variable must free by itself.
 
@@ -382,7 +417,7 @@ int ulfius_start_framework(struct _u_instance * u_instance);
 int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem);
 ```
 
-In your program where you want to start the web server, simply execute the function `ulfius_start_framework(struct _u_instance * u_instance)` for a non-secure http connection or `ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem)` for a secure https connection, using a valid private key and a valid corresponding server certificate, see openssl documentation for certificate generation. Those function accept the previously declared `instance` as first parameter. You can reuse the same callback function as much as you want for different endpoints. On success, these functions returns `U_CALLBACK_CONTINUE` or `U_CALLBACK_COMPLETE`, otherwise an error code.
+In your program, where you want to start the web server, execute the function `ulfius_start_framework(struct _u_instance * u_instance)` for a non-secure http connection or `ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem)` for a secure https connection, using a valid private key and a valid corresponding server certificate, see openssl documentation for certificate generation. Those function accept the previously declared `instance` as first parameter. You can reuse the same callback function as much as you want for different endpoints. On success, these functions returns `U_CALLBACK_CONTINUE` or `U_CALLBACK_COMPLETE`, otherwise an error code.
 
 Note: for security concerns, after running `ulfius_start_secure_framework`, you can free the parameters `key_pem` and `cert_pem` if you want to.
 
@@ -401,7 +436,7 @@ To stop the webservice, call the following function:
 int ulfius_stop_framework(struct _u_instance * u_instance);
 ```
 
-### Callback functions
+### Callback functions management
 
 The callback function is the function executed when a user calls an endpoint managed by your webservice (as defined in your `struct _u_endpoint` list).
 
@@ -414,6 +449,8 @@ int (* callback_function)(const struct _u_request * request, // Input parameters
 ```
 
 In the callback function definition, the variables `request` and `response` will be initialized by the framework, and the `user_data` variable will be assigned to the user_data defined in your endpoint list definition.
+
+#### Get request data
 
 The request variable is defined as:
 
@@ -444,7 +481,7 @@ struct _u_request {
   char *               http_protocol;
   char *               http_verb;
   char *               http_url;
-	char *               proxy;
+  char *               proxy;
   int                  check_server_certificate;
   long                 timeout;
   struct sockaddr *    client_address;
@@ -458,6 +495,8 @@ struct _u_request {
   size_t               binary_body_length;
 };
 ```
+
+#### Set response data
 
 The response variable is defined as:
 
@@ -551,19 +590,61 @@ int ulfius_set_stream_response(struct _u_response * response,
                                 uint64_t stream_size,
                                 size_t stream_block_size,
                                 void * stream_user_data);
+
+/**
+ * Set a websocket in the response
+ * You must set at least websocket_manager_callback or websocket_incoming_message_callback
+ * @Parameters
+ * response: struct _u_response to send back the websocket initialization, mandatory
+ * websocket_protocol: list of protocols, separated by a comma, or NULL if all protocols are accepted
+ * websocket_extensions: list of extensions, separated by a comma, or NULL if all extensions are accepted
+ * websocket_manager_callback: callback function called right after the handshake acceptance, optional
+ * websocket_manager_user_data: any data that will be given to the websocket_manager_callback, optional
+ * websocket_incoming_message_callback: callback function called on each incoming complete message, optional
+ * websocket_incoming_user_data: any data that will be given to the websocket_incoming_message_callback, optional
+ * websocket_onclose_callback: callback function called right before closing the websocket, must be complete for the websocket to close
+ * websocket_onclose_user_data: any data that will be given to the websocket_onclose_callback, optional
+ * @Return value: U_OK on success
+ */
+int ulfius_set_websocket_response(struct _u_response * response,
+                                   const char * websocket_protocol,
+                                   const char * websocket_extensions, 
+                                   void (* websocket_manager_callback) (const struct _u_request * request,
+                                                                        struct _websocket_manager * websocket_manager,
+                                                                        void * websocket_manager_user_data),
+                                   void * websocket_manager_user_data,
+                                   void (* websocket_incoming_message_callback) (const struct _u_request * request,
+                                                                                 struct _websocket_manager * websocket_manager,
+                                                                                 const struct _websocket_message * message,
+                                                                                 void * websocket_incoming_user_data),
+                                   void * websocket_incoming_user_data,
+                                   void (* websocket_onclose_callback) (const struct _u_request * request,
+                                                                        struct _websocket_manager * websocket_manager,
+                                                                        void * websocket_onclose_user_data),
+                                   void * websocket_onclose_user_data);
 ```
 
-### JSON body in request and response
+#### Callback functions return value
 
-In Ulfius 2.0, hard dependency with libjansson has been removed, the jansson library is now optional but enabled by default.
+The callback returned value can have the following values:
 
-If you want to remove libjansson dependency, build Ulfius library with the flag `JANSSONFLAG=-DU_DISABLE_JANSSON`
+- `U_CALLBACK_CONTINUE`: The framework can transfer the request and the response to the next callback function in priority order if there is one, or complete the transaction and send back the response to the client.
+- `U_CALLBACK_COMPLETE`: The framework must complete the transaction and send the response to the client without calling any further callback function.
+- `U_CALLBACK_UNAUTHORIZED`: The framework must complete the transaction without calling any further callback function and send an unauthorized response to the client with the status 401, the body specified and the `auth_realm` value if specified.
+- `U_CALLBACK_ERROR`: An error occured during execution, the framework must complete the transaction without calling any further callback function and send an error 500 to the client.
+
+#### Use JSON in request and response body
+
+In Ulfius 2.0, hard dependency with `libjansson` has been removed, the jansson library is now optional but enabled by default.
+
+If you want to remove JSON dependency, build Ulfius library using Makefile with the flag `JANSSONFLAG=-DU_DISABLE_JANSSON` or with CMake with th option `-DWITH_WEBSOCKET=off`.
 
 ```
-$ make JANSSONFLAG=-DU_DISABLE_JANSSON
+$ make JANSSONFLAG=-DU_DISABLE_JANSSON # Makefile
+$ cmake -DWITH_WEBSOCKET=off # CMake
 ```
 
-if libjansson library is enabled, the following functions are available in Ulfius:
+if JSON is enabled, the following functions are available in Ulfius:
 
 ```C
 /**
@@ -603,14 +684,7 @@ The `jansson` api documentation is available at the following address: [Jansson 
 
 Note: According to the [JSON RFC section 6](https://tools.ietf.org/html/rfc4627#section-6), the MIME media type for JSON text is `application/json`. Thus, if there is no HTTP header specifying JSON content-type, the functions `ulfius_get_json_body_request` and `ulfius_get_json_body_response` will return NULL.
 
-#### Callback functions return value
-
-The callback returned value can have the following values:
-
-- `U_CALLBACK_CONTINUE`: The framework can transfer the request and the response to the next callback function in priority order if there is one, or complete the transaction and send back the response to the client.
-- `U_CALLBACK_COMPLETE`: The framework must complete the transaction and send the response to the client without calling any further callback function.
-- `U_CALLBACK_UNAUTHORIZED`: The framework must complete the transaction without calling any further callback function and send an unauthorized response to the client with the status 401, the body specified and the `auth_realm` value if specified.
-- `U_CALLBACK_ERROR`: An error occured during execution, the framework must complete the transaction without calling any further callback function and send an error 500 to the client.
+#### Additional functions
 
 In addition with manipulating the raw parameters of the structures, you can use the `_u_request` and `_u_response` structures by using specific functions designed to facilitate their use and memory management:
 
@@ -694,15 +768,15 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
 struct _u_response * ulfius_duplicate_response(const struct _u_response * response);
 ```
 
-### Memory management
+#### Memory management
 
 The Ulfius framework will automatically free the variables referenced by the request and responses structures, except for `struct _u_response.shared_data`, so you must use dynamically allocated values for the response pointers.
 
-### Character encoding
+#### Character encoding
 
 You may be careful with characters encoding if you use non UTF8 characters in your application or webservice, and especially if you use different encodings in the same application. Ulfius has not been fully tested in cases like that.
 
-### Cookie management
+#### Cookie management
 
 The map_cookie structure will contain a set of key/values for the cookies. The cookie structure is defined as
 
@@ -794,9 +868,9 @@ The prototype of the `stream_callback` function is the following:
 
 ```C
 ssize_t stream_callback (void * stream_user_data,  // Your predefined user_data
-                     uint64_t offset,          // the position of the current data to send
-                     char * out_buf,           // The output buffer to fill with data
-                     size_t max);              // the max size of data to be put in the out_buf
+                         uint64_t offset,          // the position of the current data to send
+                         char * out_buf,           // The output buffer to fill with data
+                         size_t max);              // the max size of data to be put in the out_buf
 ```
 
 The return value must be the size of the data put in `out_buf`.
@@ -927,7 +1001,6 @@ struct _websocket_message {
 A message list has the following strucure:
 
 ```C
-
 struct _websocket_message_list {
   struct _websocket_message ** list;
   size_t len;
@@ -950,7 +1023,6 @@ int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
 You can also pop the first message of the incoming or outcoming if you need to with `ulfius_websocket_pop_first_message`, this will remove the first message of the list, and return it as a pointer. You can free a message using the function `ulfius_clear_websocket_message`:
 
 ```C
-
 /**
  * Return the first message of the message list
  * Return NULL if message_list has no message
@@ -1141,12 +1213,13 @@ int u_map_copy_into(const struct _u_map * source, struct _u_map * target);
 int u_map_count(const struct _u_map * source);
 ```
 
-## Output request functions
+## Outgoing request functions
 
-Ulfius allows output functions to send HTTP or SMTP requests. These functions use `libcurl`. You can disable these functions by appending the argument `CURLFLAG=-DU_DISABLE_CURL` when you build the library:
+Ulfius allows output functions to send HTTP or SMTP requests. These functions use `libcurl`. You can disable these functions by appending the argument `CURLFLAG=-DU_DISABLE_CURL` when you build the library with Makefile or by disabling the flag in CMake build:
 
 ```
-$ make CURLFLAG=-DU_DISABLE_CURL
+$ make CURLFLAG=-DU_DISABLE_CURL # Makefile
+$ cmake -DWITH_CURL=off # CMake
 ```
 
 ### Send HTTP request API
@@ -1190,7 +1263,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
 
 The function `ulfius_send_smtp_email` is used to send emails using a smtp server. It is based on `libcurl` API.
 
-It's used to send emails (without attached files) via a smtp server.
+It's used to send raw emails via a smtp server.
 
 This function is defined as:
 
