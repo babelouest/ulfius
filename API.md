@@ -11,8 +11,8 @@
   - [Multiple callback functions](#multiple-callback-functions)
 - [Start and stop webservice](#start-and-stop-webservice)
 - [Callback functions management](#callback-functions-management)
-  - [Get request data](#get-request-data)
-  - [Set response data](#set-response-data)
+  - [Request structure](#request-structure)
+  - [Response structure](#response-structure)
   - [Callback functions return value](#callback-functions-return-value)
   - [Use JSON in request and response body](#use-json-in-request-and-response-body)
   - [Additional functions](#additional-functions)
@@ -450,7 +450,7 @@ int (* callback_function)(const struct _u_request * request, // Input parameters
 
 In the callback function definition, the variables `request` and `response` will be initialized by the framework, and the `user_data` variable will be assigned to the user_data defined in your endpoint list definition.
 
-#### Get request data
+#### Request structure
 
 The request variable is defined as:
 
@@ -496,7 +496,7 @@ struct _u_request {
 };
 ```
 
-#### Set response data
+#### Response structure
 
 The response variable is defined as:
 
