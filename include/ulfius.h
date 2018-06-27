@@ -894,7 +894,7 @@ int u_map_empty(struct _u_map * u_map);
 #define U_WEBSOCKET_LEN_MASK        0x7F
 #define U_WEBSOCKET_OPCODE_CONTINUE 0x00
 #define U_WEBSOCKET_OPCODE_TEXT     0x01
-#define U_WEBSOCKET_OPCODE_BINARY   0x01
+#define U_WEBSOCKET_OPCODE_BINARY   0x02
 #define U_WEBSOCKET_OPCODE_CLOSE    0x08
 #define U_WEBSOCKET_OPCODE_PING     0x09
 #define U_WEBSOCKET_OPCODE_PONG     0x0A
