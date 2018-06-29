@@ -188,11 +188,16 @@ void websocket_manager_callback(const struct _u_request * request,
   if (websocket_manager_user_data != NULL) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_manager_user_data is %s", websocket_manager_user_data);
   }
-  for (i=0; i<5; i++) {
+  for (i=0;; i++) {
     sleep(2);
     if (websocket_manager != NULL && websocket_manager->connected) {
-      my_message = msprintf("Send message #%d", i);
-      ret = ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(my_message), my_message);
+      if (i%2) {
+        my_message = msprintf("Send text message #%d", i);
+        ret = ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(my_message), my_message);
+      } else {
+        my_message = msprintf("Send binary message #%d", i);
+        ret = ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_BINARY, o_strlen(my_message), my_message);
+      }
       o_free(my_message);
       if (ret != U_OK) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "Error send message");
@@ -241,7 +246,7 @@ int callback_websocket (const struct _u_request * request, struct _u_response * 
   char * websocket_user_data = o_strdup("my_user_data");
   int ret;
   
-  if ((ret = ulfius_set_websocket_response(response, "grut,gna", "permessage-deflate", &websocket_manager_callback, websocket_user_data, &websocket_incoming_message_callback, websocket_user_data, &websocket_onclose_callback, websocket_user_data)) == U_OK) {
+  if ((ret = ulfius_set_websocket_response(response, NULL, NULL, &websocket_manager_callback, websocket_user_data, &websocket_incoming_message_callback, websocket_user_data, &websocket_onclose_callback, websocket_user_data)) == U_OK) {
     return U_CALLBACK_CONTINUE;
   } else {
     return U_CALLBACK_ERROR;

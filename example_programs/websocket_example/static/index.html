@@ -18,14 +18,24 @@
     var mySocket = false;
     function connectSocket() {
       if (location.protocol === "https:") {
-        mySocket = new WebSocket("wss://" + location.hostname + ":" + location.port + "/websocket", ["grut", "plop"]);
+        mySocket = new WebSocket("wss://" + location.hostname + ":" + location.port + "/websocket", ["plop"]);
       } else {
-        mySocket = new WebSocket("ws://" + location.hostname + ":" + location.port + "/websocket", ["grut", "plop"]);
+        mySocket = new WebSocket("ws://" + location.hostname + ":" + location.port + "/websocket", ["plop"]);
       }
       if (mySocket) {
         mySocket.onmessage = function (event) {
-          var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Message received: </strong>" + event.data + "</p><hr>"
-          $("#message").append(message);
+          console.log(event);
+          if (event.data instanceof Blob) {
+            var reader = new FileReader();
+            reader.onload = function() {
+              var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Binary message received: </strong>" + reader.result + "</p><hr>"
+              $("#message").append(message);
+            }
+            reader.readAsText(event.data);
+          } else {
+            var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Text message received: </strong>" + event.data + "</p><hr>"
+            $("#message").append(message);
+          }
         };
         mySocket.onclose = function () {
           mySocket = false;
