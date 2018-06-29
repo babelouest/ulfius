@@ -2,6 +2,7 @@
 
 ## 2.3.7
 
+- Improve documentation with summary
 - Yet another websocket fix, this one was binary messages not properly handled
 - At the same time, improve websocket_example to handle incoming binary messages
 
