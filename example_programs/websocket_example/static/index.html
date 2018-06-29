@@ -24,18 +24,12 @@
       }
       if (mySocket) {
         mySocket.onmessage = function (event) {
-          console.log(event);
           if (event.data instanceof Blob) {
-            var reader = new FileReader();
-            reader.onload = function() {
-              var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Binary message received: </strong>" + reader.result + "</p><hr>"
-              $("#message").append(message);
-            }
-            reader.readAsText(event.data);
+            var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Binary message received: </strong>" + event.data.size + " bytes</p><hr>"
           } else {
             var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Text message received: </strong>" + event.data + "</p><hr>"
-            $("#message").append(message);
           }
+          $("#message").append(message);
         };
         mySocket.onclose = function () {
           mySocket = false;

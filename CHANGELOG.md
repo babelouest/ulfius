@@ -1,5 +1,10 @@
 # Ulfius Changelog
 
+## 2.3.7
+
+- Yet another websocket fix, this one was binary messages not properly handled
+- At the same time, improve websocket_example to handle incoming binary messages
+
 ## 2.3.6
 
 - Fix websocket bug that did not close a websocket properly after wrongly closed connections
