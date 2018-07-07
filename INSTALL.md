@@ -76,6 +76,7 @@ The available options for cmake are:
 - `-DWITH_JANSSON=[on|off]` (default `on`): Build with Jansson dependency
 - `-DWITH_CURL=[on|off]` (default `on`): Build with libcurl dependency
 - `-DWITH_WEBSOCKET=[on|off]` (default `on`): Build with websocket functions, not available for Windows, requires libmicrohttpd 0.9.53 minimum and GnuTLS installed.
+- `-DWITH_JOURNALD=[on|off]` (default on): Build with journald (SystemD) support for logging
 - `-DBUILD_STATIC=[on|off]` (default `off`): Build the static archive in addition to the shared library
 - `-DBUILD_TESTING=[on|off]` (default `off`): Build unit tests
 - `-DINSTALL_HEADER=[on|off]` (default `on`): Install header file `ulfius.h`
