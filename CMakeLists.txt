@@ -134,7 +134,7 @@ if (BUILD_STATIC)
 	add_library(ulfius_static STATIC ${LIB_SRC})
 	target_compile_definitions(ulfius_static PUBLIC -DO_STATIC_LIBRARY)
 	set_target_properties(ulfius_static PROPERTIES
-					OUTPUT_NAME libulfius)
+					OUTPUT_NAME ulfius)
 endif ()
 
 # shared library
