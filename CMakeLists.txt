@@ -21,6 +21,11 @@ project(ulfius C)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 
+
+if (UNIX)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I/usr/local/include")
+endif (UNIX)
+
 # library info
 
 set(PROJECT_DESCRIPTION "HTTP Framework for REST API in C, using JSON or not, with websockets or not, with streaming data or not")
