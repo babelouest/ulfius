@@ -30,14 +30,6 @@
 
 /** External dependencies **/
 
-#if defined(_WIN32) && !defined(U_DISABLE_WEBSOCKET)
-  #define U_DISABLE_WEBSOCKET
-#endif
-
-#if (MHD_VERSION < 0x00095300) && !defined(U_DISABLE_WEBSOCKET)
-  #define U_DISABLE_WEBSOCKET
-#endif
-
 #ifndef U_DISABLE_WEBSOCKET
   #ifndef _GNU_SOURCE
     #define _GNU_SOURCE
@@ -49,6 +41,14 @@
 #endif
 #include <pthread.h>
 #include <microhttpd.h>
+
+#if defined(_WIN32) && !defined(U_DISABLE_WEBSOCKET)
+  #define U_DISABLE_WEBSOCKET
+#endif
+
+#if (MHD_VERSION < 0x00095300) && !defined(U_DISABLE_WEBSOCKET)
+  #define U_DISABLE_WEBSOCKET
+#endif
 
 /** Angharad libraries **/
 #include <yder.h>
