@@ -21,9 +21,10 @@ project(ulfius C)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 
-IF(${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+
+if (UNIX)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I/usr/local/include")
-endif()
+endif (UNIX)
 
 # library info
 
