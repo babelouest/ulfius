@@ -1,5 +1,9 @@
 # Ulfius Changelog
 
+## 2.3.8
+
+- Fix CMake build when /usr/local is not present in default build path
+
 ## 2.3.7
 
 - Improve documentation with summary

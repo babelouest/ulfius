@@ -28,10 +28,11 @@ set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/ulfius/issues")
 
 set(LIBRARY_VERSION_MAJOR "2")
 set(LIBRARY_VERSION_MINOR "3")
-set(LIBRARY_VERSION_PATCH "7")
+set(LIBRARY_VERSION_PATCH "8")
 set(LIBRARY_VERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}.${LIBRARY_VERSION_PATCH}")
 set(LIBRARY_SOVERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}")
-set(YDER_VERSION_DOWNLOAD "1.3.3")
+set(YDER_VERSION_DOWNLOAD "1.3.4")
+set(ORCANIA_VERSION_DOWNLOAD "1.2.4")
 
 # cmake modules
 
@@ -77,38 +78,40 @@ set(LIB_SRC
 option(WITH_WEBSOCKET "Websocket support" ON)
 
 if (WIN32)
-	set(WITH_WEBSOCKET OFF)
+    set(WITH_WEBSOCKET OFF)
 endif ()
 
 if (NOT WITH_WEBSOCKET)
-	add_definitions(-DU_DISABLE_WEBSOCKET)
+    add_definitions(-DU_DISABLE_WEBSOCKET)
   set(MHD_MIN_VERSION 0.9.51)
 else ()
   set(MHD_MIN_VERSION 0.9.53)
-	include(FindGnuTLS)
-	find_package(GnuTLS REQUIRED)
-	if (GNUTLS_FOUND)
-			set(LIBS ${LIBS} ${GNUTLS_LIBRARIES})
-	endif ()
+    include(FindGnuTLS)
+    find_package(GnuTLS REQUIRED)
+    if (GNUTLS_FOUND)
+        set(LIBS ${LIBS} ${GNUTLS_LIBRARIES})
+    endif ()
 endif ()
 
 include(FindMHD)
 find_package(MHD ${MHD_MIN_VERSION} REQUIRED)
 if (MHD_FOUND)
-		set(LIBS ${LIBS} ${MHD_LIBRARIES})
+    set(LIBS ${LIBS} ${MHD_LIBRARIES})
+    include_directories(${MHD_INCLUDE_DIRS})
     if (MHD_VERSION_STRING VERSION_LESS "0.9.53")
-      set(WITH_WEBSOCKET OFF)
+        set(WITH_WEBSOCKET OFF)
     endif ()
 endif ()
 
 option(WITH_CURL "Use Curl library" ON)
 
 if (WITH_CURL)
-	include(FindCURL)
-	find_package(CURL REQUIRED)
-	if (CURL_FOUND)
-			set(LIBS ${LIBS} ${CURL_LIBRARIES})
-	endif ()
+    include(FindCURL)
+    find_package(CURL REQUIRED)
+    if (CURL_FOUND)
+        set(LIBS ${LIBS} ${CURL_LIBRARIES})
+        include_directories(${CURL_INCLUDE_DIRS})
+    endif ()
 else ()
     add_definitions(-DU_DISABLE_CURL)
 endif ()
@@ -117,9 +120,10 @@ option(WITH_JANSSON "Use jansson library" ON)
 
 if (WITH_JANSSON)
     include(FindJansson)
-		set(JANSSON_MIN_VERSION 2.4)
+        set(JANSSON_MIN_VERSION 2.4)
     find_package(Jansson ${JANSSON_MIN_VERSION} REQUIRED)
     if (JANSSON_FOUND)
+        include_directories(${JANSSON_INCLUDE_DIRS})
         set(LIBS ${LIBS} ${JANSSON_LIBRARIES})
     endif ()
 else ()
@@ -131,10 +135,10 @@ endif ()
 option(BUILD_STATIC "Build static library." OFF)
 
 if (BUILD_STATIC)
-	add_library(ulfius_static STATIC ${LIB_SRC})
-	target_compile_definitions(ulfius_static PUBLIC -DO_STATIC_LIBRARY)
-	set_target_properties(ulfius_static PROPERTIES
-					OUTPUT_NAME ulfius)
+    add_library(ulfius_static STATIC ${LIB_SRC})
+    target_compile_definitions(ulfius_static PUBLIC -DO_STATIC_LIBRARY)
+    set_target_properties(ulfius_static PROPERTIES
+                    OUTPUT_NAME ulfius)
 endif ()
 
 # shared library
@@ -152,27 +156,45 @@ target_link_libraries(ulfius ${LIBS})
 
 # dependencies
 
-option(CHECK_YDER "Check Yder library." ON)
+set(Orcania_FIND_QUIETLY ON) # force to find Orcania quietly
+include(FindOrcania)
+find_package(Orcania 1.1 QUIET) # try to find Orcania
+if (NOT ORCANIA_FOUND)
+    include(DownloadProject)
+    download_project(PROJ orcania # ... otherwise, download archive
+                      URL "https://github.com/babelouest/orcania/archive/v${ORCANIA_VERSION_DOWNLOAD}.tar.gz"
+                      QUIET)
+    add_subdirectory(${orcania_SOURCE_DIR} ${orcania_BINARY_DIR})
+    include_directories(${orcania_SOURCE_DIR}/include)
+    include_directories(${orcania_SOURCE_DIR}/include)
+    add_dependencies(ulfius orcania)
+    add_dependencies(ulfius orcania)
+    set(ORCANIA_LIBRARIES orcania orcania)
+else()
+    set(LIBS ${LIBS} ${ORCANIA_LIBRARIES})
+    include_directories(${ORCANIA_INCLUDE_DIRS})
+endif ()
+target_link_libraries(ulfius ${LIBS} ${ORCANIA_LIBRARIES})
 
-if (CHECK_YDER)
-  set(Yder_FIND_QUIETLY ON) # force to find Yder quietly
-  include(FindYder)
-  find_package(Yder 1.1 QUIET) # try to find Yder
-  if (NOT YDER_FOUND)
-      include(DownloadProject)
-      download_project(PROJ yder # ... otherwise, download archive
-              URL "https://github.com/babelouest/yder/archive/v${YDER_VERSION_DOWNLOAD}.tar.gz"
-              QUIET)
-      add_subdirectory(${yder_SOURCE_DIR} ${yder_BINARY_DIR})
-      include_directories(${yder_SOURCE_DIR}/include)
-      include_directories(${orcania_SOURCE_DIR}/include)
-      add_dependencies(ulfius yder)
-      add_dependencies(ulfius orcania)
-      set(YDER_LIBRARIES yder orcania)
-  endif ()
-
-  target_link_libraries(ulfius ${LIBS} ${YDER_LIBRARIES})
-endif()
+set(Yder_FIND_QUIETLY ON) # force to find Yder quietly
+include(FindYder)
+find_package(Yder 1.1 QUIET) # try to find Yder
+if (NOT YDER_FOUND)
+    include(DownloadProject)
+    download_project(PROJ yder # ... otherwise, download archive
+                      URL "https://github.com/babelouest/yder/archive/v${YDER_VERSION_DOWNLOAD}.tar.gz"
+                      QUIET)
+    add_subdirectory(${yder_SOURCE_DIR} ${yder_BINARY_DIR})
+    include_directories(${yder_SOURCE_DIR}/include)
+    include_directories(${orcania_SOURCE_DIR}/include)
+    add_dependencies(ulfius yder)
+    add_dependencies(ulfius orcania)
+    set(YDER_LIBRARIES yder orcania)
+else()
+    set(LIBS ${LIBS} ${YDER_LIBRARIES})
+    include_directories(${YDER_INCLUDE_DIRS})
+endif ()
+target_link_libraries(ulfius ${LIBS} ${YDER_LIBRARIES})
 
 # tests
 
@@ -227,7 +249,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libulfius.pc
 
 SET (TARGETS ulfius)
 if (BUILD_STATIC)
-	SET (TARGETS ${TARGETS} ulfius_static)
+    SET (TARGETS ${TARGETS} ulfius_static)
 endif ()
 
 if (INSTALL_HEADER)
