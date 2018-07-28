@@ -367,6 +367,8 @@ int ulfius_clear_websocket(struct _websocket * websocket) {
     ulfius_clean_request_full(websocket->request);
     o_free(websocket->websocket_manager);
     websocket->websocket_manager = NULL;
+    o_free(websocket->websocket_protocol_selected);
+    o_free(websocket->websocket_extensions_selected);
     o_free(websocket);
     return U_OK;
   } else {

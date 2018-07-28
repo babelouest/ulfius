@@ -443,7 +443,9 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                     if (websocket->request != NULL) {
                       websocket->instance = (struct _u_instance *)cls;
                       websocket->websocket_protocol = ((struct _websocket_handle *)response->websocket_handle)->websocket_protocol;
+                      websocket->websocket_protocol_selected = protocol;
                       websocket->websocket_extensions = ((struct _websocket_handle *)response->websocket_handle)->websocket_extensions;
+                      websocket->websocket_extensions_selected = extensions;
                       websocket->websocket_manager_callback = ((struct _websocket_handle *)response->websocket_handle)->websocket_manager_callback;
                       websocket->websocket_manager_user_data = ((struct _websocket_handle *)response->websocket_handle)->websocket_manager_user_data;
                       websocket->websocket_incoming_message_callback = ((struct _websocket_handle *)response->websocket_handle)->websocket_incoming_message_callback;
@@ -515,8 +517,6 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                 response_buffer = o_strdup(U_WEBSOCKET_BAD_REQUEST_BODY);
                 mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
               }
-              o_free(extensions);
-              o_free(protocol);
             } else {
               response->status = MHD_HTTP_BAD_REQUEST;
               response_buffer = o_strdup(U_WEBSOCKET_BAD_REQUEST_BODY);

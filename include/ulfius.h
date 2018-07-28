@@ -950,7 +950,9 @@ struct _websocket {
   struct _u_instance               * instance;
   struct _u_request                * request;
   char                             * websocket_protocol;
+  char                             * websocket_protocol_selected;
   char                             * websocket_extensions;
+  char                             * websocket_extensions_selected;
   void                             (* websocket_manager_callback) (const struct _u_request * request,
                                                                   struct _websocket_manager * websocket_manager,
                                                                   void * websocket_manager_user_data);
