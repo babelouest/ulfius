@@ -10,12 +10,17 @@
   <textarea name="sendMessage" id="sendMessage" cols="80" rows="20"></textarea><br>
   <input type="button" id="send" name="send" value="Send message">
   <input type="button" id="clear" name="clear" value="Clear messages"><br/>
+  <input type="button" id="fileSend" name="fileSend" value="Send binary file">
+  <input type="button" id="fileTextSend" name="fileTextSend" value="Send text file">
+  <input type="file" id="file" name="file"><br/>
   <hr>
   <div style="width=100%; height=100%" id="message"></div>
 </body>
 <script type="text/javascript">
   $(document).ready(function() {
     var mySocket = false;
+    var curFile = false;
+    
     function connectSocket() {
       if (location.protocol === "https:") {
         mySocket = new WebSocket("wss://" + location.hostname + ":" + location.port + "/websocket", ["plop"]);
@@ -38,7 +43,6 @@
           $("#connect").val("Connect websocket");
         };
       }
-			console.log(mySocket);
     }
     
     $("#connect").click(function() {
@@ -68,6 +72,70 @@
         var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Message sent: </strong>" + $("#sendMessage").val() + "</p><hr>"
         $("#message").append(message);
       }
+    });
+    
+    $("#file").on("change", function (event) {
+      curFile = event.target.files[0];
+    });
+    
+    $("#fileSend").click(function() {
+      var fr = new FileReader();
+      fr.onload = function(ev2) {
+        var curFileData = ev2.target.result;
+        if (curFileData) {
+          if (location.protocol === "https:") {
+            mySocket = new WebSocket("wss://" + location.hostname + ":" + location.port + "/websocket/file", ["file"]);
+          } else {
+            mySocket = new WebSocket("ws://" + location.hostname + ":" + location.port + "/websocket/file", ["file"]);
+          }
+          if (mySocket) {
+            mySocket.binaryType = "arraybuffer";
+            mySocket.onopen = function () {
+              var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Send bytes length: </strong>" + curFileData.byteLength + "</p><hr>"
+              $("#message").append(message);
+              mySocket.send(curFileData);
+            };
+            
+            mySocket.onmessage = function (event) {
+              var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Message received after binary: </strong>" + event.data + "</p><hr>"
+              $("#message").append(message);
+              mySocket.close();
+              mySocket = false;
+            };
+          }
+        }
+      }
+      fr.readAsArrayBuffer(curFile);
+    });
+    
+    $("#fileTextSend").click(function() {
+      var fr = new FileReader();
+      fr.onload = function(ev2) {
+        var curFileText = ev2.target.result;
+        if (curFileText) {
+          if (location.protocol === "https:") {
+            mySocket = new WebSocket("wss://" + location.hostname + ":" + location.port + "/websocket/file", ["file"]);
+          } else {
+            mySocket = new WebSocket("ws://" + location.hostname + ":" + location.port + "/websocket/file", ["file"]);
+          }
+          if (mySocket) {
+            mySocket.binaryType = "arraybuffer";
+            mySocket.onopen = function () {
+              var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Send bytes length: </strong>" + curFileText.length + "</p><hr>"
+              $("#message").append(message);
+              mySocket.send(curFileText);
+            };
+            
+            mySocket.onmessage = function (event) {
+              var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Message received after binary: </strong>" + event.data + "</p><hr>"
+              $("#message").append(message);
+              mySocket.close();
+              mySocket = false;
+            };
+          }
+        }
+      }
+      fr.readAsText(curFile);
     });
   });
 </script>

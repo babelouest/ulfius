@@ -1,5 +1,9 @@
 # Ulfius Changelog
 
+## 2.4.0
+
+- Fix Websocket fragmented messages
+
 ## 2.3.8
 
 - Fix CMake build when /usr/local is not present in default build path

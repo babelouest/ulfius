@@ -87,12 +87,6 @@ void ulfius_start_websocket_cb (void *cls,
 void ulfius_websocket_send_all(MHD_socket sock, const uint8_t * data, size_t len);
 
 /**
- * Centralise socket reading in this function
- * so if options or check must be done, it's done here instead of each read call
- */
-size_t ulfius_websocket_recv_all(MHD_socket sock, uint8_t * data, size_t len);
-
-/**
  * Generates a handhshake answer from the key given in parameter
  */
 int ulfius_generate_handshake_answer(const char * key, char * out_digest);

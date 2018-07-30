@@ -41,3 +41,6 @@ websocket_example: libulfius.so static_file_callback.o websocket_example.o
 
 test: websocket_example
 	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./websocket_example
+
+memcheck: websocket_example
+	LD_LIBRARY_PATH=../../src valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all ./websocket_example 2>valgrind.txt
