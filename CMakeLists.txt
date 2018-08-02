@@ -196,6 +196,20 @@ else()
 endif ()
 target_link_libraries(ulfius ${LIBS} ${YDER_LIBRARIES})
 
+set(PKGCONF_REQ "")
+set(PKGCONF_REQ_PRIVATE "liborcania, libyder")
+if (WITH_CURL)
+  set (PKGCONF_REQ_PRIVATE "${PKGCONF_REQ_PRIVATE}, libcurl")
+endif ()
+if (WITH_JANSSON)
+  set (PKGCONF_REQ_PRIVATE "${PKGCONF_REQ_PRIVATE}, jansson")
+endif ()
+if (WITH_WEBSOCKET)
+  set (PKGCONF_REQ_PRIVATE "${PKGCONF_REQ_PRIVATE}, gnutls > 3.5.0, libmicrohttpd > 0.9.53")
+else ()
+  set (PKGCONF_REQ_PRIVATE "${PKGCONF_REQ_PRIVATE}, libmicrohttpd > 0.9.51")
+endif ()
+
 # tests
 
 option(BUILD_TESTING "Build the testing tree." OFF) # because we do not use include(CTest)

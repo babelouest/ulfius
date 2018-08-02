@@ -7,5 +7,9 @@ Name: @PROJECT_NAME@
 Description: @PROJECT_DESCRIPTION@
 URL: @PROJECT_BUGREPORT_PATH@
 Version: @LIBRARY_VERSION@
+Requires: @PKGCONF_REQ@
+Requires: @PKGCONF_REQ@
+Requires: @PKGCONF_REQ@
+Requires.private: @PKGCONF_REQ_PRIVATE@
 Libs: -L${libdir} -lulfius
 Cflags: -I${includedir}
