@@ -485,7 +485,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                         mhd_ret = MHD_NO;
                       } else {
                         response_buffer_len = strlen(ULFIUS_HTTP_ERROR_BODY);
-                        mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
+                        mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_COPY );
                       }
                     }
                   } else {
@@ -497,7 +497,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                       mhd_ret = MHD_NO;
                     } else {
                       response_buffer_len = strlen(ULFIUS_HTTP_ERROR_BODY);
-                      mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
+                      mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_COPY );
                     }
                   }
                 } else {
@@ -509,18 +509,18 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                     mhd_ret = MHD_NO;
                   } else {
                     response_buffer_len = strlen(ULFIUS_HTTP_ERROR_BODY);
-                    mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
+                    mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_COPY );
                   }
                 }
               } else {
                 response->status = MHD_HTTP_BAD_REQUEST;
                 response_buffer = o_strdup(U_WEBSOCKET_BAD_REQUEST_BODY);
-                mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
+                mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_COPY );
               }
             } else {
               response->status = MHD_HTTP_BAD_REQUEST;
               response_buffer = o_strdup(U_WEBSOCKET_BAD_REQUEST_BODY);
-              mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
+              mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_COPY );
             }
             close_loop = 1;
 #endif
@@ -537,7 +537,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                 close_loop = 1;
                 if (ulfius_get_body_from_response(response, &response_buffer, &response_buffer_len) == U_OK) {
                   // Build the response binary_body
-                  mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
+                  mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_COPY );
                   if (mhd_response == NULL) {
                     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error MHD_create_response_from_buffer");
                     mhd_ret = MHD_NO;
@@ -554,7 +554,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                     mhd_ret = MHD_NO;
                   } else {
                     response_buffer_len = strlen(ULFIUS_HTTP_ERROR_BODY);
-                    mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
+                    mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_COPY );
                   }
                 }
                 break;
@@ -562,7 +562,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                 close_loop = 1;
                 // Wrong credentials, send status 401 and realm value if set
                 if (ulfius_get_body_from_response(response, &response_buffer, &response_buffer_len) == U_OK) {
-                  mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
+                  mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_COPY );
                   if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
                     inner_error = U_ERROR_PARAMS;
                     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
@@ -586,7 +586,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                     mhd_ret = MHD_NO;
                   } else {
                     response_buffer_len = strlen(ULFIUS_HTTP_ERROR_BODY);
-                    mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
+                    mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_COPY );
                     inner_error = U_CALLBACK_UNAUTHORIZED;
                   }
                 }
@@ -606,7 +606,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                   mhd_ret = MHD_NO;
                 } else {
                   response_buffer_len = strlen(ULFIUS_HTTP_ERROR_BODY);
-                  mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
+                  mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_COPY );
                 }
                 break;
             }
@@ -639,12 +639,13 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
         mhd_ret = MHD_NO;
       } else {
         response_buffer_len = strlen(ULFIUS_HTTP_NOT_FOUND_BODY);
-        mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
+        mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_COPY );
         mhd_ret = MHD_queue_response (connection, MHD_HTTP_NOT_FOUND, mhd_response);
         MHD_destroy_response (mhd_response);
       }
     }
     o_free(current_endpoint_list);
+    o_free(response_buffer);
     return mhd_ret;
   }
 }
