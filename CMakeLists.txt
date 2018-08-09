@@ -259,7 +259,7 @@ option(INSTALL_HEADER "Install the header files" ON) # Install ulfius.h or not
 configure_file(libulfius.pc.in libulfius.pc @ONLY)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libulfius.pc
-        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 
 SET (TARGETS ulfius)
 if (BUILD_STATIC)
