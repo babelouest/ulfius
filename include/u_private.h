@@ -154,9 +154,10 @@ void * ulfius_thread_websocket_manager_run(void * args);
  * Return U_OK on success
  */
 int ulfius_websocket_send_message_nolock(struct _websocket_manager * websocket_manager,
-                                  const uint8_t opcode,
-                                  const uint64_t data_len,
-                                  const char * data);
+                                         const uint8_t opcode,
+                                         const short int fin,
+                                         const uint64_t data_len,
+                                         const char * data);
 
 /**
  * Add a websocket in the list of active websockets of the instance

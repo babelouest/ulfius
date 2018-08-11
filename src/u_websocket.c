@@ -33,6 +33,8 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <gnutls/gnutls.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 
 /**
  * Set a websocket in the response
@@ -531,7 +533,7 @@ int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
         pthread_mutex_unlock(&websocket_manager->write_lock);
         return U_ERROR;
       }
-      ret = ulfius_websocket_send_message_nolock(websocket_manager, opcode, data_len, data);
+      ret = ulfius_websocket_send_message_nolock(websocket_manager, opcode, 1, data_len, data);
       message = NULL;
       poll_ret = poll(&websocket_manager->fds, 1, U_WEBSOCKET_USEC_WAIT);
       if (poll_ret == -1) {
@@ -550,7 +552,7 @@ int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
       websocket_manager->closing = 1;
       pthread_mutex_unlock(&websocket_manager->read_lock);
     } else {
-      ret = ulfius_websocket_send_message_nolock(websocket_manager, opcode, data_len, data);
+      ret = ulfius_websocket_send_message_nolock(websocket_manager, opcode, 1, data_len, data);
     }
     pthread_mutex_unlock(&websocket_manager->write_lock);
     return ret;
@@ -560,11 +562,67 @@ int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
 }
 
 /**
+ * Send a fragmented message in the websocket
+ * each fragment size will be at most fragment_len
+ * Return U_OK on success
+ */
+int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websocket_manager,
+                                  const uint8_t opcode,
+                                  const uint64_t data_len,
+                                  const char * data,
+                  const size_t fragment_len) {
+  size_t i = 0, cur_len;
+  int ret = U_OK, count = WEBSOCKET_MAX_CLOSE_TRY, poll_ret;
+  struct _websocket_message * message;
+  
+  if (websocket_manager != NULL && websocket_manager->connected && fragment_len > 0) {
+    if (pthread_mutex_lock(&websocket_manager->write_lock)) {
+      return U_ERROR;
+    }
+    while (i < data_len) {
+      cur_len = fragment_len<(data_len - i)?fragment_len:(data_len - i);
+      if (opcode == U_WEBSOCKET_OPCODE_CLOSE) {
+        // If message sent is U_WEBSOCKET_OPCODE_CLOSE, wait for the response for 2 s max, then close the connection
+        if (pthread_mutex_lock(&websocket_manager->read_lock)) {
+          pthread_mutex_unlock(&websocket_manager->write_lock);
+          return U_ERROR;
+        }
+        ret = ulfius_websocket_send_message_nolock(websocket_manager, opcode, 1, cur_len, (data + i));
+        message = NULL;
+        poll_ret = poll(&websocket_manager->fds, 1, U_WEBSOCKET_USEC_WAIT);
+        if (poll_ret == -1) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Error poll websocket read for close signal");
+        } else if (!(websocket_manager->fds.revents & (POLLRDHUP|POLLERR|POLLHUP|POLLNVAL)) && poll_ret > 0) {
+          do {
+            if (ulfius_read_incoming_message(websocket_manager, &message) == U_OK) {
+              while (count-- > 0) {
+                if (ulfius_push_websocket_message(websocket_manager->message_list_incoming, message) != U_OK) {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "Error pushing new websocket message in list");
+                }
+              }
+            }
+          } while (message->opcode != U_WEBSOCKET_OPCODE_CLOSE);
+        }
+        websocket_manager->closing = 1;
+        pthread_mutex_unlock(&websocket_manager->read_lock);
+      } else {
+        ret = ulfius_websocket_send_message_nolock(websocket_manager, opcode, ((i+fragment_len)>=data_len), data_len, data);
+      }
+      i += cur_len;
+    }
+    pthread_mutex_unlock(&websocket_manager->write_lock);
+    return ret;
+  }
+  return ret;
+}
+
+/**
  * Send a message in the websocket without lock
  * Return U_OK on success
  */
 int ulfius_websocket_send_message_nolock(struct _websocket_manager * websocket_manager,
                                          const uint8_t opcode,
+                                         const short int fin,
                                          const uint64_t data_len,
                                          const char * data) {
   size_t frame_data_len;
@@ -598,7 +656,9 @@ int ulfius_websocket_send_message_nolock(struct _websocket_manager * websocket_m
           return U_ERROR_MEMORY;
         }
       }
-      sent_data[0] = opcode|U_WEBSOCKET_BIT_FIN;
+      if (fin) {
+        sent_data[0] = opcode|U_WEBSOCKET_BIT_FIN;
+      }
       my_message->opcode = opcode;
       my_message->has_mask = 0;
       memset(my_message->mask, 0, 4);
@@ -816,4 +876,327 @@ int ulfius_instance_remove_websocket_active(struct _u_instance * instance, struc
     return U_ERROR_PARAMS;
   }
 }
+
+#define WEBSOCKET_RESPONSE_HTTP       0x0001
+#define WEBSOCKET_RESPONSE_UPGRADE    0x0002
+#define WEBSOCKET_RESPONSE_CONNECTION 0x0004
+#define WEBSOCKET_RESPONSE_ACCEPT     0x0008
+#define WEBSOCKET_RESPONSE_PROTCOL    0x0010
+
+/**
+ * Search for the length of the current reponse http line in buffer, starting at buffer_offset
+ * If no end of line found, read the socket until an end of line is found
+ */
+static int ulfius_get_next_line_from_http_response(int sock, char ** buffer, size_t * buffer_len, size_t buffer_offset, size_t * line_len) {
+  char read_buffer[512] = {0}, * end_line = NULL;
+  int ret;
+  size_t read_buffer_len = 0;
+  
+  if (*buffer != NULL && (end_line = o_strstr(*buffer+buffer_offset, "\r\n")) != NULL) {
+    *line_len = (end_line-(*buffer+buffer_offset));
+    ret = U_OK;
+  } else {
+    // Read sock
+    if ((read_buffer_len = recv(sock, read_buffer, 512, 0)) >= 0) {
+      *buffer = o_realloc(*buffer, *buffer_len + 512);
+      *buffer_len += 512;
+      if (*buffer != NULL) {
+        memcpy((*buffer)+*buffer_len, read_buffer, 512);
+        return ulfius_get_next_line_from_http_response(sock, buffer, buffer_len, buffer_offset, line_len);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "ulfius_get_next_line_from_http_response - Error allocating resources for *buffer");
+        ret = U_ERROR;
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "ulfius_get_next_line_from_http_response - Error recv socket");
+      ret = U_ERROR;
+    }
+  }
+  
+  return ret;
+}
+
+static int ulfius_open_websocket(struct _u_request * request, struct yuarel * y_url) {
+  int sock, websocket_response_http = 0, i;
+  unsigned int websocket_response = 0;
+  struct sockaddr_in server;
+  char * http_line, * response = NULL, * endline_pointer = NULL, * protocol;
+  const char ** keys;
+  size_t response_len = 0, response_offset = 0, line_len;
+  
+  sock = socket(AF_INET, SOCK_STREAM, 0);
+  if (sock != -1) {
+    server.sin_addr.s_addr = inet_addr(y_url->host);
+    server.sin_family = AF_INET;
+    server.sin_port = htons(y_url->port);
+    
+    if (connect(sock, (struct sockaddr *)&server , sizeof(server)) >= 0) {
+      // Send HTTP Request
+      do {
+        http_line = msprintf("%s %s HTTP/%s\r\n", request->http_verb, y_url->query, request->http_protocol);
+        if (send(sock , http_line , o_strlen(http_line) , 0) < 0) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Error send (1)");
+          close(sock);
+          sock = -1;
+          break;
+        }
+        o_free(http_line);
+        
+        http_line = msprintf("Host: %s\r\n", y_url->host);
+        if (send(sock , http_line , o_strlen(http_line) , 0) < 0) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Error send (Host)");
+          close(sock);
+          sock = -1;
+          break;
+        }
+        o_free(http_line);
+        
+        http_line = msprintf("Upgrade: websocket\r\n");
+        if (send(sock , http_line , o_strlen(http_line) , 0) < 0) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Error send (Upgrade)");
+          close(sock);
+          sock = -1;
+          break;
+        }
+        o_free(http_line);
+        
+        http_line = msprintf("Connection: Upgrade\r\n");
+        if (send(sock , http_line , o_strlen(http_line) , 0) < 0) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Error send (Connection)");
+          close(sock);
+          sock = -1;
+          break;
+        }
+        o_free(http_line);
+        
+        http_line = msprintf("Origin: %s://%s\r\n", y_url->scheme, y_url->host);
+        if (send(sock , http_line , o_strlen(http_line) , 0) < 0) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Error send (Origin)");
+          close(sock);
+          sock = -1;
+          break;
+        }
+        o_free(http_line);
+        
+        keys = u_map_enum_keys(request->map_header);
+        for (i=0; keys[i] != NULL; i++) {
+          http_line = msprintf("%s: %s://%s\r\n", keys[i], u_map_get(request->map_header, keys[i]));
+          if (send(sock , http_line , o_strlen(http_line) , 0) < 0) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Error send header (%s)", keys[i]);
+            close(sock);
+            sock = -1;
+            break;
+          }
+          o_free(http_line);
+        }
+        
+        if (sock >= 0) {
+          // Send empty line
+          const char * empty = "\r\n";
+          if (send(sock , empty , o_strlen(empty) , 0) < 0) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Error send empty line");
+            close(sock);
+            sock = -1;
+            break;
+          }
+        }
+      } while (0);
+      
+      // Read and parse response
+      do {
+        if (ulfius_get_next_line_from_http_response(sock, &response, &response_len, response_offset, &line_len) == U_OK) {
+          if (!websocket_response_http) {
+            if (0 == o_strcmp((response + response_offset), "HTTP/1.1 101 Switching Protocols")) {
+              websocket_response_http = 1;
+              response_offset += 2;
+            } else {
+              y_log_message(Y_LOG_LEVEL_DEBUG, "HTTP Response error: %.*s", line_len, (response + response_offset));
+              break;
+            }
+          } else if (!line_len) {
+            
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_get_next_line_from_http_response, abort parsing response");
+          close(sock);
+          sock = -1;
+          break;
+        }
+        response = o_realloc(response, 512 + response_len);
+        if (response != NULL) {
+          size_t len;
+          if ((len = recv(sock, (response + response_len), 512, 0)) >= 0) {
+            response_len += len;
+            endline_pointer = o_strstr(response + response_offset, "\r\n");
+            // First, check http first line
+            if (endline_pointer != NULL && !websocket_response_http) {
+              if (0 == o_strcmp((response + response_offset), "HTTP/1.1 101 Switching Protocols\r\n")) {
+                websocket_response |= WEBSOCKET_RESPONSE_HTTP;
+                response_offset += o_strlen("HTTP/1.1 101 Switching Protocols\r\n");
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "Error response http");
+                close(sock);
+                sock = -1;
+                break;
+              }
+            } else if (endline_pointer != NULL) {
+              while (endline_pointer != NULL) {
+                if (0 == o_strcmp((response + response_offset), "Upgrade: websocket\r\n")) {
+                  websocket_response |= WEBSOCKET_RESPONSE_UPGRADE;
+                  response_offset += o_strlen("Upgrade: websocket\r\n");
+                } else if (0 == o_strcmp((response + response_offset), "Connection: Upgrade\r\n")) {
+                  websocket_response |= WEBSOCKET_RESPONSE_CONNECTION;
+                  response_offset += o_strlen("Connection: Upgrade\r\n");
+                } else if (0 == o_strcmp((response + response_offset), "Sec-WebSocket-Protocol")) {
+                  response_offset += o_strlen("Sec-WebSocket-Protocol: ");
+                  protocol = o_strndup(response + response_offset, o_strstr(response + response_offset, "\r\n") - (response + response_offset));
+                  websocket_response |= WEBSOCKET_RESPONSE_PROTCOL;
+                }
+                // TODO: contiue here
+              }
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Error read socket");
+            close(sock);
+            sock = -1;
+            break;
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for response buffer");
+          close(sock);
+          sock = -1;
+          break;
+        }
+      } while (0);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error connecting socket");
+      close(sock);
+      sock = -1;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error opening socket");
+  }
+  return sock;
+}
+
+/**
+ * Initialize values for a struct _u_request to open a websocket
+ * request must be previously initialized
+ * Return U_OK on success
+ */
+int ulfius_init_websocket_request(struct _u_request * request,
+                                  const char * url,
+                                  const char * websocket_protocol,
+                                  const char * websocket_extensions) {
+  int ret;
+  if (request != NULL && url != NULL) {
+    o_free(request->http_protocol);
+    o_free(request->http_verb);
+    o_free(request->http_url);
+    request->http_protocol = o_strdup("1.1");
+    request->http_verb = o_strdup("GET");
+    request->http_url = o_strdup(url);
+    if (websocket_protocol != NULL) {
+      u_map_put(request->map_header, "Sec-WebSocket-Protocol", websocket_protocol);
+    }
+    if (websocket_extensions != NULL) {
+      u_map_put(request->map_header, "Sec-WebSocket-Extensions", websocket_extensions);
+    }
+    u_map_put(request->map_header, "Sec-WebSocket-Version", "13");
+    u_map_put(request->map_header, "Upgrade", "websocket");
+    u_map_put(request->map_header, "Connection", "Upgrade");
+    u_map_put(request->map_header, "Sec-WebSocket-Key", "x3JJHMbDL1EzLkh9GBhXDw=="); // TODO init key with a more random value
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "ulfius_init_websocket_request error input parameters");
+    ret = U_ERROR;
+  }
+  return ret;
+}
+
+/**
+ * Open a websocket client connction
+ * Return U_OK on success
+ */
+int ulfius_open_websocket_client_connection(struct _u_request * request,
+                                            void (* websocket_client_manager_callback) (const struct _u_request * request,
+                                                                                        struct _websocket_manager * websocket_manager,
+                                                                                        void * websocket_manager_user_data),
+                                            void * websocket_client_manager_user_data,
+                                            void (* websocket_client_incoming_message_callback) (const struct _u_request * request,
+                                                                                                 struct _websocket_manager * websocket_manager,
+                                                                                                 const struct _websocket_message * message,
+                                                                                                 void * websocket_incoming_user_data),
+                                            void * websocket_client_incoming_user_data,
+                                            void (* websocket_client_onclose_callback) (const struct _u_request * request,
+                                                                                        struct _websocket_manager * websocket_manager,
+                                                                                        void * websocket_onclose_user_data),
+                                            void * websocket_client_onclose_user_data) {
+  int ret;
+  struct yuarel y_url;
+  char * url, * basic_auth_encoded_header, * basic_auth, * basic_auth_encoded;
+  size_t basic_auth_encoded_len;
+  struct _websocket_manager * websocket_manager;
+  int sock;
+  
+  if (request != NULL && (websocket_client_manager_callback != NULL || websocket_client_incoming_message_callback != NULL)) {
+    url = o_strdup(request->http_url);
+    if (!yuarel_parse(&y_url, url)) {
+      if (0 == o_strcasecmp("http", y_url.scheme) || 0 == o_strcasecmp("https", y_url.scheme) || 0 == o_strcasecmp("ws", y_url.scheme) || 0 == o_strcasecmp("wss", y_url.scheme)) {
+        if (!y_url.port) {
+          if (0 == o_strcasecmp("http", y_url.scheme) || 0 == o_strcasecmp("ws", y_url.scheme)) {
+            y_url.port = 80;
+          } else {
+            y_url.port = 443;
+          }
+        }
+        if (y_url.username != NULL && y_url.password != NULL) {
+          basic_auth = msprintf("%s:%s", y_url.username, y_url.password);
+          basic_auth_encoded = o_malloc((o_strlen(basic_auth)*4/3)+1);
+          memset(basic_auth_encoded, 0, (o_strlen(basic_auth)*4/3)+1);
+          if (o_base64_encode((const unsigned char *)basic_auth, o_strlen(basic_auth), (unsigned char *)basic_auth_encoded, &basic_auth_encoded_len)) {
+            basic_auth_encoded_header = msprintf("Basic: %s", basic_auth_encoded);
+            u_map_remove_from_key(request->map_header, "Authorization");
+            u_map_put(request->map_header, "Authorization", basic_auth_encoded_header);
+            o_free(basic_auth_encoded_header);
+            o_free(basic_auth_encoded);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Error o_base64_encode");
+          }
+          o_free(basic_auth);
+        }
+        
+        websocket_manager = o_malloc(sizeof(struct _websocket_manager));
+        if (websocket_manager != NULL) {
+          // Open connection
+          if (0 == o_strcasecmp("http", y_url.scheme) || 0 == o_strcasecmp("ws", y_url.scheme)) {
+            sock = ulfius_open_websocket(request, &y_url);
+            if (sock != -1) {
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_open_websocket");
+              ret = U_ERROR;
+            }
+          } else {
+            // TODO: Use gnutls secure connection
+            ret = U_ERROR;
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for websocket_manager");
+          ret = U_ERROR_PARAMS;
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "unknown scheme, please use one of the following: 'http', 'https', 'ws', 'wss'");
+        ret = U_ERROR_PARAMS;
+      }
+      ret = U_OK;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error parsing url");
+      ret = U_ERROR_PARAMS;
+    }
+    o_free(url);
+  } else {
+    ret = U_ERROR_PARAMS;
+  }
+  return ret;
+}
+
 #endif

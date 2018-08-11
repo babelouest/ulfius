@@ -43,8 +43,8 @@ endif
 
 all: release
 
-libulfius.so: ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o
-	$(CC) -shared -fPIC -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o $(LIBS) $(LJANSSON) $(LCURL) $(LWEBSOCKET)
+libulfius.so: ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
+	$(CC) -shared -fPIC -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o $(LIBS) $(LJANSSON) $(LCURL) $(LWEBSOCKET)
 	ln -sf $(OUTPUT).$(VERSION) $(OUTPUT)
 
 libulfius.a: ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o
@@ -67,6 +67,9 @@ u_websocket.o: $(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h u_websoc
 
 u_send_request.o: $(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h u_send_request.c
 	$(CC) $(CFLAGS) u_send_request.c
+
+yuarel.o: $(ULFIUS_INCLUDE)/yuarel.h yuarel.c
+	$(CC) $(CFLAGS) yuarel.c
 
 clean:
 	rm -f *.o *.so *.a $(OUTPUT) $(OUTPUT).*

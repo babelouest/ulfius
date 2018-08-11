@@ -39,8 +39,14 @@ websocket_example.o: websocket_example.c
 websocket_example: libulfius.so static_file_callback.o websocket_example.o
 	$(CC) -o websocket_example websocket_example.o static_file_callback.o $(LIBS)
 
+websocket_client: libulfius.so websocket_client.c
+	$(CC) -o websocket_client websocket_client.c $(LIBS)
+
 test: websocket_example
 	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./websocket_example
+
+test_client: websocket_client
+	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./websocket_client
 
 memcheck: websocket_example
 	LD_LIBRARY_PATH=../../src valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all ./websocket_example 2>valgrind.txt

@@ -236,7 +236,7 @@ struct _u_endpoint {
 struct _u_instance {
   struct MHD_Daemon          *  mhd_daemon;
   int                           status;
-  unsigned int                          port;
+  unsigned int                  port;
   struct sockaddr_in          * bind_address;
   int                           nb_endpoints;
   char                        * default_auth_realm;
@@ -256,6 +256,7 @@ struct _u_instance {
                                                        size_t size, 
                                                        void * cls);
   void                        * file_upload_cls;
+  int                           mhd_response_copy_data;
 };
 
 /**
@@ -882,6 +883,9 @@ int u_map_count(const struct _u_map * source);
 int u_map_empty(struct _u_map * u_map);
 
 #ifndef U_DISABLE_WEBSOCKET
+
+#include "yuarel.h"
+
 /**********************************
  * Websocket functions declarations
  **********************************/
@@ -920,6 +924,8 @@ struct _websocket_manager {
   MHD_socket sock;
   pthread_mutex_t read_lock;
   pthread_mutex_t write_lock;
+  pthread_mutex_t message_lock;
+  pthread_cond_t message_cond;
   struct pollfd fds;
 };
 
@@ -1004,6 +1010,17 @@ int ulfius_set_websocket_response(struct _u_response * response,
                                    void * websocket_onclose_user_data);
 
 /**
+ * Send a fragmented message in the websocket
+ * each fragment size will be at most fragment_len
+ * Return U_OK on success
+ */
+int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websocket_manager,
+                                  const uint8_t opcode,
+                                  const uint64_t data_len,
+                                  const char * data,
+                                  const size_t fragment_len);
+
+/**
  * Send a message in the websocket
  * Return U_OK on success
  */
@@ -1023,6 +1040,34 @@ struct _websocket_message * ulfius_websocket_pop_first_message(struct _websocket
  * Clear data of a websocket message
  */
 void ulfius_clear_websocket_message(struct _websocket_message * message);
+
+/**
+ * Initialize values for a struct _u_request to open a websocket
+ * request must be previously initialized
+ * Return U_OK on success
+ */
+int ulfius_init_websocket_request(struct _u_request * request,
+                                  const char * url,
+                                  const char * websocket_protocol,
+                                  const char * websocket_extensions);
+
+/**
+ * Open a websocket client connction
+ */
+int ulfius_open_websocket_client_connection(struct _u_request * request,
+                                            void (* websocket_client_manager_callback) (const struct _u_request * request,
+                                                                                        struct _websocket_manager * websocket_manager,
+                                                                                        void * websocket_manager_user_data),
+                                            void * websocket_client_manager_user_data,
+                                            void (* websocket_client_incoming_message_callback) (const struct _u_request * request,
+                                                                                                 struct _websocket_manager * websocket_manager,
+                                                                                                 const struct _websocket_message * message,
+                                                                                                 void * websocket_incoming_user_data),
+                                            void * websocket_client_incoming_user_data,
+                                            void (* websocket_client_onclose_callback) (const struct _u_request * request,
+                                                                                        struct _websocket_manager * websocket_manager,
+                                                                                        void * websocket_onclose_user_data),
+                                            void * websocket_client_onclose_user_data);
 
 #endif
 
