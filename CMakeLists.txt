@@ -31,7 +31,7 @@ set(LIBRARY_VERSION_MINOR "4")
 set(LIBRARY_VERSION_PATCH "0")
 set(LIBRARY_VERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}.${LIBRARY_VERSION_PATCH}")
 set(LIBRARY_SOVERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}")
-set(YDER_VERSION_DOWNLOAD "1.3.4")
+set(YDER_VERSION_DOWNLOAD "1.4.0b")
 set(ORCANIA_VERSION_DOWNLOAD "1.2.4")
 
 # cmake modules
@@ -176,6 +176,7 @@ else()
 endif ()
 target_link_libraries(ulfius ${LIBS} ${ORCANIA_LIBRARIES})
 
+set(SEARCH_ORCANIA OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during yder search and download
 set(Yder_FIND_QUIETLY ON) # force to find Yder quietly
 include(FindYder)
 find_package(Yder 1.1 QUIET) # try to find Yder
