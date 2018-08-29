@@ -796,8 +796,11 @@ int ulfius_stop_framework(struct _u_instance * u_instance) {
     u_instance->mhd_daemon = NULL;
     u_instance->status = U_STATUS_STOP;
     return U_OK;
-  } else {
+  } else if (u_instance != NULL) {
     u_instance->status = U_STATUS_ERROR;
+    return U_ERROR_PARAMS;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error, u_instance is NULL");
     return U_ERROR_PARAMS;
   }
 }

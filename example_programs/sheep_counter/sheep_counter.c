@@ -143,7 +143,7 @@ int main (int argc, char **argv) {
   
   // Start the framework
   if (ulfius_start_framework(&instance) == U_OK) {
-    printf("Start sheep counter on port %d\n", instance.port);
+    printf("Start sheep counter on port %u\n", instance.port);
     
     // Wait for the user to press <enter> on the console to quit the application
     getchar();
