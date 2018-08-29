@@ -164,6 +164,7 @@ struct _u_request {
  * stream_block_size:                   size of each block to be streamed, set according to your system
  * stream_user_data:                    user defined data that will be available in your callback stream functions
  * websocket_handle:                    handle for websocket extension
+ * timeout:                             Timeout to close the connection because of inactivity between the client and the server
  * shared_data:                         any data shared between callback functions, must be allocated and freed by the callback functions
  * 
  */
@@ -182,6 +183,7 @@ struct _u_response {
   size_t             stream_block_size;
   void             * stream_user_data;
   void             * websocket_handle;
+  unsigned int       timeout;
   void *             shared_data;
 };
 
@@ -224,6 +226,7 @@ struct _u_endpoint {
  * status:                status of the current instance, status are U_STATUS_STOP, U_STATUS_RUNNING or U_STATUS_ERROR
  * port:                  port number to listen to
  * bind_address:          ip address to listen to (optional)
+ * timeout:               Timeout to close the connection because of inactivity between the client and the server
  * nb_endpoints:          Number of available endpoints
  * default_auth_realm:    Default realm on authentication error
  * endpoint_list:         List of available endpoints
@@ -238,6 +241,7 @@ struct _u_instance {
   int                           status;
   unsigned int                  port;
   struct sockaddr_in          * bind_address;
+  unsigned int                  timeout;
   int                           nb_endpoints;
   char                        * default_auth_realm;
   struct _u_endpoint          * endpoint_list;

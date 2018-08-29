@@ -406,6 +406,9 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
           }
           // Run callback function with the input parameters filled for the current callback
           callback_ret = current_endpoint->callback_function(con_info->request, response, current_endpoint->user_data);
+          if (response->timeout > 0 && MHD_set_connection_option(connection, MHD_CONNECTION_OPTION_TIMEOUT, response->timeout) !=  MHD_YES) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Error setting connection response timeout value");
+          }
           if (response->stream_callback != NULL) {
             // Call the stream_callback function to build the response binary_body
             // A stram_callback is always the last one
@@ -671,7 +674,7 @@ static struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance
 #endif
   
   if (u_instance->mhd_daemon == NULL) {
-    struct MHD_OptionItem mhd_ops[6];
+    struct MHD_OptionItem mhd_ops[7];
     
     // Default options
     mhd_ops[0].option = MHD_OPTION_NOTIFY_COMPLETED;
@@ -704,6 +707,24 @@ static struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance
       mhd_ops[5].option = MHD_OPTION_END;
       mhd_ops[5].value = 0;
       mhd_ops[5].ptr_value = NULL;
+      
+      if (u_instance->timeout > 0) {
+        mhd_ops[5].option = MHD_OPTION_CONNECTION_TIMEOUT;
+        mhd_ops[5].value = u_instance->timeout;
+        mhd_ops[5].ptr_value = NULL;
+        
+        mhd_ops[6].option = MHD_OPTION_END;
+        mhd_ops[6].value = 0;
+        mhd_ops[6].ptr_value = NULL;
+      }
+    } else if (u_instance->timeout > 0) {
+      mhd_ops[3].option = MHD_OPTION_CONNECTION_TIMEOUT;
+      mhd_ops[3].value = u_instance->timeout;
+      mhd_ops[3].ptr_value = NULL;
+      
+      mhd_ops[4].option = MHD_OPTION_END;
+      mhd_ops[4].value = 0;
+      mhd_ops[4].ptr_value = NULL;
     }
     return MHD_start_daemon (
       mhd_flags, u_instance->port, NULL, NULL, &ulfius_webservice_dispatcher, (void *)u_instance, 
@@ -1212,6 +1233,7 @@ int ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, str
     u_instance->status = U_STATUS_STOP;
     u_instance->port = port;
     u_instance->bind_address = bind_address;
+    u_instance->timeout = 0;
     u_instance->default_auth_realm = o_strdup(default_auth_realm);
     u_instance->nb_endpoints = 0;
     u_instance->endpoint_list = NULL;
