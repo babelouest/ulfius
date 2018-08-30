@@ -6,7 +6,7 @@
  * 
  * u_websocket.c: websocket implementation
  * 
- * Copyright 2017 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2018 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -306,7 +306,7 @@ int ulfius_read_incoming_message(struct _websocket_manager * websocket_manager, 
             len = read_data_from_socket(websocket_manager, payload_len, 2);
             if (len == 2) {
               msg_len = payload_len[1] | ((uint64_t)payload_len[0] << 8);
-            } else if (len != -1) {
+            } else {
               message_error = 1;
               ret = U_ERROR;
               y_log_message(Y_LOG_LEVEL_ERROR, "Error reading websocket message length");
@@ -322,7 +322,7 @@ int ulfius_read_incoming_message(struct _websocket_manager * websocket_manager, 
                         ((uint64_t)payload_len[2] << 40) |
                         ((uint64_t)payload_len[1] << 48) |
                         ((uint64_t)payload_len[0] << 54);
-            } else if (len != -1) {
+            } else {
               message_error = 1;
               ret = U_ERROR;
               y_log_message(Y_LOG_LEVEL_ERROR, "Error reading websocket message length");
@@ -337,7 +337,7 @@ int ulfius_read_incoming_message(struct _websocket_manager * websocket_manager, 
         if (header[1] & U_WEBSOCKET_HAS_MASK) {
           (*message)->has_mask = 1;
           len = read_data_from_socket(websocket_manager, masking_key, 4);
-          if (len != 4 && len != -1) {
+          if (len != 4) {
             message_error = 1;
             ret = U_ERROR;
             y_log_message(Y_LOG_LEVEL_ERROR, "Error reading websocket for mask");
@@ -882,6 +882,7 @@ int ulfius_instance_remove_websocket_active(struct _u_instance * instance, struc
 #define WEBSOCKET_RESPONSE_CONNECTION 0x0004
 #define WEBSOCKET_RESPONSE_ACCEPT     0x0008
 #define WEBSOCKET_RESPONSE_PROTCOL    0x0010
+#define WEBSOCKET_RESPONSE_EXTENSION  0x0020
 
 /**
  * Search for the length of the current reponse http line in buffer, starting at buffer_offset
@@ -920,7 +921,7 @@ static int ulfius_open_websocket(struct _u_request * request, struct yuarel * y_
   int sock, websocket_response_http = 0, i;
   unsigned int websocket_response = 0;
   struct sockaddr_in server;
-  char * http_line, * response = NULL, * endline_pointer = NULL, * protocol;
+  char * http_line, * response = NULL, * endline_pointer = NULL, * protocol, * extension;
   const char ** keys;
   size_t response_len = 0, response_offset = 0, line_len;
   
@@ -1014,7 +1015,10 @@ static int ulfius_open_websocket(struct _u_request * request, struct yuarel * y_
               break;
             }
           } else if (!line_len) {
-            
+            y_log_message(Y_LOG_LEVEL_ERROR, "Error reading line");
+            close(sock);
+            sock = -1;
+            break;
           }
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_get_next_line_from_http_response, abort parsing response");
@@ -1027,7 +1031,7 @@ static int ulfius_open_websocket(struct _u_request * request, struct yuarel * y_
           size_t len;
           if ((len = recv(sock, (response + response_len), 512, 0)) >= 0) {
             response_len += len;
-            endline_pointer = o_strstr(response + response_offset, "\r\n");
+            endline_pointer = o_strstr(response + response_len, "\r\n");
             // First, check http first line
             if (endline_pointer != NULL && !websocket_response_http) {
               if (0 == o_strcmp((response + response_offset), "HTTP/1.1 101 Switching Protocols\r\n")) {
@@ -1048,12 +1052,24 @@ static int ulfius_open_websocket(struct _u_request * request, struct yuarel * y_
                   websocket_response |= WEBSOCKET_RESPONSE_CONNECTION;
                   response_offset += o_strlen("Connection: Upgrade\r\n");
                 } else if (0 == o_strcmp((response + response_offset), "Sec-WebSocket-Protocol")) {
-                  response_offset += o_strlen("Sec-WebSocket-Protocol: ");
+                  response_offset = o_strstr(response + response_offset, "\r\n") + 2;
                   protocol = o_strndup(response + response_offset, o_strstr(response + response_offset, "\r\n") - (response + response_offset));
                   websocket_response |= WEBSOCKET_RESPONSE_PROTCOL;
+                } else if (0 == o_strcmp((response + response_offset), "Sec-WebSocket-Extension")) {
+                  response_offset = o_strstr(response + response_offset, "\r\n") + 2;
+                  extension = o_strndup(response + response_offset, o_strstr(response + response_offset, "\r\n") - (response + response_offset));
+                  websocket_response |= WEBSOCKET_RESPONSE_PROTCOL;
+                } else if (0 == o_strcmp((response + response_offset), "Sec-WebSocket-Accept")) {
+                  response_offset = o_strstr(response + response_offset, "\r\n") + 2;
+                  // TODO: Check handshake
+                  websocket_response |= WEBSOCKET_RESPONSE_ACCEPT;
                 }
-                // TODO: contiue here
+                endline_pointer = o_strstr(response + response_offset, "\r\n");
               }
+            }
+            if (websocket_response & (WEBSOCKET_RESPONSE_UPGRADE|WEBSOCKET_RESPONSE_CONNECTION|WEBSOCKET_RESPONSE_PROTCOL|WEBSOCKET_RESPONSE_EXTENSION|WEBSOCKET_RESPONSE_ACCEPT)) {
+              // Websocket response is valid and complete
+              break;
             }
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "Error read socket");
