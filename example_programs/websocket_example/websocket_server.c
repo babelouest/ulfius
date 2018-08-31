@@ -32,6 +32,7 @@
 #if defined(U_DISABLE_WEBSOCKET)
   #error Ulfius is not available with WebSockets support
 #else
+
 int callback_websocket (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_websocket_file (const struct _u_request * request, struct _u_response * response, void * user_data);
 

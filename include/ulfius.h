@@ -913,6 +913,8 @@ int u_map_empty(struct _u_map * u_map);
 #define U_WEBSOCKET_OPCODE_ERROR    0xFE
 #define U_WEBSOCKET_OPCODE_NONE     0xFF
 
+#define U_WEBSOCKET_SERVER 0
+#define U_WEBSOCKET_CLIENT 1
 /**
  * Websocket manager structure
  * contains among other things the socket
@@ -925,12 +927,16 @@ struct _websocket_manager {
   int connected;
   int closing;
   int manager_closed;
-  MHD_socket sock;
+  MHD_socket mhd_sock;
+  int tcp_sock;
+  char * protocol;
+  char * extension;
   pthread_mutex_t read_lock;
   pthread_mutex_t write_lock;
   pthread_mutex_t message_lock;
   pthread_cond_t message_cond;
   struct pollfd fds;
+  int type;
 };
 
 /**
@@ -1073,6 +1079,24 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
                                                                                         void * websocket_onclose_user_data),
                                             void * websocket_client_onclose_user_data);
 
+/**
+ * Open a websocket client connection
+ * Return U_OK on success
+ */
+int ulfius_open_websocket_client_connection(struct _u_request * request,
+                                            void (* websocket_manager_callback) (const struct _u_request * request,
+                                                                                 struct _websocket_manager * websocket_manager,
+                                                                                 void * websocket_manager_user_data),
+                                            void * websocket_manager_user_data,
+                                            void (* websocket_incoming_message_callback) (const struct _u_request * request,
+                                                                                          struct _websocket_manager * websocket_manager,
+                                                                                          const struct _websocket_message * message,
+                                                                                          void * websocket_incoming_user_data),
+                                            void * websocket_incoming_user_data,
+                                            void (* websocket_onclose_callback) (const struct _u_request * request,
+                                                                                 struct _websocket_manager * websocket_manager,
+                                                                                 void * websocket_onclose_user_data),
+                                            void * websocket_onclose_user_data);
 #endif
 
 /** Macro values **/

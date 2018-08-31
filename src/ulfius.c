@@ -435,6 +435,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                 NULL != o_strcasestr(u_map_get_case(con_info->request->map_header, "Connection"), "Upgrade") &&
                 0 == o_strcmp(con_info->request->http_verb, "GET")) {
               // Check websocket_protocol and websocket_extensions to match ours
+              y_log_message(Y_LOG_LEVEL_DEBUG, "ex: %s, pro: %s", u_map_get(con_info->request->map_header, "Sec-WebSocket-Extensions"), u_map_get(con_info->request->map_header, "Sec-WebSocket-Protocol"));
               char * extensions = ulfius_check_list_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Extensions"), ((struct _websocket_handle *)response->websocket_handle)->websocket_extensions, ";"),
                    * protocol = ulfius_check_first_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Protocol"), ((struct _websocket_handle *)response->websocket_handle)->websocket_protocol, ",");
               if (extensions != NULL && protocol != NULL) {
@@ -516,13 +517,22 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                   }
                 }
               } else {
+                y_log_message(Y_LOG_LEVEL_DEBUG, "grut la");
                 response->status = MHD_HTTP_BAD_REQUEST;
-                response_buffer = o_strdup(U_WEBSOCKET_BAD_REQUEST_BODY);
+                response_buffer = msprintf("%s%s", extensions==NULL?"No extensions\n":"", protocol==NULL?"No protocol":"");
                 mhd_response = MHD_create_response_from_buffer(response_buffer_len, response_buffer, mhd_response_flag);
               }
             } else {
+              y_log_message(Y_LOG_LEVEL_DEBUG, "grut la plutot");
+              char * err1 = (NULL != o_strcasestr(u_map_get_case(con_info->request->map_header, "upgrade"), U_WEBSOCKET_UPGRADE_VALUE))?"":"No upgrade key\n",
+              * err2 = u_map_get(con_info->request->map_header, "Sec-WebSocket-Key") != NULL?"":"No Sec-WebSocket-Key\n",
+              * err3 = u_map_get(con_info->request->map_header, "Origin") != NULL?"":"No Origin\n",
+              * err4 = 0 == o_strcmp(con_info->request->http_protocol, "HTTP/1.1")?"":"No protocol\n",
+              * err5 = 0 == o_strcmp(u_map_get(con_info->request->map_header, "Sec-WebSocket-Version"), "13")?"":"No Sec-WebSocket-Version\n",
+              * err6 = NULL != o_strcasestr(u_map_get_case(con_info->request->map_header, "Connection"), "Upgrade")?"":"No Connection key\n",
+              * err7 = 0 == o_strcmp(con_info->request->http_verb, "GET")?"":"No HTTP verb\n";
               response->status = MHD_HTTP_BAD_REQUEST;
-              response_buffer = o_strdup(U_WEBSOCKET_BAD_REQUEST_BODY);
+              response_buffer = msprintf("%s%s%s%s%s%s%s", err1, err2, err3, err4, err5, err6, err7);
               mhd_response = MHD_create_response_from_buffer(response_buffer_len, response_buffer, mhd_response_flag);
             }
             close_loop = 1;

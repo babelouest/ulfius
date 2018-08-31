@@ -3,6 +3,11 @@
 ## 2.4.0
 
 - Fix Websocket fragmented messages
+- Fix CMake script that installed Orcania twice
+- Fix cppcheck warnings
+- Add timeout for http connections
+- Allow to use MHD_RESPMEM_MUST_COPY for different memory manager
+- Add websocket client framework
 
 ## 2.3.8
 
