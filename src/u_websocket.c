@@ -210,6 +210,7 @@ void ulfius_start_websocket_cb (void * cls,
     websocket->websocket_manager = o_malloc(sizeof(struct _websocket_manager));
     // Run websocket manager in a thread if set
     if (websocket->websocket_manager != NULL) {
+      websocket->websocket_manager->type = U_WEBSOCKET_SERVER;
       websocket->websocket_manager->message_list_incoming = o_malloc(sizeof(struct _websocket_message_list));
       websocket->websocket_manager->message_list_outcoming = o_malloc(sizeof(struct _websocket_message_list));
       ulfius_init_websocket_message_list(websocket->websocket_manager->message_list_incoming);
@@ -571,7 +572,7 @@ int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websock
                                   const uint8_t opcode,
                                   const uint64_t data_len,
                                   const char * data,
-                  const size_t fragment_len) {
+                                  const size_t fragment_len) {
   size_t i = 0, cur_len;
   int ret = U_OK, count = WEBSOCKET_MAX_CLOSE_TRY, poll_ret;
   struct _websocket_message * message;
@@ -886,46 +887,45 @@ int ulfius_instance_remove_websocket_active(struct _u_instance * instance, struc
 #define WEBSOCKET_RESPONSE_EXTENSION  0x0020
 
 /**
- * Search for the length of the current reponse http line in buffer, starting at buffer_offset
- * If no end of line found, read the socket until an end of line is found
+ * Read the next line in http response
+ * Fill buffer until \r\n is read or buffer_len is reached
+ * return U_OK on success
  */
-static int ulfius_get_next_line_from_http_response(int sock, char ** buffer, size_t * buffer_len, size_t buffer_offset, size_t * line_len) {
-  char read_buffer[512] = {0}, * end_line = NULL;
-  int ret;
-  size_t read_buffer_len = 0;
+static int ulfius_get_next_line_from_http_response(struct _websocket * websocket, char * buffer, size_t buffer_len, size_t * line_len) {
+  size_t offset = 0;
+  int eol = 0, ret = U_ERROR;
+  char car;
   
-  if (*buffer != NULL && (end_line = o_strstr(*buffer+buffer_offset, "\r\n")) != NULL) {
-    *line_len = (end_line-(*buffer+buffer_offset)) + 2;
-    ret = U_OK;
-  } else {
-    // Read sock
-    if ((read_buffer_len = recv(sock, read_buffer, 512, 0)) >= 0) {
-      *buffer = o_realloc((*buffer), ((*buffer_len) + 512));
-      if (*buffer != NULL) {
-        memcpy((*buffer)+(*buffer_len), read_buffer, 512);
-        *buffer_len += read_buffer_len;
-        return ulfius_get_next_line_from_http_response(sock, buffer, buffer_len, buffer_offset, line_len);
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "ulfius_get_next_line_from_http_response - Error allocating resources for *buffer");
-        ret = U_ERROR;
-      }
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "ulfius_get_next_line_from_http_response - Error recv socket");
-      ret = U_ERROR;
+  do {
+    if (recv(websocket->websocket_manager->tcp_sock, &car, 1, 0) == 1) { // TODO make it more fault tolerant
+      buffer[offset] = car;
     }
-  }
-  
+    
+    if (offset > 0 && buffer[offset-1] == '\r' && buffer[offset] == '\n') {
+      eol = 1;
+      buffer[offset-1] = '\0';
+      *line_len = offset - 1;
+      ret = U_OK;
+    }
+    
+    offset++;
+  } while (!eol && offset < buffer_len);
   return ret;
 }
 
+/**
+ * Opens a websocket connection to the specified server
+ * Returns U_OK on success
+ */
 static int ulfius_open_websocket(struct _u_request * request, struct yuarel * y_url, struct _websocket * websocket) {
   int websocket_response_http = 0, i, ret;
   unsigned int websocket_response = 0;
   struct sockaddr_in server;
   struct hostent * he;
-  char * http_line, * response = NULL;
+  char * http_line;
+  char buffer[4096] = {0};
   const char ** keys;
-  size_t response_len = 0, response_offset = 0, line_len;
+  size_t buffer_len = 4096, line_len;
   
   websocket->websocket_manager->tcp_sock = socket(AF_INET, SOCK_STREAM, 0);
   if (websocket->websocket_manager->tcp_sock != -1) {
@@ -933,7 +933,6 @@ static int ulfius_open_websocket(struct _u_request * request, struct yuarel * y_
       memcpy(&server.sin_addr, he->h_addr_list[0], he->h_length);
       server.sin_family = AF_INET;
       server.sin_port = htons(y_url->port);
-      y_log_message(Y_LOG_LEVEL_DEBUG, "connect to %s:%d", y_url->host, y_url->port);
       
       if (connect(websocket->websocket_manager->tcp_sock, (struct sockaddr *)&server , sizeof(server)) >= 0) {
         // Send HTTP Request
@@ -1013,48 +1012,35 @@ static int ulfius_open_websocket(struct _u_request * request, struct yuarel * y_
             }
           }
         } while (0);
-        y_log_message(Y_LOG_LEVEL_DEBUG, "Send http request complete");
         
         // Read and parse response
         do {
-          if (ulfius_get_next_line_from_http_response(websocket->websocket_manager->tcp_sock, &response, &response_len, response_offset, &line_len) == U_OK) {
+          if (ulfius_get_next_line_from_http_response(websocket, buffer, buffer_len, &line_len) == U_OK) {
             if (!websocket_response_http) {
-              if (0 == o_strcmp((response + response_offset), "HTTP/1.1 101 Switching Protocols")) {
+              if (0 == o_strcmp(buffer, "HTTP/1.1 101 Switching Protocols")) {
                 websocket_response_http = 1;
-                response_offset += line_len;
               } else {
-                y_log_message(Y_LOG_LEVEL_DEBUG, "HTTP Response error: %.*s", line_len, (response + response_offset));
+                y_log_message(Y_LOG_LEVEL_DEBUG, "HTTP Response error: %.*s", line_len, buffer);
                 break;
               }
             } else if (websocket_response_http) {
-              if (0 == o_strcmp((response + response_offset), "Upgrade: websocket\r\n")) {
+              if (0 == o_strcmp(buffer, "Upgrade: websocket")) {
                 websocket_response |= WEBSOCKET_RESPONSE_UPGRADE;
-                response_offset += line_len;
-              } else if (0 == o_strcmp((response + response_offset), "Connection: Upgrade\r\n")) {
+              } else if (0 == o_strcmp(buffer, "Connection: Upgrade")) {
                 websocket_response |= WEBSOCKET_RESPONSE_CONNECTION;
-                response_offset += line_len;
-              } else if (0 == o_strcmp((response + response_offset), "Sec-WebSocket-Protocol")) {
-                response_offset += line_len;
-                websocket->websocket_manager->protocol = o_strndup(response + response_offset, o_strstr(response + response_offset, "\r\n") - (response + response_offset));
+              } else if (0 == o_strncmp(buffer, "Sec-WebSocket-Protocol", o_strlen("Sec-WebSocket-Protocol"))) {
+                websocket->websocket_manager->protocol = o_strdup(o_strstr(buffer, ":") + 1);
                 websocket_response |= WEBSOCKET_RESPONSE_PROTCOL;
-              } else if (0 == o_strcmp((response + response_offset), "Sec-WebSocket-Extension")) {
-                response_offset += line_len;
-                websocket->websocket_manager->extension = o_strndup(response + response_offset, o_strstr(response + response_offset, "\r\n") - (response + response_offset));
+              } else if (0 == o_strncmp(buffer, "Sec-WebSocket-Extension", o_strlen("Sec-WebSocket-Extension"))) {
+                websocket->websocket_manager->extension = o_strdup(o_strstr(buffer, ":") + 1);
                 websocket_response |= WEBSOCKET_RESPONSE_EXTENSION;
-              } else if (0 == o_strcmp((response + response_offset), "Sec-WebSocket-Accept")) {
-                response_offset += line_len;
+              } else if (0 == o_strncmp(buffer, "Sec-WebSocket-Accept", o_strlen("Sec-WebSocket-Accept"))) {
                 // TODO: Check handshake
                 websocket_response |= WEBSOCKET_RESPONSE_ACCEPT;
-              } else if (0 == o_strcmp((response + response_offset), "\r\n")) {
+              } else if (0 == o_strcmp(buffer, "")) {
                 // Websocket HTTP response complete
                 break;
               }
-            } else if (!line_len) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "Error reading line");
-              close(websocket->websocket_manager->tcp_sock);
-              websocket->websocket_manager->tcp_sock = -1;
-              ret = U_ERROR;
-              break;
             }
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_get_next_line_from_http_response, abort parsing response");
@@ -1063,7 +1049,7 @@ static int ulfius_open_websocket(struct _u_request * request, struct yuarel * y_
             ret = U_ERROR;
             break;
           }
-        } while (0);
+        } while (1);
         
         if (websocket->websocket_manager->tcp_sock > -1 && !(websocket_response & (WEBSOCKET_RESPONSE_UPGRADE|WEBSOCKET_RESPONSE_CONNECTION|WEBSOCKET_RESPONSE_PROTCOL|WEBSOCKET_RESPONSE_EXTENSION|WEBSOCKET_RESPONSE_ACCEPT))) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Websocket HTTP response incomplete or incorrect, aborting");
@@ -1182,8 +1168,8 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
           o_free(basic_auth);
         }
         
-        websocket_manager = o_malloc(sizeof(struct _websocket_manager));
         websocket = o_malloc(sizeof(struct _websocket));
+        websocket_manager = o_malloc(sizeof(struct _websocket_manager));
         if (websocket_manager != NULL && websocket != NULL) {
           websocket->websocket_manager = websocket_manager;
           websocket->websocket_manager->type = U_WEBSOCKET_CLIENT;
