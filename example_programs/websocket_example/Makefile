@@ -21,7 +21,7 @@ LIBS=-lc -lulfius -lyder -lorcania -L$(ULFIUS_LOCATION)
 all: websocket_server websocket_client
 
 clean:
-	rm -f websocket_server websocket_client valgrind_server.txt valgrind_client.txt
+	rm -f *.o websocket_server websocket_client valgrind_server.txt valgrind_client.txt
 
 debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 

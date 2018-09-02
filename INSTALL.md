@@ -37,14 +37,6 @@ If there's no package available for your distribution, you can recompile it manu
 
 ## Manual install
 
-Download Ulfius source code from Github, get the submodules, compile and install each submodule, then compile and install ulfius:
-
-```shell
-$ git clone https://github.com/babelouest/ulfius.git
-$ cd ulfius/
-$ git submodule update --init
-```
-
 ### Prerequisites
 
 Ulfius requires the following dependencies
@@ -61,41 +53,20 @@ For example, to install all the external dependencies on Debian Stretch, run as 
 # apt-get install libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev libgnutls28-dev libgcrypt20-dev
 ```
 
-### CMake - Multi architecture
-
-You can build Ulfius library using cmake, example:
-
-```shell
-$ mkdir build
-$ cd build
-$ cmake ..
-$ make && sudo make install
-```
-
-The available options for cmake are:
-- `-DWITH_JANSSON=[on|off]` (default `on`): Build with Jansson dependency
-- `-DWITH_CURL=[on|off]` (default `on`): Build with libcurl dependency
-- `-DWITH_WEBSOCKET=[on|off]` (default `on`): Build with websocket functions, not available for Windows, requires libmicrohttpd 0.9.53 minimum and GnuTLS installed.
-- `-DWITH_JOURNALD=[on|off]` (default `on`): Build with journald (SystemD) support for logging
-- `-DBUILD_STATIC=[on|off]` (default `off`): Build the static archive in addition to the shared library
-- `-DBUILD_TESTING=[on|off]` (default `off`): Build unit tests
-- `-DINSTALL_HEADER=[on|off]` (default `on`): Install header file `ulfius.h`
-- `-DCMAKE_BUILD_TYPE=[Debug|Release]` (default `Release`): Compile with debugging symbols or not
-
 ### Good ol' Makefile
 
-#### Install Ulfius as a shared library
-
-Ulfius can also be installed via the traditional Makefile
+Download Orcania, Yder and Ulfius source code from Github, compile and install Orcania, then Yder, then compile and install ulfius:
 
 ```shell
-$ cd lib/orcania
+$ git clone https://github.com/babelouest/orcania.git
+$ git clone https://github.com/babelouest/yder.git
+$ git clone https://github.com/babelouest/ulfius.git
+$ cd orcania/
 $ make && sudo make install
-$ cd ../yder
+$ cd ../yder/
 $ make && sudo make install
-$ cd ../..
-$ make
-$ sudo make install
+$ cd ../ulfius/
+$ make && sudo make install
 ```
 
 #### Disable Ulfius dependencies
@@ -142,7 +113,28 @@ You can install Ulfius without root permission if your user has write access to 
 A `ldconfig` command is executed at the end of the install, it will probably fail if you don't have root permission, but this is harmless.
 If you choose to install Ulfius in another directory, you must set your environment variable `LD_LIBRARY_PATH` properly.
 
-#### Install from a `.zip` archive
+### CMake - Multi architecture
+
+You can build Ulfius library using cmake, example:
+
+```shell
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make && sudo make install
+```
+
+The available options for cmake are:
+- `-DWITH_JANSSON=[on|off]` (default `on`): Build with Jansson dependency
+- `-DWITH_CURL=[on|off]` (default `on`): Build with libcurl dependency
+- `-DWITH_WEBSOCKET=[on|off]` (default `on`): Build with websocket functions, not available for Windows, requires libmicrohttpd 0.9.53 minimum and GnuTLS installed.
+- `-DWITH_JOURNALD=[on|off]` (default `on`): Build with journald (SystemD) support for logging
+- `-DBUILD_STATIC=[on|off]` (default `off`): Build the static archive in addition to the shared library
+- `-DBUILD_TESTING=[on|off]` (default `off`): Build unit tests
+- `-DINSTALL_HEADER=[on|off]` (default `on`): Install header file `ulfius.h`
+- `-DCMAKE_BUILD_TYPE=[Debug|Release]` (default `Release`): Compile with debugging symbols or not
+
+### Install from a `.zip` archive
 
 If you download Ulfius as a `.zip` or `.tar.gz` file via github release tab, you must initiaize the submodules prior to the compilaton with the following command:
 
@@ -151,7 +143,7 @@ $ cd ulfius/
 $ git submodule update --init
 ```
 
-#### Install as a static archive
+### Install as a static archive
 
 To install Ulfius library as a static archive, `libulfius.a`, use the make commands `make static*`:
 

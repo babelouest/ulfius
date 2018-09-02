@@ -14,8 +14,6 @@
 #
 
 LIBULFIUS_LOCATION=./src
-LIBORCANIA_LOCATION=lib/orcania/src
-LIBYDER_LOCATION=lib/yder/src
 EXAMPLES_LOCATION=./example_programs
 TESTS_LOCATION=./test
 
@@ -32,13 +30,13 @@ ADD_WEBSOCKETFLAG="WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET"
 endif
 
 all: libulfius.so
+	cd $(EXAMPLES_LOCATION) && $(MAKE) debug
 
 debug:
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) debug $(ADD_JANSSONFLAG) $(ADD_CURLFLAG) $(ADD_WEBSOCKETFLAG)
+	cd $(EXAMPLES_LOCATION) && $(MAKE) debug
 
 clean:
-	cd $(LIBORCANIA_LOCATION) && $(MAKE) clean
-	cd $(LIBYDER_LOCATION) && $(MAKE) clean
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) clean
 	cd $(EXAMPLES_LOCATION) && $(MAKE) clean
 	cd $(TESTS_LOCATION) && $(MAKE) clean

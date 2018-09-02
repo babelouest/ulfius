@@ -19,13 +19,11 @@
 # License along with this library.	If not, see <http://www.gnu.org/licenses/>.
 #
 
-LIBORCANIA_LOCATION=../lib/orcania/src
-LIBYDER_LOCATION=../lib/yder/src
 ULFIUS_INCLUDE=../include
 DESTDIR=/usr/local
 CC=gcc
-CFLAGS+=-c -pedantic -std=gnu99 -fPIC -Wall -D_REENTRANT -I$(DESTDIR)/include -I$(ULFIUS_INCLUDE) -I$(LIBORCANIA_LOCATION) -I$(LIBYDER_LOCATION) $(ADDITIONALFLAGS) $(JANSSONFLAG) $(CURLFLAG) $(WEBSOCKETFLAG) $(CPPFLAGS)
-LIBS=-L$(DESTDIR)/lib -L$(LIBORCANIA_LOCATION) -L$(LIBYDER_LOCATION) -lc -lmicrohttpd -lyder -lorcania -lpthread $(LDFLAGS)
+CFLAGS+=-c -pedantic -std=gnu99 -fPIC -Wall -D_REENTRANT -I$(DESTDIR)/include -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS) $(JANSSONFLAG) $(CURLFLAG) $(WEBSOCKETFLAG) $(CPPFLAGS)
+LIBS=-L$(DESTDIR)/lib -lc -lmicrohttpd -lyder -lorcania -lpthread $(LDFLAGS)
 OUTPUT=libulfius.so
 VERSION=2.4.0
 

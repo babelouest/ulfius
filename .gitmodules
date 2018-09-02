@@ -1,6 +1,0 @@
-[submodule "lib/orcania"]
-	path = lib/orcania
-	url = https://github.com/babelouest/orcania.git
-[submodule "lib/yder"]
-	path = lib/yder
-	url = https://github.com/babelouest/yder.git
