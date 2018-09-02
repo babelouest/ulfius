@@ -201,10 +201,10 @@ void websocket_manager_callback(const struct _u_request * request,
     sleep(2);
     if (websocket_manager != NULL && websocket_manager->connected) {
       if (i%2) {
-        my_message = msprintf("Send text message #%d", i);
+        my_message = msprintf("Send text message #%d from server", i);
         ret = ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(my_message), my_message);
       } else {
-        my_message = msprintf("Send binary message #%d", i);
+        my_message = msprintf("Send binary message #%d from server", i);
         ret = ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_BINARY, o_strlen(my_message), my_message);
       }
       o_free(my_message);

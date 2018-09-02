@@ -84,7 +84,7 @@ void ulfius_start_websocket_cb (void *cls,
 /**
  * Workaround to make sure a message, as long as it can be is complete sent
  */
-void ulfius_websocket_send_all(MHD_socket sock, const uint8_t * data, size_t len);
+void ulfius_websocket_send_all(struct _websocket_manager * websocket_manager, const uint8_t * data, size_t len);
 
 /**
  * Generates a handhshake answer from the key given in parameter
