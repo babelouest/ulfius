@@ -38,16 +38,17 @@ websocket_server: libulfius.so static_file_callback.o websocket_server.c
 	$(CC) -o websocket_server websocket_server.o static_file_callback.o $(LIBS)
 
 websocket_client: libulfius.so websocket_client.c
-	$(CC) -o websocket_client websocket_client.c $(LIBS)
+	$(CC) $(CFLAGS) websocket_client.c 
+	$(CC) -o websocket_client websocket_client.o $(LIBS)
 
-test_server: websocket_server websocket_client
+test_server: websocket_server
 	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./websocket_server
 
-test_client: websocket_client websocket_client
+test_client: websocket_client
 	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./websocket_client
 
-memcheck_server: websocket_server websocket_client
+memcheck_server: websocket_server
 	LD_LIBRARY_PATH=../../src valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all ./websocket_server 2>valgrind_server.txt
 
-memcheck_client: websocket_server websocket_client
+memcheck_client: websocket_client
 	LD_LIBRARY_PATH=../../src valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all ./websocket_client 2>valgrind_client.txt

@@ -446,10 +446,6 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                     websocket->request = ulfius_duplicate_request(con_info->request);
                     if (websocket->request != NULL) {
                       websocket->instance = (struct _u_instance *)cls;
-                      websocket->websocket_protocol = ((struct _websocket_handle *)response->websocket_handle)->websocket_protocol;
-                      websocket->websocket_protocol_selected = protocol;
-                      websocket->websocket_extensions = ((struct _websocket_handle *)response->websocket_handle)->websocket_extensions;
-                      websocket->websocket_extensions_selected = extensions;
                       websocket->websocket_manager_callback = ((struct _websocket_handle *)response->websocket_handle)->websocket_manager_callback;
                       websocket->websocket_manager_user_data = ((struct _websocket_handle *)response->websocket_handle)->websocket_manager_user_data;
                       websocket->websocket_incoming_message_callback = ((struct _websocket_handle *)response->websocket_handle)->websocket_incoming_message_callback;
@@ -517,13 +513,13 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                   }
                 }
               } else {
-                y_log_message(Y_LOG_LEVEL_DEBUG, "grut la");
                 response->status = MHD_HTTP_BAD_REQUEST;
                 response_buffer = msprintf("%s%s", extensions==NULL?"No extensions\n":"", protocol==NULL?"No protocol":"");
+                response_buffer_len = o_strlen(response_buffer);
+                y_log_message(Y_LOG_LEVEL_DEBUG, "grut la %s", response_buffer);
                 mhd_response = MHD_create_response_from_buffer(response_buffer_len, response_buffer, mhd_response_flag);
               }
             } else {
-              y_log_message(Y_LOG_LEVEL_DEBUG, "grut la plutot");
               char * err1 = (NULL != o_strcasestr(u_map_get_case(con_info->request->map_header, "upgrade"), U_WEBSOCKET_UPGRADE_VALUE))?"":"No upgrade key\n",
               * err2 = u_map_get(con_info->request->map_header, "Sec-WebSocket-Key") != NULL?"":"No Sec-WebSocket-Key\n",
               * err3 = u_map_get(con_info->request->map_header, "Origin") != NULL?"":"No Origin\n",
@@ -533,6 +529,8 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
               * err7 = 0 == o_strcmp(con_info->request->http_verb, "GET")?"":"No HTTP verb\n";
               response->status = MHD_HTTP_BAD_REQUEST;
               response_buffer = msprintf("%s%s%s%s%s%s%s", err1, err2, err3, err4, err5, err6, err7);
+              response_buffer_len = o_strlen(response_buffer);
+              y_log_message(Y_LOG_LEVEL_DEBUG, "grut la plutot %s", response_buffer);
               mhd_response = MHD_create_response_from_buffer(response_buffer_len, response_buffer, mhd_response_flag);
             }
             close_loop = 1;

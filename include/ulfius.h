@@ -616,6 +616,13 @@ int ulfius_clean_request(struct _u_request * request);
 int ulfius_clean_request_full(struct _u_request * request);
 
 /**
+ * ulfius_copy_request
+ * Copy the source request elements into the dest request
+ * return U_OK on success
+ */
+int ulfius_copy_request(struct _u_request * dest, const struct _u_request * source);
+
+/**
  * ulfius_init_response
  * Initialize a response structure by allocating inner elements
  * return U_OK on success
@@ -640,7 +647,7 @@ int ulfius_clean_response_full(struct _u_response * response);
 
 /**
  * ulfius_copy_response
- * Copy the source response elements into the des response
+ * Copy the source response elements into the dest response
  * return U_OK on success
  */
 int ulfius_copy_response(struct _u_response * dest, const struct _u_response * source);
@@ -901,7 +908,7 @@ int u_map_empty(struct _u_map * u_map);
 #define WEBSOCKET_MAX_CLOSE_TRY      10
 
 #define U_WEBSOCKET_BIT_FIN         0x80
-#define U_WEBSOCKET_HAS_MASK        0x80
+#define U_WEBSOCKET_MASK            0x80
 #define U_WEBSOCKET_LEN_MASK        0x7F
 #define U_WEBSOCKET_OPCODE_CONTINUE 0x00
 #define U_WEBSOCKET_OPCODE_TEXT     0x01
@@ -915,6 +922,10 @@ int u_map_empty(struct _u_map * u_map);
 
 #define U_WEBSOCKET_SERVER 0
 #define U_WEBSOCKET_CLIENT 1
+
+#define U_WEBSOCKET_STATUS_OPEN  0
+#define U_WEBSOCKET_STATUS_CLOSE 1
+
 /**
  * Websocket manager structure
  * contains among other things the socket
@@ -930,7 +941,7 @@ struct _websocket_manager {
   MHD_socket mhd_sock;
   int tcp_sock;
   char * protocol;
-  char * extension;
+  char * extensions;
   pthread_mutex_t read_lock;
   pthread_mutex_t write_lock;
   pthread_mutex_t message_lock;
@@ -965,10 +976,6 @@ struct _websocket_message_list {
 struct _websocket {
   struct _u_instance               * instance;
   struct _u_request                * request;
-  char                             * websocket_protocol;
-  char                             * websocket_protocol_selected;
-  char                             * websocket_extensions;
-  char                             * websocket_extensions_selected;
   void                             (* websocket_manager_callback) (const struct _u_request * request,
                                                                   struct _websocket_manager * websocket_manager,
                                                                   void * websocket_manager_user_data);
@@ -985,6 +992,10 @@ struct _websocket {
   int                                tls;
   struct _websocket_manager        * websocket_manager;
   struct MHD_UpgradeResponseHandle * urh;
+};
+
+struct _websocket_client_handler {
+  struct _websocket * websocket;
 };
 
 /**
@@ -1062,24 +1073,6 @@ int ulfius_init_websocket_request(struct _u_request * request,
                                   const char * websocket_extensions);
 
 /**
- * Open a websocket client connction
- */
-int ulfius_open_websocket_client_connection(struct _u_request * request,
-                                            void (* websocket_client_manager_callback) (const struct _u_request * request,
-                                                                                        struct _websocket_manager * websocket_manager,
-                                                                                        void * websocket_manager_user_data),
-                                            void * websocket_client_manager_user_data,
-                                            void (* websocket_client_incoming_message_callback) (const struct _u_request * request,
-                                                                                                 struct _websocket_manager * websocket_manager,
-                                                                                                 const struct _websocket_message * message,
-                                                                                                 void * websocket_incoming_user_data),
-                                            void * websocket_client_incoming_user_data,
-                                            void (* websocket_client_onclose_callback) (const struct _u_request * request,
-                                                                                        struct _websocket_manager * websocket_manager,
-                                                                                        void * websocket_onclose_user_data),
-                                            void * websocket_client_onclose_user_data);
-
-/**
  * Open a websocket client connection
  * Return U_OK on success
  */
@@ -1096,7 +1089,19 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
                                             void (* websocket_onclose_callback) (const struct _u_request * request,
                                                                                  struct _websocket_manager * websocket_manager,
                                                                                  void * websocket_onclose_user_data),
-                                            void * websocket_onclose_user_data);
+                                            void * websocket_onclose_user_data,
+                                            struct _websocket_client_handler * websocket_client_handler);
+
+/**
+ * Closes a websocket client connection
+ * return U_OK when the websocket is closed
+ */
+int ulfius_close_websocket_client_connection(struct _websocket_client_handler * websocket_client_handler);
+
+/**
+ * Returns the status of the websocket client connection
+ */
+int ulfius_status_websocket_client_connection(struct _websocket_client_handler * websocket_client_handler);
 #endif
 
 /** Macro values **/

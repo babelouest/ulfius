@@ -34,7 +34,7 @@
 #include <unistd.h>
 #include <gnutls/gnutls.h>
 #include <sys/socket.h>
-#include <arpa/inet.h>
+#include <netinet/in.h>
 #include <netdb.h>
 
 /**
@@ -164,7 +164,6 @@ void * ulfius_thread_websocket(void * data) {
               }
             } else if (message->opcode != U_WEBSOCKET_OPCODE_NONE && message != NULL) {
               if (websocket->websocket_incoming_message_callback != NULL) {
-                y_log_message(Y_LOG_LEVEL_DEBUG, "Dispatch message %p of size %zu", message, message->data_len);
                 websocket->websocket_incoming_message_callback(websocket->request, websocket->websocket_manager, message, websocket->websocket_incoming_user_data);
               }
             }
@@ -288,7 +287,7 @@ static size_t read_data_from_socket(struct _websocket_manager * websocket_manage
  * Sets the new message in the message variable
  */
 int ulfius_read_incoming_message(struct _websocket_manager * websocket_manager, struct _websocket_message ** message) {
-  int ret = U_OK, fin = 0;
+  int ret = U_OK, fin = 0, i;
   int message_error = 0;
   uint8_t header[2], payload_len[8], masking_key[4];
   uint8_t * payload_data;
@@ -345,7 +344,7 @@ int ulfius_read_incoming_message(struct _websocket_manager * websocket_manager, 
         
         if (websocket_manager->type == U_WEBSOCKET_SERVER) {
           // Read mask
-          if (header[1] & U_WEBSOCKET_HAS_MASK) {
+          if (header[1] & U_WEBSOCKET_MASK) {
             (*message)->has_mask = 1;
             len = read_data_from_socket(websocket_manager, masking_key, 4);
             if (len != 4) {
@@ -353,39 +352,37 @@ int ulfius_read_incoming_message(struct _websocket_manager * websocket_manager, 
               ret = U_ERROR;
               y_log_message(Y_LOG_LEVEL_ERROR, "Error reading websocket for mask");
             }
-            if (!message_error) {
-            }
           } else {
             message_error = 1;
             ret = U_ERROR;
             y_log_message(Y_LOG_LEVEL_ERROR, "Incoming message has no MASK flag, exiting");
           }
         } else {
-          if (!(header[1] & U_WEBSOCKET_HAS_MASK)) {
-            if (msg_len > 0) {
-              payload_data = o_malloc(msg_len*sizeof(uint8_t));
-              y_log_message(Y_LOG_LEVEL_DEBUG, "msg_len is %zu", msg_len);
-              len = read_data_from_socket(websocket_manager, payload_data, msg_len);
-              if ((unsigned int)len == msg_len) {
-                y_log_message(Y_LOG_LEVEL_DEBUG, "store message");
-                // Decode message
-                (*message)->data = o_realloc((*message)->data, (msg_len+(*message)->data_len)*sizeof(uint8_t));
-                memcpy((*message)->data+(*message)->data_len, payload_data, msg_len);
-                (*message)->data_len += msg_len;
-                y_log_message(Y_LOG_LEVEL_DEBUG, "data_len is now %zu", (*message)->data_len);
-              } else {
-                message_error = 1;
-                ret = U_ERROR;
-                y_log_message(Y_LOG_LEVEL_ERROR, "Error reading websocket for payload_data: %zu", len);
-              }
-              o_free(payload_data);
-            }
-          } else {
+          if ((header[1] & U_WEBSOCKET_MASK)) {
             message_error = 1;
             ret = U_ERROR;
             y_log_message(Y_LOG_LEVEL_ERROR, "Incoming message has MASK flag while it should not, exiting");
           }
         }
+        payload_data = o_malloc(msg_len*sizeof(uint8_t));
+        len = read_data_from_socket(websocket_manager, payload_data, msg_len);
+        if (!message_error && (unsigned int)len == msg_len) {
+          // If mask, decode message
+          (*message)->data = o_realloc((*message)->data, (msg_len+(*message)->data_len)*sizeof(uint8_t));
+          if ((*message)->has_mask) {
+            for (i = (*message)->data_len; (unsigned int)i < msg_len; i++) {
+              (*message)->data[i] = payload_data[i-(*message)->data_len] ^ masking_key[(i-(*message)->data_len)%4];
+            }
+          } else {
+            memcpy((*message)->data+(*message)->data_len, payload_data, msg_len);
+          }
+          (*message)->data_len += msg_len;
+        } else if (len != -1) {
+          message_error = 1;
+          ret = U_ERROR;
+          y_log_message(Y_LOG_LEVEL_ERROR, "Error reading websocket for payload_data");
+        }
+        o_free(payload_data);
       }
     } while (!message_error && !fin);
   } else {
@@ -399,7 +396,7 @@ int ulfius_read_incoming_message(struct _websocket_manager * websocket_manager, 
  */
 int ulfius_clear_websocket(struct _websocket * websocket) {
   if (websocket != NULL) {
-    if (MHD_upgrade_action (websocket->urh, MHD_UPGRADE_ACTION_CLOSE) != MHD_YES) {
+    if (websocket->websocket_manager->type == U_WEBSOCKET_SERVER && MHD_upgrade_action (websocket->urh, MHD_UPGRADE_ACTION_CLOSE) != MHD_YES) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error sending MHD_UPGRADE_ACTION_CLOSE frame to urh");
     }
     ulfius_instance_remove_websocket_active(websocket->instance, websocket);
@@ -407,8 +404,6 @@ int ulfius_clear_websocket(struct _websocket * websocket) {
     ulfius_clean_request_full(websocket->request);
     o_free(websocket->websocket_manager);
     websocket->websocket_manager = NULL;
-    o_free(websocket->websocket_protocol_selected);
-    o_free(websocket->websocket_extensions_selected);
     o_free(websocket);
     return U_OK;
   } else {
@@ -676,19 +671,11 @@ int ulfius_websocket_send_message_nolock(struct _websocket_manager * websocket_m
           return U_ERROR_MEMORY;
         }
       }
+      sent_data[0] = opcode;
       if (fin) {
-        sent_data[0] = opcode|U_WEBSOCKET_BIT_FIN;
+        sent_data[0] |= U_WEBSOCKET_BIT_FIN;
       }
       my_message->opcode = opcode;
-      if (websocket_manager->type == U_WEBSOCKET_SERVER) {
-        my_message->has_mask = 0;
-        memset(my_message->mask, 0, 4);
-      } else {
-        mask[0] = 40; mask[1] = 41; mask[2] = 42; mask[3] = 43; // TODO: more random
-        my_message->has_mask = 1;
-        memcpy(my_message->mask, mask, 4);
-        sent_data[0] |= U_WEBSOCKET_HAS_MASK;
-      }
       my_message->data_len = data_len;
       if (data_len > 65536) {
         sent_data[1] = 127;
@@ -709,6 +696,15 @@ int ulfius_websocket_send_message_nolock(struct _websocket_manager * websocket_m
       } else {
         sent_data[1] = (uint8_t)data_len;
         off = 2;
+      }
+      if (websocket_manager->type == U_WEBSOCKET_SERVER) {
+        my_message->has_mask = 0;
+        memset(my_message->mask, 0, 4);
+      } else {
+        mask[0] = 40; mask[1] = 41; mask[2] = 42; mask[3] = 43; // TODO: more random
+        my_message->has_mask = 1;
+        memcpy(my_message->mask, mask, 4);
+        sent_data[1] |= U_WEBSOCKET_MASK;
       }
       if (websocket_manager->type == U_WEBSOCKET_CLIENT) {
         // Append mask
@@ -867,6 +863,8 @@ void ulfius_clear_websocket_manager(struct _websocket_manager * websocket_manage
     ulfius_clear_websocket_message_list(websocket_manager->message_list_outcoming);
     o_free(websocket_manager->message_list_outcoming);
     websocket_manager->message_list_outcoming = NULL;
+    o_free(websocket_manager->protocol);
+    o_free(websocket_manager->extensions);
   }
 }
 
@@ -983,6 +981,9 @@ static int ulfius_open_websocket(struct _u_request * request, struct yuarel * y_
         websocket->websocket_manager->fds.events = POLLIN | POLLRDHUP;
         websocket->websocket_manager->connected = 1;
         websocket->websocket_manager->closing = 0;
+        websocket->urh = NULL;
+        websocket->instance = NULL;
+        websocket->request = request;
         // Send HTTP Request
         do {
           http_line = msprintf("%s %s HTTP/%s\r\n", request->http_verb, y_url->path, request->http_protocol);
@@ -1027,7 +1028,11 @@ static int ulfius_open_websocket(struct _u_request * request, struct yuarel * y_
               if (0 == o_strcmp(buffer, "HTTP/1.1 101 Switching Protocols")) {
                 websocket_response_http = 1;
               } else {
-                y_log_message(Y_LOG_LEVEL_DEBUG, "HTTP Response error: %.*s", line_len, buffer);
+                y_log_message(Y_LOG_LEVEL_ERROR, "Error establishing websocket connexion, response is:", line_len, buffer);
+                y_log_message(Y_LOG_LEVEL_ERROR, "%.*s", line_len, buffer);
+                while (ulfius_get_next_line_from_http_response(websocket, buffer, buffer_len, &line_len) == U_OK) {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "%.*s", line_len, buffer);
+                }
                 break;
               }
             } else if (websocket_response_http) {
@@ -1039,7 +1044,7 @@ static int ulfius_open_websocket(struct _u_request * request, struct yuarel * y_
                 websocket->websocket_manager->protocol = o_strdup(o_strstr(buffer, ":") + 1);
                 websocket_response |= WEBSOCKET_RESPONSE_PROTCOL;
               } else if (0 == o_strncmp(buffer, "Sec-WebSocket-Extension", o_strlen("Sec-WebSocket-Extension"))) {
-                websocket->websocket_manager->extension = o_strdup(o_strstr(buffer, ":") + 1);
+                websocket->websocket_manager->extensions = o_strdup(o_strstr(buffer, ":") + 1);
                 websocket_response |= WEBSOCKET_RESPONSE_EXTENSION;
               } else if (0 == o_strncmp(buffer, "Sec-WebSocket-Accept", o_strlen("Sec-WebSocket-Accept"))) {
                 // TODO: Check handshake
@@ -1138,7 +1143,8 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
                                             void (* websocket_onclose_callback) (const struct _u_request * request,
                                                                                  struct _websocket_manager * websocket_manager,
                                                                                  void * websocket_onclose_user_data),
-                                            void * websocket_onclose_user_data) {
+                                            void * websocket_onclose_user_data,
+                                            struct _websocket_client_handler * websocket_client_handler) {
   int ret;
   struct yuarel y_url;
   char * url, * basic_auth_encoded_header, * basic_auth, * basic_auth_encoded;
@@ -1196,8 +1202,11 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
             if (ulfius_open_websocket(request, &y_url, websocket) != U_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_open_websocket");
               ret = U_ERROR;
+            } else {
+              ret = U_OK;
             }
           } else {
+            websocket->tls = 1;
             // TODO: Use gnutls secure connection
             ret = U_ERROR;
           }
@@ -1213,18 +1222,15 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
           ret = U_ERROR_PARAMS;
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "unknown scheme, please use one of the following: 'http', 'https', 'ws', 'wss'");
+        y_log_message(Y_LOG_LEVEL_ERROR, "Unknown scheme, please use one of the following: 'http', 'https', 'ws', 'wss'");
         ret = U_ERROR_PARAMS;
       }
-      y_log_message(Y_LOG_LEVEL_DEBUG, "That's cool");
-      ret = U_OK;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error parsing url");
       ret = U_ERROR_PARAMS;
     }
     o_free(url);
   } else {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "Error param");
     ret = U_ERROR_PARAMS;
   }
   return ret;
