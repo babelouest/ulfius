@@ -6,7 +6,7 @@
  * 
  * ulfius.h: public structures and functions declarations
  * 
- * Copyright 2015-2017 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2015-2018 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -40,6 +40,7 @@
   #endif
 #endif
 #include <pthread.h>
+#include <gnutls/gnutls.h>
 #include <microhttpd.h>
 
 #if defined(_WIN32) && !defined(U_DISABLE_WEBSOCKET)
@@ -920,11 +921,19 @@ int u_map_empty(struct _u_map * u_map);
 #define U_WEBSOCKET_OPCODE_ERROR    0xFE
 #define U_WEBSOCKET_OPCODE_NONE     0xFF
 
-#define U_WEBSOCKET_SERVER 0
-#define U_WEBSOCKET_CLIENT 1
+#define U_WEBSOCKET_NONE   0
+#define U_WEBSOCKET_SERVER 1
+#define U_WEBSOCKET_CLIENT 2
 
 #define U_WEBSOCKET_STATUS_OPEN  0
 #define U_WEBSOCKET_STATUS_CLOSE 1
+
+#define WEBSOCKET_RESPONSE_HTTP       0x0001
+#define WEBSOCKET_RESPONSE_UPGRADE    0x0002
+#define WEBSOCKET_RESPONSE_CONNECTION 0x0004
+#define WEBSOCKET_RESPONSE_ACCEPT     0x0008
+#define WEBSOCKET_RESPONSE_PROTCOL    0x0010
+#define WEBSOCKET_RESPONSE_EXTENSION  0x0020
 
 /**
  * Websocket manager structure
@@ -935,19 +944,22 @@ int u_map_empty(struct _u_map * u_map);
 struct _websocket_manager {
   struct _websocket_message_list * message_list_incoming;
   struct _websocket_message_list * message_list_outcoming;
-  int connected;
-  int closing;
-  int manager_closed;
-  MHD_socket mhd_sock;
-  int tcp_sock;
-  char * protocol;
-  char * extensions;
-  pthread_mutex_t read_lock;
-  pthread_mutex_t write_lock;
-  pthread_mutex_t message_lock;
-  pthread_cond_t message_cond;
-  struct pollfd fds;
-  int type;
+  int                              connected;
+  int                              closing;
+  int                              manager_closed;
+  MHD_socket                       mhd_sock;
+  int                              tcp_sock;
+  int                              tls;
+  gnutls_session_t                 gnutls_session;
+  gnutls_certificate_credentials_t xcred;
+  char                           * protocol;
+  char                           * extensions;
+  pthread_mutex_t                  read_lock;
+  pthread_mutex_t                  write_lock;
+  pthread_mutex_t                  status_lock;
+  pthread_cond_t                   status_cond;
+  struct pollfd                    fds;
+  int                              type;
 };
 
 /**
@@ -964,6 +976,9 @@ struct _websocket_message {
   char * data;
 };
 
+/**
+ * List of websocket messages
+ */
 struct _websocket_message_list {
   struct _websocket_message ** list;
   size_t len;
@@ -989,13 +1004,16 @@ struct _websocket {
                                                                   struct _websocket_manager * websocket_manager,
                                                                   void * websocket_onclose_user_data);
   void                             * websocket_onclose_user_data;
-  int                                tls;
   struct _websocket_manager        * websocket_manager;
   struct MHD_UpgradeResponseHandle * urh;
 };
 
+/**
+ * Handler for the websocket client, to allow the program to know the status of a websocket client
+ */
 struct _websocket_client_handler {
   struct _websocket * websocket;
+  struct _u_response * response;
 };
 
 /**
@@ -1031,6 +1049,11 @@ int ulfius_set_websocket_response(struct _u_response * response,
                                    void * websocket_onclose_user_data);
 
 /**
+ * Check if the response corresponds to the transformation of the key with the magic string
+ */
+int ulfius_check_handshake_response(const char * key, const char * response);
+
+/**
  * Send a fragmented message in the websocket
  * each fragment size will be at most fragment_len
  * Return U_OK on success
@@ -1058,21 +1081,6 @@ int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
 struct _websocket_message * ulfius_websocket_pop_first_message(struct _websocket_message_list * message_list);
 
 /**
- * Clear data of a websocket message
- */
-void ulfius_clear_websocket_message(struct _websocket_message * message);
-
-/**
- * Initialize values for a struct _u_request to open a websocket
- * request must be previously initialized
- * Return U_OK on success
- */
-int ulfius_init_websocket_request(struct _u_request * request,
-                                  const char * url,
-                                  const char * websocket_protocol,
-                                  const char * websocket_extensions);
-
-/**
  * Open a websocket client connection
  * Return U_OK on success
  */
@@ -1090,18 +1098,53 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
                                                                                  struct _websocket_manager * websocket_manager,
                                                                                  void * websocket_onclose_user_data),
                                             void * websocket_onclose_user_data,
-                                            struct _websocket_client_handler * websocket_client_handler);
+                                            struct _websocket_client_handler * websocket_client_handler,
+                                            struct _u_response * response);
 
 /**
  * Closes a websocket client connection
  * return U_OK when the websocket is closed
  */
-int ulfius_close_websocket_client_connection(struct _websocket_client_handler * websocket_client_handler);
+int ulfius_websocket_client_connection_close(struct _websocket_client_handler * websocket_client_handler);
 
 /**
  * Returns the status of the websocket client connection
  */
-int ulfius_status_websocket_client_connection(struct _websocket_client_handler * websocket_client_handler);
+int ulfius_websocket_client_connection_status(struct _websocket_client_handler * websocket_client_handler);
+
+/**
+ * Wait until the websocket client connection is closed or the timeout in milliseconds is reached
+ * if timeout is 0, no timeout is set
+ */
+int ulfius_websocket_client_connection_wait_close(struct _websocket_client_handler * websocket_client_handler, unsigned int timeout);
+
+/**
+ * Initialize values for a struct _u_request to open a websocket
+ * request must be previously initialized
+ * Return U_OK on success
+ */
+int ulfius_init_websocket_request(struct _u_request * request,
+                                  const char * url,
+                                  const char * websocket_protocol,
+                                  const char * websocket_extensions);
+
+/**
+ * Initialize a struct _websocket
+ * return U_OK on success
+ */
+int ulfius_init_websocket(struct _websocket * websocket);
+
+/**
+ * Initialize a struct _websocket_manager
+ * return U_OK on success
+ */
+int ulfius_init_websocket_manager(struct _websocket_manager * websocket_manager);
+
+/**
+ * Clear data of a websocket message
+ */
+void ulfius_clear_websocket_message(struct _websocket_message * message);
+
 #endif
 
 /** Macro values **/

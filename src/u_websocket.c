@@ -28,14 +28,16 @@
 
 #ifndef U_DISABLE_WEBSOCKET
 #include <string.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <errno.h>
 #include <unistd.h>
-#include <gnutls/gnutls.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <stdlib.h>
 
 /**
  * Set a websocket in the response
@@ -108,19 +110,11 @@ void * ulfius_thread_websocket(void * data) {
   struct _websocket * websocket = (struct _websocket*)data;
   struct _websocket_message * message = NULL;
   pthread_t thread_websocket_manager;
-  pthread_mutexattr_t mutexattr;
   int thread_ret_websocket_manager = 0, poll_ret;
   int error = 0;
   socklen_t len = sizeof (error);
   
   if (websocket != NULL && websocket->websocket_manager != NULL) {
-    pthread_mutexattr_init ( &mutexattr );
-    pthread_mutexattr_settype( &mutexattr, PTHREAD_MUTEX_RECURSIVE );
-    if (pthread_mutex_init(&(websocket->websocket_manager->read_lock), &mutexattr) != 0 || pthread_mutex_init(&(websocket->websocket_manager->write_lock), &mutexattr) != 0) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Impossible to initialize Mutex Lock for websocket");
-      websocket->websocket_manager->connected = 0;
-    }
-    pthread_mutexattr_destroy( &mutexattr );
     if (websocket->websocket_manager_callback != NULL && websocket->websocket_manager->connected) {
       websocket->websocket_manager->manager_closed = 0;
       thread_ret_websocket_manager = pthread_create(&thread_websocket_manager, NULL, ulfius_thread_websocket_manager_run, (void *)websocket);
@@ -210,28 +204,17 @@ void ulfius_start_websocket_cb (void * cls,
   
   if (websocket != NULL) {
     websocket->urh = urh;
-    websocket->websocket_manager = o_malloc(sizeof(struct _websocket_manager));
-    // Run websocket manager in a thread if set
-    if (websocket->websocket_manager != NULL) {
-      websocket->websocket_manager->type = U_WEBSOCKET_SERVER;
-      websocket->websocket_manager->message_list_incoming = o_malloc(sizeof(struct _websocket_message_list));
-      websocket->websocket_manager->message_list_outcoming = o_malloc(sizeof(struct _websocket_message_list));
-      ulfius_init_websocket_message_list(websocket->websocket_manager->message_list_incoming);
-      ulfius_init_websocket_message_list(websocket->websocket_manager->message_list_outcoming);
-      websocket->websocket_manager->mhd_sock = sock;
-      websocket->websocket_manager->fds.fd = sock;
-      websocket->websocket_manager->fds.events = POLLIN | POLLRDHUP;
-      websocket->websocket_manager->connected = 1;
-      websocket->websocket_manager->closing = 0;
-      thread_ret_websocket = pthread_create(&thread_websocket, NULL, ulfius_thread_websocket, (void *)websocket);
-      thread_detach_websocket = pthread_detach(thread_websocket);
-      if (thread_ret_websocket || thread_detach_websocket) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Error creating or detaching websocket manager thread, return code: %d, detach code: %d",
-                      thread_ret_websocket, thread_detach_websocket);
-        ulfius_clear_websocket(websocket);
-      }
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for websocket_manager");
+    // Run websocket manager in a thread
+    websocket->websocket_manager->type = U_WEBSOCKET_SERVER;
+    websocket->websocket_manager->mhd_sock = sock;
+    websocket->websocket_manager->fds.fd = sock;
+    websocket->websocket_manager->fds.events = POLLIN | POLLRDHUP;
+    websocket->websocket_manager->connected = 1;
+    thread_ret_websocket = pthread_create(&thread_websocket, NULL, ulfius_thread_websocket, (void *)websocket);
+    thread_detach_websocket = pthread_detach(thread_websocket);
+    if (thread_ret_websocket || thread_detach_websocket) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error creating or detaching websocket manager thread, return code: %d, detach code: %d",
+                    thread_ret_websocket, thread_detach_websocket);
       ulfius_clear_websocket(websocket);
     }
   } else {
@@ -270,7 +253,11 @@ static size_t read_data_from_socket(struct _websocket_manager * websocket_manage
         if (websocket_manager->type == U_WEBSOCKET_SERVER) {
           data_len = read(websocket_manager->mhd_sock, data, (len - ret));
         } else {
-          data_len = read(websocket_manager->tcp_sock, data, (len - ret));
+          if (websocket_manager->tls) {
+            data_len = gnutls_record_recv(websocket_manager->gnutls_session, data, (len - ret));
+          } else {
+            data_len = read(websocket_manager->tcp_sock, data, (len - ret));
+          }
         }
         if (data_len > 0) {
           ret += data_len;
@@ -406,6 +393,23 @@ int ulfius_clear_websocket(struct _websocket * websocket) {
     websocket->websocket_manager = NULL;
     o_free(websocket);
     return U_OK;
+  } else {
+    return U_ERROR_PARAMS;
+  }
+}
+
+/**
+ * Check if the response corresponds to the transformation of the key with the magic string
+ */
+int ulfius_check_handshake_response(const char * key, const char * response) {
+  char websocket_accept[32] = {0};
+  
+  if (key != NULL && response != NULL) {
+    if (ulfius_generate_handshake_answer(key, websocket_accept) && 0 == o_strcmp(websocket_accept, response)) {
+      return U_OK;
+    } else {
+      return U_ERROR;
+    }
   } else {
     return U_ERROR_PARAMS;
   }
@@ -701,7 +705,10 @@ int ulfius_websocket_send_message_nolock(struct _websocket_manager * websocket_m
         my_message->has_mask = 0;
         memset(my_message->mask, 0, 4);
       } else {
-        mask[0] = 40; mask[1] = 41; mask[2] = 42; mask[3] = 43; // TODO: more random
+        mask[0] = rand();
+        mask[1] = rand();
+        mask[2] = rand();
+        mask[3] = rand();
         my_message->has_mask = 1;
         memcpy(my_message->mask, mask, 4);
         sent_data[1] |= U_WEBSOCKET_MASK;
@@ -752,7 +759,11 @@ void ulfius_websocket_send_all(struct _websocket_manager * websocket_manager, co
           break;
         }
       } else {
-        ret = send(websocket_manager->tcp_sock, &data[off], len - off, MSG_NOSIGNAL);
+        if (websocket_manager->tls) {
+          ret = gnutls_record_send(websocket_manager->gnutls_session, &data[off], len - off);
+        } else {
+          ret = send(websocket_manager->tcp_sock, &data[off], len - off, MSG_NOSIGNAL);
+        }
         if (ret < 0) {
           break;
         }
@@ -843,6 +854,19 @@ int ulfius_close_websocket(struct _websocket * websocket) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Error sending close frame to websocket");
       }
     }
+    if (websocket->websocket_manager->type == U_WEBSOCKET_CLIENT) {
+      pthread_mutex_lock(&websocket->websocket_manager->status_lock);
+      pthread_cond_broadcast(&websocket->websocket_manager->status_cond);
+      pthread_mutex_unlock(&websocket->websocket_manager->status_lock);
+      if (websocket->websocket_manager->tls) {
+        gnutls_bye(websocket->websocket_manager->gnutls_session, GNUTLS_SHUT_RDWR);
+        gnutls_deinit(websocket->websocket_manager->gnutls_session);
+        gnutls_certificate_free_credentials(websocket->websocket_manager->xcred);
+        gnutls_global_deinit();
+      }
+      shutdown(websocket->websocket_manager->tcp_sock, SHUT_RDWR);
+      close(websocket->websocket_manager->tcp_sock);
+    }
     websocket->websocket_manager->connected = 0;
     return U_OK;
   } else {
@@ -857,6 +881,7 @@ void ulfius_clear_websocket_manager(struct _websocket_manager * websocket_manage
   if (websocket_manager != NULL) {
     pthread_mutex_destroy(&websocket_manager->read_lock);
     pthread_mutex_destroy(&websocket_manager->write_lock);
+    y_log_message(Y_LOG_LEVEL_DEBUG, "clear list");
     ulfius_clear_websocket_message_list(websocket_manager->message_list_incoming);
     o_free(websocket_manager->message_list_incoming);
     websocket_manager->message_list_incoming = NULL;
@@ -921,13 +946,6 @@ int ulfius_instance_remove_websocket_active(struct _u_instance * instance, struc
   }
 }
 
-#define WEBSOCKET_RESPONSE_HTTP       0x0001
-#define WEBSOCKET_RESPONSE_UPGRADE    0x0002
-#define WEBSOCKET_RESPONSE_CONNECTION 0x0004
-#define WEBSOCKET_RESPONSE_ACCEPT     0x0008
-#define WEBSOCKET_RESPONSE_PROTCOL    0x0010
-#define WEBSOCKET_RESPONSE_EXTENSION  0x0020
-
 /**
  * Read the next line in http response
  * Fill buffer until \r\n is read or buffer_len is reached
@@ -959,12 +977,12 @@ static int ulfius_get_next_line_from_http_response(struct _websocket * websocket
  * Opens a websocket connection to the specified server
  * Returns U_OK on success
  */
-static int ulfius_open_websocket(struct _u_request * request, struct yuarel * y_url, struct _websocket * websocket) {
-  int websocket_response_http = 0, i, ret;
+static int ulfius_open_websocket(struct _u_request * request, struct yuarel * y_url, struct _websocket * websocket, struct _u_response * response) {
+  int websocket_response_http = 0, i, ret, check_websocket = WEBSOCKET_RESPONSE_UPGRADE | WEBSOCKET_RESPONSE_CONNECTION | WEBSOCKET_RESPONSE_ACCEPT;
   unsigned int websocket_response = 0;
   struct sockaddr_in server;
   struct hostent * he;
-  char * http_line;
+  char * http_line, ** split_line = NULL, * key, * value, * separator;
   char buffer[4096] = {0};
   const char ** keys;
   size_t buffer_len = 4096, line_len;
@@ -978,7 +996,6 @@ static int ulfius_open_websocket(struct _u_request * request, struct yuarel * y_
       
       if (connect(websocket->websocket_manager->tcp_sock, (struct sockaddr *)&server , sizeof(server)) >= 0) {
         websocket->websocket_manager->fds.fd = websocket->websocket_manager->tcp_sock;
-        websocket->websocket_manager->fds.events = POLLIN | POLLRDHUP;
         websocket->websocket_manager->connected = 1;
         websocket->websocket_manager->closing = 0;
         websocket->urh = NULL;
@@ -1011,13 +1028,17 @@ static int ulfius_open_websocket(struct _u_request * request, struct yuarel * y_
             http_line = msprintf("%s: %s\r\n", keys[i], u_map_get(request->map_header, keys[i]));
             ulfius_websocket_send_all(websocket->websocket_manager, (uint8_t *)http_line, o_strlen(http_line));
             o_free(http_line);
+            if (0 == o_strcmp("Sec-WebSocket-Protocol", keys[i])) {
+              check_websocket |= WEBSOCKET_RESPONSE_PROTCOL;
+            } else if (0 == o_strcmp("Sec-WebSocket-Extension", keys[i])) {
+              check_websocket |= WEBSOCKET_RESPONSE_EXTENSION;
+            }
           }
           
           if (websocket->websocket_manager->tcp_sock >= 0) {
             // Send empty line
             const char * empty = "\r\n";
             ulfius_websocket_send_all(websocket->websocket_manager, (uint8_t *)empty, o_strlen(empty));
-            
           }
         } while (0);
         
@@ -1025,35 +1046,43 @@ static int ulfius_open_websocket(struct _u_request * request, struct yuarel * y_
         do {
           if (ulfius_get_next_line_from_http_response(websocket, buffer, buffer_len, &line_len) == U_OK) {
             if (!websocket_response_http) {
-              if (0 == o_strcmp(buffer, "HTTP/1.1 101 Switching Protocols")) {
+              if (split_string(buffer, " ", &split_line) >= 2 && 0 == o_strcmp(split_line[0], "HTTP/1.1") && 0 == o_strcmp(split_line[1], "101")) {
                 websocket_response_http = 1;
+                response->status = strtol(split_line[1], NULL, 10);
+                response->protocol = o_strdup("1.1");
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "Error establishing websocket connexion, response is:", line_len, buffer);
                 y_log_message(Y_LOG_LEVEL_ERROR, "%.*s", line_len, buffer);
-                while (ulfius_get_next_line_from_http_response(websocket, buffer, buffer_len, &line_len) == U_OK) {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "%.*s", line_len, buffer);
-                }
-                break;
               }
+              free_string_array(split_line);
             } else if (websocket_response_http) {
+              if (o_strlen(buffer) && (separator = o_strchr(buffer, ':')) != NULL) {
+                key = o_strndup(buffer, (separator - buffer));
+                value = o_strdup(separator + 1);
+                if (u_map_put(response->map_header, key, value) != U_OK) {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "Error adding header %s:%s to the response structure", key, value);
+                }
+                o_free(key);
+                o_free(value);
+              }
               if (0 == o_strcmp(buffer, "Upgrade: websocket")) {
                 websocket_response |= WEBSOCKET_RESPONSE_UPGRADE;
               } else if (0 == o_strcmp(buffer, "Connection: Upgrade")) {
                 websocket_response |= WEBSOCKET_RESPONSE_CONNECTION;
-              } else if (0 == o_strncmp(buffer, "Sec-WebSocket-Protocol", o_strlen("Sec-WebSocket-Protocol"))) {
-                websocket->websocket_manager->protocol = o_strdup(o_strstr(buffer, ":") + 1);
+              } else if (0 == o_strcmp(key, "Sec-WebSocket-Protocol")) {
+                websocket->websocket_manager->protocol = o_strdup(value);
                 websocket_response |= WEBSOCKET_RESPONSE_PROTCOL;
-              } else if (0 == o_strncmp(buffer, "Sec-WebSocket-Extension", o_strlen("Sec-WebSocket-Extension"))) {
-                websocket->websocket_manager->extensions = o_strdup(o_strstr(buffer, ":") + 1);
+              } else if (0 == o_strcmp(key, "Sec-WebSocket-Extension")) {
+                websocket->websocket_manager->extensions = o_strdup(value);
                 websocket_response |= WEBSOCKET_RESPONSE_EXTENSION;
-              } else if (0 == o_strncmp(buffer, "Sec-WebSocket-Accept", o_strlen("Sec-WebSocket-Accept"))) {
-                // TODO: Check handshake
+              } else if (0 == o_strcmp(key, "Sec-WebSocket-Accept") && ulfius_check_handshake_response(u_map_get(request->map_header, "Sec-WebSocket-Key"), value) == U_OK) {
                 websocket_response |= WEBSOCKET_RESPONSE_ACCEPT;
               } else if (0 == o_strcmp(buffer, "")) {
-                // Websocket HTTP response complete
+                // Websocket HTTP response header complete
                 break;
               }
             }
+            
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_get_next_line_from_http_response, abort parsing response");
             close(websocket->websocket_manager->tcp_sock);
@@ -1063,13 +1092,20 @@ static int ulfius_open_websocket(struct _u_request * request, struct yuarel * y_
           }
         } while (1);
         
-        if (websocket->websocket_manager->tcp_sock > -1 && !(websocket_response & (WEBSOCKET_RESPONSE_UPGRADE|WEBSOCKET_RESPONSE_CONNECTION|WEBSOCKET_RESPONSE_PROTCOL|WEBSOCKET_RESPONSE_EXTENSION|WEBSOCKET_RESPONSE_ACCEPT))) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Websocket HTTP response incomplete or incorrect, aborting");
+        if (!(websocket_response & check_websocket) || response->status != 101) {
+          if (u_map_has_key(response->map_header, "Content-Length")) {
+            response->binary_body_length = strtol(u_map_get(response->map_header, "Content-Length"), NULL, 10);
+            response->binary_body = o_malloc(response->binary_body_length);
+            if (response->binary_body != NULL) {
+              if (read_data_from_socket(websocket->websocket_manager, response->binary_body, response->binary_body_length) != response->binary_body_length) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "Error read_data_from_socket for response->binary_body");
+              }
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for response->binary_body");
+            }
+          }
           close(websocket->websocket_manager->tcp_sock);
           websocket->websocket_manager->tcp_sock = -1;
-          ret = U_ERROR;
-        } else if (websocket->websocket_manager->tcp_sock == -1) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Socket closed");
           ret = U_ERROR;
         } else {
           ret = U_OK;
@@ -1092,6 +1128,35 @@ static int ulfius_open_websocket(struct _u_request * request, struct yuarel * y_
 }
 
 /**
+ * Opens a websocket connection to the specified server using a tls socket
+ * Returns U_OK on success
+ */
+static int ulfius_open_websocket_tls(struct _u_request * request, struct yuarel * y_url, struct _websocket * websocket, struct _u_response * response) {
+  int ret;
+  
+  if (gnutls_global_init() >= 0) {
+    if (gnutls_certificate_allocate_credentials(&websocket->websocket_manager->xcred) >= 0 &&
+        gnutls_certificate_set_x509_system_trust(websocket->websocket_manager->xcred) >= 0 &&
+        gnutls_init(&websocket->websocket_manager->gnutls_session, GNUTLS_CLIENT) >= 0 &&
+        gnutls_server_name_set(websocket->websocket_manager->gnutls_session, GNUTLS_NAME_DNS, y_url->host, o_strlen(y_url->host)) >= 0 &&
+        gnutls_set_default_priority(websocket->websocket_manager->gnutls_session) >= 0 &&
+        gnutls_credentials_set(websocket->websocket_manager->gnutls_session, GNUTLS_CRD_CERTIFICATE, websocket->websocket_manager->xcred) >= 0) {
+          
+      gnutls_session_set_verify_cert(websocket->websocket_manager->gnutls_session, y_url->host, request->check_server_certificate);
+      
+      ret = ulfius_open_websocket(request, y_url, websocket, response);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error initialize gnutls routines");
+      ret = U_ERROR;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error gnutls_global_init");
+    ret = U_ERROR;
+  }
+  return ret;
+}
+
+/**
  * Initialize values for a struct _u_request to open a websocket
  * request must be previously initialized
  * Return U_OK on success
@@ -1101,6 +1166,9 @@ int ulfius_init_websocket_request(struct _u_request * request,
                                   const char * websocket_protocol,
                                   const char * websocket_extensions) {
   int ret;
+  char rand_int[17] = {0}, rand_int_base64[25] = {0};
+  size_t out_len;
+  
   if (request != NULL && url != NULL) {
     o_free(request->http_protocol);
     o_free(request->http_verb);
@@ -1117,8 +1185,14 @@ int ulfius_init_websocket_request(struct _u_request * request,
     u_map_put(request->map_header, "Sec-WebSocket-Version", "13");
     u_map_put(request->map_header, "Upgrade", "websocket");
     u_map_put(request->map_header, "Connection", "Upgrade");
-    u_map_put(request->map_header, "Sec-WebSocket-Key", "x3JJHMbDL1EzLkh9GBhXDw=="); // TODO init key with a more random value
-    ret = U_OK;
+    sprintf(rand_int, "%04d%04d%04d%04d", rand(), rand(), rand(), rand());
+    if (!o_base64_encode((unsigned char *)rand_int, 16, (unsigned char *)rand_int_base64, &out_len)) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error o_base64_encode with the input string %s", rand_int);
+      ret = U_ERROR;
+    } else {
+      u_map_put(request->map_header, "Sec-WebSocket-Key", rand_int_base64);
+      ret = U_OK;
+    }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "ulfius_init_websocket_request error input parameters");
     ret = U_ERROR;
@@ -1144,17 +1218,17 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
                                                                                  struct _websocket_manager * websocket_manager,
                                                                                  void * websocket_onclose_user_data),
                                             void * websocket_onclose_user_data,
-                                            struct _websocket_client_handler * websocket_client_handler) {
+                                            struct _websocket_client_handler * websocket_client_handler,
+                                            struct _u_response * response) {
   int ret;
   struct yuarel y_url;
   char * url, * basic_auth_encoded_header, * basic_auth, * basic_auth_encoded;
   size_t basic_auth_encoded_len;
-  struct _websocket_manager * websocket_manager;
   struct _websocket * websocket;
   pthread_t thread_websocket;
   int thread_ret_websocket = 0, thread_detach_websocket = 0;
   
-  if (request != NULL && (websocket_manager_callback != NULL || websocket_incoming_message_callback != NULL)) {
+  if (request != NULL && response != NULL && (websocket_manager_callback != NULL || websocket_incoming_message_callback != NULL)) {
     url = o_strdup(request->http_url);
     if (!yuarel_parse(&y_url, url)) {
       if (0 == o_strcasecmp("http", y_url.scheme) || 0 == o_strcasecmp("https", y_url.scheme) || 0 == o_strcasecmp("ws", y_url.scheme) || 0 == o_strcasecmp("wss", y_url.scheme)) {
@@ -1182,44 +1256,43 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
         }
         
         websocket = o_malloc(sizeof(struct _websocket));
-        websocket_manager = o_malloc(sizeof(struct _websocket_manager));
-        if (websocket_manager != NULL && websocket != NULL) {
-          websocket->websocket_manager = websocket_manager;
-          websocket->websocket_manager->message_list_incoming = o_malloc(sizeof(struct _websocket_message_list));
-          websocket->websocket_manager->message_list_outcoming = o_malloc(sizeof(struct _websocket_message_list));
-          ulfius_init_websocket_message_list(websocket->websocket_manager->message_list_incoming);
-          ulfius_init_websocket_message_list(websocket->websocket_manager->message_list_outcoming);
-          websocket->websocket_manager->type = U_WEBSOCKET_CLIENT;
-          websocket->websocket_manager_callback = websocket_manager_callback;
-          websocket->websocket_manager_user_data = websocket_manager_user_data;
-          websocket->websocket_incoming_message_callback = websocket_incoming_message_callback;
-          websocket->websocket_incoming_user_data = websocket_incoming_user_data;
-          websocket->websocket_onclose_callback = websocket_onclose_callback;
-          websocket->websocket_onclose_user_data = websocket_onclose_user_data;
-          // Open connection
-          if (0 == o_strcasecmp("http", y_url.scheme) || 0 == o_strcasecmp("ws", y_url.scheme)) {
-            websocket->tls = 0;
-            if (ulfius_open_websocket(request, &y_url, websocket) != U_OK) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_open_websocket");
-              ret = U_ERROR;
+        if (websocket != NULL && ulfius_init_websocket(websocket) == U_OK) {
+            websocket->websocket_manager->type = U_WEBSOCKET_CLIENT;
+            websocket->websocket_manager_callback = websocket_manager_callback;
+            websocket->websocket_manager_user_data = websocket_manager_user_data;
+            websocket->websocket_incoming_message_callback = websocket_incoming_message_callback;
+            websocket->websocket_incoming_user_data = websocket_incoming_user_data;
+            websocket->websocket_onclose_callback = websocket_onclose_callback;
+            websocket->websocket_onclose_user_data = websocket_onclose_user_data;
+            // Open connection
+            if (0 == o_strcasecmp("http", y_url.scheme) || 0 == o_strcasecmp("ws", y_url.scheme)) {
+              websocket->websocket_manager->tls = 0;
+              if (ulfius_open_websocket(request, &y_url, websocket, response) != U_OK) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_open_websocket");
+                ret = U_ERROR;
+              } else {
+                ret = U_OK;
+              }
             } else {
-              ret = U_OK;
+              websocket->websocket_manager->tls = 1;
+              if (ulfius_open_websocket_tls(request, &y_url, websocket, response) != U_OK) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_open_websocket_tls");
+                ret = U_ERROR;
+              } else {
+                ret = U_OK;
+              }
             }
-          } else {
-            websocket->tls = 1;
-            // TODO: Use gnutls secure connection
-            ret = U_ERROR;
-          }
-          thread_ret_websocket = pthread_create(&thread_websocket, NULL, ulfius_thread_websocket, (void *)websocket);
-          thread_detach_websocket = pthread_detach(thread_websocket);
-          if (thread_ret_websocket || thread_detach_websocket) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Error creating or detaching websocket manager thread, return code: %d, detach code: %d",
-                          thread_ret_websocket, thread_detach_websocket);
-            ulfius_clear_websocket(websocket);
-          }
+            thread_ret_websocket = pthread_create(&thread_websocket, NULL, ulfius_thread_websocket, (void *)websocket);
+            thread_detach_websocket = pthread_detach(thread_websocket);
+            if (thread_ret_websocket || thread_detach_websocket) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "Error creating or detaching websocket manager thread, return code: %d, detach code: %d",
+                            thread_ret_websocket, thread_detach_websocket);
+              ulfius_clear_websocket(websocket);
+            }
+            websocket_client_handler->websocket = websocket;
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for websocket_manager or websocket");
-          ret = U_ERROR_PARAMS;
+            y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for websocket");
+            ret = U_ERROR_MEMORY;
         }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "Unknown scheme, please use one of the following: 'http', 'https', 'ws', 'wss'");
@@ -1234,6 +1307,141 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
     ret = U_ERROR_PARAMS;
   }
   return ret;
+}
+
+/**
+ * Initialize a struct _websocket
+ * return U_OK on success
+ */
+int ulfius_init_websocket(struct _websocket * websocket) {
+  if (websocket != NULL) {
+    websocket->instance = NULL;
+    websocket->request = NULL;
+    websocket->websocket_manager_callback = NULL;
+    websocket->websocket_manager_user_data = NULL;
+    websocket->websocket_incoming_message_callback = NULL;
+    websocket->websocket_incoming_user_data = NULL;
+    websocket->websocket_onclose_callback = NULL;
+    websocket->websocket_onclose_user_data = NULL;
+    websocket->websocket_manager = o_malloc(sizeof(struct _websocket_manager));
+    websocket->urh = NULL;
+    if (websocket->websocket_manager == NULL) {
+      websocket->websocket_manager->tls = 0;
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for websocket_manager");
+      return U_ERROR_MEMORY;
+    } else {
+      if (ulfius_init_websocket_manager(websocket->websocket_manager) != U_OK) {
+        o_free(websocket->websocket_manager);
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_init_websocket_manager");
+        return U_ERROR;
+      } else {
+        return U_OK;
+      }
+    }
+  } else {
+    return U_ERROR_PARAMS;
+  }
+}
+
+/**
+ * Initialize a struct _websocket_manager
+ * return U_OK on success
+ */
+int ulfius_init_websocket_manager(struct _websocket_manager * websocket_manager) {
+  pthread_mutexattr_t mutexattr;
+  int ret = U_OK;
+  
+  if (websocket_manager != NULL) {
+    websocket_manager->message_list_incoming = o_malloc(sizeof(struct _websocket_message_list));
+    websocket_manager->message_list_outcoming = o_malloc(sizeof(struct _websocket_message_list));
+    websocket_manager->connected = 0;
+    websocket_manager->closing = 0;
+    websocket_manager->manager_closed = 0;
+    websocket_manager->mhd_sock = 0;
+    websocket_manager->tcp_sock = 0;
+    websocket_manager->protocol = NULL;
+    websocket_manager->extensions = NULL;
+    pthread_mutexattr_init ( &mutexattr );
+    pthread_mutexattr_settype( &mutexattr, PTHREAD_MUTEX_RECURSIVE );
+    if (pthread_mutex_init(&(websocket_manager->read_lock), &mutexattr) != 0 || pthread_mutex_init(&(websocket_manager->write_lock), &mutexattr) != 0) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Impossible to initialize Mutex Lock for websocket");
+      ret = U_ERROR;
+    } else if (pthread_mutex_init(&websocket_manager->status_lock, NULL) || pthread_cond_init(&websocket_manager->status_cond, NULL)) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error initializing status_lock or status_cond");
+      ret = U_ERROR;
+    } else if ((websocket_manager->message_list_incoming = o_malloc(sizeof(struct _websocket_message_list))) == NULL ||
+               ulfius_init_websocket_message_list(websocket_manager->message_list_incoming) != U_OK ||
+               (websocket_manager->message_list_outcoming = o_malloc(sizeof(struct _websocket_message_list))) == NULL ||
+               ulfius_init_websocket_message_list(websocket_manager->message_list_outcoming) != U_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error initializing message_list_incoming or message_list_outcoming");
+      ret = U_ERROR_MEMORY;
+    }
+    websocket_manager->fds.events = POLLIN | POLLRDHUP;
+    websocket_manager->type = U_WEBSOCKET_NONE;
+
+    if (ret != U_OK) {
+      o_free(websocket_manager->message_list_incoming);
+      o_free(websocket_manager->message_list_outcoming);
+    }
+    pthread_mutexattr_destroy(&mutexattr);
+  } else {
+    ret = U_ERROR_PARAMS;
+  }
+  return ret;
+}
+
+/**
+ * Closes a websocket client connection
+ * return U_OK when the websocket is closed
+ */
+int ulfius_websocket_client_connection_close(struct _websocket_client_handler * websocket_client_handler) {
+  if (websocket_client_handler != NULL) {
+    websocket_client_handler->websocket->websocket_manager->closing = 1;
+    if (ulfius_websocket_client_connection_wait_close(websocket_client_handler, 0) != U_WEBSOCKET_STATUS_CLOSE) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_websocket_client_connection_wait_close");
+    }
+    return U_OK;
+  } else {
+    return U_ERROR_PARAMS;
+  }
+}
+
+/**
+ * Returns the status of the websocket client connection
+ */
+int ulfius_websocket_client_connection_status(struct _websocket_client_handler * websocket_client_handler) {
+  if (websocket_client_handler != NULL) {
+    return websocket_client_handler->websocket->websocket_manager->connected?U_WEBSOCKET_STATUS_OPEN:U_WEBSOCKET_STATUS_CLOSE;
+  } else {
+    return U_WEBSOCKET_STATUS_CLOSE;
+  }
+}
+
+/**
+ * Wait until the websocket client connection is closed or the timeout in milliseconds is reached
+ */
+int ulfius_websocket_client_connection_wait_close(struct _websocket_client_handler * websocket_client_handler, unsigned int timeout) {
+  struct timespec abstime;
+  int ret;
+  
+  if (websocket_client_handler != NULL) {
+    if (timeout) {
+      clock_gettime(CLOCK_REALTIME, &abstime);
+      abstime.tv_nsec += ((timeout%1000) * 1000);
+      abstime.tv_sec += (timeout * 1000);
+      pthread_mutex_lock(&websocket_client_handler->websocket->websocket_manager->status_lock);
+      ret = pthread_cond_timedwait(&websocket_client_handler->websocket->websocket_manager->status_cond, &websocket_client_handler->websocket->websocket_manager->status_lock, &abstime);
+      pthread_mutex_unlock(&websocket_client_handler->websocket->websocket_manager->status_lock);
+      return (ret == ETIMEDOUT?U_WEBSOCKET_STATUS_OPEN:U_WEBSOCKET_STATUS_CLOSE);
+    } else {
+      pthread_mutex_lock(&websocket_client_handler->websocket->websocket_manager->status_lock);
+      pthread_cond_wait(&websocket_client_handler->websocket->websocket_manager->status_cond, &websocket_client_handler->websocket->websocket_manager->status_lock);
+      pthread_mutex_unlock(&websocket_client_handler->websocket->websocket_manager->status_lock);
+      return U_WEBSOCKET_STATUS_CLOSE;
+    }
+  } else {
+    return U_WEBSOCKET_STATUS_CLOSE;
+  }
 }
 
 #endif
