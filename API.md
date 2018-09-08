@@ -27,8 +27,8 @@
     - [Messages manipulation](#messages-manipulation)
 - [struct _u_map API](#struct-_u_map-api)
 - [Outgoing request functions](#outgoing-request-functions)
-- [Send HTTP request API](#send-http-request-api)
-- [Send SMTP request API](#send-http-request-api)
+  - [Send HTTP request API](#send-http-request-api)
+  - [Send SMTP request API](#send-http-request-api)
 
 ## Update existing programs from Ulfius 2.0 to 2.1
 
@@ -885,15 +885,83 @@ While the `stream_callback_free` function is as simple as:
 void stream_callback_free (void * stream_user_data);
 ```
 
-Check the program `stream_example` in the example folder.
+Check the application `stream_example` in the example folder.
 
 ### Websockets communication
 
-Websocket communication is possible via callback functions defined in your program. The framework will handle sending and receiving messages with the clients, and your program will deal with high level functions to facilitate the communication process. The communication will respect the [RFC6455](https://tools.ietf.org/html/rfc6455) of the websocket protocol.
+The websocket protocol is defined in the [RFC6455](https://tools.ietf.org/html/rfc6455). A websocket is a full-duplex communication layer between a server and a client initiated by a HTTP request. Once the websocket HTTP request is completed between the client and the server, the socket between them is kept open and messages in a specific format can be exchanged. Any side of the socket can send a message to the other side, which allows the server to push messages to the client.
 
-#### Starting a websocket communication
+Ulfius implements websocket communication, both server-side and client-side. The following chapter will describe how to create a websocket service or a websocket client by using callback functions. The framework will handle sending and receiving messages with the clients, and your application will deal with high level functions to facilitate the communication process.
 
-To start a websocket communication between the client and your program, you must use the dedicated function `ulfius_start_websocket_cb` with proper values:
+#### Websocket management
+
+During the websocket connection, you can either send messages, read the incoming messages, close the connection, or wait until the connection is closed by the client or by a network problem.
+
+#### Messages manipulation
+
+A websocket message has the following structure:
+
+```C
+/**
+ * websocket message structure
+ * contains all the data of a websocket message
+ * and the timestamp of when it was sent of received
+ */
+struct _websocket_message {
+  time_t datestamp;  // datestamp when the message was transmitted
+  uint8_t opcode;    // opcode of the message: U_WEBSOCKET_OPCODE_TEXT, U_WEBSOCKET_OPCODE_BINARY, U_WEBSOCKET_OPCODE_PING, U_WEBSOCKET_OPCODE_PONG
+  uint8_t has_mask;  // Flag to specify if the message has a mask
+  uint8_t mask[4];   // mask
+  uint64_t data_len; // Length of the data payload
+  char * data;       // data payload
+};
+```
+
+If you want to send a message to the client, you must use the dedicated functions `ulfius_websocket_send_message` or `ulfius_websocket_send_fragmented_message`:
+
+```C
+/**
+ * Send a message in the websocket
+ * Return U_OK on success
+ */
+int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
+                                  const uint8_t opcode,
+                                  const uint64_t data_len,
+                                  const char * data);
+
+/**
+ * Send a fragmented message in the websocket
+ * each fragment size will be at most fragment_len
+ * Return U_OK on success
+ */
+int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websocket_manager,
+                                             const uint8_t opcode,
+                                             const uint64_t data_len,
+                                             const char * data,
+                                             const size_t fragment_len);
+```
+
+To get the first message of the incoming or outcoming if you need to with `ulfius_websocket_pop_first_message`, this will remove the first message of the list, and return it as a pointer. You must free the message using the function `ulfius_clear_websocket_message` after use:
+
+```C
+/**
+ * Return the first message of the message list
+ * Return NULL if message_list has no message
+ * Returned value must be cleared after use
+ */
+struct _websocket_message * ulfius_websocket_pop_first_message(struct _websocket_message_list * message_list);
+
+/**
+ * Clear data of a websocket message
+ */
+void ulfius_clear_websocket_message(struct _websocket_message * message);
+```
+
+#### Server-side websocket
+
+##### Starting a websocket communication
+
+To start a websocket communication between the client and your application, you must use the dedicated function `ulfius_start_websocket_cb` with proper values:
 
 ```C
 /**
@@ -931,11 +999,13 @@ int ulfius_set_websocket_response(struct _u_response * response,
 
 According to the Websockets RFC, parameters `websocket_protocol` and `websocket_extensions` are specific for your application.
 
-In Ulfius Implementation, if you specify a list of protocols as a string of protocol names, separated by a comma, Ulfius will check each one and see if they match the list of protocols specified by the client. The resulting protocol list will be sent back to the client.
-If no protocol match your list, the connection will be closed by the framework and will return an error 400 to the client.
-If you set a `NULL` value, Ulfius will accept all protocols sent by the client.
+In Ulfius Implementation, if you specify a list of protocols as a string of protocol names, separated by a comma (`,`), Ulfius framework will check each one and see if they match the list of protocols specified by the client. The resulting protocol list will be sent back to the client.
+Likewise, the websocket extension is specific to your application, you can specify a list of websocket extension separated by a semicolon (`;`).
 
-This behaviour is the same with websocket extension check.
+If no protocol match your list, the connection will be closed by the framework and will return an error 400 to the client.
+If you set a `NULL` value for the protocol or the extension, Ulfius will accept any protocols and/or extension sent by the client.
+
+This behavior is the same with websocket extension check.
 
 3 callback functions are available for the websocket implementation:
 
@@ -943,97 +1013,132 @@ This behaviour is the same with websocket extension check.
 - `websocket_incoming_message_callback`: This function will be called every time a new message is sent by the client. Although, it is in synchronous mode, which means that you won't have 2 different `websocket_incoming_message_callback` of the same websocket executed at the same time.
 - `websocket_onclose_callback`: This function will be called right after the websocket connection is closed, but before the websocket structure is cleaned.
 
-You must specify at least one of the callback functions `websocket_manager_callback` or `websocket_incoming_message_callback`.
+You must specify at least one of the callback functions between `websocket_manager_callback` or `websocket_incoming_message_callback`.
 
 When the function `ulfius_stop_framework` is called, it will wait for all running websockets to end by themselves, there is no force close. So if you have a `websocket_manager_callback` function running, you *MUST* end this function in order to make a clean stop of the http daemon.
 
 For each of these callback function, you can specify a `*_user_data` pointer containing any data you need.
 
-#### Manipulating websocket data structure
+##### Websocket status
 
-The websocket manager data structure definition is the following:
+The following functions allow the application to know if the the websocket is still open, to enforce closing the websocket or to wait until the websocket is closed by the client:
 
 ```C
 /**
- * Websocket manager structure
- * contains among other things the socket
- * the status (open, closed), and the list of incoming and outcoming messages
- * Used on public callback functions
+ * Closes a websocket connection
+ * return U_OK when the websocket is closed
+ * or U_ERROR on error
  */
-struct _websocket_manager {
-  struct _websocket_message_list * message_list_incoming;
-  struct _websocket_message_list * message_list_outcoming;
-  int connected;
-  int closing;
-  int manager_closed;
-  MHD_socket sock;
-  pthread_mutex_t read_lock;
-  pthread_mutex_t write_lock;
-};
-```
+int ulfius_websocket_close(struct _websocket_manager * websocket_manager);
 
-The most important data you will need are `message_list_incoming`, `message_list_outcoming` and `connected`. The other ones are reserved for the framework, do not alterate them.
-
-The `connected` value will tell you wether the websocket is connected or not, `message_list_incoming`, `message_list_outcoming` will contain the message lists. These lists are updated in real time during the execution, do not try to update them directly.
-
-When an incoming message will arrive, the `message_list_incoming` table will be updated, and the `websocket_incoming_message_callback` function will be called too, depending on your application behaviour, use the method you prefer for incoming messages.
-
-#### Messages manipulation
-
-A message has the following structure:
-
-```C
 /**
- * websocket message structure
- * contains all the data of a websocket message
- * and the timestamp of when it was sent of received
+ * Returns the status of the websocket connection
+ * Returned values can be U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
+ * wether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
  */
-struct _websocket_message {
-  time_t datestamp;
-  uint8_t opcode;
-  uint8_t has_mask;
-  uint8_t mask[4];
-  uint64_t data_len;
-  char * data;
-};
+int ulfius_websocket_status(struct _websocket_manager * websocket_manager);
+
+/**
+ * Wait until the websocket connection is closed or the timeout in milliseconds is reached
+ * if timeout is 0, no timeout is set
+ * Returned values can be U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
+ * wether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
+ */
+int ulfius_websocket_wait_close(struct _websocket_manager * websocket_manager, unsigned int timeout);
 ```
 
-A message list has the following strucure:
+#### Client-side websocket
 
-```C
-struct _websocket_message_list {
-  struct _websocket_message ** list;
-  size_t len;
-};
-```
+Ulfius allows to create a websocket connection as a client. The behavior is quite similar to the server-side websocket. The application will open a websocket connection specified by a `struct _u_request`, and a set of callback functions to manage the websocket once connected.
 
-If you want to send a message to the client, you must use the dedicated function `ulfius_websocket_send_message`:
+You can manually fill the `struct _u_request` with your parameters or use the dedicated function `ulfius_init_websocket_request`:
 
 ```C
 /**
- * Send a message in the websocket
+ * Initialize values for a struct _u_request to open a websocket
+ * request must be previously initialized
  * Return U_OK on success
  */
-int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
-                                  const uint8_t opcode,
-                                  const uint64_t data_len,
-                                  const char * data);
+int ulfius_init_websocket_request(struct _u_request * request,
+                                  const char * url,
+                                  const char * websocket_protocol,
+                                  const char * websocket_extensions);
 ```
 
-You can also pop the first message of the incoming or outcoming if you need to with `ulfius_websocket_pop_first_message`, this will remove the first message of the list, and return it as a pointer. You can free a message using the function `ulfius_clear_websocket_message`:
+The `url` specified must have one of the following form:
+- `http://<websocket_url>`
+- `ws://<websocket_url>`
+- `https://<websocket_url>`
+- `wss://<websocket_url>`
+
+The `websocket_protocol` and `websocket_extensions` values are optional. To specify multiple protocol, you must separate them with the comma `,` character. To specify multiple extensions, you must separate them with the semicolon `;` character.
+
+You can also specify additional headers or cookies to the request.
+
+Any body parameter or body raw value will be ignored.
+
+Once the request is completed, you can open the websocket connection with `ulfius_open_websocket_client_connection`:
 
 ```C
 /**
- * Return the first message of the message list
- * Return NULL if message_list has no message
- * Returned value must be cleared after use
+ * Open a websocket client connection
+ * Return U_OK on success
+ * @parameters
+ * struct _u_request * request: request used to specify the input parameters
+ * websocket_manager_callback: main websocket callback function
+ * websocket_manager_user_data: a pointer that will be available in websocket_manager_callback
+ * websocket_incoming_message_callback: callback function that will be called each time a message is received
+ * websocket_incoming_user_data: a pointer that will be available in websocket_incoming_message_callback
+ * websocket_onclose_callback: callback function that will be called right after the websocket is closed
+ * websocket_onclose_user_data: a pointer that will be available in websocket_onclose_callback
+ * websocket_client_handler: The handler for the websocket
+ *
  */
-struct _websocket_message * ulfius_websocket_pop_first_message(struct _websocket_message_list * message_list);
+int ulfius_open_websocket_client_connection(struct _u_request * request,
+                                            void (* websocket_manager_callback) (const struct _u_request * request,
+                                                                                 struct _websocket_manager * websocket_manager,
+                                                                                 void * websocket_manager_user_data),
+                                            void * websocket_manager_user_data,
+                                            void (* websocket_incoming_message_callback) (const struct _u_request * request,
+                                                                                          struct _websocket_manager * websocket_manager,
+                                                                                          const struct _websocket_message * message,
+                                                                                          void * websocket_incoming_user_data),
+                                            void * websocket_incoming_user_data,
+                                            void (* websocket_onclose_callback) (const struct _u_request * request,
+                                                                                 struct _websocket_manager * websocket_manager,
+                                                                                 void * websocket_onclose_user_data),
+                                            void * websocket_onclose_user_data,
+                                            struct _websocket_client_handler * websocket_client_handler);
+```
+
+If the websocket connection is established, `U_OK` will be returned and the websocket connection will be executed in a separate thread. 
+
+##### Websocket status
+
+The following functions allow the application to know if the the websocket is still open, to enforce closing the websocket or to wait until the websocket is closed by the server:
+
+```C
+/**
+ * Closes a websocket client connection
+ * return U_OK when the websocket is closed
+ * or U_ERROR on error
+ */
+int ulfius_websocket_client_connection_close(struct _websocket_client_handler * websocket_client_handler);
 
 /**
- * Clear data of a websocket message
+ * Returns the status of the websocket client connection
+ * Returned values can be U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
+ * wether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
  */
-void ulfius_clear_websocket_message(struct _websocket_message * message);
+int ulfius_websocket_client_connection_status(struct _websocket_client_handler * websocket_client_handler);
+
+/**
+ * Wait until the websocket client connection is closed or the timeout in milliseconds is reached
+ * if timeout is 0, no timeout is set
+ * Returned values can be U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
+ * wether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
+ */
+int ulfius_websocket_client_connection_wait_close(struct _websocket_client_handler * websocket_client_handler, unsigned int timeout);
 ```
 
 ### struct _u_map API
