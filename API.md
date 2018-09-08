@@ -22,13 +22,19 @@
   - [File upload](#file-upload)
   - [Streaming data](#streaming-data)
   - [Websockets communication](#websockets-communication)
-    - [Starting a websocket communication](#starting-a-websocket-communication)
-    - [Manipulating websocket data structure](#manipulating-websocket-data-structure)
+    - [Websocket management](#websocket-management)
     - [Messages manipulation](#messages-manipulation)
-- [struct _u_map API](#struct-_u_map-api)
+    - [Server-side websocket](#server-side-websocket)
+      - [Starting a websocket communication](#starting-a-websocket-communication)
+      - [Websocket status](#websocket-status)
+    - [Client-side websocket](#client-side-websocket)
+      - [Prepare the request](#prepare-the-request)
+      - [Open the websocket](#open-the-websocket)
+      - [Websocket status](#websocket-status-1)
 - [Outgoing request functions](#outgoing-request-functions)
   - [Send HTTP request API](#send-http-request-api)
   - [Send SMTP request API](#send-http-request-api)
+- [struct _u_map API](#struct-_u_map-api)
 
 ## Update existing programs from Ulfius 2.0 to 2.1
 
@@ -1051,6 +1057,8 @@ int ulfius_websocket_wait_close(struct _websocket_manager * websocket_manager, u
 
 Ulfius allows to create a websocket connection as a client. The behavior is quite similar to the server-side websocket. The application will open a websocket connection specified by a `struct _u_request`, and a set of callback functions to manage the websocket once connected.
 
+##### Prepare the request
+
 You can manually fill the `struct _u_request` with your parameters or use the dedicated function `ulfius_init_websocket_request`:
 
 ```C
@@ -1076,6 +1084,8 @@ The `websocket_protocol` and `websocket_extensions` values are optional. To spec
 You can also specify additional headers or cookies to the request.
 
 Any body parameter or body raw value will be ignored.
+
+##### Open the websocket
 
 Once the request is completed, you can open the websocket connection with `ulfius_open_websocket_client_connection`:
 
@@ -1139,6 +1149,91 @@ int ulfius_websocket_client_connection_status(struct _websocket_client_handler *
  * wether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
  */
 int ulfius_websocket_client_connection_wait_close(struct _websocket_client_handler * websocket_client_handler, unsigned int timeout);
+```
+
+## Outgoing request functions
+
+Ulfius allows output functions to send HTTP or SMTP requests. These functions use `libcurl`. You can disable these functions by appending the argument `CURLFLAG=-DU_DISABLE_CURL` when you build the library with Makefile or by disabling the flag in CMake build:
+
+```
+$ make CURLFLAG=-DU_DISABLE_CURL # Makefile
+$ cmake -DWITH_CURL=off # CMake
+```
+
+### Send HTTP request API
+
+The functions `int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response)` and `int ulfius_send_http_streaming_request(const struct _u_request * request, struct _u_response * response, size_t (* write_body_function)(void * contents, size_t size, size_t nmemb, void * user_data), void * write_body_data)` are based on `libcurl` api.
+
+They allow to send an HTTP request with the parameters specified by the `_u_request` structure. Use the parameter `_u_request.http_url` to specify the distant url to call.
+
+You can fill the maps in the `_u_request` structure with parameters, they will be used to build the request. Note that if you fill `_u_request.map_post_body` with parameters, the content-type `application/x-www-form-urlencoded` will be use to encode the data.
+
+The response parameters is stored into the `_u_response` structure. If you specify NULL for the response structure, the http call will still be made but no response details will be returned. If you use `ulfius_send_http_request`, the response body will be stored in the parameter `response->*body*`, if you use `ulfius_send_http_streaming_request`, the response body will be available in the `write_body_function` specified in the call. The `ulfius_send_http_streaming_request` can be used for streaming data or large response.
+
+Return value is `U_OK` on success.
+
+This functions are defined as:
+
+```C
+/**
+ * ulfius_send_http_request
+ * Send a HTTP request and store the result into a _u_response
+ * return U_OK on success
+ */
+int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response);
+
+/**
+ * ulfius_send_http_streaming_request
+ * Send a HTTP request and store the result into a _u_response
+ * Except for the body which will be available using write_body_function in the write_body_data
+ * return U_OK on success
+ */
+int ulfius_send_http_streaming_request(const struct _u_request * request, 
+                                       struct _u_response * response, 
+                                       size_t (* write_body_function)(void * contents, 
+                                                                      size_t size, 
+                                                                      size_t nmemb, 
+                                                                      void * user_data), 
+                                       void * write_body_data);
+```
+
+### Send SMTP request API
+
+The function `ulfius_send_smtp_email` is used to send emails using a smtp server. It is based on `libcurl` API.
+
+It's used to send raw emails via a smtp server.
+
+This function is defined as:
+
+```C
+/**
+ * Send an email
+ * host: smtp server host name
+ * port: tcp port number (optional, 0 for default)
+ * use_tls: true if the connection is tls secured
+ * verify_certificate: true if you want to disable the certificate verification on a tls server
+ * user: connection user name (optional, NULL: no user name)
+ * password: connection password (optional, NULL: no password)
+ * from: from address (mandatory)
+ * to: to recipient address (mandatory)
+ * cc: cc recipient address (optional, NULL: no cc)
+ * bcc: bcc recipient address (optional, NULL: no bcc)
+ * subject: email subject (mandatory)
+ * mail_body: email body (mandatory)
+ * return U_OK on success
+ */
+int ulfius_send_smtp_email(const char * host, 
+                           const int port, 
+                           const int use_tls, 
+                           const int verify_certificate, 
+                           const char * user, 
+                           const char * password, 
+                           const char * from, 
+                           const char * to, 
+                           const char * cc, 
+                           const char * bcc, 
+                           const char * subject, 
+                           const char * mail_body);
 ```
 
 ### struct _u_map API
@@ -1316,89 +1411,4 @@ int u_map_copy_into(const struct _u_map * source, struct _u_map * target);
  * Return -1 on error
  */
 int u_map_count(const struct _u_map * source);
-```
-
-## Outgoing request functions
-
-Ulfius allows output functions to send HTTP or SMTP requests. These functions use `libcurl`. You can disable these functions by appending the argument `CURLFLAG=-DU_DISABLE_CURL` when you build the library with Makefile or by disabling the flag in CMake build:
-
-```
-$ make CURLFLAG=-DU_DISABLE_CURL # Makefile
-$ cmake -DWITH_CURL=off # CMake
-```
-
-### Send HTTP request API
-
-The functions `int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response)` and `int ulfius_send_http_streaming_request(const struct _u_request * request, struct _u_response * response, size_t (* write_body_function)(void * contents, size_t size, size_t nmemb, void * user_data), void * write_body_data)` are based on `libcurl` api.
-
-They allow to send an HTTP request with the parameters specified by the `_u_request` structure. Use the parameter `_u_request.http_url` to specify the distant url to call.
-
-You can fill the maps in the `_u_request` structure with parameters, they will be used to build the request. Note that if you fill `_u_request.map_post_body` with parameters, the content-type `application/x-www-form-urlencoded` will be use to encode the data.
-
-The response parameters is stored into the `_u_response` structure. If you specify NULL for the response structure, the http call will still be made but no response details will be returned. If you use `ulfius_send_http_request`, the response body will be stored in the parameter `response->*body*`, if you use `ulfius_send_http_streaming_request`, the response body will be available in the `write_body_function` specified in the call. The `ulfius_send_http_streaming_request` can be used for streaming data or large response.
-
-Return value is `U_OK` on success.
-
-This functions are defined as:
-
-```C
-/**
- * ulfius_send_http_request
- * Send a HTTP request and store the result into a _u_response
- * return U_OK on success
- */
-int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response);
-
-/**
- * ulfius_send_http_streaming_request
- * Send a HTTP request and store the result into a _u_response
- * Except for the body which will be available using write_body_function in the write_body_data
- * return U_OK on success
- */
-int ulfius_send_http_streaming_request(const struct _u_request * request, 
-                                       struct _u_response * response, 
-                                       size_t (* write_body_function)(void * contents, 
-                                                                      size_t size, 
-                                                                      size_t nmemb, 
-                                                                      void * user_data), 
-                                       void * write_body_data);
-```
-
-### Send SMTP request API
-
-The function `ulfius_send_smtp_email` is used to send emails using a smtp server. It is based on `libcurl` API.
-
-It's used to send raw emails via a smtp server.
-
-This function is defined as:
-
-```C
-/**
- * Send an email
- * host: smtp server host name
- * port: tcp port number (optional, 0 for default)
- * use_tls: true if the connection is tls secured
- * verify_certificate: true if you want to disable the certificate verification on a tls server
- * user: connection user name (optional, NULL: no user name)
- * password: connection password (optional, NULL: no password)
- * from: from address (mandatory)
- * to: to recipient address (mandatory)
- * cc: cc recipient address (optional, NULL: no cc)
- * bcc: bcc recipient address (optional, NULL: no bcc)
- * subject: email subject (mandatory)
- * mail_body: email body (mandatory)
- * return U_OK on success
- */
-int ulfius_send_smtp_email(const char * host, 
-                           const int port, 
-                           const int use_tls, 
-                           const int verify_certificate, 
-                           const char * user, 
-                           const char * password, 
-                           const char * from, 
-                           const char * to, 
-                           const char * cc, 
-                           const char * bcc, 
-                           const char * subject, 
-                           const char * mail_body);
 ```
