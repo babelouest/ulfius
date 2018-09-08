@@ -169,6 +169,23 @@ int ulfius_instance_add_websocket_active(struct _u_instance * instance, struct _
  */
 int ulfius_instance_remove_websocket_active(struct _u_instance * instance, struct _websocket * websocket); 
 
+/**
+ * Initialize a struct _websocket
+ * return U_OK on success
+ */
+int ulfius_init_websocket(struct _websocket * websocket);
+
+/**
+ * Initialize a struct _websocket_manager
+ * return U_OK on success
+ */
+int ulfius_init_websocket_manager(struct _websocket_manager * websocket_manager);
+
+/**
+ * Check if the response corresponds to the transformation of the key with the magic string
+ */
+int ulfius_check_handshake_response(const char * key, const char * response);
+
 #endif // U_DISABLE_WEBSOCKET
 
 #endif // __U_PRIVATE_H__

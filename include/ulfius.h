@@ -927,6 +927,7 @@ int u_map_empty(struct _u_map * u_map);
 
 #define U_WEBSOCKET_STATUS_OPEN  0
 #define U_WEBSOCKET_STATUS_CLOSE 1
+#define U_WEBSOCKET_STATUS_ERROR 2
 
 #define WEBSOCKET_RESPONSE_HTTP       0x0001
 #define WEBSOCKET_RESPONSE_UPGRADE    0x0002
@@ -1049,9 +1050,26 @@ int ulfius_set_websocket_response(struct _u_response * response,
                                    void * websocket_onclose_user_data);
 
 /**
- * Check if the response corresponds to the transformation of the key with the magic string
+ * Closes a websocket connection
+ * return U_OK when the websocket is closed
+ * or U_ERROR on error
  */
-int ulfius_check_handshake_response(const char * key, const char * response);
+int ulfius_websocket_close(struct _websocket_manager * websocket_manager);
+
+/**
+ * Returns the status of the websocket connection
+ * Returned values can be U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
+ * wether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
+ */
+int ulfius_websocket_status(struct _websocket_manager * websocket_manager);
+
+/**
+ * Wait until the websocket connection is closed or the timeout in milliseconds is reached
+ * if timeout is 0, no timeout is set
+ * Returned values can be U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
+ * wether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
+ */
+int ulfius_websocket_wait_close(struct _websocket_manager * websocket_manager, unsigned int timeout);
 
 /**
  * Send a fragmented message in the websocket
@@ -1104,17 +1122,22 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
 /**
  * Closes a websocket client connection
  * return U_OK when the websocket is closed
+ * or U_ERROR on error
  */
 int ulfius_websocket_client_connection_close(struct _websocket_client_handler * websocket_client_handler);
 
 /**
  * Returns the status of the websocket client connection
+ * Returned values can be U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
+ * wether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
  */
 int ulfius_websocket_client_connection_status(struct _websocket_client_handler * websocket_client_handler);
 
 /**
  * Wait until the websocket client connection is closed or the timeout in milliseconds is reached
  * if timeout is 0, no timeout is set
+ * Returned values can be U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
+ * wether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
  */
 int ulfius_websocket_client_connection_wait_close(struct _websocket_client_handler * websocket_client_handler, unsigned int timeout);
 
@@ -1127,18 +1150,6 @@ int ulfius_init_websocket_request(struct _u_request * request,
                                   const char * url,
                                   const char * websocket_protocol,
                                   const char * websocket_extensions);
-
-/**
- * Initialize a struct _websocket
- * return U_OK on success
- */
-int ulfius_init_websocket(struct _websocket * websocket);
-
-/**
- * Initialize a struct _websocket_manager
- * return U_OK on success
- */
-int ulfius_init_websocket_manager(struct _websocket_manager * websocket_manager);
 
 /**
  * Clear data of a websocket message

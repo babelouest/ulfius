@@ -1393,12 +1393,54 @@ int ulfius_init_websocket_manager(struct _websocket_manager * websocket_manager)
 /**
  * Closes a websocket client connection
  * return U_OK when the websocket is closed
+ * or U_ERROR on error
  */
 int ulfius_websocket_client_connection_close(struct _websocket_client_handler * websocket_client_handler) {
   if (websocket_client_handler != NULL) {
-    websocket_client_handler->websocket->websocket_manager->closing = 1;
-    if (ulfius_websocket_client_connection_wait_close(websocket_client_handler, 0) != U_WEBSOCKET_STATUS_CLOSE) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_websocket_client_connection_wait_close");
+    return ulfius_websocket_close(websocket_client_handler->websocket->websocket_manager);
+  } else {
+    return U_ERROR_PARAMS;
+  }
+}
+
+/**
+ * Returns the status of the websocket client connection
+ * Returned values can be U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
+ * wether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
+ */
+int ulfius_websocket_client_connection_status(struct _websocket_client_handler * websocket_client_handler) {
+  if (websocket_client_handler != NULL) {
+    return ulfius_websocket_status(websocket_client_handler->websocket->websocket_manager);
+  } else {
+    return U_WEBSOCKET_STATUS_ERROR;
+  }
+}
+
+/**
+ * Wait until the websocket client connection is closed or the timeout in milliseconds is reached
+ * if timeout is 0, no timeout is set
+ * Returned values can be U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
+ * wether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
+ */
+int ulfius_websocket_client_connection_wait_close(struct _websocket_client_handler * websocket_client_handler, unsigned int timeout) {
+  if (websocket_client_handler != NULL) {
+    return ulfius_websocket_wait_close(websocket_client_handler->websocket->websocket_manager, timeout);
+  } else {
+    return U_WEBSOCKET_STATUS_ERROR;
+  }
+}
+
+/**
+ * Closes a websocket connection
+ * return U_OK when the websocket is closed
+ * or U_ERROR on error
+ */
+int ulfius_websocket_close(struct _websocket_manager * websocket_manager) {
+  if (websocket_manager != NULL) {
+    websocket_manager->closing = 1;
+    if (ulfius_websocket_wait_close(websocket_manager, 0) != U_WEBSOCKET_STATUS_CLOSE) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_websocket_close");
+      return U_ERROR;
     }
     return U_OK;
   } else {
@@ -1407,40 +1449,45 @@ int ulfius_websocket_client_connection_close(struct _websocket_client_handler * 
 }
 
 /**
- * Returns the status of the websocket client connection
+ * Returns the status of the websocket connection
+ * Returned values can be U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
+ * wether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
  */
-int ulfius_websocket_client_connection_status(struct _websocket_client_handler * websocket_client_handler) {
-  if (websocket_client_handler != NULL) {
-    return websocket_client_handler->websocket->websocket_manager->connected?U_WEBSOCKET_STATUS_OPEN:U_WEBSOCKET_STATUS_CLOSE;
+int ulfius_websocket_status(struct _websocket_manager * websocket_manager) {
+  if (websocket_manager != NULL) {
+    return websocket_manager->connected?U_WEBSOCKET_STATUS_OPEN:U_WEBSOCKET_STATUS_CLOSE;
   } else {
-    return U_WEBSOCKET_STATUS_CLOSE;
+    return U_WEBSOCKET_STATUS_ERROR;
   }
 }
 
 /**
- * Wait until the websocket client connection is closed or the timeout in milliseconds is reached
+ * Wait until the websocket connection is closed or the timeout in milliseconds is reached
+ * if timeout is 0, no timeout is set
+ * Returned values can be U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
+ * wether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
  */
-int ulfius_websocket_client_connection_wait_close(struct _websocket_client_handler * websocket_client_handler, unsigned int timeout) {
+int ulfius_websocket_wait_close(struct _websocket_manager * websocket_manager, unsigned int timeout) {
   struct timespec abstime;
   int ret;
   
-  if (websocket_client_handler != NULL) {
+  if (websocket_manager != NULL) {
     if (timeout) {
       clock_gettime(CLOCK_REALTIME, &abstime);
       abstime.tv_nsec += ((timeout%1000) * 1000);
       abstime.tv_sec += (timeout * 1000);
-      pthread_mutex_lock(&websocket_client_handler->websocket->websocket_manager->status_lock);
-      ret = pthread_cond_timedwait(&websocket_client_handler->websocket->websocket_manager->status_cond, &websocket_client_handler->websocket->websocket_manager->status_lock, &abstime);
-      pthread_mutex_unlock(&websocket_client_handler->websocket->websocket_manager->status_lock);
+      pthread_mutex_lock(&websocket_manager->status_lock);
+      ret = pthread_cond_timedwait(&websocket_manager->status_cond, &websocket_manager->status_lock, &abstime);
+      pthread_mutex_unlock(&websocket_manager->status_lock);
       return (ret == ETIMEDOUT?U_WEBSOCKET_STATUS_OPEN:U_WEBSOCKET_STATUS_CLOSE);
     } else {
-      pthread_mutex_lock(&websocket_client_handler->websocket->websocket_manager->status_lock);
-      pthread_cond_wait(&websocket_client_handler->websocket->websocket_manager->status_cond, &websocket_client_handler->websocket->websocket_manager->status_lock);
-      pthread_mutex_unlock(&websocket_client_handler->websocket->websocket_manager->status_lock);
+      pthread_mutex_lock(&websocket_manager->status_lock);
+      pthread_cond_wait(&websocket_manager->status_cond, &websocket_manager->status_lock);
+      pthread_mutex_unlock(&websocket_manager->status_lock);
       return U_WEBSOCKET_STATUS_CLOSE;
     }
   } else {
-    return U_WEBSOCKET_STATUS_CLOSE;
+    return U_WEBSOCKET_STATUS_ERROR;
   }
 }
 
