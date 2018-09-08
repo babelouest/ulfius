@@ -109,6 +109,7 @@ int main(int argc, char ** argv) {
   ulfius_init_request(&request);
   ulfius_init_response(&response);
   if (ulfius_init_websocket_request(&request, url, "protocol", "extension") == U_OK) {
+    request.check_server_certificate = 0;
     if (ulfius_open_websocket_client_connection(&request, &websocket_manager_callback, websocket_user_data, &websocket_incoming_message_callback, websocket_user_data, &websocket_onclose_callback, websocket_user_data, &websocket_client_handler, &response) == U_OK) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "Wait for user to press <enter> to close the program");
       getchar();
