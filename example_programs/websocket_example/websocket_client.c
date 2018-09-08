@@ -103,11 +103,12 @@ int main(int argc, char ** argv) {
   struct _u_response response;
   struct _websocket_client_handler websocket_client_handler;
   char * websocket_user_data = o_strdup("my user data");
+  char * url = (argc>1&&0==o_strcmp("-https", argv[1]))?"wss://localhost:" PORT PREFIX_WEBSOCKET:"ws://localhost:" PORT PREFIX_WEBSOCKET;
   
   y_init_logs("websocket_client", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting websocket_client");
   ulfius_init_request(&request);
   ulfius_init_response(&response);
-  if (ulfius_init_websocket_request(&request, "http://localhost:" PORT PREFIX_WEBSOCKET, "protocol", "extension") == U_OK) {
+  if (ulfius_init_websocket_request(&request, url, "protocol", "extension") == U_OK) {
     if (ulfius_open_websocket_client_connection(&request, &websocket_manager_callback, websocket_user_data, &websocket_incoming_message_callback, websocket_user_data, &websocket_onclose_callback, websocket_user_data, &websocket_client_handler, &response) == U_OK) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "Wait for user to press <enter> to close the program");
       getchar();
