@@ -17,6 +17,7 @@ CFLAGS=-c -Wall -I$(ULFIUS_LOCATION) -I$(STATIC_FILE_LOCATION) $(ADDITIONALFLAGS
 ULFIUS_LOCATION=../../src
 STATIC_FILE_LOCATION=../../example_callbacks/static_file
 LIBS=-lc -lulfius -lyder -lorcania -L$(ULFIUS_LOCATION)
+#SECUREFLAG=-https test.key test.pem
 
 all: websocket_server websocket_client
 
@@ -42,13 +43,13 @@ websocket_client: libulfius.so websocket_client.c
 	$(CC) -o websocket_client websocket_client.o $(LIBS)
 
 test_server: websocket_server
-	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./websocket_server
+	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./websocket_server $(SECUREFLAG)
 
 test_client: websocket_client
-	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./websocket_client
+	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./websocket_client $(SECUREFLAG)
 
 memcheck_server: websocket_server
-	LD_LIBRARY_PATH=../../src valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all ./websocket_server 2>valgrind_server.txt
+	LD_LIBRARY_PATH=../../src valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all ./websocket_server $(SECUREFLAG) 2>valgrind_server.txt
 
 memcheck_client: websocket_client
-	LD_LIBRARY_PATH=../../src valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all ./websocket_client 2>valgrind_client.txt
+	LD_LIBRARY_PATH=../../src valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all ./websocket_client $(SECUREFLAG) 2>valgrind_client.txt
