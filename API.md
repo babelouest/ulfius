@@ -1059,15 +1059,15 @@ Ulfius allows to create a websocket connection as a client. The behavior is quit
 
 ##### Prepare the request
 
-You can manually fill the `struct _u_request` with your parameters or use the dedicated function `ulfius_init_websocket_request`:
+You can manually fill the `struct _u_request` with your parameters or use the dedicated function `ulfius_set_websocket_request`:
 
 ```C
 /**
- * Initialize values for a struct _u_request to open a websocket
+ * Set values for a struct _u_request to open a websocket
  * request must be previously initialized
  * Return U_OK on success
  */
-int ulfius_init_websocket_request(struct _u_request * request,
+int ulfius_set_websocket_request(struct _u_request * request,
                                   const char * url,
                                   const char * websocket_protocol,
                                   const char * websocket_extensions);
