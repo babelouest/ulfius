@@ -1142,11 +1142,11 @@ int ulfius_websocket_client_connection_status(struct _websocket_client_handler *
 int ulfius_websocket_client_connection_wait_close(struct _websocket_client_handler * websocket_client_handler, unsigned int timeout);
 
 /**
- * Initialize values for a struct _u_request to open a websocket
+ * Set values for a struct _u_request to open a websocket
  * request must be previously initialized
  * Return U_OK on success
  */
-int ulfius_init_websocket_request(struct _u_request * request,
+int ulfius_set_websocket_request(struct _u_request * request,
                                   const char * url,
                                   const char * websocket_protocol,
                                   const char * websocket_extensions);

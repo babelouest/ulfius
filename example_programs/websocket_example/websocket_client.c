@@ -38,9 +38,8 @@ void websocket_manager_callback(const struct _u_request * request,
   if (websocket_manager_user_data != NULL) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_manager_user_data is %s", websocket_manager_user_data);
   }
-  for (i=0; i<10; i++) {
-    sleep(2);
-    if (websocket_manager != NULL && websocket_manager->connected) {
+  for (i=0; i<4; i++) {
+    if (ulfius_websocket_wait_close(websocket_manager, 2000) == U_WEBSOCKET_STATUS_OPEN) {
       if (i%2) {
         my_message = msprintf("Send text message #%d from client", i);
         ret = ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(my_message), my_message);
@@ -108,7 +107,7 @@ int main(int argc, char ** argv) {
   y_init_logs("websocket_client", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting websocket_client");
   ulfius_init_request(&request);
   ulfius_init_response(&response);
-  if (ulfius_init_websocket_request(&request, url, "protocol", "extension") == U_OK) {
+  if (ulfius_set_websocket_request(&request, url, "protocol", "extension") == U_OK) {
     request.check_server_certificate = 0;
     if (ulfius_open_websocket_client_connection(&request, &websocket_manager_callback, websocket_user_data, &websocket_incoming_message_callback, websocket_user_data, &websocket_onclose_callback, websocket_user_data, &websocket_client_handler, &response) == U_OK) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "Wait for user to press <enter> to close the program");
@@ -118,13 +117,12 @@ int main(int argc, char ** argv) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_open_websocket_client_connection");
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_init_websocket_request");
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_set_websocket_request");
   }
   
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
   y_close_logs();
-  o_free(websocket_user_data);
   return 0;
 }
 #endif

@@ -512,6 +512,8 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                 response_buffer = o_strdup(U_WEBSOCKET_BAD_REQUEST_BODY);
                 mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
               }
+              o_free(protocol);
+              o_free(extensions);
             } else {
               response->status = MHD_HTTP_BAD_REQUEST;
               response_buffer = o_strdup(U_WEBSOCKET_BAD_REQUEST_BODY);
