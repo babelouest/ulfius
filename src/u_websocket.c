@@ -232,9 +232,11 @@ static int is_websocket_data_available(struct _websocket_manager * websocket_man
   do {
     poll_ret = poll(&websocket_manager->fds, 1, U_WEBSOCKET_USEC_WAIT);
     if (poll_ret == -1) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error poll websocket read for close signal");
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error poll websocket read");
+      websocket_manager->connected = 0;
       ret = 0;
     } else if (websocket_manager->fds.revents & (POLLRDHUP|POLLERR|POLLHUP|POLLNVAL)) {
+      websocket_manager->connected = 0;
       ret = 0;
     } else if (poll_ret > 0) {
       ret = 1;
@@ -250,8 +252,7 @@ static size_t read_data_from_socket(struct _websocket_manager * websocket_manage
   
   if (len > 0) {
     do {
-      data_available = is_websocket_data_available(websocket_manager);
-      if (data_available) {
+      if ((data_available = is_websocket_data_available(websocket_manager))) {
         if (websocket_manager->type == U_WEBSOCKET_SERVER) {
           data_len = read(websocket_manager->mhd_sock, data, (len - ret));
         } else {
@@ -541,38 +542,13 @@ int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
                                   const uint8_t opcode,
                                   const uint64_t data_len,
                                   const char * data) {
-  int ret, count = WEBSOCKET_MAX_CLOSE_TRY, poll_ret;
-  struct _websocket_message * message;
+  int ret;
+  
   if (websocket_manager != NULL && websocket_manager->connected) {
     if (pthread_mutex_lock(&websocket_manager->write_lock)) {
       return U_ERROR;
     }
-    if (opcode == U_WEBSOCKET_OPCODE_CLOSE) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "Send close message");
-      // If message sent is U_WEBSOCKET_OPCODE_CLOSE, wait for the response for 2 s max, then close the connection
-      if (pthread_mutex_lock(&websocket_manager->read_lock)) {
-        pthread_mutex_unlock(&websocket_manager->write_lock);
-        return U_ERROR;
-      }
-      ret = ulfius_websocket_send_message_nolock(websocket_manager, opcode, 1, data_len, data);
-      message = NULL;
-      poll_ret = poll(&websocket_manager->fds, 1, U_WEBSOCKET_USEC_WAIT);
-      if (poll_ret == -1) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Error poll websocket read for close signal");
-      } else if (!(websocket_manager->fds.revents & (POLLRDHUP|POLLERR|POLLHUP|POLLNVAL)) && poll_ret > 0) {
-        do {
-          while (count-- > 0 && is_websocket_data_available(websocket_manager) && ulfius_read_incoming_message(websocket_manager, &message) == U_OK) {
-            if (ulfius_push_websocket_message(websocket_manager->message_list_incoming, message) != U_OK) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "Error pushing new websocket message in list");
-            }
-          }
-        } while (message->opcode != U_WEBSOCKET_OPCODE_CLOSE);
-      }
-      websocket_manager->closing = 1;
-      pthread_mutex_unlock(&websocket_manager->read_lock);
-    } else {
-      ret = ulfius_websocket_send_message_nolock(websocket_manager, opcode, 1, data_len, data);
-    }
+    ret = ulfius_websocket_send_message_nolock(websocket_manager, opcode, 1, data_len, data);
     pthread_mutex_unlock(&websocket_manager->write_lock);
     return ret;
   } else {
@@ -1273,17 +1249,16 @@ static int ulfius_open_websocket_tls(struct _u_request * request, struct yuarel 
                 type = gnutls_certificate_type_get(websocket->websocket_manager->gnutls_session);
                 status = gnutls_session_get_verify_cert_status(websocket->websocket_manager->gnutls_session);
                 if (gnutls_certificate_verification_status_print(status, type, &out, 0) >= 0) {
-                  printf("cert verify output: %s\n", out.data);
+                  y_log_message(Y_LOG_LEVEL_ERROR, "Certificate verify output: %s\n", out.data);
                   gnutls_free(out.data);
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "Error gnutls_certificate_verification_status_print");
                 }
               }
-              fprintf(stderr, "*** Handshake failed: %s\n", gnutls_strerror(ret));
+              y_log_message(Y_LOG_LEVEL_ERROR, "Handshake failed: %s\n", gnutls_strerror(ret));
               ret = U_ERROR;
             } else {
               char * desc = gnutls_session_get_desc(websocket->websocket_manager->gnutls_session);
-              printf("- Session info: %s\n", desc);
               gnutls_free(desc);
               
               ret = ulfius_websocket_connection_handshake(request, y_url, websocket, response);
