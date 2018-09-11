@@ -41,5 +41,8 @@ stream_client.o: stream_client.c
 stream_client: libulfius.so stream_client.o
 	$(CC) -o stream_client stream_client.o $(LIBS)
 
-test: stream_example stream_client
+test_example: stream_example
 	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./stream_example
+
+test_client: stream_client
+	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./stream_client
