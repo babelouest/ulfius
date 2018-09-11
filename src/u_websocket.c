@@ -176,6 +176,13 @@ void * ulfius_thread_websocket(void * data) {
     }
     // Wait for thread manager to close
     pthread_join(thread_websocket_manager, NULL);
+    
+    // Broadcast end signal
+    if (websocket->websocket_manager->type == U_WEBSOCKET_CLIENT) {
+      pthread_mutex_lock(&websocket->websocket_manager->status_lock);
+      pthread_cond_broadcast(&websocket->websocket_manager->status_cond);
+      pthread_mutex_unlock(&websocket->websocket_manager->status_lock);
+    }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error websocket parameters");
   }
@@ -279,9 +286,9 @@ static size_t read_data_from_socket(struct _websocket_manager * websocket_manage
 int ulfius_read_incoming_message(struct _websocket_manager * websocket_manager, struct _websocket_message ** message) {
   int ret = U_OK, fin = 0, i;
   int message_error = 0;
-  uint8_t header[2], payload_len[8], masking_key[4];
-  uint8_t * payload_data;
-  size_t msg_len = 0, len;
+  uint8_t header[2] = {0}, payload_len[8] = {0}, masking_key[4] = {0};
+  uint8_t * payload_data = NULL;
+  size_t msg_len = 0, len = 0;
   
   *message = o_malloc(sizeof(struct _websocket_message));
   if (*message != NULL) {
@@ -296,9 +303,6 @@ int ulfius_read_incoming_message(struct _websocket_manager * websocket_manager, 
         if (read_data_from_socket(websocket_manager, header, 2) == 2) {
           (*message)->opcode = header[0] & 0x0F;
           fin = (header[0] & U_WEBSOCKET_BIT_FIN);
-          if (!fin) {
-            y_log_message(Y_LOG_LEVEL_DEBUG, "message fragmented");
-          }
           if ((header[1] & U_WEBSOCKET_LEN_MASK) <= 125) {
             msg_len = (header[1] & U_WEBSOCKET_LEN_MASK);
           } else if ((header[1] & U_WEBSOCKET_LEN_MASK) == 126) {
@@ -385,7 +389,6 @@ int ulfius_read_incoming_message(struct _websocket_manager * websocket_manager, 
  * Clear all data related to the websocket
  */
 int ulfius_clear_websocket(struct _websocket * websocket) {
-  y_log_message(Y_LOG_LEVEL_DEBUG, "Call ulfius_clear_websocket");
   if (websocket != NULL) {
     if (websocket->websocket_manager->type == U_WEBSOCKET_SERVER && MHD_upgrade_action (websocket->urh, MHD_UPGRADE_ACTION_CLOSE) != MHD_YES) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error sending MHD_UPGRADE_ACTION_CLOSE frame to urh");
@@ -431,6 +434,7 @@ void * ulfius_thread_websocket_manager_run(void * args) {
     websocket->websocket_manager->manager_closed = 1;
     websocket->websocket_manager->closing = 1;
   }
+  
   pthread_exit(NULL);
 }
 
@@ -567,8 +571,7 @@ int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websock
                                   const char * data,
                                   const size_t fragment_len) {
   size_t i = 0, cur_len;
-  int ret = U_OK, count = WEBSOCKET_MAX_CLOSE_TRY, poll_ret;
-  struct _websocket_message * message;
+  int ret = U_OK;
   
   if (websocket_manager != NULL && websocket_manager->connected && fragment_len > 0) {
     if (pthread_mutex_lock(&websocket_manager->write_lock)) {
@@ -576,33 +579,7 @@ int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websock
     }
     while (i < data_len) {
       cur_len = fragment_len<(data_len - i)?fragment_len:(data_len - i);
-      if (opcode == U_WEBSOCKET_OPCODE_CLOSE) {
-        // If message sent is U_WEBSOCKET_OPCODE_CLOSE, wait for the response for 2 s max, then close the connection
-        if (pthread_mutex_lock(&websocket_manager->read_lock)) {
-          pthread_mutex_unlock(&websocket_manager->write_lock);
-          return U_ERROR;
-        }
-        ret = ulfius_websocket_send_message_nolock(websocket_manager, opcode, 1, cur_len, (data + i));
-        message = NULL;
-        poll_ret = poll(&websocket_manager->fds, 1, U_WEBSOCKET_USEC_WAIT);
-        if (poll_ret == -1) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Error poll websocket read for close signal");
-        } else if (!(websocket_manager->fds.revents & (POLLRDHUP|POLLERR|POLLHUP|POLLNVAL)) && poll_ret > 0) {
-          do {
-            if (ulfius_read_incoming_message(websocket_manager, &message) == U_OK) {
-              while (count-- > 0) {
-                if (ulfius_push_websocket_message(websocket_manager->message_list_incoming, message) != U_OK) {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "Error pushing new websocket message in list");
-                }
-              }
-            }
-          } while (message->opcode != U_WEBSOCKET_OPCODE_CLOSE);
-        }
-        websocket_manager->closing = 1;
-        pthread_mutex_unlock(&websocket_manager->read_lock);
-      } else {
-        ret = ulfius_websocket_send_message_nolock(websocket_manager, opcode, ((i+fragment_len)>=data_len), data_len, data);
-      }
+      ret = ulfius_websocket_send_message_nolock(websocket_manager, opcode, ((i+fragment_len)>=data_len), cur_len, (data + i));
       i += cur_len;
     }
     pthread_mutex_unlock(&websocket_manager->write_lock);
@@ -833,19 +810,14 @@ int ulfius_close_websocket(struct _websocket * websocket) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Error sending close frame to websocket");
       }
     }
-    if (websocket->websocket_manager->type == U_WEBSOCKET_CLIENT) {
-      pthread_mutex_lock(&websocket->websocket_manager->status_lock);
-      pthread_cond_broadcast(&websocket->websocket_manager->status_cond);
-      pthread_mutex_unlock(&websocket->websocket_manager->status_lock);
-      if (websocket->websocket_manager->tls) {
-        gnutls_bye(websocket->websocket_manager->gnutls_session, GNUTLS_SHUT_RDWR);
-        gnutls_deinit(websocket->websocket_manager->gnutls_session);
-        gnutls_certificate_free_credentials(websocket->websocket_manager->xcred);
-        gnutls_global_deinit();
-      }
-      shutdown(websocket->websocket_manager->tcp_sock, SHUT_RDWR);
-      close(websocket->websocket_manager->tcp_sock);
+    if (websocket->websocket_manager->type == U_WEBSOCKET_CLIENT && websocket->websocket_manager->tls) {
+      gnutls_bye(websocket->websocket_manager->gnutls_session, GNUTLS_SHUT_RDWR);
+      gnutls_deinit(websocket->websocket_manager->gnutls_session);
+      gnutls_certificate_free_credentials(websocket->websocket_manager->xcred);
+      gnutls_global_deinit();
     }
+    shutdown(websocket->websocket_manager->tcp_sock, SHUT_RDWR);
+    close(websocket->websocket_manager->tcp_sock);
     websocket->websocket_manager->connected = 0;
     return U_OK;
   } else {
@@ -950,7 +922,7 @@ void ulfius_clear_websocket_manager(struct _websocket_manager * websocket_manage
   }
 }
 
- /**
+/**
  * Add a websocket in the list of active websockets of the instance
  */
 int ulfius_instance_add_websocket_active(struct _u_instance * instance, struct _websocket * websocket) {
