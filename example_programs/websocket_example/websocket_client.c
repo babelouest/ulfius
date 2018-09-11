@@ -42,7 +42,8 @@ void websocket_manager_callback(const struct _u_request * request,
     if (ulfius_websocket_wait_close(websocket_manager, 2000) == U_WEBSOCKET_STATUS_OPEN) {
       if (i%2) {
         my_message = msprintf("Send text message #%d from client", i);
-        ret = ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(my_message), my_message);
+        //ret = ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(my_message), my_message);
+        ret = ulfius_websocket_send_fragmented_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(my_message), my_message, 5);
       } else {
         my_message = msprintf("Send binary message #%d from client", i);
         ret = ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_BINARY, o_strlen(my_message), my_message);

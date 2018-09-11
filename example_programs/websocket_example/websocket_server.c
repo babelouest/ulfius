@@ -36,39 +36,7 @@
 int callback_websocket (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_websocket_file (const struct _u_request * request, struct _u_response * response, void * user_data);
 
-/**
- * decode a u_map into a string
- */
-char * print_map(const struct _u_map * map) {
-  char * line, * to_return = NULL;
-  const char **keys, * value;
-  int i;
-  size_t len;
-  if (map != NULL) {
-    keys = u_map_enum_keys(map);
-    for (i=0; keys[i] != NULL; i++) {
-      value = u_map_get(map, keys[i]);
-      line = msprintf("%s: %s", keys[i], value);
-      if (to_return != NULL) {
-        len = strlen(to_return) + strlen(line) + 1;
-        to_return = o_realloc(to_return, (len+1)*sizeof(char));
-        if (strlen(to_return) > 0) {
-          strcat(to_return, "\n");
-        }
-      } else {
-        to_return = o_malloc((strlen(line) + 1)*sizeof(char));
-        to_return[0] = 0;
-      }
-      strcat(to_return, line);
-      o_free(line);
-    }
-    return to_return;
-  } else {
-    return NULL;
-  }
-}
-
-char * read_file(const char * filename) {
+static char * read_file(const char * filename) {
   char * buffer = NULL;
   long length;
   FILE * f = fopen (filename, "rb");
@@ -198,11 +166,10 @@ void websocket_manager_callback(const struct _u_request * request,
     y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_manager_user_data is %s", websocket_manager_user_data);
   }
   for (i=0;; i++) {
-    sleep(2);
-    if (websocket_manager != NULL && websocket_manager->connected) {
+    if (ulfius_websocket_wait_close(websocket_manager, 2000) == U_WEBSOCKET_STATUS_OPEN) {
       if (i%2) {
         my_message = msprintf("Send text message #%d from server", i);
-        ret = ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(my_message), my_message);
+        ret = ulfius_websocket_send_fragmented_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(my_message), my_message, 5);
       } else {
         my_message = msprintf("Send binary message #%d from server", i);
         ret = ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_BINARY, o_strlen(my_message), my_message);
