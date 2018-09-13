@@ -1017,6 +1017,46 @@ struct _websocket_client_handler {
   struct _u_response * response;
 };
 
+/******************************/
+/* Common websocket functions */
+/******************************/
+
+/**
+ * Send a message in the websocket
+ * Return U_OK on success
+ */
+int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
+                                  const uint8_t opcode,
+                                  const uint64_t data_len,
+                                  const char * data);
+
+/**
+ * Send a fragmented message in the websocket
+ * each fragment size will be at most fragment_len
+ * Return U_OK on success
+ */
+int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websocket_manager,
+                                             const uint8_t opcode,
+                                             const uint64_t data_len,
+                                             const char * data,
+                                             const uint64_t fragment_len);
+
+/**
+ * Return the first message of the message list
+ * Return NULL if message_list has no message
+ * Returned value must be cleared after use
+ */
+struct _websocket_message * ulfius_websocket_pop_first_message(struct _websocket_message_list * message_list);
+
+/**
+ * Clear data of a websocket message
+ */
+void ulfius_clear_websocket_message(struct _websocket_message * message);
+
+/******************************/
+/* Server websocket functions */
+/******************************/
+
 /**
  * Set a websocket in the response
  * You must set at least websocket_manager_callback or websocket_incoming_message_callback
@@ -1050,8 +1090,11 @@ int ulfius_set_websocket_response(struct _u_response * response,
                                    void * websocket_onclose_user_data);
 
 /**
- * Closes a websocket connection
- * return U_OK when the websocket is closed
+ * Sets the websocket in closing mode
+ * The websocket will not necessarily be closed at the return of this function,
+ * it will process through the end of the `websocket_manager_callback`
+ * and the `websocket_onclose_callback` calls first.
+ * return U_OK on success
  * or U_ERROR on error
  */
 int ulfius_websocket_close(struct _websocket_manager * websocket_manager);
@@ -1071,32 +1114,9 @@ int ulfius_websocket_status(struct _websocket_manager * websocket_manager);
  */
 int ulfius_websocket_wait_close(struct _websocket_manager * websocket_manager, unsigned int timeout);
 
-/**
- * Send a fragmented message in the websocket
- * each fragment size will be at most fragment_len
- * Return U_OK on success
- */
-int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websocket_manager,
-                                  const uint8_t opcode,
-                                  const uint64_t data_len,
-                                  const char * data,
-                                  const size_t fragment_len);
-
-/**
- * Send a message in the websocket
- * Return U_OK on success
- */
-int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
-                                  const uint8_t opcode,
-                                  const uint64_t data_len,
-                                  const char * data);
-
-/**
- * Return the first message of the message list
- * Return NULL if message_list has no message
- * Returned value must be cleared after use
- */
-struct _websocket_message * ulfius_websocket_pop_first_message(struct _websocket_message_list * message_list);
+/******************************/
+/* Client websocket functions */
+/******************************/
 
 /**
  * Open a websocket client connection
@@ -1150,11 +1170,6 @@ int ulfius_set_websocket_request(struct _u_request * request,
                                   const char * url,
                                   const char * websocket_protocol,
                                   const char * websocket_extensions);
-
-/**
- * Clear data of a websocket message
- */
-void ulfius_clear_websocket_message(struct _websocket_message * message);
 
 #endif
 

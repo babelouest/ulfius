@@ -82,11 +82,6 @@ void ulfius_start_websocket_cb (void *cls,
             struct MHD_UpgradeResponseHandle *urh);
 
 /**
- * Workaround to make sure a message, as long as it can be is complete sent
- */
-void ulfius_websocket_send_all(struct _websocket_manager * websocket_manager, const uint8_t * data, size_t len);
-
-/**
  * Generates a handhshake answer from the key given in parameter
  */
 int ulfius_generate_handshake_answer(const char * key, char * out_digest);
@@ -138,26 +133,9 @@ void ulfius_clear_websocket_manager(struct _websocket_manager * websocket_manage
 int ulfius_close_websocket(struct _websocket * websocket);
 
 /**
- * Read and parse a new message from the websocket
- * Return the opcode of the new websocket, U_WEBSOCKET_OPCODE_NONE if no message arrived, or U_WEBSOCKET_OPCODE_ERROR on error
- * Sets the new message in the message variable if available
- */
-int ulfius_read_incoming_message(struct _websocket_manager * websocket_manager, struct _websocket_message ** message);
-
-/**
  * Run the websocket manager in a separated detached thread
  */
 void * ulfius_thread_websocket_manager_run(void * args);
-
-/**
- * Send a message in the websocket without lock
- * Return U_OK on success
- */
-int ulfius_websocket_send_message_nolock(struct _websocket_manager * websocket_manager,
-                                         const uint8_t opcode,
-                                         const short int fin,
-                                         const uint64_t data_len,
-                                         const char * data);
 
 /**
  * Add a websocket in the list of active websockets of the instance
