@@ -19,6 +19,8 @@ ULFIUS_LOCATION=../src
 CFLAGS=-c -Wall -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS)
 LIBS=-lc -lulfius -lyder -lorcania -L$(ULFIUS_LOCATION)
 
+COMMAND=./uwsc --output-log-file=out.log http://localhost:9275/websocket
+
 all: uwsc
 
 clean:
@@ -31,3 +33,9 @@ debug: uwsc
 uwsc: uwsc.c
 	$(CC) $(CFLAGS) uwsc.c
 	$(CC) -o uwsc uwsc.o $(LIBS)
+
+test: uwsc
+	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} $(COMMAND)
+
+memcheck: uwsc
+	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all  $(COMMAND) 2>valgrind.txt
