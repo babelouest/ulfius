@@ -146,6 +146,8 @@ START_TEST(test_websocket_ulfius_websocket_client)
   
   ck_assert_int_eq(ulfius_stop_framework(&instance), U_OK);
   ulfius_clean_instance(&instance);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
 }
 END_TEST
 
