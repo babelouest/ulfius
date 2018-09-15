@@ -129,15 +129,17 @@ int main (int argc, char ** argv) {
   
   ulfius_init_request(&request);
   ulfius_init_response(&response);
-  if (ulfius_set_websocket_request(&request, url, NULL, "permessage-deflate") == U_OK) {
+  if (ulfius_set_websocket_request(&request, url, NULL, NULL) == U_OK) {
     if (ulfius_open_websocket_client_connection(&request, &uwsc_manager_callback, NULL, &uwsc_manager_incoming, NULL, NULL, NULL, &websocket_client_handler, &response) == U_OK) {
       fprintf(stdout, "Websocket connected, you can send text messages of maximum 256 characters.\n> ");
       fflush(stdout);
       ulfius_websocket_client_connection_wait_close(&websocket_client_handler, 0);
     } else {
+      fprintf(stderr, "Error connecting to websocket");
       y_log_message(Y_LOG_LEVEL_ERROR, "Error connecting to websocket");
     }
   } else {
+    fprintf(stderr, "Error initializing websocket request");
     y_log_message(Y_LOG_LEVEL_ERROR, "Error initializing websocket request");
   }
   
