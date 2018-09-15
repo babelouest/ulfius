@@ -472,45 +472,43 @@ static int ulfius_websocket_connection_handshake(struct _u_request * request, st
   size_t buffer_len = 4096, line_len;
 
   // Send HTTP Request
-  do {
-    http_line = msprintf("%s %s%s%s HTTP/%s\r\n", request->http_verb, o_strlen(y_url->path)?y_url->path:"/", y_url->query!=NULL?"?":"", y_url->query!=NULL?y_url->query:"", request->http_protocol);
+  http_line = msprintf("%s %s%s%s HTTP/%s\r\n", request->http_verb, o_strlen(y_url->path)?y_url->path:"/", y_url->query!=NULL?"?":"", y_url->query!=NULL?y_url->query:"", request->http_protocol);
+  ulfius_websocket_send_all(websocket->websocket_manager, (uint8_t *)http_line, o_strlen(http_line));
+  o_free(http_line);
+  
+  http_line = msprintf("Host: %s\r\n", y_url->host);
+  ulfius_websocket_send_all(websocket->websocket_manager, (uint8_t *)http_line, o_strlen(http_line));
+  o_free(http_line);
+  
+  http_line = msprintf("Upgrade: websocket\r\n");
+  ulfius_websocket_send_all(websocket->websocket_manager, (uint8_t *)http_line, o_strlen(http_line));
+  o_free(http_line);
+  
+  http_line = msprintf("Connection: Upgrade\r\n");
+  ulfius_websocket_send_all(websocket->websocket_manager, (uint8_t *)http_line, o_strlen(http_line));
+  o_free(http_line);
+  
+  http_line = msprintf("Origin: %s://%s\r\n", y_url->scheme, y_url->host);
+  ulfius_websocket_send_all(websocket->websocket_manager, (uint8_t *)http_line, o_strlen(http_line));
+  o_free(http_line);
+  
+  keys = u_map_enum_keys(request->map_header);
+  for (i=0; keys[i] != NULL; i++) {
+    http_line = msprintf("%s: %s\r\n", keys[i], u_map_get(request->map_header, keys[i]));
     ulfius_websocket_send_all(websocket->websocket_manager, (uint8_t *)http_line, o_strlen(http_line));
     o_free(http_line);
-    
-    http_line = msprintf("Host: %s\r\n", y_url->host);
-    ulfius_websocket_send_all(websocket->websocket_manager, (uint8_t *)http_line, o_strlen(http_line));
-    o_free(http_line);
-    
-    http_line = msprintf("Upgrade: websocket\r\n");
-    ulfius_websocket_send_all(websocket->websocket_manager, (uint8_t *)http_line, o_strlen(http_line));
-    o_free(http_line);
-    
-    http_line = msprintf("Connection: Upgrade\r\n");
-    ulfius_websocket_send_all(websocket->websocket_manager, (uint8_t *)http_line, o_strlen(http_line));
-    o_free(http_line);
-    
-    http_line = msprintf("Origin: %s://%s\r\n", y_url->scheme, y_url->host);
-    ulfius_websocket_send_all(websocket->websocket_manager, (uint8_t *)http_line, o_strlen(http_line));
-    o_free(http_line);
-    
-    keys = u_map_enum_keys(request->map_header);
-    for (i=0; keys[i] != NULL; i++) {
-      http_line = msprintf("%s: %s\r\n", keys[i], u_map_get(request->map_header, keys[i]));
-      ulfius_websocket_send_all(websocket->websocket_manager, (uint8_t *)http_line, o_strlen(http_line));
-      o_free(http_line);
-      if (0 == o_strcmp("Sec-WebSocket-Protocol", keys[i])) {
-        check_websocket |= WEBSOCKET_RESPONSE_PROTCOL;
-      } else if (0 == o_strcmp("Sec-WebSocket-Extension", keys[i])) {
-        check_websocket |= WEBSOCKET_RESPONSE_EXTENSION;
-      }
+    if (0 == o_strcmp("Sec-WebSocket-Protocol", keys[i])) {
+      check_websocket |= WEBSOCKET_RESPONSE_PROTCOL;
+    } else if (0 == o_strcmp("Sec-WebSocket-Extension", keys[i])) {
+      check_websocket |= WEBSOCKET_RESPONSE_EXTENSION;
     }
-    
-    if (websocket->websocket_manager->tcp_sock >= 0) {
-      // Send empty line
-      const char * empty = "\r\n";
-      ulfius_websocket_send_all(websocket->websocket_manager, (uint8_t *)empty, o_strlen(empty));
-    }
-  } while (0);
+  }
+  
+  if (websocket->websocket_manager->tcp_sock >= 0) {
+    // Send empty line
+    const char * empty = "\r\n";
+    ulfius_websocket_send_all(websocket->websocket_manager, (uint8_t *)empty, o_strlen(empty));
+  }
   
   // Read and parse response
   do {
