@@ -23,5 +23,6 @@ test/*.o
 test/core
 test/u_map
 test/framework
+test/websocket
 *.key
 *.pem
