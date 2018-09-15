@@ -39,9 +39,9 @@
 #include <netdb.h>
 #include <stdlib.h>
 
-/********************************/
-/* Internal websocket functions */
-/********************************/
+/**********************************/
+/** Internal websocket functions **/
+/**********************************/
 
 static int is_websocket_data_available(struct _websocket_manager * websocket_manager) {
   int ret = -1, poll_ret;
@@ -125,7 +125,7 @@ static int ulfius_build_and_send_frame(struct _websocket_manager * websocket_man
                                        const char * data) {
   size_t frame_data_len;
   uint8_t * sent_data, mask[4];
-  int off, i;
+  unsigned int off, i;
   struct _websocket_message * my_message;
   if (websocket_manager != NULL &&
       websocket_manager->connected &&
@@ -314,14 +314,14 @@ static int ulfius_read_incoming_message(struct _websocket_manager * websocket_ma
           // If mask, decode message
           (*message)->data = o_realloc((*message)->data, (msg_len+(*message)->data_len)*sizeof(uint8_t));
           if ((*message)->has_mask) {
-            for (i = (*message)->data_len; (unsigned int)i < msg_len; i++) {
+            for (i = (*message)->data_len; (unsigned int)i < (*message)->data_len + msg_len; i++) {
               (*message)->data[i] = payload_data[i-(*message)->data_len] ^ masking_key[(i-(*message)->data_len)%4];
             }
           } else {
             memcpy((*message)->data+(*message)->data_len, payload_data, msg_len);
           }
           (*message)->data_len += msg_len;
-        } else if (len != -1) {
+        } else if (!len) {
           message_error = 1;
           ret = U_ERROR;
           y_log_message(Y_LOG_LEVEL_ERROR, "Error reading websocket for payload_data");
@@ -997,9 +997,9 @@ int ulfius_instance_remove_websocket_active(struct _u_instance * instance, struc
   }
 }
 
-/******************************/
-/* Common websocket functions */
-/******************************/
+/********************************/
+/** Common websocket functions **/
+/********************************/
 
 /**
  * Send a fragmented message in the websocket
@@ -1072,9 +1072,9 @@ void ulfius_clear_websocket_message(struct _websocket_message * message) {
   }
 }
 
-/**********************************/
-/* Init/clear websocket functions */
-/**********************************/
+/************************************/
+/** Init/clear websocket functions **/
+/************************************/
 
 /**
  * Clear all data related to the websocket
@@ -1207,9 +1207,9 @@ void ulfius_clear_websocket_manager(struct _websocket_manager * websocket_manage
   }
 }
 
-/******************************/
-/* Server websocket functions */
-/******************************/
+/********************************/
+/** Server websocket functions **/
+/********************************/
 
 /**
  * Set a websocket in the response
@@ -1336,9 +1336,9 @@ int ulfius_websocket_wait_close(struct _websocket_manager * websocket_manager, u
   }
 }
 
-/******************************/
-/* Client websocket functions */
-/******************************/
+/********************************/
+/** Client websocket functions **/
+/********************************/
 
 /**
  * Set values for a struct _u_request to open a websocket
