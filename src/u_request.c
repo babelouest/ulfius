@@ -26,7 +26,7 @@
 #include <string.h>
 
 #include "u_private.h"
-#include "../include/ulfius.h"
+#include "ulfius.h"
 
 /**
  * Splits the url to an array of char *

@@ -25,7 +25,7 @@
 #include <string.h>
 
 #include "u_private.h"
-#include "../include/ulfius.h"
+#include "ulfius.h"
 
 /**
  * Add a cookie in the cookie map as defined in the RFC 6265

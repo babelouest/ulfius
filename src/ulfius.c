@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include "u_private.h"
-#include "../include/ulfius.h"
+#include "ulfius.h"
 
 /**
  * Fill a map with the key/values specified
