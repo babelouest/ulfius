@@ -89,16 +89,16 @@ int ulfius_generate_handshake_answer(const char * key, char * out_digest);
 /**
  * Return a match list between two list of items
  * If match is NULL, then return source duplicate
- * Returned value must be u_free'd after use
+ * result must be u_free'd after use
  */
-char * ulfius_check_list_match(const char * source, const char * match, const char * separator);
+int ulfius_check_list_match(const char * source, const char * match, const char * separator, char ** result);
 
 /**
  * Return the first match between two list of items
  * If match is NULL, then return the first element of source
- * Returned value must be u_free'd after use
+ * result must be u_free'd after use
  */
-char * ulfius_check_first_match(const char * source, const char * match, const char * separator);
+int ulfius_check_first_match(const char * source, const char * match, const char * separator, char ** result);
 
 /**
  * Initialize a websocket message list
