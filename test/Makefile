@@ -19,9 +19,10 @@
 # License along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-CC=gcc
-CFLAGS=-Wall -D_REENTRANT -DDEBUG -g -O0
+ULFIUS_INCLUDE=../include
 ULFIUS_LOCATION=../src
+CC=gcc
+CFLAGS=-Wall -D_REENTRANT -I$(ULFIUS_INCLUDE) -DDEBUG -g -O0
 LIBS=-lc -lorcania -lyder -lulfius -lcheck -lpthread -lm -lrt -lsubunit -L$(ULFIUS_LOCATION)
 
 all: test
@@ -49,5 +50,11 @@ framework: framework.c
 
 test_framework: libulfius.so framework
 	-LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./framework
+
+websocket: websocket.c
+	$(CC) $(CFLAGS) websocket.c -o websocket $(LIBS)
+
+test_websocket: libulfius.so websocket
+	-LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./websocket
 
 test: test_u_map test_core test_framework
