@@ -228,6 +228,16 @@ void websocket_incoming_message_callback (const struct _u_request * request,
   }
 }
 
+void websocket_echo_message_callback (const struct _u_request * request,
+                                         struct _websocket_manager * websocket_manager,
+                                         const struct _websocket_message * last_message,
+                                         void * websocket_incoming_message_user_data) {
+  y_log_message(Y_LOG_LEVEL_DEBUG, "Incoming message, opcode: %x, mask: %d, len: %zu, text payload '%.*s'", last_message->opcode, last_message->has_mask, last_message->data_len, last_message->data_len, last_message->data);
+  if (ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, last_message->data_len, last_message->data) != U_OK) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_websocket_send_message");
+  }
+}
+
 void websocket_incoming_file_callback (const struct _u_request * request,
                                          struct _websocket_manager * websocket_manager,
                                          const struct _websocket_message * last_message,
@@ -246,6 +256,7 @@ int callback_websocket (const struct _u_request * request, struct _u_response * 
   int ret;
   
   if ((ret = ulfius_set_websocket_response(response, NULL, NULL, &websocket_manager_callback, websocket_user_data, &websocket_incoming_message_callback, websocket_user_data, &websocket_onclose_callback, websocket_user_data)) == U_OK) {
+  //if ((ret = ulfius_set_websocket_response(response, NULL, NULL, NULL, NULL, &websocket_echo_message_callback, websocket_user_data, &websocket_onclose_callback, websocket_user_data)) == U_OK) {
     return U_CALLBACK_CONTINUE;
   } else {
     return U_CALLBACK_ERROR;
