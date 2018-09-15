@@ -282,7 +282,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
 #ifndef U_DISABLE_WEBSOCKET
   int upgrade_protocol = 0;
 #endif
-  char * content_type, * auth_realm = NULL;
+  char * content_type, * auth_realm = NULL, * protocol = NULL, * extension = NULL;
   struct _u_response * response = NULL;
   struct sockaddr * so_client;
   
@@ -432,9 +432,8 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                 NULL != o_strcasestr(u_map_get_case(con_info->request->map_header, "Connection"), "Upgrade") &&
                 0 == o_strcmp(con_info->request->http_verb, "GET")) {
               // Check websocket_protocol and websocket_extensions to match ours
-              char * extensions = ulfius_check_list_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Extensions"), ((struct _websocket_handle *)response->websocket_handle)->websocket_extensions, ";"),
-                   * protocol = ulfius_check_first_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Protocol"), ((struct _websocket_handle *)response->websocket_handle)->websocket_protocol, ",");
-              if (extensions != NULL && protocol != NULL) {
+              if (ulfius_check_list_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Extensions"), ((struct _websocket_handle *)response->websocket_handle)->websocket_extensions, ";", &extension) == U_OK && 
+                  ulfius_check_first_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Protocol"), ((struct _websocket_handle *)response->websocket_handle)->websocket_protocol, ",", &protocol) == U_OK) {
                 char websocket_accept[32] = {0};
                 if (ulfius_generate_handshake_answer(u_map_get(con_info->request->map_header, "Sec-WebSocket-Key"), websocket_accept)) {
                   struct _websocket * websocket = o_malloc(sizeof(struct _websocket));
@@ -513,7 +512,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                 mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, MHD_RESPMEM_MUST_FREE );
               }
               o_free(protocol);
-              o_free(extensions);
+              o_free(extension);
             } else {
               response->status = MHD_HTTP_BAD_REQUEST;
               response_buffer = o_strdup(U_WEBSOCKET_BAD_REQUEST_BODY);
