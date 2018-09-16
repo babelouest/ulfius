@@ -383,26 +383,29 @@ static void * ulfius_thread_websocket(void * data) {
           websocket->websocket_manager->connected = 0;
         } else {
           if (ulfius_read_incoming_message(websocket->websocket_manager, &message) == U_OK) {
-            if (message->opcode == U_WEBSOCKET_OPCODE_CLOSE) {
-              // Send close command back, then close the socket
-              if (ulfius_websocket_send_message(websocket->websocket_manager, U_WEBSOCKET_OPCODE_CLOSE, 0, NULL) != U_OK) {
-                y_log_message(Y_LOG_LEVEL_ERROR, "Error sending close command");
-              }
-              websocket->websocket_manager->closing = 1;
-            } else if (message->opcode == U_WEBSOCKET_OPCODE_PING) {
-              // Send pong command
-              if (ulfius_websocket_send_message(websocket->websocket_manager, U_WEBSOCKET_OPCODE_PONG, 0, NULL) != U_OK) {
-                y_log_message(Y_LOG_LEVEL_ERROR, "Error sending pong command");
-              }
-            } else if (message->opcode != U_WEBSOCKET_OPCODE_NONE && message != NULL) {
-              if (websocket->websocket_incoming_message_callback != NULL) {
-                websocket->websocket_incoming_message_callback(websocket->request, websocket->websocket_manager, message, websocket->websocket_incoming_user_data);
-              }
-            }
             if (message != NULL) {
+              if (message->opcode == U_WEBSOCKET_OPCODE_CLOSE) {
+                // Send close command back, then close the socket
+                if (ulfius_websocket_send_message(websocket->websocket_manager, U_WEBSOCKET_OPCODE_CLOSE, 0, NULL) != U_OK) {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "Error sending close command");
+                }
+                websocket->websocket_manager->closing = 1;
+              } else if (message->opcode == U_WEBSOCKET_OPCODE_PING) {
+                // Send pong command
+                if (ulfius_websocket_send_message(websocket->websocket_manager, U_WEBSOCKET_OPCODE_PONG, 0, NULL) != U_OK) {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "Error sending pong command");
+                }
+              } else if (message->opcode != U_WEBSOCKET_OPCODE_NONE && message != NULL) {
+                if (websocket->websocket_incoming_message_callback != NULL) {
+                  websocket->websocket_incoming_message_callback(websocket->request, websocket->websocket_manager, message, websocket->websocket_incoming_user_data);
+                }
+              }
               if (ulfius_push_websocket_message(websocket->websocket_manager->message_list_incoming, message) != U_OK) {
                 y_log_message(Y_LOG_LEVEL_ERROR, "Error pushing new websocket message in list");
               }
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error message is NULL");
+              error = 1;
             }
           }
         }

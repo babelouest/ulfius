@@ -87,8 +87,8 @@ char * read_file(const char * filename) {
     buffer = o_malloc (length + 1);
     if (buffer != NULL) {
       fread (buffer, 1, length, f);
+      buffer[length] = '\0';
     }
-    buffer[length] = '\0';
     fclose (f);
   }
   return buffer;
