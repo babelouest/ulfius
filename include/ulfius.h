@@ -1017,9 +1017,9 @@ struct _websocket_client_handler {
   struct _u_response * response;
 };
 
-/******************************/
-/* Common websocket functions */
-/******************************/
+/********************************/
+/** Common websocket functions **/
+/********************************/
 
 /**
  * Send a message in the websocket
@@ -1053,9 +1053,9 @@ struct _websocket_message * ulfius_websocket_pop_first_message(struct _websocket
  */
 void ulfius_clear_websocket_message(struct _websocket_message * message);
 
-/******************************/
-/* Server websocket functions */
-/******************************/
+/********************************/
+/** Server websocket functions **/
+/********************************/
 
 /**
  * Set a websocket in the response
@@ -1114,9 +1114,9 @@ int ulfius_websocket_status(struct _websocket_manager * websocket_manager);
  */
 int ulfius_websocket_wait_close(struct _websocket_manager * websocket_manager, unsigned int timeout);
 
-/******************************/
-/* Client websocket functions */
-/******************************/
+/********************************/
+/** Client websocket functions **/
+/********************************/
 
 /**
  * Open a websocket client connection
