@@ -60,18 +60,21 @@ endif ()
 
 set(INC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set(UWSC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/uwsc)
 
 include_directories(${INC_DIR})
 
 set(LIB_SRC
-        ${INC_DIR}/ulfius.h
-        ${INC_DIR}/u_private.h
-        ${SRC_DIR}/u_map.c
-        ${SRC_DIR}/u_request.c
-        ${SRC_DIR}/u_response.c
-        ${SRC_DIR}/u_send_request.c
-        ${SRC_DIR}/u_websocket.c
-        ${SRC_DIR}/ulfius.c)
+    ${INC_DIR}/ulfius.h
+    ${INC_DIR}/u_private.h
+    ${INC_DIR}/yuarel.h
+    ${SRC_DIR}/u_map.c
+    ${SRC_DIR}/u_request.c
+    ${SRC_DIR}/u_response.c
+    ${SRC_DIR}/u_send_request.c
+    ${SRC_DIR}/u_websocket.c
+    ${SRC_DIR}/yuarel.c
+    ${SRC_DIR}/ulfius.c)
 
 # websocket support
 
@@ -83,9 +86,9 @@ endif ()
 
 if (NOT WITH_WEBSOCKET)
     add_definitions(-DU_DISABLE_WEBSOCKET)
-  set(MHD_MIN_VERSION 0.9.51)
+    set(MHD_MIN_VERSION 0.9.51)
 else ()
-  set(MHD_MIN_VERSION 0.9.53)
+    set(MHD_MIN_VERSION 0.9.53)
     include(FindGnuTLS)
     find_package(GnuTLS REQUIRED)
     if (GNUTLS_FOUND)
@@ -153,6 +156,21 @@ if (WIN32)
     set_target_properties(ulfius PROPERTIES SUFFIX "-${LIBRARY_VERSION_MAJOR}.dll")
 endif ()
 target_link_libraries(ulfius ${LIBS})
+
+# build uwsc
+
+option(BUILD_UWSC "Build uwsc application." ON)
+
+if (BUILD_UWSC)
+    if (NOT WITH_WEBSOCKET)
+        message(SEND_ERROR "websocket support is mandatory to build uwsc")
+    else ()
+        add_executable(uwsc ${UWSC_DIR}/uwsc.c ${INC_DIR}/ulfius.h ${INC_DIR}/u_private.h)
+        add_dependencies(uwsc ulfius)
+        target_link_libraries(uwsc ulfius)
+        install(TARGETS uwsc RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    endif ()
+endif ()
 
 # dependencies
 
@@ -342,5 +360,4 @@ set(CPACK_SOURCE_IGNORE_FILES ${PACKAGE_IGNORED_FILES})
 
 include(CPack)
 
-add_custom_target(dist_u
-        COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
+add_custom_target(dist_u COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
