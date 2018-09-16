@@ -21,7 +21,7 @@
 
 #define U_DISABLE_JANSSON
 #define U_DISABLE_CURL
-#include "../../include/ulfius.h"
+#include <ulfius.h>
 
 #include "../../example_callbacks/static_file/static_file_callback.h"
 

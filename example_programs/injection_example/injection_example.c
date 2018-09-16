@@ -19,7 +19,7 @@
 #define U_DISABLE_JANSSON
 #define U_DISABLE_CURL
 #define U_DISABLE_WEBSOCKET
-#include "../../include/ulfius.h"
+#include <ulfius.h>
 
 #define PORT 4528
 #define PREFIX "/inject"

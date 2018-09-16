@@ -17,7 +17,7 @@
 
 #define U_DISABLE_JANSSON
 #define U_DISABLE_WEBSOCKET
-#include "../../include/ulfius.h"
+#include <ulfius.h>
 
 #define URL "http://localhost:7876/stream"
 

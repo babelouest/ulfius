@@ -21,7 +21,7 @@
 
 #define U_DISABLE_CURL
 #define U_DISABLE_WEBSOCKET
-#include "../../include/ulfius.h"
+#include <ulfius.h>
 
 #define PORT 8537
 #define PREFIX "/test"

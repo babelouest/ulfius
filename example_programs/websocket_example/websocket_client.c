@@ -24,7 +24,7 @@
 
 #define U_DISABLE_JANSSON
 #define U_DISABLE_CURL
-#include "../../include/ulfius.h"
+#include <ulfius.h>
 
 #if defined(U_DISABLE_WEBSOCKET)
   #error Ulfius is not available with WebSockets support

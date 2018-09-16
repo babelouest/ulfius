@@ -13,8 +13,9 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #
 CC=gcc
-CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS)
 ULFIUS_LOCATION=../../src
+ULFIUS_INCLUDE=../../include
+CFLAGS=-c -Wall -I$(ULFIUS_INCLUDE) -D_REENTRANT $(ADDITIONALFLAGS)
 LIBS=-lc -lorcania -lulfius -lyder -L$(ULFIUS_LOCATION)
 
 all: stream_example stream_client
