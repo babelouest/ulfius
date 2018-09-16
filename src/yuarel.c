@@ -33,7 +33,7 @@
 static inline int
 natoi(const char *str, size_t len)
 {
-	int i, r = 0;
+	unsigned int i, r = 0;
 	for (i = 0; i < len; i++) {
 		r *= 10;
 		r += str[i] - '0';
