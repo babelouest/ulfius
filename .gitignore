@@ -28,3 +28,4 @@ uwsc/uwsc
 uwsc/valgrind.txt
 *.key
 *.pem
+*.log

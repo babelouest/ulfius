@@ -19,12 +19,12 @@ ULFIUS_LOCATION=../src
 CFLAGS=-c -Wall -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS)
 LIBS=-lc -lulfius -lyder -lorcania -L$(ULFIUS_LOCATION)
 
-COMMAND=./uwsc --output-log-file=out.log http://localhost:9275/websocket
+COMMAND=./uwsc --output-log-file=out.log http://localhost:9275/websocket/echo
 
 all: uwsc
 
 clean:
-	rm -f *.o uwsc valgrind.txt
+	rm -f *.o uwsc valgrind.txt out.log
 
 debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
