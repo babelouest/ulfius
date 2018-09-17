@@ -30,7 +30,10 @@ debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
 debug: uwsc
 
-uwsc: uwsc.c
+libulfius.so:
+	cd $(ULFIUS_LOCATION) && $(MAKE) debug JANSSONFLAG=-DU_DISABLE_JANSSON CURLFLAG=-DU_DISABLE_CURL
+
+uwsc: libulfius.so uwsc.c
 	$(CC) $(CFLAGS) uwsc.c
 	$(CC) -o uwsc uwsc.o $(LIBS)
 
