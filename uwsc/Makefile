@@ -15,6 +15,7 @@
 CC=gcc
 ULFIUS_INCLUDE=../include
 ULFIUS_LOCATION=../src
+DESTDIR=/usr/local
 
 CFLAGS=-c -Wall -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS)
 LIBS=-lc -lulfius -lyder -lorcania -L$(ULFIUS_LOCATION)
@@ -42,3 +43,9 @@ test: uwsc
 
 memcheck: uwsc
 	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all  $(COMMAND) 2>valgrind.txt
+
+install: uwsc
+	cp uwsc $(DESTDIR)/bin
+
+uninstall:
+	rm -f $(DESTDIR)/bin/uwsc

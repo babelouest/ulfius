@@ -15,6 +15,7 @@
 
 LIBULFIUS_LOCATION=./src
 EXAMPLES_LOCATION=./example_programs
+UWSC_LOCATION=./uwsc
 TESTS_LOCATION=./test
 
 ifeq (($(JANSSONFLAG)),"")
@@ -39,10 +40,12 @@ debug:
 clean:
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) clean
 	cd $(EXAMPLES_LOCATION) && $(MAKE) clean
+	cd $(UWSC_LOCATION) && $(MAKE) clean
 	cd $(TESTS_LOCATION) && $(MAKE) clean
 
 install:
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) install
+	cd $(UWSC_LOCATION) && $(MAKE) install
 
 uninstall:
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) uninstall

@@ -1097,7 +1097,7 @@ int ulfius_set_websocket_response(struct _u_response * response,
  * return U_OK on success
  * or U_ERROR on error
  */
-int ulfius_websocket_close(struct _websocket_manager * websocket_manager);
+int ulfius_websocket_send_close_signal(struct _websocket_manager * websocket_manager);
 
 /**
  * Returns the status of the websocket connection
@@ -1138,6 +1138,12 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
                                             void * websocket_onclose_user_data,
                                             struct _websocket_client_handler * websocket_client_handler,
                                             struct _u_response * response);
+/**
+ * Send a close signal to the websocket
+ * return U_OK when the signal is sent
+ * or U_ERROR on error
+ */
+int ulfius_websocket_client_connection_send_close_signal(struct _websocket_client_handler * websocket_client_handler);
 
 /**
  * Closes a websocket client connection

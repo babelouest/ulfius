@@ -114,6 +114,7 @@ int main(int argc, char ** argv) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "Wait for user to press <enter> to close the program");
       getchar();
       ulfius_websocket_client_connection_close(&websocket_client_handler);
+      y_log_message(Y_LOG_LEVEL_DEBUG, "Websocket closed");
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_open_websocket_client_connection");
     }

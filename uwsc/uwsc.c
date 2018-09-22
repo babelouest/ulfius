@@ -22,12 +22,11 @@
  */
 
 #include <getopt.h>
-#include <signal.h>
 #include <orcania.h>
 #include <yder.h>
 #include <ulfius.h>
 
-#define _UWSC_VERSION_ "0.2"
+#define _UWSC_VERSION_ "0.3"
   
 struct _websocket_client_handler websocket_client_handler;
 
@@ -44,54 +43,111 @@ struct _config {
   struct _u_response * response;
 };
 
+static char * read_file(const char * filename, size_t * filesize) {
+  char * buffer = NULL;
+  long length;
+  FILE * f = fopen (filename, "rb");
+  if (filename != NULL) {
+
+    if (f) {
+      fseek (f, 0, SEEK_END);
+      length = ftell (f);
+      if (filesize != NULL) {
+        *filesize = length;
+      }
+      fseek (f, 0, SEEK_SET);
+      buffer = malloc (length + 1);
+      if (buffer) {
+        fread (buffer, 1, length, f);
+      }
+      buffer[length] = '\0';
+      fclose (f);
+    }
+    return buffer;
+  } else {
+    return NULL;
+  }
+}
+
 static void uwsc_manager_callback (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_manager_user_data) {
+  char message[257] = {0};
   struct _websocket_message * last_message;
-  int ret, end_loop = 0;
-  struct timeval tmo;
-  fd_set readfds;  
-
-  FD_ZERO(&readfds);
-  FD_SET(0, &readfds);
-  tmo.tv_sec = 0;
-  tmo.tv_usec = 50000;
-
+  struct _config * config = (struct _config *)websocket_manager_user_data;
+  char * file_content;
+  size_t file_len;
+  
+  if (config->text_file_send != NULL) {
+    file_content = read_file(config->text_file_send, &file_len);
+    if (file_content != NULL && file_len > 0) {
+      if (ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, file_len, file_content) != U_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error sending text file");
+      } else {
+        last_message = ulfius_websocket_pop_first_message(websocket_manager->message_list_outcoming);
+        if (last_message != NULL) {
+          ulfius_clear_websocket_message(last_message);
+        }
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error reading file %s", config->text_file_send);
+    }
+  } else if (config->binary_file_send != NULL) {
+    file_content = read_file(config->binary_file_send, &file_len);
+    if (file_content != NULL && file_len > 0) {
+      if (ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_BINARY, file_len, file_content) != U_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error sending binary file");
+      } else {
+        last_message = ulfius_websocket_pop_first_message(websocket_manager->message_list_outcoming);
+        if (last_message != NULL) {
+          ulfius_clear_websocket_message(last_message);
+        }
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error reading file %s", config->binary_file_send);
+    }
+  }
   do {
-    if (ulfius_websocket_wait_close(websocket_manager, U_WEBSOCKET_USEC_WAIT) == U_WEBSOCKET_STATUS_OPEN) {
-      ret = select(1, &readfds, NULL, NULL, &tmo);
-      if (ret == -1) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Error poll stdin read");
-        fprintf(stdout, "\n - Websocket closed - \n");
-        end_loop = 1;
-      } else if (ret > 0) {
-        char message[257];
-        if (fgets(message, 256, stdin) != NULL) {
-          fprintf(stdout, "\b\bSend '%.*s'\n> ", (int)(o_strlen(message)-1), message);
-          fflush(stdout);
-          if (ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(message)-1, message) != U_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Error sending message '%.*s'\n", (int)(o_strlen(message)-1), message);
+    if (!config->non_interactive) {
+      if (fgets(message, 256, stdin) != NULL) {
+        if (o_strlen(message)) {
+          if (0 == o_strncmp(message, "!q", o_strlen("!q"))) {
+            fprintf(stdout, "\b\bQuit uwsc\n");
+            if (ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_CLOSE, 0, NULL) != U_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "Error sending close message");
+            }
           } else {
-            last_message = ulfius_websocket_pop_first_message(websocket_manager->message_list_outcoming);
-            if (last_message != NULL) {
-              ulfius_clear_websocket_message(last_message);
+            fprintf(stdout, "\b\bSend '%.*s'\n> ", (int)(o_strlen(message)-1), message);
+            fflush(stdout);
+            if (ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(message)-1, message) != U_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "Error sending message '%.*s'", (int)(o_strlen(message)-1), message);
+            } else {
+              last_message = ulfius_websocket_pop_first_message(websocket_manager->message_list_outcoming);
+              if (last_message != NULL) {
+                ulfius_clear_websocket_message(last_message);
+              }
             }
           }
         }
       }
-    } else {
-      fprintf(stdout, "\n - Websocket closed by server - \n");
-      end_loop = 1;
     }
-  } while (!end_loop);
+  } while (o_strncmp(message, "!q", o_strlen("!q")) != 0 && ulfius_websocket_wait_close(websocket_manager, 500) == U_WEBSOCKET_STATUS_OPEN);
+  printf("exit\n");
 }
 
 static void uwsc_manager_incoming (const struct _u_request * request, struct _websocket_manager * websocket_manager, const struct _websocket_message * message, void * websocket_incoming_user_data) {
   struct _websocket_message * last_message;
-  if (message->opcode == U_WEBSOCKET_OPCODE_TEXT) {
-    fprintf(stdout, "\b\bServer: '%.*s'\n> ", (int)message->data_len, message->data);
-    fflush(stdout);
-  } else if (message->opcode == U_WEBSOCKET_OPCODE_BINARY) {
-    fprintf(stdout, "\b\bServer sent binary message, length %zu\n> ", message->data_len);
-    fflush(stdout);
+  struct _config * config = (struct _config *)websocket_incoming_user_data;
+  
+  if (!config->non_listening) {
+    if (message->opcode == U_WEBSOCKET_OPCODE_TEXT) {
+      fprintf(stdout, "\b\bServer: '%.*s'\n> ", (int)message->data_len, message->data);
+      fflush(stdout);
+    } else if (message->opcode == U_WEBSOCKET_OPCODE_BINARY) {
+      fprintf(stdout, "\b\bServer sent binary message, length %zu\n> ", message->data_len);
+      fflush(stdout);
+    } else if (message->opcode == U_WEBSOCKET_OPCODE_CLOSE) {
+      fprintf(stdout, "\b\bConnection closed by the server, press <enter> to exit\n> ");
+      fflush(stdout);
+    }
   }
   last_message = ulfius_websocket_pop_first_message(websocket_manager->message_list_incoming);
   if (last_message != NULL) {
@@ -179,11 +235,6 @@ static void exit_program(struct _config ** config, int exit_value) {
   exit(exit_value);
 }
 
-static void exit_handler(int signal) {
-  fprintf(stdout, "Exit uwsc with signal %d\n", signal);
-  ulfius_websocket_client_connection_close(&websocket_client_handler);
-}
-
 int main (int argc, char ** argv) {
   struct _config * config;
   int next_option;
@@ -210,15 +261,6 @@ int main (int argc, char ** argv) {
     exit_program(NULL, 1);
   }
 
-  // Catch end signals to make a clean exit
-  if (signal (SIGQUIT, exit_handler) == SIG_ERR || 
-      signal (SIGINT, exit_handler) == SIG_ERR || 
-      signal (SIGTERM, exit_handler) == SIG_ERR || 
-      signal (SIGHUP, exit_handler) == SIG_ERR) {
-    fprintf(stderr, "Error initializing end signal\n");
-    return 1;
-  }
-  
   // TODO: Complete option manager
   do {
     char * key, * value;
@@ -240,9 +282,17 @@ int main (int argc, char ** argv) {
         }
         break;
       case 'b':
+        if (config->text_file_send != NULL) {
+          fprintf(stderr, "Error, you can't send a binary file and a text file\n\nuse uwsc -h for help\n");
+          exit_program(&config, 1);
+        }
         config->binary_file_send = o_strdup(optarg);
         break;
       case 't':
+        if (config->binary_file_send != NULL) {
+          fprintf(stderr, "Error, you can't send a binary file and a text file\n\nuse uwsc -h for help\n");
+          exit_program(&config, 1);
+        }
         config->text_file_send = o_strdup(optarg);
         break;
       case 'i':
@@ -288,7 +338,7 @@ int main (int argc, char ** argv) {
   }
   
   if (ulfius_set_websocket_request(config->request, url, NULL, NULL) == U_OK) {
-    if (ulfius_open_websocket_client_connection(config->request, &uwsc_manager_callback, NULL, &uwsc_manager_incoming, NULL, NULL, NULL, &websocket_client_handler, config->response) == U_OK) {
+    if (ulfius_open_websocket_client_connection(config->request, &uwsc_manager_callback, config, &uwsc_manager_incoming, config, NULL, NULL, &websocket_client_handler, config->response) == U_OK) {
       fprintf(stdout, "Websocket connected, you can send text messages of maximum 256 characters.\n> ");
       fflush(stdout);
       ulfius_websocket_client_connection_wait_close(&websocket_client_handler, 0);
