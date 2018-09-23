@@ -43,29 +43,31 @@
 /** Internal websocket functions **/
 /**********************************/
 
-int is_websocket_data_available(struct _websocket_manager * websocket_manager) {
+static int is_websocket_data_available(struct _websocket_manager * websocket_manager, int block) {
   int ret = 0, poll_ret;
   
-  poll_ret = poll(&websocket_manager->fds, 1, U_WEBSOCKET_USEC_WAIT);
-  if (poll_ret == -1) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error poll websocket read");
-    websocket_manager->connected = 0;
-  } else if (websocket_manager->fds.revents & (POLLRDHUP|POLLERR|POLLHUP|POLLNVAL)) {
-    websocket_manager->connected = 0;
-  } else if (poll_ret > 0) {
-    ret = 1;
-  }
+  do {
+    poll_ret = poll(&websocket_manager->fds, 1, U_WEBSOCKET_USEC_WAIT);
+    if (poll_ret == -1) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error poll websocket read");
+      websocket_manager->connected = 0;
+    } else if (websocket_manager->fds.revents & (POLLRDHUP|POLLERR|POLLHUP|POLLNVAL)) {
+      websocket_manager->connected = 0;
+    } else if (poll_ret > 0) {
+      ret = 1;
+    }
+  } while (block && ret == -1);
   return ret;
 }
 
-size_t read_data_from_socket(struct _websocket_manager * websocket_manager, uint8_t * data, size_t len) {
+static size_t read_data_from_socket(struct _websocket_manager * websocket_manager, uint8_t * data, size_t len) {
   size_t ret = 0;
   ssize_t data_len;
   int data_available;
   
   if (len > 0) {
     do {
-      if ((data_available = is_websocket_data_available(websocket_manager))) {
+      if ((data_available = is_websocket_data_available(websocket_manager, 1))) {
         if (websocket_manager->type == U_WEBSOCKET_SERVER) {
           data_len = read(websocket_manager->mhd_sock, data, (len - ret));
         } else {
@@ -87,7 +89,7 @@ size_t read_data_from_socket(struct _websocket_manager * websocket_manager, uint
 /**
  * Workaround to make sure a message, as long as it can be is complete sent
  */
-void ulfius_websocket_send_all(struct _websocket_manager * websocket_manager, const uint8_t * data, size_t len) {
+static void ulfius_websocket_send_all(struct _websocket_manager * websocket_manager, const uint8_t * data, size_t len) {
   ssize_t ret = 0, off;
   if (data != NULL && len > 0) {
     for (off = 0; (size_t)off < len; off += ret) {
@@ -114,7 +116,7 @@ void ulfius_websocket_send_all(struct _websocket_manager * websocket_manager, co
  * Send a message in the websocket without lock
  * Return U_OK on success
  */
-int ulfius_build_and_send_frame(struct _websocket_manager * websocket_manager,
+static int ulfius_build_and_send_frame(struct _websocket_manager * websocket_manager,
                                        const uint8_t opcode,
                                        const short int fin,
                                        const uint64_t data_len,
@@ -229,7 +231,7 @@ int ulfius_build_and_send_frame(struct _websocket_manager * websocket_manager,
  * Return the opcode of the new websocket, U_WEBSOCKET_OPCODE_NONE if no message arrived, or U_WEBSOCKET_OPCODE_ERROR on error
  * Sets the new message in the message variable
  */
-int ulfius_read_incoming_message(struct _websocket_manager * websocket_manager, struct _websocket_message ** message) {
+static int ulfius_read_incoming_message(struct _websocket_manager * websocket_manager, struct _websocket_message ** message) {
   int ret = U_OK, fin = 0, i;
   uint8_t header[2] = {0}, payload_len[8] = {0}, masking_key[4] = {0};
   uint8_t * payload_data = NULL;
@@ -339,7 +341,7 @@ int ulfius_read_incoming_message(struct _websocket_manager * websocket_manager, 
  * Complete the callback when the websocket is closed
  * The websocket can be closed by the client, the manager, the program, or on network disconnect
  */
-void * ulfius_thread_websocket(void * data) {
+static void * ulfius_thread_websocket(void * data) {
   struct _websocket * websocket = (struct _websocket*)data;
   struct _websocket_message * message = NULL;
   pthread_t thread_websocket_manager;
@@ -377,7 +379,7 @@ void * ulfius_thread_websocket(void * data) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Socket error");
           websocket->websocket_manager->connected = 0;
         } else {
-          if (is_websocket_data_available(websocket->websocket_manager)) {
+          if (is_websocket_data_available(websocket->websocket_manager, 0)) {
             if (ulfius_read_incoming_message(websocket->websocket_manager, &message) == U_OK) {
               if (message->opcode == U_WEBSOCKET_OPCODE_CLOSE) {
                 // Send close command back, then close the socket
@@ -455,7 +457,7 @@ void * ulfius_thread_websocket(void * data) {
  * Fill buffer until \r\n is read or buffer_len is reached
  * return U_OK on success
  */
-int ulfius_get_next_line_from_http_response(struct _websocket * websocket, char * buffer, size_t buffer_len, size_t * line_len) {
+static int ulfius_get_next_line_from_http_response(struct _websocket * websocket, char * buffer, size_t buffer_len, size_t * line_len) {
   size_t offset = 0;
   int eol = 0, ret = U_ERROR;
   uint8_t car;
@@ -483,7 +485,7 @@ int ulfius_get_next_line_from_http_response(struct _websocket * websocket, char 
  * websocket
  * Return U_OK on success
  */
-int ulfius_websocket_connection_handshake(struct _u_request * request, struct yuarel * y_url, struct _websocket * websocket, struct _u_response * response) {
+static int ulfius_websocket_connection_handshake(struct _u_request * request, struct yuarel * y_url, struct _websocket * websocket, struct _u_response * response) {
   int websocket_response_http = 0, i, ret, check_websocket = WEBSOCKET_RESPONSE_UPGRADE | WEBSOCKET_RESPONSE_CONNECTION | WEBSOCKET_RESPONSE_ACCEPT;
   unsigned int websocket_response = 0;
   char * http_line, ** split_line = NULL, * key, * value, * separator;
@@ -606,7 +608,7 @@ int ulfius_websocket_connection_handshake(struct _u_request * request, struct yu
  * Opens a websocket connection to the specified server
  * Returns U_OK on success
  */
-int ulfius_open_websocket(struct _u_request * request, struct yuarel * y_url, struct _websocket * websocket, struct _u_response * response) {
+static int ulfius_open_websocket(struct _u_request * request, struct yuarel * y_url, struct _websocket * websocket, struct _u_response * response) {
   int ret;
   struct sockaddr_in server;
   struct hostent * he;
@@ -647,7 +649,7 @@ int ulfius_open_websocket(struct _u_request * request, struct yuarel * y_url, st
  * Opens a websocket connection to the specified server using a tls socket
  * Returns U_OK on success
  */
-int ulfius_open_websocket_tls(struct _u_request * request, struct yuarel * y_url, struct _websocket * websocket, struct _u_response * response) {
+static int ulfius_open_websocket_tls(struct _u_request * request, struct yuarel * y_url, struct _websocket * websocket, struct _u_response * response) {
   int ret;
   struct sockaddr_in server;
   struct hostent * he;
