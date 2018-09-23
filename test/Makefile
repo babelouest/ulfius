@@ -28,7 +28,7 @@ LIBS=-lc -lorcania -lyder -lulfius -lcheck -lpthread -lm -lrt -lsubunit -L$(ULFI
 all: test
 
 clean:
-	rm -f *.o u_map core framework valgrind.txt
+	rm -f *.o u_map core framework websocket valgrind.txt
 
 libulfius.so:
 	cd $(ULFIUS_LOCATION) && $(MAKE) debug
