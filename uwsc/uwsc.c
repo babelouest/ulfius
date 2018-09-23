@@ -90,6 +90,7 @@ static void uwsc_manager_callback (const struct _u_request * request, struct _we
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error reading file %s", config->text_file_send);
     }
+    o_free(file_content);
   } else if (config->binary_file_send != NULL) {
     file_content = read_file(config->binary_file_send, &file_len);
     if (file_content != NULL && file_len > 0) {
@@ -104,6 +105,7 @@ static void uwsc_manager_callback (const struct _u_request * request, struct _we
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error reading file %s", config->binary_file_send);
     }
+    o_free(file_content);
   }
   do {
     if (!config->non_interactive) {
@@ -130,22 +132,23 @@ static void uwsc_manager_callback (const struct _u_request * request, struct _we
       }
     }
   } while (o_strncmp(message, "!q", o_strlen("!q")) != 0 && ulfius_websocket_wait_close(websocket_manager, 500) == U_WEBSOCKET_STATUS_OPEN);
-  printf("exit\n");
+  printf("exit %d\n", ulfius_websocket_wait_close(websocket_manager, 500) == U_WEBSOCKET_STATUS_OPEN);
 }
 
 static void uwsc_manager_incoming (const struct _u_request * request, struct _websocket_manager * websocket_manager, const struct _websocket_message * message, void * websocket_incoming_user_data) {
   struct _websocket_message * last_message;
   struct _config * config = (struct _config *)websocket_incoming_user_data;
   
+  if (message->opcode == U_WEBSOCKET_OPCODE_CLOSE) {
+    fprintf(stdout, "\b\bConnection closed by the server, press <enter> to exit\n> ");
+    fflush(stdout);
+  }
   if (!config->non_listening) {
     if (message->opcode == U_WEBSOCKET_OPCODE_TEXT) {
       fprintf(stdout, "\b\bServer: '%.*s'\n> ", (int)message->data_len, message->data);
       fflush(stdout);
     } else if (message->opcode == U_WEBSOCKET_OPCODE_BINARY) {
       fprintf(stdout, "\b\bServer sent binary message, length %zu\n> ", message->data_len);
-      fflush(stdout);
-    } else if (message->opcode == U_WEBSOCKET_OPCODE_CLOSE) {
-      fprintf(stdout, "\b\bConnection closed by the server, press <enter> to exit\n> ");
       fflush(stdout);
     }
   }

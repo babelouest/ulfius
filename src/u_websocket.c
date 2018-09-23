@@ -231,7 +231,6 @@ int ulfius_build_and_send_frame(struct _websocket_manager * websocket_manager,
  */
 int ulfius_read_incoming_message(struct _websocket_manager * websocket_manager, struct _websocket_message ** message) {
   int ret = U_OK, fin = 0, i;
-  int message_error = 0;
   uint8_t header[2] = {0}, payload_len[8] = {0}, masking_key[4] = {0};
   uint8_t * payload_data = NULL;
   size_t msg_len = 0, len = 0;
@@ -244,7 +243,7 @@ int ulfius_read_incoming_message(struct _websocket_manager * websocket_manager, 
     time(&(*message)->datestamp);
     
     do {
-      if (!message_error) {
+      if (ret == U_OK) {
         // Read header
         if ((len = read_data_from_socket(websocket_manager, header, 2)) == 2) {
           (*message)->opcode = header[0] & 0x0F;
@@ -256,7 +255,6 @@ int ulfius_read_incoming_message(struct _websocket_manager * websocket_manager, 
             if (len == 2) {
               msg_len = payload_len[1] | ((uint64_t)payload_len[0] << 8);
             } else {
-              message_error = 1;
               ret = U_ERROR;
               y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error reading websocket message length");
             }
@@ -272,48 +270,42 @@ int ulfius_read_incoming_message(struct _websocket_manager * websocket_manager, 
                         ((uint64_t)payload_len[1] << 48) |
                         ((uint64_t)payload_len[0] << 54);
             } else {
-              message_error = 1;
               ret = U_ERROR;
               y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error reading websocket message length");
             }
           }
         } else if (len == 0) {
-          message_error = 1;
           ret = U_ERROR;
         } else {
-          message_error = 1;
           ret = U_ERROR;
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error getting websocket header");
         }
         
-        if (!message_error) {
+        if (ret == U_OK) {
           if (websocket_manager->type == U_WEBSOCKET_SERVER) {
             // Read mask
             if (header[1] & U_WEBSOCKET_MASK) {
               (*message)->has_mask = 1;
               len = read_data_from_socket(websocket_manager, masking_key, 4);
               if (len != 4) {
-                message_error = 1;
                 ret = U_ERROR;
                 y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error reading websocket for mask");
               }
             } else {
-              message_error = 1;
               ret = U_ERROR;
               y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Incoming message has no MASK flag, exiting");
             }
           } else {
             if ((header[1] & U_WEBSOCKET_MASK)) {
-              message_error = 1;
               ret = U_ERROR;
               y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Incoming message has MASK flag while it should not, exiting");
             }
           }
         }
-        if (!message_error) {
+        if (ret == U_OK) {
           payload_data = o_malloc(msg_len*sizeof(uint8_t));
           len = read_data_from_socket(websocket_manager, payload_data, msg_len);
-          if (!message_error && (unsigned int)len == msg_len) {
+          if ((unsigned int)len == msg_len) {
             // If mask, decode message
             (*message)->data = o_realloc((*message)->data, (msg_len+(*message)->data_len)*sizeof(uint8_t));
             if ((*message)->has_mask) {
@@ -325,14 +317,13 @@ int ulfius_read_incoming_message(struct _websocket_manager * websocket_manager, 
             }
             (*message)->data_len += msg_len;
           } else if (!len) {
-            message_error = 1;
             ret = U_ERROR;
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error reading websocket for payload_data");
           }
           o_free(payload_data);
         }
       }
-    } while (!message_error && !fin);
+    } while (ret == U_OK && !fin);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for *message");
   }
@@ -399,10 +390,9 @@ void * ulfius_thread_websocket(void * data) {
                 if (ulfius_websocket_send_message(websocket->websocket_manager, U_WEBSOCKET_OPCODE_PONG, 0, NULL) != U_OK) {
                   y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error sending pong command");
                 }
-              } else if (message->opcode != U_WEBSOCKET_OPCODE_NONE && message != NULL) {
-                if (websocket->websocket_incoming_message_callback != NULL) {
-                  websocket->websocket_incoming_message_callback(websocket->request, websocket->websocket_manager, message, websocket->websocket_incoming_user_data);
-                }
+              }
+              if (websocket->websocket_incoming_message_callback != NULL) {
+                websocket->websocket_incoming_message_callback(websocket->request, websocket->websocket_manager, message, websocket->websocket_incoming_user_data);
               }
               if (ulfius_push_websocket_message(websocket->websocket_manager->message_list_incoming, message) != U_OK) {
                 y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error pushing new websocket message in list");
@@ -415,6 +405,28 @@ void * ulfius_thread_websocket(void * data) {
         }
       }
       pthread_mutex_unlock(&websocket->websocket_manager->read_lock);
+    }
+    if (!websocket->websocket_manager->connected) {
+      message = o_malloc(sizeof(struct _websocket_message));
+      if (message != NULL) {
+        time(&message->datestamp);
+        message->opcode = U_WEBSOCKET_OPCODE_CLOSE;
+        message->has_mask = 0;
+        message->mask[0] = 0;
+        message->mask[1] = 0;
+        message->mask[2] = 0;
+        message->mask[3] = 0;
+        message->data_len = 0;
+        message->data = NULL;
+        if (websocket->websocket_incoming_message_callback != NULL) {
+          websocket->websocket_incoming_message_callback(websocket->request, websocket->websocket_manager, message, websocket->websocket_incoming_user_data);
+        }
+        if (ulfius_push_websocket_message(websocket->websocket_manager->message_list_incoming, message) != U_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error pushing new websocket message in list");
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for close essage");
+      }
     }
     if (ulfius_close_websocket(websocket) != U_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error closing websocket");
