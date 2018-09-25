@@ -40,9 +40,9 @@ int callback_websocket_file (const struct _u_request * request, struct _u_respon
 static char * read_file(const char * filename) {
   char * buffer = NULL;
   long length;
-  FILE * f = fopen (filename, "rb");
+  FILE * f;
   if (filename != NULL) {
-
+    f = fopen (filename, "rb");
     if (f) {
       fseek (f, 0, SEEK_END);
       length = ftell (f);
@@ -178,17 +178,16 @@ void websocket_manager_callback(const struct _u_request * request,
       }
       o_free(my_message);
       if (ret != U_OK) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "Error send message");
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error send message");
         break;
       }
       
-      if (i == 2) {
+      if (i == 2 && ulfius_websocket_status(websocket_manager) == U_WEBSOCKET_STATUS_OPEN) {
         ret = ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_PING, 0, NULL);
         if (ret != U_OK) {
-          y_log_message(Y_LOG_LEVEL_DEBUG, "Error send ping message");
+          y_log_message(Y_LOG_LEVEL_ERROR, "Error send ping message");
           break;
-        }
-        sleep(1);
+        };
       }
     } else {
       y_log_message(Y_LOG_LEVEL_DEBUG, "websocket not connected");
