@@ -33,39 +33,39 @@
 void websocket_manager_callback(const struct _u_request * request,
                                struct _websocket_manager * websocket_manager,
                                void * websocket_manager_user_data) {
-  int i, ret;
-  char * my_message;
+  
   if (websocket_manager_user_data != NULL) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_manager_user_data is %s", websocket_manager_user_data);
   }
-  for (i=0; i<4; i++) {
-    if (ulfius_websocket_wait_close(websocket_manager, 2000) == U_WEBSOCKET_STATUS_OPEN) {
-      if (i%2) {
-        my_message = msprintf("Send text message #%d from client", i);
-        //ret = ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(my_message), my_message);
-        ret = ulfius_websocket_send_fragmented_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(my_message), my_message, 5);
-      } else {
-        my_message = msprintf("Send binary message #%d from client", i);
-        ret = ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_BINARY, o_strlen(my_message), my_message);
-      }
-      o_free(my_message);
-      if (ret != U_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Error send message");
-        break;
-      }
-      
-      if (i == 2 && ulfius_websocket_status(websocket_manager) == U_WEBSOCKET_STATUS_OPEN) {
-        ret = ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_PING, 0, NULL);
-        if (ret != U_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Error send ping message");
-          break;
-        }
-      }
-    } else {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "websocket not connected");
-      break;
+  
+  // Send text message without fragmentation
+  if (ulfius_websocket_wait_close(websocket_manager, 2000) == U_WEBSOCKET_STATUS_OPEN) {
+    if (ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen("Message without fragmentation from client"), "Message without fragmentation from client") != U_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error send message without fragmentation");
     }
   }
+  
+  // Send text message with fragmentation
+  if (ulfius_websocket_wait_close(websocket_manager, 2000) == U_WEBSOCKET_STATUS_OPEN) {
+    if (ulfius_websocket_send_fragmented_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen("Message with fragmentation from client"), "Message with fragmentation from client", 5) != U_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error send message with fragmentation");
+    }
+  }
+  
+  // Send ping message
+  if (ulfius_websocket_wait_close(websocket_manager, 2000) == U_WEBSOCKET_STATUS_OPEN) {
+    if (ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_PING, 0, NULL) != U_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error send message with fragmentation");
+    }
+  }
+  
+  // Send binary message without fragmentation
+  if (ulfius_websocket_wait_close(websocket_manager, 2000) == U_WEBSOCKET_STATUS_OPEN) {
+    if (ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_BINARY, o_strlen("Message without fragmentation from client"), "Message without fragmentation from client") != U_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error send message with fragmentation");
+    }
+  }
+  
   y_log_message(Y_LOG_LEVEL_DEBUG, "Closing websocket_manager_callback");
 }
 
