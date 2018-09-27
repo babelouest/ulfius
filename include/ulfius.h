@@ -151,22 +151,22 @@ struct _u_request {
  * Structure of response parameters
  * 
  * Contains response data that must be set by the user
- * status:                              HTTP status code (200, 404, 500, etc)
- * protocol:                            HTTP Protocol sent
- * map_header:                          map containing the header variables
- * nb_cookies:                          number of cookies sent
- * map_cookie:                          array of cookies sent
- * auth_realm:                          realm to send to the client on authenticationb failed
- * binary_body:                         a void * containing a raw binary content
- * binary_body_length:                  the length of the binary_body
- * stream_callback:                     callback function to stream data in response body
- * stream_callback_free:                callback function to free data allocated for streaming
- * stream_size:                         size of the streamed data (U_STREAM_SIZE_UNKOWN if unknown)
- * stream_block_size:                   size of each block to be streamed, set according to your system
- * stream_user_data:                    user defined data that will be available in your callback stream functions
- * websocket_handle:                    handle for websocket extension
- * timeout:                             Timeout to close the connection because of inactivity between the client and the server
- * shared_data:                         any data shared between callback functions, must be allocated and freed by the callback functions
+ * status:               HTTP status code (200, 404, 500, etc)
+ * protocol:             HTTP Protocol sent
+ * map_header:           map containing the header variables
+ * nb_cookies:           number of cookies sent
+ * map_cookie:           array of cookies sent
+ * auth_realm:           realm to send to the client on authenticationb failed
+ * binary_body:          a void * containing a raw binary content
+ * binary_body_length:   the length of the binary_body
+ * stream_callback:      callback function to stream data in response body
+ * stream_callback_free: callback function to free data allocated for streaming
+ * stream_size:          size of the streamed data (U_STREAM_SIZE_UNKOWN if unknown)
+ * stream_block_size:    size of each block to be streamed, set according to your system
+ * stream_user_data:     user defined data that will be available in your callback stream functions
+ * websocket_handle:     handle for websocket extension
+ * shared_data:          any data shared between callback functions, must be allocated and freed by the callback functions
+ * timeout:              Timeout in seconds to close the connection because of inactivity between the client and the server
  * 
  */
 struct _u_response {
@@ -184,8 +184,8 @@ struct _u_response {
   size_t             stream_block_size;
   void             * stream_user_data;
   void             * websocket_handle;
-  unsigned int       timeout;
   void *             shared_data;
+  unsigned int       timeout;
 };
 
 /**
@@ -223,18 +223,22 @@ struct _u_endpoint {
  * 
  * Contains the needed data for an ulfius instance to work
  * 
- * mhd_daemon:            pointer to the libmicrohttpd daemon
- * status:                status of the current instance, status are U_STATUS_STOP, U_STATUS_RUNNING or U_STATUS_ERROR
- * port:                  port number to listen to
- * bind_address:          ip address to listen to (optional)
- * timeout:               Timeout to close the connection because of inactivity between the client and the server
- * nb_endpoints:          Number of available endpoints
- * default_auth_realm:    Default realm on authentication error
- * endpoint_list:         List of available endpoints
- * default_endpoint:      Default endpoint if no other endpoint match the current url
- * default_headers:       Default headers that will be added to all response->map_header
- * max_post_param_size:   maximum size for a post parameter, 0 means no limit, default 0
- * max_post_body_size:    maximum size for the entire post body, 0 means no limit, default 0
+ * mhd_daemon:             pointer to the libmicrohttpd daemon
+ * status:                 status of the current instance, status are U_STATUS_STOP, U_STATUS_RUNNING or U_STATUS_ERROR
+ * port:                   port number to listen to
+ * bind_address:           ip address to listen to (optional)
+ * timeout:                Timeout to close the connection because of inactivity between the client and the server
+ * nb_endpoints:           Number of available endpoints
+ * default_auth_realm:     Default realm on authentication error
+ * endpoint_list:          List of available endpoints
+ * default_endpoint:       Default endpoint if no other endpoint match the current url
+ * default_headers:        Default headers that will be added to all response->map_header
+ * max_post_param_size:    maximum size for a post parameter, 0 means no limit, default 0
+ * max_post_body_size:     maximum size for the entire post body, 0 means no limit, default 0
+ * websocket_handler:      handler for the websocket structure
+ * file_upload_callback:   callback function to manage file upload by blocks
+ * file_upload_cls:        any pointer to pass to the file_upload_callback function
+ * mhd_response_copy_data: to choose between MHD_RESPMEM_MUST_COPY and MHD_RESPMEM_MUST_FREE
  * 
  */
 struct _u_instance {
