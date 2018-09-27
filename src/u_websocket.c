@@ -436,9 +436,6 @@ static void * ulfius_thread_websocket(void * data) {
     }
     while (websocket->websocket_manager->connected && !websocket->websocket_manager->closing) {
       message = NULL;
-      if (pthread_mutex_lock(&websocket->websocket_manager->read_lock)) {
-        websocket->websocket_manager->connected = 0;
-      }
       error = 0;
       if (websocket->websocket_manager->type == U_WEBSOCKET_SERVER) {
         poll_ret = getsockopt(websocket->websocket_manager->mhd_sock, SOL_SOCKET, SO_ERROR, &error, &len);
@@ -454,33 +451,37 @@ static void * ulfius_thread_websocket(void * data) {
           websocket->websocket_manager->connected = 0;
         } else {
           if (is_websocket_data_available(websocket->websocket_manager, 0)) {
-            if (ulfius_read_incoming_message(websocket->websocket_manager, &message) == U_OK) {
-              if (message->opcode == U_WEBSOCKET_OPCODE_CLOSE) {
-                // Send close command back, then close the socket
-                if (ulfius_websocket_send_message(websocket->websocket_manager, U_WEBSOCKET_OPCODE_CLOSE, 0, NULL) != U_OK) {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error sending close command");
-                }
-                websocket->websocket_manager->closing = 1;
-              } else if (message->opcode == U_WEBSOCKET_OPCODE_PING) {
-                // Send pong command
-                if (ulfius_websocket_send_message(websocket->websocket_manager, U_WEBSOCKET_OPCODE_PONG, 0, NULL) != U_OK) {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error sending pong command");
-                }
-              }
-              if (websocket->websocket_incoming_message_callback != NULL) {
-                websocket->websocket_incoming_message_callback(websocket->request, websocket->websocket_manager, message, websocket->websocket_incoming_user_data);
-              }
-              if (ulfius_push_websocket_message(websocket->websocket_manager->message_list_incoming, message) != U_OK) {
-                y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error pushing new websocket message in list");
-              }
+            if (pthread_mutex_lock(&websocket->websocket_manager->read_lock)) {
+              websocket->websocket_manager->connected = 0;
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_read_incoming_message");
-              error = 1;
+              if (ulfius_read_incoming_message(websocket->websocket_manager, &message) == U_OK) {
+                if (message->opcode == U_WEBSOCKET_OPCODE_CLOSE) {
+                  // Send close command back, then close the socket
+                  if (ulfius_websocket_send_message(websocket->websocket_manager, U_WEBSOCKET_OPCODE_CLOSE, 0, NULL) != U_OK) {
+                    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error sending close command");
+                  }
+                  websocket->websocket_manager->closing = 1;
+                } else if (message->opcode == U_WEBSOCKET_OPCODE_PING) {
+                  // Send pong command
+                  if (ulfius_websocket_send_message(websocket->websocket_manager, U_WEBSOCKET_OPCODE_PONG, 0, NULL) != U_OK) {
+                    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error sending pong command");
+                  }
+                }
+                if (websocket->websocket_incoming_message_callback != NULL) {
+                  websocket->websocket_incoming_message_callback(websocket->request, websocket->websocket_manager, message, websocket->websocket_incoming_user_data);
+                }
+                if (ulfius_push_websocket_message(websocket->websocket_manager->message_list_incoming, message) != U_OK) {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error pushing new websocket message in list");
+                }
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_read_incoming_message");
+                error = 1;
+              }
+              pthread_mutex_unlock(&websocket->websocket_manager->read_lock);
             }
           }
         }
       }
-      pthread_mutex_unlock(&websocket->websocket_manager->read_lock);
     }
     if (!websocket->websocket_manager->connected) {
       message = o_malloc(sizeof(struct _websocket_message));
@@ -1139,12 +1140,12 @@ int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websock
         } else if (!(websocket_manager->fds.revents & (POLLRDHUP|POLLERR|POLLHUP|POLLNVAL)) && poll_ret > 0) {
           do {
             ret_message = ulfius_read_incoming_message(websocket_manager, &message);
-            if (message != NULL) {
+            if (ret_message == U_OK && message != NULL) {
               if (ulfius_push_websocket_message(websocket_manager->message_list_incoming, message) != U_OK) {
                 y_log_message(Y_LOG_LEVEL_ERROR, "Error pushing new websocket message in list");
               }
             }
-          } while (ret_message == U_OK && (count-- > 0));
+          } while (message->opcode != U_WEBSOCKET_OPCODE_CLOSE && (count-- > 0));
         }
         websocket_manager->closing = 1;
         pthread_mutex_unlock(&websocket_manager->read_lock);
@@ -1183,7 +1184,12 @@ struct _websocket_message * ulfius_websocket_pop_first_message(struct _websocket
     for (len=0; len < message_list->len-1; len++) {
       message_list->list[len] = message_list->list[len+1];
     }
-    message_list->list = o_realloc(message_list->list, (message_list->len-1));
+    if (message_list->len > 1) {
+      message_list->list = o_realloc(message_list->list, (message_list->len-1));
+    } else {
+      o_free(message_list->list);
+      message_list->list = NULL;
+    }
     message_list->len--;
   }
   return message;
