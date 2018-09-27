@@ -122,7 +122,8 @@ static int ulfius_build_frame (const struct _websocket_message * message,
                                const size_t data_len,
                                uint8_t ** frame,
                                size_t * frame_len) {
-  int ret, i, has_fin = 0;
+  int ret, has_fin = 0;
+  unsigned int i;
   size_t off, frame_data_len;
   if (message != NULL && frame != NULL && frame_len != NULL) {
     *frame_len = 2;
