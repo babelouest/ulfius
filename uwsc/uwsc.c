@@ -46,9 +46,9 @@ struct _config {
 static char * read_file(const char * filename, size_t * filesize) {
   char * buffer = NULL;
   long length;
-  FILE * f = fopen (filename, "rb");
+  FILE * f;
   if (filename != NULL) {
-
+    f = fopen (filename, "rb");
     if (f) {
       fseek (f, 0, SEEK_END);
       length = ftell (f);
