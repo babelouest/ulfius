@@ -55,14 +55,14 @@ void websocket_manager_callback(const struct _u_request * request,
   // Send ping message
   if (ulfius_websocket_wait_close(websocket_manager, 2000) == U_WEBSOCKET_STATUS_OPEN) {
     if (ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_PING, 0, NULL) != U_OK) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error send message with fragmentation");
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error send ping message");
     }
   }
   
   // Send binary message without fragmentation
   if (ulfius_websocket_wait_close(websocket_manager, 2000) == U_WEBSOCKET_STATUS_OPEN) {
     if (ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_BINARY, o_strlen("Message without fragmentation from client"), "Message without fragmentation from client") != U_OK) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error send message with fragmentation");
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error send binary message without fragmentation");
     }
   }
   
