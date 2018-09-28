@@ -57,4 +57,4 @@ websocket: websocket.c
 test_websocket: libulfius.so websocket
 	-LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./websocket
 
-test: test_u_map test_core test_framework
+test: test_u_map test_core test_framework test_websocket
