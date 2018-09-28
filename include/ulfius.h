@@ -977,7 +977,7 @@ struct _websocket_message {
   uint8_t opcode;
   uint8_t has_mask;
   uint8_t mask[4];
-  uint64_t data_len;
+  size_t  data_len;
   char * data;
 };
 
