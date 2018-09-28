@@ -27,8 +27,6 @@
 #include <ulfius.h>
 
 #define _UWSC_VERSION_ "0.3"
-  
-struct _websocket_client_handler websocket_client_handler;
 
 struct _config {
   char       * log_path;
@@ -256,6 +254,7 @@ int main (int argc, char ** argv) {
     {NULL, 0, NULL, 0}
   };
   char * url = NULL;
+  struct _websocket_client_handler websocket_client_handler;
   
   config = malloc(sizeof(struct _config));
   if (config == NULL || !init_config(config)) {
@@ -345,6 +344,7 @@ int main (int argc, char ** argv) {
       fflush(stdout);
       ulfius_websocket_client_connection_wait_close(&websocket_client_handler, 0);
       fprintf(stdout, "Websocket closed\n");
+      ulfius_websocket_client_connection_close(&websocket_client_handler);
     } else {
       fprintf(stderr, "Error connecting to websocket\n");
       y_log_message(Y_LOG_LEVEL_ERROR, "Error connecting to websocket");
@@ -357,7 +357,6 @@ int main (int argc, char ** argv) {
   if (config->log_path != NULL) {
     y_close_logs();
   }
-  ulfius_websocket_client_connection_close(&websocket_client_handler);
   exit_program(&config, 0);
   return 0;
 }
