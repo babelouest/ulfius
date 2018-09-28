@@ -161,15 +161,11 @@ target_link_libraries(ulfius ${LIBS})
 
 option(BUILD_UWSC "Build uwsc application." ON)
 
-if (BUILD_UWSC)
-    if (NOT WITH_WEBSOCKET)
-        message(SEND_ERROR "websocket support is mandatory to build uwsc")
-    else ()
-        add_executable(uwsc ${UWSC_DIR}/uwsc.c ${INC_DIR}/ulfius.h ${INC_DIR}/u_private.h)
-        add_dependencies(uwsc ulfius)
-        target_link_libraries(uwsc ulfius)
-        install(TARGETS uwsc RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-    endif ()
+if (WITH_WEBSOCKET AND BUILD_UWSC)
+    add_executable(uwsc ${UWSC_DIR}/uwsc.c ${INC_DIR}/ulfius.h ${INC_DIR}/u_private.h)
+    add_dependencies(uwsc ulfius)
+    target_link_libraries(uwsc ulfius)
+    install(TARGETS uwsc RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif ()
 
 # dependencies
