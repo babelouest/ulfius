@@ -118,13 +118,13 @@ static void ulfius_websocket_send_all(struct _websocket_manager * websocket_mana
  * frame must be free'd after use
  */
 static int ulfius_build_frame (const struct _websocket_message * message,
-                               const size_t data_offset,
-                               const size_t data_len,
+                               const uint64_t data_offset,
+                               const uint64_t data_len,
                                uint8_t ** frame,
                                size_t * frame_len) {
   int ret, has_fin = 0;
   unsigned int i;
-  size_t off, frame_data_len;
+  uint64_t off, frame_data_len;
   if (message != NULL && frame != NULL && frame_len != NULL) {
     *frame_len = 2;
     if (message->data_len > 65536) {
@@ -538,6 +538,7 @@ static int ulfius_get_next_line_from_http_response(struct _websocket * websocket
   int eol = 0, ret = U_ERROR;
   uint8_t car;
   
+  *line_len = 0;
   do {
     if (read_data_from_socket(websocket->websocket_manager, &car, 1) == 1) {
       buffer[offset] = car;
@@ -568,7 +569,7 @@ static int ulfius_websocket_connection_handshake(struct _u_request * request, st
   char buffer[4096] = {0};
   const char ** keys;
   size_t buffer_len = 4096, line_len;
-
+  
   // Send HTTP Request
   http_line = msprintf("%s %s%s%s HTTP/%s\r\n", request->http_verb, o_strlen(y_url->path)?y_url->path:"/", y_url->query!=NULL?"?":"", y_url->query!=NULL?y_url->query:"", request->http_protocol);
   ulfius_websocket_send_all(websocket->websocket_manager, (uint8_t *)http_line, o_strlen(http_line));
@@ -1503,6 +1504,8 @@ int ulfius_set_websocket_request(struct _u_request * request,
     u_map_put(request->map_header, "Sec-WebSocket-Version", "13");
     u_map_put(request->map_header, "Upgrade", "websocket");
     u_map_put(request->map_header, "Connection", "Upgrade");
+    u_map_put(request->map_header, "Content-Length", "0");
+    srand(time(NULL));
     sprintf(rand_int, "%04d%04d%04d%04d", rand(), rand(), rand(), rand());
     if (!o_base64_encode((unsigned char *)rand_int, 16, (unsigned char *)rand_int_base64, &out_len)) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error o_base64_encode with the input string %s", rand_int);
