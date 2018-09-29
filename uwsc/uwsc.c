@@ -344,7 +344,7 @@ int main (int argc, char ** argv) {
     exit_program(&config, 1);
   }
   
-  if (ulfius_set_websocket_request(config->request, url, NULL, NULL) == U_OK) {
+  if (ulfius_set_websocket_request(config->request, url, config->protocol, config->extensions) == U_OK) {
     if (ulfius_open_websocket_client_connection(config->request, &uwsc_manager_callback, config, &uwsc_manager_incoming, config, NULL, NULL, &websocket_client_handler, config->response) == U_OK) {
       fprintf(stdout, "Websocket connected, you can send text messages of maximum 256 characters.\nTo exit uwsc, type !q<enter>\n> ");
       fflush(stdout);
