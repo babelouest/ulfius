@@ -81,6 +81,14 @@ int main(void) {
 
 - Client websocket request execution, the websocket messages exchange is executed in dedicated callback functions.
 
+### Websockets
+
+- Create a websocket service application
+
+- Create websocket client application
+
+- Connect to a websocket with a simple websocket client command: `uwsc`
+
 ## Installation
 
 See [INSTALL.md](INSTALL.md) file for installation details
