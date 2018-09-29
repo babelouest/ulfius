@@ -113,6 +113,17 @@ You can install Ulfius without root permission if your user has write access to 
 A `ldconfig` command is executed at the end of the install, it will probably fail if you don't have root permission, but this is harmless.
 If you choose to install Ulfius in another directory, you must set your environment variable `LD_LIBRARY_PATH` properly.
 
+#### Install uwsc
+
+uwsc is a small command-line tool to connect to websocket services. To install uwsc only, you can use the `Makefile` in the `uwsc/` directory:
+
+```shell
+$ cd ulfius/uwsc
+$ make && sudo make install
+```
+
+This will compile and install uwsc in `/usr/local/bin`, to install it in another directory, you can change the value of `DESTDIR`.
+
 ### CMake - Multi architecture
 
 You can build Ulfius library using cmake, example:
@@ -129,6 +140,7 @@ The available options for cmake are:
 - `-DWITH_CURL=[on|off]` (default `on`): Build with libcurl dependency
 - `-DWITH_WEBSOCKET=[on|off]` (default `on`): Build with websocket functions, not available for Windows, requires libmicrohttpd 0.9.53 minimum and GnuTLS installed.
 - `-DWITH_JOURNALD=[on|off]` (default `on`): Build with journald (SystemD) support for logging
+- `-DBUILD_UWSC=[on|off]` (default `on`): Build uwsc
 - `-DBUILD_STATIC=[on|off]` (default `off`): Build the static archive in addition to the shared library
 - `-DBUILD_TESTING=[on|off]` (default `off`): Build unit tests
 - `-DINSTALL_HEADER=[on|off]` (default `on`): Install header file `ulfius.h`
