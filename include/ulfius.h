@@ -1049,6 +1049,8 @@ int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websock
  * Return the first message of the message list
  * Return NULL if message_list has no message
  * Returned value must be cleared after use
+ * Use it with struct _websocket_manager->message_list_incoming
+ * or struct _websocket_manager->message_list_outcoming
  */
 struct _websocket_message * ulfius_websocket_pop_first_message(struct _websocket_message_list * message_list);
 
