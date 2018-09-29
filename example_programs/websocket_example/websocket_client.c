@@ -80,7 +80,7 @@ void websocket_incoming_message_callback (const struct _u_request * request,
   if (websocket_incoming_message_user_data != NULL) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_incoming_message_user_data is %s", websocket_incoming_message_user_data);
   }
-  y_log_message(Y_LOG_LEVEL_DEBUG, "Incoming message, opcode: %x, mask: %d, len: %zu", last_message->opcode, last_message->has_mask, last_message->data_len);
+  y_log_message(Y_LOG_LEVEL_DEBUG, "Incoming message, opcode: 0x%02x, mask: %d, len: %zu", last_message->opcode, last_message->has_mask, last_message->data_len);
   if (last_message->opcode == U_WEBSOCKET_OPCODE_TEXT) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "text payload '%.*s'", last_message->data_len, last_message->data);
   } else if (last_message->opcode == U_WEBSOCKET_OPCODE_BINARY) {
