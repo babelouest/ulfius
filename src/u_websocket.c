@@ -611,19 +611,17 @@ static int ulfius_websocket_connection_handshake(struct _u_request * request, st
   }
   
   // Read and parse response
-  do {
-    if (ulfius_get_next_line_from_http_response(websocket, buffer, buffer_len, &line_len) == U_OK) {
-      if (!websocket_response_http) {
-        if (split_string(buffer, " ", &split_line) >= 2 && 0 == o_strcmp(split_line[0], "HTTP/1.1") && 0 == o_strcmp(split_line[1], "101")) {
-          websocket_response_http = 1;
-          response->status = strtol(split_line[1], NULL, 10);
-          response->protocol = o_strdup("1.1");
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error establishing websocket connexion, response is:", line_len, buffer);
-          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - %.*s", line_len, buffer);
-        }
-        free_string_array(split_line);
-      } else if (websocket_response_http) {
+  if (ulfius_get_next_line_from_http_response(websocket, buffer, buffer_len, &line_len) == U_OK) {
+    if (split_string(buffer, " ", &split_line) >= 2 && 0 == o_strcmp(split_line[0], "HTTP/1.1") && 0 == o_strcmp(split_line[1], "101")) {
+      websocket_response_http = 1;
+      response->status = strtol(split_line[1], NULL, 10);
+      response->protocol = o_strdup("1.1");
+    }
+    free_string_array(split_line);
+  }
+  if (websocket_response_http) {
+    do {
+      if (ulfius_get_next_line_from_http_response(websocket, buffer, buffer_len, &line_len) == U_OK) {
         if (o_strlen(buffer) && (separator = o_strchr(buffer, ':')) != NULL) {
           key = o_strndup(buffer, (separator - buffer));
           value = o_strdup(separator + 1);
@@ -649,17 +647,17 @@ static int ulfius_websocket_connection_handshake(struct _u_request * request, st
           // Websocket HTTP response header complete
           break;
         }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_get_next_line_from_http_response, abort parsing response");
+        close(websocket->websocket_manager->tcp_sock);
+        websocket->websocket_manager->tcp_sock = -1;
+        ret = U_ERROR;
+        break;
       }
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_get_next_line_from_http_response, abort parsing response");
-      close(websocket->websocket_manager->tcp_sock);
-      websocket->websocket_manager->tcp_sock = -1;
-      ret = U_ERROR;
-      break;
-    }
-  } while (1);
+    } while (1);
+  }
   
-  if (!(websocket_response & check_websocket) || response->status != 101) {
+  if (!websocket_response_http || !(websocket_response & check_websocket) || response->status != 101) {
     if (u_map_has_key(response->map_header, "Content-Length")) {
       response->binary_body_length = strtol(u_map_get(response->map_header, "Content-Length"), NULL, 10);
       response->binary_body = o_malloc(response->binary_body_length);
@@ -1016,6 +1014,9 @@ int ulfius_check_first_match(const char * source, const char * match, const char
           free_string_array(source_list);
           free_string_array(match_list);
         }
+      }
+      if (*result == NULL) {
+        ret = U_ERROR;
       }
     }
   } else {
@@ -1606,14 +1607,16 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
               ret = U_OK;
             }
           }
-          thread_ret_websocket = pthread_create(&thread_websocket, NULL, ulfius_thread_websocket, (void *)websocket);
-          thread_detach_websocket = pthread_detach(thread_websocket);
-          if (thread_ret_websocket || thread_detach_websocket) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error creating or detaching websocket manager thread, return code: %d, detach code: %d",
-                          thread_ret_websocket, thread_detach_websocket);
-            ulfius_clear_websocket(websocket);
+          if (ret == U_OK) {
+            thread_ret_websocket = pthread_create(&thread_websocket, NULL, ulfius_thread_websocket, (void *)websocket);
+            thread_detach_websocket = pthread_detach(thread_websocket);
+            if (thread_ret_websocket || thread_detach_websocket) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error creating or detaching websocket manager thread, return code: %d, detach code: %d",
+                            thread_ret_websocket, thread_detach_websocket);
+              ulfius_clear_websocket(websocket);
+            }
+            websocket_client_handler->websocket = websocket;
           }
-          websocket_client_handler->websocket = websocket;
         } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for websocket");
             ret = U_ERROR_MEMORY;
