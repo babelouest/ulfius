@@ -144,9 +144,10 @@ static int ulfius_build_frame (const struct _websocket_message * message,
     *frame_len += frame_data_len;
     *frame = o_malloc(*frame_len);
     if (*frame != NULL) {
-      (*frame)[0] = message->opcode;
       if (has_fin) {
-        (*frame)[0] |= U_WEBSOCKET_BIT_FIN;
+        (*frame)[0] = (message->opcode | U_WEBSOCKET_BIT_FIN);
+      } else {
+        (*frame)[0] = 0;
       }
       if (message->data_len > 65536) {
         (*frame)[1] = 127;
