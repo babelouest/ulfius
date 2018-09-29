@@ -41,7 +41,7 @@
           mySocket = false;
           var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Websocket closed</strong></p><hr>"
           $("#message").append(message);
-          $("#connect").val("Connect websocket " + (echo?"echo":"standard"));
+          $("#connect" + (echo?"Echo":"")).val("Connect websocket " + (echo?"echo":"standard"));
         };
       }
     }
@@ -49,14 +49,14 @@
     $("#connect").click(function() {
       if (!mySocket) {
         connectSocket(false);
-        $(this).val("Disconnect websocket");
+        $("#connect").val("Disconnect websocket");
         var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Websocket connected</strong></p><hr>"
         $("#message").append(message);
         $("#connect").val("Disconnect websocket");
       } else {
         mySocket.close();
         mySocket = false;
-        $(this).val("Connect websocket standard");
+        $("#connect").val("Connect websocket standard");
       }
     });
     
@@ -64,14 +64,14 @@
     $("#connectEcho").click(function() {
       if (!mySocket) {
         connectSocket(true);
-        $(this).val("Disconnect websocket echo");
+        $("#connectEcho").val("Disconnect websocket echo");
         var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Websocket echo connected</strong></p><hr>"
         $("#message").append(message);
-        $("#connect").val("Disconnect websocket echo");
+        $("#connectEcho").val("Disconnect websocket echo");
       } else {
         mySocket.close();
         mySocket = false;
-        $(this).val("Connect websocket echo");
+        $("#connectEcho").val("Connect websocket echo");
       }
     });
     
