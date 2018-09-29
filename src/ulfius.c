@@ -430,15 +430,16 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
             // Initiate an UPGRADE session,
             // then run the websocket callback functions with initialized data
             if (NULL != o_strcasestr(u_map_get_case(con_info->request->map_header, "upgrade"), U_WEBSOCKET_UPGRADE_VALUE) &&
-                u_map_get(con_info->request->map_header, "Sec-WebSocket-Key") != NULL &&
-                u_map_get(con_info->request->map_header, "Origin") != NULL &&
-                0 == o_strcmp(con_info->request->http_protocol, "HTTP/1.1") &&
-                0 == o_strcmp(u_map_get(con_info->request->map_header, "Sec-WebSocket-Version"), "13") &&
+                NULL != u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Key") &&
+                NULL != u_map_get_case(con_info->request->map_header, "Origin") &&
                 NULL != o_strcasestr(u_map_get_case(con_info->request->map_header, "Connection"), "Upgrade") &&
+                0 == o_strcmp(con_info->request->http_protocol, "HTTP/1.1") &&
+                0 == o_strcmp(u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Version"), "13") &&
                 0 == o_strcmp(con_info->request->http_verb, "GET")) {
+              int ret_protocol, ret_extensions;
               // Check websocket_protocol and websocket_extensions to match ours
-              if (ulfius_check_list_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Extensions"), ((struct _websocket_handle *)response->websocket_handle)->websocket_extensions, ";", &extension) == U_OK && 
-                  ulfius_check_first_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Protocol"), ((struct _websocket_handle *)response->websocket_handle)->websocket_protocol, ",", &protocol) == U_OK) {
+              if ((ret_extensions = ulfius_check_list_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Extensions"), ((struct _websocket_handle *)response->websocket_handle)->websocket_extensions, ";", &extension)) == U_OK && 
+                  (ret_protocol = ulfius_check_first_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Protocol"), ((struct _websocket_handle *)response->websocket_handle)->websocket_protocol, ",", &protocol)) == U_OK) {
                 char websocket_accept[32] = {0};
                 if (ulfius_generate_handshake_answer(u_map_get(con_info->request->map_header, "Sec-WebSocket-Key"), websocket_accept)) {
                   struct _websocket * websocket = o_malloc(sizeof(struct _websocket));
@@ -513,15 +514,24 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                 }
               } else {
                 response->status = MHD_HTTP_BAD_REQUEST;
-                response_buffer = o_strdup(U_WEBSOCKET_BAD_REQUEST_BODY);
-                mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, mhd_response_flag );
+                response_buffer = msprintf("%s%s", (ret_protocol!=U_OK?"Error validating protocol\n":""), (ret_extensions!=U_OK?"Error validating extensions":""));
+                y_log_message(Y_LOG_LEVEL_DEBUG, "Ulfius - Error websocket connection: %s", response_buffer);
+                mhd_response = MHD_create_response_from_buffer (o_strlen(response_buffer), response_buffer, mhd_response_flag );
               }
               o_free(protocol);
               o_free(extension);
             } else {
+              response_buffer = msprintf("%s%s%s%s%s%s%s",
+                                         o_strcasestr(u_map_get_case(con_info->request->map_header, "upgrade"), U_WEBSOCKET_UPGRADE_VALUE)==NULL?"No Upgrade websocket header\n":"",
+                                         o_strcasestr(u_map_get_case(con_info->request->map_header, "Connection"), "Upgrade")==NULL?"No Connection Upgrade header\n":"",
+                                         u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Key")==NULL?"No Sec-WebSocket-Key header\n":"",
+                                         u_map_get_case(con_info->request->map_header, "Origin")?"No Origin header\n":"",
+                                         o_strcmp(con_info->request->http_protocol, "HTTP/1.1")!=0?"Wrong HTTP Protocolv":"",
+                                         o_strcmp(u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Version"), "13")!=0?"Wrong websocket version\n":"",
+                                         o_strcmp(con_info->request->http_verb, "GET")!=0?"Method is not GET":"");
               response->status = MHD_HTTP_BAD_REQUEST;
-              response_buffer = o_strdup(U_WEBSOCKET_BAD_REQUEST_BODY);
-              mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, mhd_response_flag );
+              y_log_message(Y_LOG_LEVEL_DEBUG, "Ulfius - Error websocket connection: %s", response_buffer);
+              mhd_response = MHD_create_response_from_buffer (o_strlen(response_buffer), response_buffer, mhd_response_flag );
             }
             close_loop = 1;
 #endif
