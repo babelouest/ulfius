@@ -185,6 +185,8 @@ static void print_help(FILE * output) {
   fprintf(output, "\tSpecify the Websocket Protocol values, default none\n");
   fprintf(output, "-e --extensions=EXTENSION\n");
   fprintf(output, "\tSpecify the Websocket extensions values, default none\n");
+  fprintf(output, "-s --non-secure\n");
+  fprintf(output, "\tDo not check server certificate\n");
   fprintf(output, "-v --version\n");
   fprintf(output, "\tPrint Glewlwyd's current version\n\n");
   fprintf(output, "-h --help\n");
@@ -238,7 +240,7 @@ static void exit_program(struct _config ** config, int exit_value) {
 int main (int argc, char ** argv) {
   struct _config * config;
   int next_option;
-  const char * short_options = "o::x::b::t::i::l::f::p::e::v::h::";
+  const char * short_options = "o::x::b::t::i::l::f::p::e::s::v::h::";
   static const struct option long_options[]= {
     {"output-log-file", required_argument, NULL, 'o'},  // Sets an output file for logging messages
     {"add-header", required_argument, NULL, 'x'},       // Add the specified header of the form 'key:value'
@@ -249,6 +251,7 @@ int main (int argc, char ** argv) {
     {"fragmentation", required_argument, NULL, 'f'},    // Specify the max length of a frame and fragment the message to send if required
     {"protocol", required_argument, NULL, 'p'},         // Websocket protocol
     {"extensions", required_argument, NULL, 'e'},       // Websocket extensions
+    {"non-secure", no_argument, NULL, 's'},             // Do not check server certificate
     {"version", no_argument, NULL, 'v'},                // Show version
     {"help", no_argument, NULL, 'h'},                   // print help
     {NULL, 0, NULL, 0}
@@ -310,6 +313,9 @@ int main (int argc, char ** argv) {
         break;
       case 'e':
         config->extensions = o_strdup(optarg);
+        break;
+      case 's':
+        config->request->check_server_certificate = 0;
         break;
       case 'v':
         // Print version and exit

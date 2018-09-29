@@ -35,6 +35,8 @@ uwsc has some options available:
 	Specify the Websocket Protocol values, default none
 -e --extensions=EXTENSION
 	Specify the Websocket extensions values, default none
+-s --non-secure
+	Do not check server certificate
 -v --version
 	Print Glewlwyd's current version
 
