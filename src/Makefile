@@ -75,13 +75,11 @@ clean:
 install: all
 	cp $(OUTPUT).$(VERSION) $(DESTDIR)/lib
 	cp $(ULFIUS_INCLUDE)/ulfius.h $(DESTDIR)/include
-	cp $(ULFIUS_INCLUDE)/yuarel.h $(DESTDIR)/include
 	-ldconfig
 
 static-install: static
 	cp libulfius.a $(DESTDIR)/lib
 	cp $(ULFIUS_INCLUDE)/ulfius.h $(DESTDIR)/include
-	cp $(ULFIUS_INCLUDE)/yuarel.h $(DESTDIR)/include
 
 uninstall:
 	rm -f $(DESTDIR)/lib/$(OUTPUT) $(DESTDIR)/lib/libulfius.a
