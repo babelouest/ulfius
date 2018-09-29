@@ -1506,6 +1506,7 @@ int ulfius_set_websocket_request(struct _u_request * request,
     u_map_put(request->map_header, "Upgrade", "websocket");
     u_map_put(request->map_header, "Connection", "Upgrade");
     u_map_put(request->map_header, "Content-Length", "0");
+    u_map_put(request->map_header, "User-Agent", "Ulfius Websocket Client Framework");
     srand(time(NULL));
     sprintf(rand_int, "%04d%04d%04d%04d", rand(), rand(), rand(), rand());
     if (!o_base64_encode((unsigned char *)rand_int, 16, (unsigned char *)rand_int_base64, &out_len)) {
