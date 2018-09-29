@@ -973,12 +973,12 @@ struct _websocket_manager {
  * and the timestamp of when it was sent of received
  */
 struct _websocket_message {
-  time_t datestamp;
+  time_t  datestamp;
   uint8_t opcode;
   uint8_t has_mask;
   uint8_t mask[4];
   size_t  data_len;
-  char * data;
+  char *  data;
 };
 
 /**
@@ -1179,9 +1179,9 @@ int ulfius_websocket_client_connection_wait_close(struct _websocket_client_handl
  * Return U_OK on success
  */
 int ulfius_set_websocket_request(struct _u_request * request,
-                                  const char * url,
-                                  const char * websocket_protocol,
-                                  const char * websocket_extensions);
+                                 const char * url,
+                                 const char * websocket_protocol,
+                                 const char * websocket_extensions);
 
 #endif
 
