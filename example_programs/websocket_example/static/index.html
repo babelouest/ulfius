@@ -6,7 +6,8 @@
 </head>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 <body>
-  <input type="button" id="connect" name="connect" value="Connect websocket"><br>
+  <input type="button" id="connect" name="connect" value="Connect websocket standard">
+  <input type="button" id="connectEcho" name="connectEcho" value="Connect websocket echo"><br>
   <textarea name="sendMessage" id="sendMessage" cols="80" rows="20"></textarea><br>
   <input type="button" id="send" name="send" value="Send message">
   <input type="button" id="clear" name="clear" value="Clear messages"><br/>
@@ -21,11 +22,11 @@
     var mySocket = false;
     var curFile = false;
     
-    function connectSocket() {
+    function connectSocket(echo) {
       if (location.protocol === "https:") {
-        mySocket = new WebSocket("wss://" + location.hostname + ":" + location.port + "/websocket", ["plop"]);
+        mySocket = new WebSocket("wss://" + location.hostname + ":" + location.port + "/websocket" + (echo?"/echo":""), ["plop"]);
       } else {
-        mySocket = new WebSocket("ws://" + location.hostname + ":" + location.port + "/websocket", ["plop"]);
+        mySocket = new WebSocket("ws://" + location.hostname + ":" + location.port + "/websocket" + (echo?"/echo":""), ["plop"]);
       }
       if (mySocket) {
         mySocket.onmessage = function (event) {
@@ -40,14 +41,14 @@
           mySocket = false;
           var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Websocket closed</strong></p><hr>"
           $("#message").append(message);
-          $("#connect").val("Connect websocket");
+          $("#connect").val("Connect websocket " + (echo?"echo":"standard"));
         };
       }
     }
     
     $("#connect").click(function() {
       if (!mySocket) {
-        connectSocket();
+        connectSocket(false);
         $(this).val("Disconnect websocket");
         var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Websocket connected</strong></p><hr>"
         $("#message").append(message);
@@ -55,7 +56,22 @@
       } else {
         mySocket.close();
         mySocket = false;
-        $(this).val("Connect websocket");
+        $(this).val("Connect websocket standard");
+      }
+    });
+    
+    
+    $("#connectEcho").click(function() {
+      if (!mySocket) {
+        connectSocket(true);
+        $(this).val("Disconnect websocket echo");
+        var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Websocket echo connected</strong></p><hr>"
+        $("#message").append(message);
+        $("#connect").val("Disconnect websocket echo");
+      } else {
+        mySocket.close();
+        mySocket = false;
+        $(this).val("Connect websocket echo");
       }
     });
     
@@ -66,7 +82,7 @@
     $("#send").click(function() {
       if ($("#sendMessage").val()) {
         if (!mySocket) {
-          connectSocket();
+          connectSocket(false);
         }
         mySocket.send($("#sendMessage").val());
         var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Message sent: </strong>" + $("#sendMessage").val() + "</p><hr>"
