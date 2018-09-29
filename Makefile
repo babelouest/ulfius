@@ -30,7 +30,7 @@ ifeq (($(WEBSOCKETFLAG)),"")
 ADD_WEBSOCKETFLAG="WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET"
 endif
 
-all: libulfius.so
+all: libulfius.so uwsc
 	cd $(EXAMPLES_LOCATION) && $(MAKE) debug
 
 debug:
@@ -52,3 +52,6 @@ uninstall:
 
 libulfius.so:
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) $(ADD_JANSSONFLAG) $(ADD_CURLFLAG) $(ADD_WEBSOCKETFLAG)
+
+uwsc: libulfius.so
+	cd $(UWSC_LOCATION) && $(MAKE)
