@@ -2,7 +2,7 @@
  *
  * uwsc - Ulfius Websocket client
  *
- * Command-line application to run a websocket client
+ * Command-line application to connect to a websocket service
  *
  * Copyright 2018 Nicolas Mora <mail@babelouest.org>
  *
@@ -26,7 +26,7 @@
 #include <yder.h>
 #include <ulfius.h>
 
-#define _UWSC_VERSION_ "0.3"
+#define _UWSC_VERSION_ "0.5"
 
 struct _config {
   char       * log_path;
