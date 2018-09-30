@@ -9,6 +9,7 @@
 - Allow to use MHD_RESPMEM_MUST_COPY for different memory manager, fix #63
 - Add websocket client framework
 - Add uwsc - Ulfius WebSocket Client - A simple command-line websocket client program
+- Add Travis CI
 
 ## 2.3.8
 
