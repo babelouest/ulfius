@@ -628,24 +628,24 @@ static int ulfius_websocket_connection_handshake(struct _u_request * request, st
           if (u_map_put(response->map_header, key, value) != U_OK) {
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error adding header %s:%s to the response structure", key, value);
           }
+          if (0 == o_strcmp(buffer, "Upgrade: websocket")) {
+            websocket_response |= WEBSOCKET_RESPONSE_UPGRADE;
+          } else if (0 == o_strcmp(buffer, "Connection: Upgrade")) {
+            websocket_response |= WEBSOCKET_RESPONSE_CONNECTION;
+          } else if (0 == o_strcmp(buffer, "Sec-WebSocket-Protocol")) {
+            websocket->websocket_manager->protocol = o_strdup(value);
+            websocket_response |= WEBSOCKET_RESPONSE_PROTCOL;
+          } else if (0 == o_strcmp(buffer, "Sec-WebSocket-Extension")) {
+            websocket->websocket_manager->extensions = o_strdup(value);
+            websocket_response |= WEBSOCKET_RESPONSE_EXTENSION;
+          } else if (0 == o_strcmp(buffer, "Sec-WebSocket-Accept") && ulfius_check_handshake_response(u_map_get(request->map_header, "Sec-WebSocket-Key"), value) == U_OK) {
+            websocket_response |= WEBSOCKET_RESPONSE_ACCEPT;
+          } else if (0 == o_strcmp(buffer, "")) {
+            // Websocket HTTP response header complete
+            break;
+          }
           o_free(key);
           o_free(value);
-        }
-        if (0 == o_strcmp(buffer, "Upgrade: websocket")) {
-          websocket_response |= WEBSOCKET_RESPONSE_UPGRADE;
-        } else if (0 == o_strcmp(buffer, "Connection: Upgrade")) {
-          websocket_response |= WEBSOCKET_RESPONSE_CONNECTION;
-        } else if (0 == o_strcmp(buffer, "Sec-WebSocket-Protocol")) {
-          websocket->websocket_manager->protocol = o_strdup(value);
-          websocket_response |= WEBSOCKET_RESPONSE_PROTCOL;
-        } else if (0 == o_strcmp(buffer, "Sec-WebSocket-Extension")) {
-          websocket->websocket_manager->extensions = o_strdup(value);
-          websocket_response |= WEBSOCKET_RESPONSE_EXTENSION;
-        } else if (0 == o_strcmp(buffer, "Sec-WebSocket-Accept") && ulfius_check_handshake_response(u_map_get(request->map_header, "Sec-WebSocket-Key"), value) == U_OK) {
-          websocket_response |= WEBSOCKET_RESPONSE_ACCEPT;
-        } else if (0 == o_strcmp(buffer, "")) {
-          // Websocket HTTP response header complete
-          break;
         }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_get_next_line_from_http_response, abort parsing response");
