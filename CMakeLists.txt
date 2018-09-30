@@ -31,8 +31,8 @@ set(LIBRARY_VERSION_MINOR "4")
 set(LIBRARY_VERSION_PATCH "0")
 set(LIBRARY_VERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}.${LIBRARY_VERSION_PATCH}")
 set(LIBRARY_SOVERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}")
-set(YDER_VERSION_DOWNLOAD "1.4.1")
-set(ORCANIA_VERSION_DOWNLOAD "1.2.4")
+set(YDER_VERSION_DOWNLOAD "1.4.2")
+set(ORCANIA_VERSION_DOWNLOAD "1.2.6")
 
 # cmake modules
 
@@ -227,7 +227,7 @@ endif ()
 
 # tests
 
-option(BUILD_TESTING "Build the testing tree." OFF) # because we do not use include(CTest)
+option(BUILD_ULFIUS_TESTING "Build the testing tree." OFF) # because we do not use include(CTest)
 
 if (BUILD_TESTING)
     include(FindCheck)
