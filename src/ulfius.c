@@ -206,7 +206,7 @@ static void mhd_request_completed (void *cls, struct MHD_Connection *connection,
   if (NULL == con_info) {
     return;
   }
-  if (NULL != con_info && con_info->has_post_processor && con_info->post_processor != NULL) {
+  if (con_info->has_post_processor && con_info->post_processor != NULL) {
     MHD_destroy_post_processor (con_info->post_processor);
   }
   ulfius_clean_request_full(con_info->request);
