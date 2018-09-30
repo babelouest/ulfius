@@ -217,15 +217,6 @@ static struct _websocket_message * ulfius_build_message (const uint8_t opcode,
         new_message->data = NULL;
       }
       if (!data_len || new_message->data != NULL) {
-        new_message->data_len = 2 + data_len;
-        if (data_len > 65536) {
-          new_message->data_len += 8;
-        } else if (data_len > 128) {
-          new_message->data_len += 2;
-        }
-        if (has_mask) {
-          new_message->data_len += 4;
-        }
         new_message->opcode = opcode;
         new_message->data_len = data_len;
         if (!has_mask) {
@@ -417,7 +408,7 @@ static int ulfius_read_incoming_message(struct _websocket_manager * websocket_ma
  * Complete the callback when the websocket is closed
  * The websocket can be closed by the client, the manager, the program, or on network disconnect
  */
-static void * ulfius_thread_websocket(void * data) {
+void * ulfius_thread_websocket(void * data) {
   struct _websocket * websocket = (struct _websocket*)data;
   struct _websocket_message * message = NULL;
   pthread_t thread_websocket_manager;
@@ -510,8 +501,10 @@ static void * ulfius_thread_websocket(void * data) {
     if (ulfius_close_websocket(websocket) != U_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error closing websocket");
     }
-    // Wait for thread manager to close
-    pthread_join(thread_websocket_manager, NULL);
+    if (!thread_ret_websocket_manager) {
+      // Wait for thread manager to close
+      pthread_join(thread_websocket_manager, NULL);
+    }
     
     // Broadcast end signal
     if (websocket->websocket_manager->type == U_WEBSOCKET_CLIENT) {
@@ -519,11 +512,11 @@ static void * ulfius_thread_websocket(void * data) {
       pthread_cond_broadcast(&websocket->websocket_manager->status_cond);
       pthread_mutex_unlock(&websocket->websocket_manager->status_lock);
     }
+    if (websocket->websocket_manager->type == U_WEBSOCKET_SERVER) {
+      ulfius_clear_websocket(websocket);
+    }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error websocket parameters");
-  }
-  if (websocket->websocket_manager->type == U_WEBSOCKET_SERVER) {
-    ulfius_clear_websocket(websocket);
   }
   
   pthread_exit(NULL);
@@ -1264,10 +1257,10 @@ int ulfius_init_websocket(struct _websocket * websocket) {
     websocket->websocket_manager = o_malloc(sizeof(struct _websocket_manager));
     websocket->urh = NULL;
     if (websocket->websocket_manager == NULL) {
-      websocket->websocket_manager->tls = 0;
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for websocket_manager");
       return U_ERROR_MEMORY;
     } else {
+      websocket->websocket_manager->tls = 0;
       if (ulfius_init_websocket_manager(websocket->websocket_manager) != U_OK) {
         o_free(websocket->websocket_manager);
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_init_websocket_manager");

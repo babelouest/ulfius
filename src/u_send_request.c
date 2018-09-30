@@ -158,16 +158,15 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
     if (copy_request == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_duplicate_request");
       return U_ERROR_MEMORY;
-    }
+    } else {
     
-    o_get_alloc_funcs(&malloc_fn, &realloc_fn, &free_fn);
-    if (curl_global_init_mem(CURL_GLOBAL_DEFAULT, malloc_fn, free_fn, realloc_fn, *o_strdup, *calloc) != CURLE_OK) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error curl_global_init_mem");
-      return U_ERROR_MEMORY;
-    }
-    curl_handle = curl_easy_init();
+      o_get_alloc_funcs(&malloc_fn, &realloc_fn, &free_fn);
+      if (curl_global_init_mem(CURL_GLOBAL_DEFAULT, malloc_fn, free_fn, realloc_fn, *o_strdup, *calloc) != CURLE_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error curl_global_init_mem");
+        return U_ERROR_MEMORY;
+      }
+      curl_handle = curl_easy_init();
 
-    if (copy_request != NULL) {
       // Append header values
       if (copy_request->map_header == NULL) {
         copy_request->map_header = o_malloc(sizeof(struct _u_map));
@@ -367,7 +366,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
         }
       }
 
-      if (copy_request->map_header != NULL && u_map_count(copy_request->map_header) > 0) {
+      if (u_map_count(copy_request->map_header) > 0) {
         // Append map headers
         keys = u_map_enum_keys(copy_request->map_header);
         for (i=0; keys != NULL && keys[i] != NULL; i++) {
@@ -707,9 +706,6 @@ static size_t smtp_payload_source(void * ptr, size_t size, size_t nmemb, void * 
   } else if (upload_ctx->lines_read == MAIL_END) {
     return 0;
   }
-
-  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting mail payload, len is %d, lines_read is %d", len, upload_ctx->lines_read);
-  return 0;
 }
 
 /**
