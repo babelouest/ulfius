@@ -436,7 +436,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                 0 == o_strcmp(con_info->request->http_protocol, "HTTP/1.1") &&
                 0 == o_strcmp(u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Version"), "13") &&
                 0 == o_strcmp(con_info->request->http_verb, "GET")) {
-              int ret_protocol, ret_extensions;
+              int ret_protocol = 0, ret_extensions = 0;
               // Check websocket_protocol and websocket_extensions to match ours
               if ((ret_extensions = ulfius_check_list_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Extensions"), ((struct _websocket_handle *)response->websocket_handle)->websocket_extensions, ";", &extension)) == U_OK && 
                   (ret_protocol = ulfius_check_first_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Protocol"), ((struct _websocket_handle *)response->websocket_handle)->websocket_protocol, ",", &protocol)) == U_OK) {
