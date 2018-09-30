@@ -705,6 +705,9 @@ static size_t smtp_payload_source(void * ptr, size_t size, size_t nmemb, void * 
     return len;
   } else if (upload_ctx->lines_read == MAIL_END) {
     return 0;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting mail payload, len is %d, lines_read is %d", len, upload_ctx->lines_read);
+    return 0;
   }
 }
 
