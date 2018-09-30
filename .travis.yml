@@ -1,0 +1,19 @@
+sudo: required
+
+language: c
+
+addons:
+  apt:
+    packages: [ libmicrohttpd-dev, libjansson-dev, check, libsubunit-dev ]
+
+matrix:
+  include:
+    - os: linux
+      compiler: gcc
+    - os: linux
+      compiler: clang
+
+script:
+  - cmake -DWITH_JOURNALD=off -DBUILD_TESTING=on .
+  - make
+  - make test
