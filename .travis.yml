@@ -4,7 +4,7 @@ language: c
 
 addons:
   apt:
-    packages: [ libmicrohttpd-dev, libjansson-dev, check, libsubunit-dev ]
+    packages: [ libmicrohttpd-dev, libjansson-dev, check, libsubunit-dev, cppcheck ]
 
 matrix:
   include:
@@ -12,6 +12,10 @@ matrix:
       compiler: gcc
     - os: linux
       compiler: clang
+    - env: LABEL=cppcheck
+      os: linux
+      script:
+        - cppcheck --force --enable=warning,missingInclude --error-exitcode=1 . >build.log 2>&1 || (cat build.log && exit 1)
 
 script:
   - cmake -DWITH_JOURNALD=off -DBUILD_TESTING=on .
