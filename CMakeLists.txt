@@ -60,7 +60,7 @@ endif ()
 
 set(INC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
-set(UWSC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/uwsc)
+set(UWSC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tools/uwsc)
 
 include_directories(${INC_DIR})
 

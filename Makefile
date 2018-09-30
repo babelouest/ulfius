@@ -15,7 +15,7 @@
 
 LIBULFIUS_LOCATION=./src
 EXAMPLES_LOCATION=./example_programs
-UWSC_LOCATION=./uwsc
+UWSC_LOCATION=./tools/uwsc
 TESTS_LOCATION=./test
 
 ifeq (($(JANSSONFLAG)),"")
