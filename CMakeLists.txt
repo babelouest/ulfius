@@ -229,7 +229,7 @@ endif ()
 
 option(BUILD_ULFIUS_TESTING "Build the testing tree." OFF) # because we do not use include(CTest)
 
-if (BUILD_TESTING)
+if (BUILD_ULFIUS_TESTING)
     include(FindCheck)
     find_package(Check REQUIRED)
     if (CHECK_FOUND)
