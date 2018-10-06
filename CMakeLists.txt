@@ -18,20 +18,19 @@ cmake_minimum_required(VERSION 3.5)
 
 project(ulfius C)
 
-set(PROJECT_DESCRIPTION "Web Framework to build REST APIs, Webservices or any HTTP endpoint in C language. Can stream large amount of data, integrate JSON data with Jansson, and create websocket services")
-set(PROJECT_HOMEPAGE_URL "https://github.com/babelouest/ulfius/")
-set(PROJECT_VERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}.${LIBRARY_VERSION_PATCH}")
-set(LIBRARY_VERSION_MAJOR "2")
-set(LIBRARY_VERSION_MINOR "4")
-set(LIBRARY_VERSION_PATCH "0")
-
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 
 # library info
 
+set(PROJECT_DESCRIPTION "Web Framework to build REST APIs, Webservices or any HTTP endpoint in C language. Can stream large amount of data, integrate JSON data with Jansson, and create websocket services")
+set(PROJECT_HOMEPAGE_URL "https://github.com/babelouest/ulfius/")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/ulfius/issues")
+set(LIBRARY_VERSION_MAJOR "2")
+set(LIBRARY_VERSION_MINOR "4")
+set(LIBRARY_VERSION_PATCH "0")
 
+set(PROJECT_VERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}.${LIBRARY_VERSION_PATCH}")
 set(LIBRARY_VERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}.${LIBRARY_VERSION_PATCH}")
 set(LIBRARY_SOVERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}")
 set(YDER_VERSION_DOWNLOAD "1.4.2")
