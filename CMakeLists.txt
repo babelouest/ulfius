@@ -18,17 +18,20 @@ cmake_minimum_required(VERSION 3.5)
 
 project(ulfius C)
 
+set(PROJECT_DESCRIPTION "Web Framework to build REST APIs, Webservices or any HTTP endpoint in C language. Can stream large amount of data, integrate JSON data with Jansson, and create websocket services")
+set(PROJECT_HOMEPAGE_URL "https://github.com/babelouest/ulfius/")
+set(PROJECT_VERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}.${LIBRARY_VERSION_PATCH}")
+set(LIBRARY_VERSION_MAJOR "2")
+set(LIBRARY_VERSION_MINOR "4")
+set(LIBRARY_VERSION_PATCH "0")
+
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 
 # library info
 
-set(PROJECT_DESCRIPTION "HTTP Framework for REST API in C, using JSON or not, with websockets or not, with streaming data or not")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/ulfius/issues")
 
-set(LIBRARY_VERSION_MAJOR "2")
-set(LIBRARY_VERSION_MINOR "4")
-set(LIBRARY_VERSION_PATCH "0")
 set(LIBRARY_VERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}.${LIBRARY_VERSION_PATCH}")
 set(LIBRARY_SOVERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}")
 set(YDER_VERSION_DOWNLOAD "1.4.2")
@@ -331,8 +334,20 @@ endif ()
 set(PACKAGE_IGNORED_FILES
         "${CMAKE_CURRENT_BINARY_DIR}/;/.git/;.gitignore;~$;${CPACK_SOURCE_IGNORE_FILES}")
 
+set(CPACK_PACKAGE_NAME "libulfius")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Web Framework for C programs")
 set(CPACK_GENERATOR "TGZ;DEB")
-set(CPACK_DEBIAN_PACKAGE_NAME "libulfius")
+set(CPACK_PACKAGE_VERSION_MAJOR ${LIBRARY_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${LIBRARY_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${LIBRARY_VERSION_PATCH})
+
+option(BUILD_RPM "Build a RPM for your system" OFF)
+if (BUILD_RPM)
+  set(CPACK_GENERATOR "TGZ;DEB;RPM")
+  set(CPACK_RPM_PACKAGE_LICENSE "LGPL")
+  set(CPACK_RPM_PACKAGE_URL "http://babelouest.github.io/ulfius/")
+endif ()
+
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "mail@babelouest.org")
 set(CPACK_DEBIAN_PACKAGE_DESCRIPTION ${PROJECT_DESCRIPTION})
 set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "http://babelouest.github.io/ulfius/")
