@@ -24,8 +24,8 @@ test/core
 test/u_map
 test/framework
 test/websocket
-uwsc/uwsc
-uwsc/valgrind.txt
+tools/uwsc/uwsc
+tools/uwsc/valgrind.txt
 *.key
 *.pem
 *.log
