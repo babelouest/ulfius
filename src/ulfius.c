@@ -655,6 +655,9 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
         MHD_destroy_response (mhd_response);
       }
     }
+    if (mhd_response_flag == MHD_RESPMEM_MUST_COPY) {
+      o_free(response_buffer);
+    }
     o_free(current_endpoint_list);
     return mhd_ret;
   }
@@ -810,7 +813,7 @@ int ulfius_stop_framework(struct _u_instance * u_instance) {
     int i;
     // Loop in all active websockets and send close signal
     for (i=((struct _websocket_handler *)u_instance->websocket_handler)->nb_websocket_active-1; i>=0; i--) {
-      ((struct _websocket_handler *)u_instance->websocket_handler)->websocket_active[i]->websocket_manager->closing = 1;
+      ((struct _websocket_handler *)u_instance->websocket_handler)->websocket_active[i]->websocket_manager->close_flag = 1;
     }
     pthread_mutex_lock(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_lock);
     while (((struct _websocket_handler *)u_instance->websocket_handler)->nb_websocket_active > 0) {
@@ -1242,6 +1245,7 @@ int ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, str
     u_instance->nb_endpoints = 0;
     u_instance->endpoint_list = NULL;
     u_instance->default_headers = o_malloc(sizeof(struct _u_map));
+    u_instance->mhd_response_copy_data = 0;
     if (u_instance->default_headers == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for u_instance->default_headers");
       ulfius_clean_instance(u_instance);
