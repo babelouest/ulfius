@@ -20,7 +20,8 @@ DESTDIR=/usr/local
 CFLAGS=-c -Wall -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS)
 LIBS=-lc -lulfius -lyder -lorcania -L$(ULFIUS_LOCATION)
 
-COMMAND=./uwsc --output-log-file=out.log http://localhost:9275/websocket/echo
+REMOTE_URL=http://localhost:9275/websocket/echo
+COMMAND=./uwsc --output-log-file=out.log $(REMOTE_URL)
 
 all: uwsc
 
@@ -42,7 +43,7 @@ test: uwsc
 	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} $(COMMAND)
 
 memcheck: uwsc
-	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all  $(COMMAND) 2>valgrind.txt
+	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all $(COMMAND) 2>valgrind.txt
 
 install: uwsc
 	cp uwsc $(DESTDIR)/bin
