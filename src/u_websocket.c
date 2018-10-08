@@ -63,9 +63,8 @@ static int is_websocket_data_available(struct _websocket_manager * websocket_man
   return ret;
 }
 
-static size_t read_data_from_socket(struct _websocket_manager * websocket_manager, uint8_t * data, size_t len) {
-  size_t ret = 0;
-  ssize_t data_len;
+static ssize_t read_data_from_socket(struct _websocket_manager * websocket_manager, uint8_t * data, size_t len) {
+  ssize_t ret = 0, data_len;
   
   if (len > 0) {
     do {
@@ -307,7 +306,8 @@ static int ulfius_read_incoming_message(struct _websocket_manager * websocket_ma
   int ret = U_OK, fin = 0, i;
   uint8_t header[2] = {0}, payload_len[8] = {0}, masking_key[4] = {0};
   uint8_t * payload_data = NULL;
-  size_t msg_len = 0, len = 0;
+  size_t msg_len = 0;
+  ssize_t len = 0;
   
   *message = o_malloc(sizeof(struct _websocket_message));
   if (*message != NULL) {
