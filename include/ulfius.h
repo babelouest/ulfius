@@ -6,7 +6,7 @@
  * 
  * ulfius.h: public structures and functions declarations
  * 
- * Copyright 2015-2017 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2015-2018 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -26,7 +26,7 @@
 #ifndef __ULFIUS_H__
 #define __ULFIUS_H__
 
-#define ULFIUS_VERSION 2.3.8
+#define ULFIUS_VERSION 2.4.0
 
 /** External dependencies **/
 
@@ -40,6 +40,7 @@
   #endif
 #endif
 #include <pthread.h>
+#include <gnutls/gnutls.h>
 #include <microhttpd.h>
 
 #if defined(_WIN32) && !defined(U_DISABLE_WEBSOCKET)
@@ -70,6 +71,7 @@
 #define U_ERROR_LIBMHD       4 // Error in libmicrohttpd execution
 #define U_ERROR_LIBCURL      5 // Error in libcurl execution
 #define U_ERROR_NOT_FOUND    6 // Something was not found
+#define U_ERROR_DISCONNECTED 7 // Connection closed
 
 #define U_CALLBACK_CONTINUE     0
 #define U_CALLBACK_COMPLETE     1
@@ -150,21 +152,22 @@ struct _u_request {
  * Structure of response parameters
  * 
  * Contains response data that must be set by the user
- * status:                              HTTP status code (200, 404, 500, etc)
- * protocol:                            HTTP Protocol sent
- * map_header:                          map containing the header variables
- * nb_cookies:                          number of cookies sent
- * map_cookie:                          array of cookies sent
- * auth_realm:                          realm to send to the client on authenticationb failed
- * binary_body:                         a void * containing a raw binary content
- * binary_body_length:                  the length of the binary_body
- * stream_callback:                     callback function to stream data in response body
- * stream_callback_free:                callback function to free data allocated for streaming
- * stream_size:                         size of the streamed data (U_STREAM_SIZE_UNKOWN if unknown)
- * stream_block_size:                   size of each block to be streamed, set according to your system
- * stream_user_data:                    user defined data that will be available in your callback stream functions
- * websocket_handle:                    handle for websocket extension
- * shared_data:                         any data shared between callback functions, must be allocated and freed by the callback functions
+ * status:               HTTP status code (200, 404, 500, etc)
+ * protocol:             HTTP Protocol sent
+ * map_header:           map containing the header variables
+ * nb_cookies:           number of cookies sent
+ * map_cookie:           array of cookies sent
+ * auth_realm:           realm to send to the client on authenticationb failed
+ * binary_body:          a void * containing a raw binary content
+ * binary_body_length:   the length of the binary_body
+ * stream_callback:      callback function to stream data in response body
+ * stream_callback_free: callback function to free data allocated for streaming
+ * stream_size:          size of the streamed data (U_STREAM_SIZE_UNKOWN if unknown)
+ * stream_block_size:    size of each block to be streamed, set according to your system
+ * stream_user_data:     user defined data that will be available in your callback stream functions
+ * websocket_handle:     handle for websocket extension
+ * shared_data:          any data shared between callback functions, must be allocated and freed by the callback functions
+ * timeout:              Timeout in seconds to close the connection because of inactivity between the client and the server
  * 
  */
 struct _u_response {
@@ -183,6 +186,7 @@ struct _u_response {
   void             * stream_user_data;
   void             * websocket_handle;
   void *             shared_data;
+  unsigned int       timeout;
 };
 
 /**
@@ -220,24 +224,30 @@ struct _u_endpoint {
  * 
  * Contains the needed data for an ulfius instance to work
  * 
- * mhd_daemon:            pointer to the libmicrohttpd daemon
- * status:                status of the current instance, status are U_STATUS_STOP, U_STATUS_RUNNING or U_STATUS_ERROR
- * port:                  port number to listen to
- * bind_address:          ip address to listen to (optional)
- * nb_endpoints:          Number of available endpoints
- * default_auth_realm:    Default realm on authentication error
- * endpoint_list:         List of available endpoints
- * default_endpoint:      Default endpoint if no other endpoint match the current url
- * default_headers:       Default headers that will be added to all response->map_header
- * max_post_param_size:   maximum size for a post parameter, 0 means no limit, default 0
- * max_post_body_size:    maximum size for the entire post body, 0 means no limit, default 0
+ * mhd_daemon:             pointer to the libmicrohttpd daemon
+ * status:                 status of the current instance, status are U_STATUS_STOP, U_STATUS_RUNNING or U_STATUS_ERROR
+ * port:                   port number to listen to
+ * bind_address:           ip address to listen to (optional)
+ * timeout:                Timeout to close the connection because of inactivity between the client and the server
+ * nb_endpoints:           Number of available endpoints
+ * default_auth_realm:     Default realm on authentication error
+ * endpoint_list:          List of available endpoints
+ * default_endpoint:       Default endpoint if no other endpoint match the current url
+ * default_headers:        Default headers that will be added to all response->map_header
+ * max_post_param_size:    maximum size for a post parameter, 0 means no limit, default 0
+ * max_post_body_size:     maximum size for the entire post body, 0 means no limit, default 0
+ * websocket_handler:      handler for the websocket structure
+ * file_upload_callback:   callback function to manage file upload by blocks
+ * file_upload_cls:        any pointer to pass to the file_upload_callback function
+ * mhd_response_copy_data: to choose between MHD_RESPMEM_MUST_COPY and MHD_RESPMEM_MUST_FREE
  * 
  */
 struct _u_instance {
   struct MHD_Daemon          *  mhd_daemon;
   int                           status;
-  unsigned int                          port;
+  unsigned int                  port;
   struct sockaddr_in          * bind_address;
+  unsigned int                  timeout;
   int                           nb_endpoints;
   char                        * default_auth_realm;
   struct _u_endpoint          * endpoint_list;
@@ -256,6 +266,7 @@ struct _u_instance {
                                                        size_t size, 
                                                        void * cls);
   void                        * file_upload_cls;
+  int                           mhd_response_copy_data;
 };
 
 /**
@@ -611,6 +622,13 @@ int ulfius_clean_request(struct _u_request * request);
 int ulfius_clean_request_full(struct _u_request * request);
 
 /**
+ * ulfius_copy_request
+ * Copy the source request elements into the dest request
+ * return U_OK on success
+ */
+int ulfius_copy_request(struct _u_request * dest, const struct _u_request * source);
+
+/**
  * ulfius_init_response
  * Initialize a response structure by allocating inner elements
  * return U_OK on success
@@ -635,7 +653,7 @@ int ulfius_clean_response_full(struct _u_response * response);
 
 /**
  * ulfius_copy_response
- * Copy the source response elements into the des response
+ * Copy the source response elements into the dest response
  * return U_OK on success
  */
 int ulfius_copy_response(struct _u_response * dest, const struct _u_response * source);
@@ -882,9 +900,14 @@ int u_map_count(const struct _u_map * source);
 int u_map_empty(struct _u_map * u_map);
 
 #ifndef U_DISABLE_WEBSOCKET
+
+#include "yuarel.h"
+
 /**********************************
  * Websocket functions declarations
  **********************************/
+
+#define U_WEBSOCKET_USER_AGENT "Ulfius Websocket Client Framework"
 
 #define U_WEBSOCKET_MAGIC_STRING     "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 #define U_WEBSOCKET_UPGRADE_VALUE    "websocket"
@@ -893,7 +916,7 @@ int u_map_empty(struct _u_map * u_map);
 #define WEBSOCKET_MAX_CLOSE_TRY      10
 
 #define U_WEBSOCKET_BIT_FIN         0x80
-#define U_WEBSOCKET_HAS_MASK        0x80
+#define U_WEBSOCKET_MASK            0x80
 #define U_WEBSOCKET_LEN_MASK        0x7F
 #define U_WEBSOCKET_OPCODE_CONTINUE 0x00
 #define U_WEBSOCKET_OPCODE_TEXT     0x01
@@ -905,6 +928,21 @@ int u_map_empty(struct _u_map * u_map);
 #define U_WEBSOCKET_OPCODE_ERROR    0xFE
 #define U_WEBSOCKET_OPCODE_NONE     0xFF
 
+#define U_WEBSOCKET_NONE   0
+#define U_WEBSOCKET_SERVER 1
+#define U_WEBSOCKET_CLIENT 2
+
+#define U_WEBSOCKET_STATUS_OPEN  0
+#define U_WEBSOCKET_STATUS_CLOSE 1
+#define U_WEBSOCKET_STATUS_ERROR 2
+
+#define WEBSOCKET_RESPONSE_HTTP       0x0001
+#define WEBSOCKET_RESPONSE_UPGRADE    0x0002
+#define WEBSOCKET_RESPONSE_CONNECTION 0x0004
+#define WEBSOCKET_RESPONSE_ACCEPT     0x0008
+#define WEBSOCKET_RESPONSE_PROTCOL    0x0010
+#define WEBSOCKET_RESPONSE_EXTENSION  0x0020
+
 /**
  * Websocket manager structure
  * contains among other things the socket
@@ -914,13 +952,21 @@ int u_map_empty(struct _u_map * u_map);
 struct _websocket_manager {
   struct _websocket_message_list * message_list_incoming;
   struct _websocket_message_list * message_list_outcoming;
-  int connected;
-  int closing;
-  int manager_closed;
-  MHD_socket sock;
-  pthread_mutex_t read_lock;
-  pthread_mutex_t write_lock;
-  struct pollfd fds;
+  int                              connected;
+  int                              close_flag;
+  MHD_socket                       mhd_sock;
+  int                              tcp_sock;
+  int                              tls;
+  gnutls_session_t                 gnutls_session;
+  gnutls_certificate_credentials_t xcred;
+  char                           * protocol;
+  char                           * extensions;
+  pthread_mutex_t                  read_lock;
+  pthread_mutex_t                  write_lock;
+  pthread_mutex_t                  status_lock;
+  pthread_cond_t                   status_cond;
+  struct pollfd                    fds;
+  int                              type;
 };
 
 /**
@@ -929,14 +975,17 @@ struct _websocket_manager {
  * and the timestamp of when it was sent of received
  */
 struct _websocket_message {
-  time_t datestamp;
+  time_t  datestamp;
   uint8_t opcode;
   uint8_t has_mask;
   uint8_t mask[4];
-  uint64_t data_len;
-  char * data;
+  size_t  data_len;
+  char *  data;
 };
 
+/**
+ * List of websocket messages
+ */
 struct _websocket_message_list {
   struct _websocket_message ** list;
   size_t len;
@@ -949,10 +998,6 @@ struct _websocket_message_list {
 struct _websocket {
   struct _u_instance               * instance;
   struct _u_request                * request;
-  char                             * websocket_protocol;
-  char                             * websocket_protocol_selected;
-  char                             * websocket_extensions;
-  char                             * websocket_extensions_selected;
   void                             (* websocket_manager_callback) (const struct _u_request * request,
                                                                   struct _websocket_manager * websocket_manager,
                                                                   void * websocket_manager_user_data);
@@ -966,10 +1011,59 @@ struct _websocket {
                                                                   struct _websocket_manager * websocket_manager,
                                                                   void * websocket_onclose_user_data);
   void                             * websocket_onclose_user_data;
-  int                                tls;
   struct _websocket_manager        * websocket_manager;
   struct MHD_UpgradeResponseHandle * urh;
 };
+
+/**
+ * Handler for the websocket client, to allow the program to know the status of a websocket client
+ */
+struct _websocket_client_handler {
+  struct _websocket * websocket;
+  struct _u_response * response;
+};
+
+/********************************/
+/** Common websocket functions **/
+/********************************/
+
+/**
+ * Send a message in the websocket
+ * Return U_OK on success
+ */
+int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
+                                  const uint8_t opcode,
+                                  const uint64_t data_len,
+                                  const char * data);
+
+/**
+ * Send a fragmented message in the websocket
+ * each fragment size will be at most fragment_len
+ * Return U_OK on success
+ */
+int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websocket_manager,
+                                             const uint8_t opcode,
+                                             const uint64_t data_len,
+                                             const char * data,
+                                             const uint64_t fragment_len);
+
+/**
+ * Return the first message of the message list
+ * Return NULL if message_list has no message
+ * Returned value must be cleared after use
+ * Use it with struct _websocket_manager->message_list_incoming
+ * or struct _websocket_manager->message_list_outcoming
+ */
+struct _websocket_message * ulfius_websocket_pop_first_message(struct _websocket_message_list * message_list);
+
+/**
+ * Clear data of a websocket message
+ */
+void ulfius_clear_websocket_message(struct _websocket_message * message);
+
+/********************************/
+/** Server websocket functions **/
+/********************************/
 
 /**
  * Set a websocket in the response
@@ -1004,25 +1098,92 @@ int ulfius_set_websocket_response(struct _u_response * response,
                                    void * websocket_onclose_user_data);
 
 /**
- * Send a message in the websocket
+ * Sets the websocket in closing mode
+ * The websocket will not necessarily be closed at the return of this function,
+ * it will process through the end of the `websocket_manager_callback`
+ * and the `websocket_onclose_callback` calls first.
+ * return U_OK on success
+ * or U_ERROR on error
+ */
+int ulfius_websocket_send_close_signal(struct _websocket_manager * websocket_manager);
+
+/**
+ * Returns the status of the websocket connection
+ * Returned values can be U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
+ * wether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
+ */
+int ulfius_websocket_status(struct _websocket_manager * websocket_manager);
+
+/**
+ * Wait until the websocket connection is closed or the timeout in milliseconds is reached
+ * if timeout is 0, no timeout is set
+ * Returned values can be U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
+ * wether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
+ */
+int ulfius_websocket_wait_close(struct _websocket_manager * websocket_manager, unsigned int timeout);
+
+/********************************/
+/** Client websocket functions **/
+/********************************/
+
+/**
+ * Open a websocket client connection
  * Return U_OK on success
  */
-int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
-                                  const uint8_t opcode,
-                                  const uint64_t data_len,
-                                  const char * data);
+int ulfius_open_websocket_client_connection(struct _u_request * request,
+                                            void (* websocket_manager_callback) (const struct _u_request * request,
+                                                                                 struct _websocket_manager * websocket_manager,
+                                                                                 void * websocket_manager_user_data),
+                                            void * websocket_manager_user_data,
+                                            void (* websocket_incoming_message_callback) (const struct _u_request * request,
+                                                                                          struct _websocket_manager * websocket_manager,
+                                                                                          const struct _websocket_message * message,
+                                                                                          void * websocket_incoming_user_data),
+                                            void * websocket_incoming_user_data,
+                                            void (* websocket_onclose_callback) (const struct _u_request * request,
+                                                                                 struct _websocket_manager * websocket_manager,
+                                                                                 void * websocket_onclose_user_data),
+                                            void * websocket_onclose_user_data,
+                                            struct _websocket_client_handler * websocket_client_handler,
+                                            struct _u_response * response);
+/**
+ * Send a close signal to the websocket
+ * return U_OK when the signal is sent
+ * or U_ERROR on error
+ */
+int ulfius_websocket_client_connection_send_close_signal(struct _websocket_client_handler * websocket_client_handler);
 
 /**
- * Return the first message of the message list
- * Return NULL if message_list has no message
- * Returned value must be cleared after use
+ * Closes a websocket client connection
+ * return U_OK when the websocket is closed
+ * or U_ERROR on error
  */
-struct _websocket_message * ulfius_websocket_pop_first_message(struct _websocket_message_list * message_list);
+int ulfius_websocket_client_connection_close(struct _websocket_client_handler * websocket_client_handler);
 
 /**
- * Clear data of a websocket message
+ * Returns the status of the websocket client connection
+ * Returned values can be U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
+ * wether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
  */
-void ulfius_clear_websocket_message(struct _websocket_message * message);
+int ulfius_websocket_client_connection_status(struct _websocket_client_handler * websocket_client_handler);
+
+/**
+ * Wait until the websocket client connection is closed or the timeout in milliseconds is reached
+ * if timeout is 0, no timeout is set
+ * Returned values can be U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
+ * wether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
+ */
+int ulfius_websocket_client_connection_wait_close(struct _websocket_client_handler * websocket_client_handler, unsigned int timeout);
+
+/**
+ * Set values for a struct _u_request to open a websocket
+ * request must be previously initialized
+ * Return U_OK on success
+ */
+int ulfius_set_websocket_request(struct _u_request * request,
+                                 const char * url,
+                                 const char * websocket_protocol,
+                                 const char * websocket_extensions);
 
 #endif
 

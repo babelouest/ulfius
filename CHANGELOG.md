@@ -1,5 +1,17 @@
 # Ulfius Changelog
 
+## 2.4.0
+
+- Fix Websocket fragmented messages
+- Fix CMake script that installed Orcania twice
+- Fix cppcheck warnings
+- Add timeout for http connections
+- Allow to use MHD_RESPMEM_MUST_COPY for different memory manager, fix #63
+- Add websocket client framework
+- Add uwsc - Ulfius WebSocket Client - A simple command-line websocket client program
+- Add Travis CI
+- Add RPM in CMake script package
+
 ## 2.3.8
 
 - Fix CMake build when /usr/local is not present in default build path

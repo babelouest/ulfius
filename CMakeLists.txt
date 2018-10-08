@@ -23,16 +23,18 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 
 # library info
 
-set(PROJECT_DESCRIPTION "HTTP Framework for REST API in C, using JSON or not, with websockets or not, with streaming data or not")
+set(PROJECT_DESCRIPTION "Web Framework to build REST APIs, Webservices or any HTTP endpoint in C language. Can stream large amount of data, integrate JSON data with Jansson, and create websocket services")
+set(PROJECT_HOMEPAGE_URL "https://github.com/babelouest/ulfius/")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/ulfius/issues")
-
 set(LIBRARY_VERSION_MAJOR "2")
-set(LIBRARY_VERSION_MINOR "3")
-set(LIBRARY_VERSION_PATCH "8")
+set(LIBRARY_VERSION_MINOR "4")
+set(LIBRARY_VERSION_PATCH "0")
+
+set(PROJECT_VERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}.${LIBRARY_VERSION_PATCH}")
 set(LIBRARY_VERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}.${LIBRARY_VERSION_PATCH}")
 set(LIBRARY_SOVERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}")
-set(YDER_VERSION_DOWNLOAD "1.3.4")
-set(ORCANIA_VERSION_DOWNLOAD "1.2.4")
+set(YDER_VERSION_DOWNLOAD "1.4.2")
+set(ORCANIA_VERSION_DOWNLOAD "1.2.6")
 
 # cmake modules
 
@@ -60,18 +62,21 @@ endif ()
 
 set(INC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set(UWSC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tools/uwsc)
 
 include_directories(${INC_DIR})
 
 set(LIB_SRC
-        ${INC_DIR}/ulfius.h
-        ${INC_DIR}/u_private.h
-        ${SRC_DIR}/u_map.c
-        ${SRC_DIR}/u_request.c
-        ${SRC_DIR}/u_response.c
-        ${SRC_DIR}/u_send_request.c
-        ${SRC_DIR}/u_websocket.c
-        ${SRC_DIR}/ulfius.c)
+    ${INC_DIR}/ulfius.h
+    ${INC_DIR}/u_private.h
+    ${INC_DIR}/yuarel.h
+    ${SRC_DIR}/u_map.c
+    ${SRC_DIR}/u_request.c
+    ${SRC_DIR}/u_response.c
+    ${SRC_DIR}/u_send_request.c
+    ${SRC_DIR}/u_websocket.c
+    ${SRC_DIR}/yuarel.c
+    ${SRC_DIR}/ulfius.c)
 
 # websocket support
 
@@ -83,9 +88,9 @@ endif ()
 
 if (NOT WITH_WEBSOCKET)
     add_definitions(-DU_DISABLE_WEBSOCKET)
-  set(MHD_MIN_VERSION 0.9.51)
+    set(MHD_MIN_VERSION 0.9.51)
 else ()
-  set(MHD_MIN_VERSION 0.9.53)
+    set(MHD_MIN_VERSION 0.9.53)
     include(FindGnuTLS)
     find_package(GnuTLS REQUIRED)
     if (GNUTLS_FOUND)
@@ -154,6 +159,17 @@ if (WIN32)
 endif ()
 target_link_libraries(ulfius ${LIBS})
 
+# build uwsc
+
+option(BUILD_UWSC "Build uwsc application." ON)
+
+if (WITH_WEBSOCKET AND BUILD_UWSC)
+    add_executable(uwsc ${UWSC_DIR}/uwsc.c ${INC_DIR}/ulfius.h ${INC_DIR}/u_private.h)
+    add_dependencies(uwsc ulfius)
+    target_link_libraries(uwsc ulfius)
+    install(TARGETS uwsc RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif ()
+
 # dependencies
 
 set(Orcania_FIND_QUIETLY ON) # force to find Orcania quietly
@@ -176,6 +192,7 @@ else()
 endif ()
 target_link_libraries(ulfius ${LIBS} ${ORCANIA_LIBRARIES})
 
+set(SEARCH_ORCANIA OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during yder search and download
 set(Yder_FIND_QUIETLY ON) # force to find Yder quietly
 include(FindYder)
 find_package(Yder 1.1 QUIET) # try to find Yder
@@ -212,9 +229,9 @@ endif ()
 
 # tests
 
-option(BUILD_TESTING "Build the testing tree." OFF) # because we do not use include(CTest)
+option(BUILD_ULFIUS_TESTING "Build the testing tree." OFF) # because we do not use include(CTest)
 
-if (BUILD_TESTING)
+if (BUILD_ULFIUS_TESTING)
     include(FindCheck)
     find_package(Check REQUIRED)
     if (CHECK_FOUND)
@@ -259,7 +276,7 @@ option(INSTALL_HEADER "Install the header files" ON) # Install ulfius.h or not
 configure_file(libulfius.pc.in libulfius.pc @ONLY)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libulfius.pc
-        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 
 SET (TARGETS ulfius)
 if (BUILD_STATIC)
@@ -316,8 +333,20 @@ endif ()
 set(PACKAGE_IGNORED_FILES
         "${CMAKE_CURRENT_BINARY_DIR}/;/.git/;.gitignore;~$;${CPACK_SOURCE_IGNORE_FILES}")
 
+set(CPACK_PACKAGE_NAME "libulfius")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Web Framework for C programs")
 set(CPACK_GENERATOR "TGZ;DEB")
-set(CPACK_DEBIAN_PACKAGE_NAME "libulfius")
+set(CPACK_PACKAGE_VERSION_MAJOR ${LIBRARY_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${LIBRARY_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${LIBRARY_VERSION_PATCH})
+
+option(BUILD_RPM "Build a RPM for your system" OFF)
+if (BUILD_RPM)
+  set(CPACK_GENERATOR "TGZ;DEB;RPM")
+  set(CPACK_RPM_PACKAGE_LICENSE "LGPL")
+  set(CPACK_RPM_PACKAGE_URL "http://babelouest.github.io/ulfius/")
+endif ()
+
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "mail@babelouest.org")
 set(CPACK_DEBIAN_PACKAGE_DESCRIPTION ${PROJECT_DESCRIPTION})
 set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "http://babelouest.github.io/ulfius/")
@@ -341,5 +370,4 @@ set(CPACK_SOURCE_IGNORE_FILES ${PACKAGE_IGNORED_FILES})
 
 include(CPack)
 
-add_custom_target(dist_u
-        COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
+add_custom_target(dist_u COMMAND ${CMAKE_MAKE_PROGRAM} package_source)

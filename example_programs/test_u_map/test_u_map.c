@@ -18,7 +18,7 @@
 #define U_DISABLE_JANSSON
 #define U_DISABLE_CURL
 #define U_DISABLE_WEBSOCKET
-#include "../../include/ulfius.h"
+#include <ulfius.h>
 
 /**
  * decode a u_map into a string

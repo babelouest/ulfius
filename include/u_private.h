@@ -82,17 +82,6 @@ void ulfius_start_websocket_cb (void *cls,
             struct MHD_UpgradeResponseHandle *urh);
 
 /**
- * Workaround to make sure a message, as long as it can be is complete sent
- */
-void ulfius_websocket_send_all(MHD_socket sock, const uint8_t * data, size_t len);
-
-/**
- * Centralise socket reading in this function
- * so if options or check must be done, it's done here instead of each read call
- */
-size_t ulfius_websocket_recv_all(MHD_socket sock, uint8_t * data, size_t len);
-
-/**
  * Generates a handhshake answer from the key given in parameter
  */
 int ulfius_generate_handshake_answer(const char * key, char * out_digest);
@@ -100,16 +89,16 @@ int ulfius_generate_handshake_answer(const char * key, char * out_digest);
 /**
  * Return a match list between two list of items
  * If match is NULL, then return source duplicate
- * Returned value must be u_free'd after use
+ * result must be u_free'd after use
  */
-char * ulfius_check_list_match(const char * source, const char * match, const char * separator);
+int ulfius_check_list_match(const char * source, const char * match, const char * separator, char ** result);
 
 /**
  * Return the first match between two list of items
  * If match is NULL, then return the first element of source
- * Returned value must be u_free'd after use
+ * result must be u_free'd after use
  */
-char * ulfius_check_first_match(const char * source, const char * match, const char * separator);
+int ulfius_check_first_match(const char * source, const char * match, const char * separator, char ** result);
 
 /**
  * Initialize a websocket message list
@@ -144,25 +133,9 @@ void ulfius_clear_websocket_manager(struct _websocket_manager * websocket_manage
 int ulfius_close_websocket(struct _websocket * websocket);
 
 /**
- * Read and parse a new message from the websocket
- * Return the opcode of the new websocket, U_WEBSOCKET_OPCODE_NONE if no message arrived, or U_WEBSOCKET_OPCODE_ERROR on error
- * Sets the new message in the message variable if available
- */
-int ulfius_read_incoming_message(struct _websocket_manager * websocket_manager, struct _websocket_message ** message);
-
-/**
  * Run the websocket manager in a separated detached thread
  */
 void * ulfius_thread_websocket_manager_run(void * args);
-
-/**
- * Send a message in the websocket without lock
- * Return U_OK on success
- */
-int ulfius_websocket_send_message_nolock(struct _websocket_manager * websocket_manager,
-                                  const uint8_t opcode,
-                                  const uint64_t data_len,
-                                  const char * data);
 
 /**
  * Add a websocket in the list of active websockets of the instance
@@ -173,6 +146,23 @@ int ulfius_instance_add_websocket_active(struct _u_instance * instance, struct _
  * Remove a websocket from the list of active websockets of the instance
  */
 int ulfius_instance_remove_websocket_active(struct _u_instance * instance, struct _websocket * websocket); 
+
+/**
+ * Initialize a struct _websocket
+ * return U_OK on success
+ */
+int ulfius_init_websocket(struct _websocket * websocket);
+
+/**
+ * Initialize a struct _websocket_manager
+ * return U_OK on success
+ */
+int ulfius_init_websocket_manager(struct _websocket_manager * websocket_manager);
+
+/**
+ * Check if the response corresponds to the transformation of the key with the magic string
+ */
+int ulfius_check_handshake_response(const char * key, const char * response);
 
 #endif // U_DISABLE_WEBSOCKET
 

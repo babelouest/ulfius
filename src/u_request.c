@@ -26,7 +26,7 @@
 #include <string.h>
 
 #include "u_private.h"
-#include "../include/ulfius.h"
+#include "ulfius.h"
 
 /**
  * Splits the url to an array of char *
@@ -320,6 +320,88 @@ int ulfius_clean_request_full(struct _u_request * request) {
   if (ulfius_clean_request(request) == U_OK) {
     o_free(request);
     return U_OK;
+  } else {
+    return U_ERROR_PARAMS;
+  }
+}
+
+/**
+ * ulfius_copy_request
+ * Copy the source request elements into the dest request
+ * return U_OK on success
+ */
+int ulfius_copy_request(struct _u_request * dest, const struct _u_request * source) {
+  int ret = U_OK;
+  if (dest != NULL && source != NULL) {
+    dest->http_protocol = o_strdup(source->http_protocol);
+    dest->http_verb = o_strdup(source->http_verb);
+    dest->http_url = o_strdup(source->http_url);
+    dest->proxy = o_strdup(source->proxy);
+    dest->check_server_certificate = source->check_server_certificate;
+    dest->timeout = source->timeout;
+    dest->auth_basic_user = o_strdup(source->auth_basic_user);
+    dest->auth_basic_password = o_strdup(source->auth_basic_password);
+    dest->client_address = o_malloc(sizeof(struct sockaddr));
+    
+    if (dest->client_address != NULL) {
+      memcpy(dest->client_address, source->client_address, sizeof(struct sockaddr));
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for dest->client_address");
+      ret = U_ERROR_MEMORY;
+    }
+    
+    if (ret == U_OK && u_map_clean(dest->map_url) == U_OK && u_map_init(dest->map_url) == U_OK) {
+      if (u_map_copy_into(dest->map_url, source->map_url) != U_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error u_map_copy_into dest->map_url");
+        ret = U_ERROR;
+      }
+    } else if (ret == U_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error reinit dest->map_url");
+      ret = U_ERROR_MEMORY;
+    }
+    
+    if (ret == U_OK && u_map_clean(dest->map_header) == U_OK && u_map_init(dest->map_header) == U_OK) {
+      if (u_map_copy_into(dest->map_header, source->map_header) != U_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error u_map_copy_into dest->map_header");
+        ret = U_ERROR;
+      }
+    } else if (ret == U_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error reinit dest->map_header");
+      ret = U_ERROR_MEMORY;
+    }
+    
+    if (ret == U_OK && u_map_clean(dest->map_cookie) == U_OK && u_map_init(dest->map_cookie) == U_OK) {
+      if (u_map_copy_into(dest->map_cookie, source->map_cookie) != U_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error u_map_copy_into dest->map_cookie");
+        ret = U_ERROR;
+      }
+    } else if (ret == U_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error reinit dest->map_cookie");
+      ret = U_ERROR_MEMORY;
+    }
+    
+    if (ret == U_OK && u_map_clean(dest->map_post_body) == U_OK && u_map_init(dest->map_post_body) == U_OK) {
+      if (u_map_copy_into(dest->map_post_body, source->map_post_body) != U_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error u_map_copy_into dest->map_post_body");
+        ret = U_ERROR;
+      }
+    } else if (ret == U_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error reinit dest->map_post_body");
+      ret = U_ERROR_MEMORY;
+    }
+    
+    if (ret == U_OK) {
+      dest->binary_body_length = source->binary_body_length;
+      dest->binary_body = o_malloc(source->binary_body_length);
+      if (dest->binary_body != NULL) {
+        memcpy(dest->binary_body, source->binary_body, source->binary_body_length);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for dest->binary_body");
+        ret = U_ERROR_MEMORY;
+      }
+    }
+    
+    return ret;
   } else {
     return U_ERROR_PARAMS;
   }

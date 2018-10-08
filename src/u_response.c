@@ -25,7 +25,7 @@
 #include <string.h>
 
 #include "u_private.h"
-#include "../include/ulfius.h"
+#include "ulfius.h"
 
 /**
  * Add a cookie in the cookie map as defined in the RFC 6265
@@ -407,6 +407,7 @@ int ulfius_init_response(struct _u_response * response) {
     response->stream_size = -1;
     response->stream_block_size = ULFIUS_STREAM_BLOCK_SIZE_DEFAULT;
     response->stream_callback_free = NULL;
+    response->timeout = 0;
     response->shared_data = NULL;
 #ifndef U_DISABLE_WEBSOCKET
     response->websocket_handle = o_malloc(sizeof(struct _websocket_handle));

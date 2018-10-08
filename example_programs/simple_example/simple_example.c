@@ -21,7 +21,7 @@
 
 #define U_DISABLE_CURL
 #define U_DISABLE_WEBSOCKET
-#include "../../include/ulfius.h"
+#include <ulfius.h>
 
 #define PORT 8537
 #define PREFIX "/test"
@@ -80,23 +80,18 @@ char * read_file(const char * filename) {
   char * buffer = NULL;
   long length;
   FILE * f = fopen (filename, "rb");
-  if (filename != NULL) {
-
-    if (f) {
-      fseek (f, 0, SEEK_END);
-      length = ftell (f);
-      fseek (f, 0, SEEK_SET);
-      buffer = o_malloc (length + 1);
-      if (buffer) {
-        fread (buffer, 1, length, f);
-      }
+  if (f != NULL) {
+    fseek (f, 0, SEEK_END);
+    length = ftell (f);
+    fseek (f, 0, SEEK_SET);
+    buffer = o_malloc (length + 1);
+    if (buffer != NULL) {
+      fread (buffer, 1, length, f);
       buffer[length] = '\0';
-      fclose (f);
     }
-    return buffer;
-  } else {
-    return NULL;
+    fclose (f);
   }
+  return buffer;
 }
 
 int main (int argc, char **argv) {

@@ -16,7 +16,7 @@
 
 #define U_DISABLE_WEBSOCKET
 #define U_DISABLE_JANSSON
-#include "../../include/ulfius.h"
+#include <ulfius.h>
 
 #define PORT 7799
 #define PROXY_DEST "https://www.wikipedia.org"
@@ -41,7 +41,7 @@ int main (int argc, char **argv) {
   
   // Start the framework
   if (ulfius_start_framework(&instance) == U_OK) {
-    printf("Start framework on port %d\n", instance.port);
+    printf("Start framework on port %u\n", instance.port);
     printf("Go to url / to proxify %s\n", PROXY_DEST);
     
     // Wait for the user to press <enter> on the console to quit the application

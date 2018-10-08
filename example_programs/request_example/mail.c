@@ -12,7 +12,7 @@
  */
 
 #define U_DISABLE_WEBSOCKET
-#include "../../include/ulfius.h"
+#include <ulfius.h>
 
 #define MAIL_SERVER "localhost"
 #define MAIL_SENDER "test@example.org"

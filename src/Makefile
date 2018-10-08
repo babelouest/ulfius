@@ -19,15 +19,13 @@
 # License along with this library.	If not, see <http://www.gnu.org/licenses/>.
 #
 
-LIBORCANIA_LOCATION=../lib/orcania/src
-LIBYDER_LOCATION=../lib/yder/src
 ULFIUS_INCLUDE=../include
 DESTDIR=/usr/local
 CC=gcc
-CFLAGS+=-c -pedantic -std=gnu99 -fPIC -Wall -D_REENTRANT -I$(DESTDIR)/include -I$(ULFIUS_INCLUDE) -I$(LIBORCANIA_LOCATION) -I$(LIBYDER_LOCATION) $(ADDITIONALFLAGS) $(JANSSONFLAG) $(CURLFLAG) $(WEBSOCKETFLAG) $(CPPFLAGS)
-LIBS=-L$(DESTDIR)/lib -L$(LIBORCANIA_LOCATION) -L$(LIBYDER_LOCATION) -lc -lmicrohttpd -lyder -lorcania -lpthread $(LDFLAGS)
+CFLAGS+=-c -pedantic -std=gnu99 -fPIC -Wall -D_REENTRANT -I$(DESTDIR)/include -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS) $(JANSSONFLAG) $(CURLFLAG) $(WEBSOCKETFLAG) $(CPPFLAGS)
+LIBS=-L$(DESTDIR)/lib -lc -lmicrohttpd -lyder -lorcania -lpthread $(LDFLAGS)
 OUTPUT=libulfius.so
-VERSION=2.3.8
+VERSION=2.4.0
 
 ifndef JANSSONFLAG
 LJANSSON=-ljansson
@@ -43,8 +41,8 @@ endif
 
 all: release
 
-libulfius.so: ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o
-	$(CC) -shared -fPIC -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o $(LIBS) $(LJANSSON) $(LCURL) $(LWEBSOCKET)
+libulfius.so: ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
+	$(CC) -shared -fPIC -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o $(LIBS) $(LJANSSON) $(LCURL) $(LWEBSOCKET)
 	ln -sf $(OUTPUT).$(VERSION) $(OUTPUT)
 
 libulfius.a: ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o
@@ -68,6 +66,9 @@ u_websocket.o: $(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h u_websoc
 u_send_request.o: $(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h u_send_request.c
 	$(CC) $(CFLAGS) u_send_request.c
 
+yuarel.o: $(ULFIUS_INCLUDE)/yuarel.h yuarel.c
+	$(CC) $(CFLAGS) yuarel.c
+
 clean:
 	rm -f *.o *.so *.a $(OUTPUT) $(OUTPUT).*
 
@@ -84,6 +85,7 @@ uninstall:
 	rm -f $(DESTDIR)/lib/$(OUTPUT) $(DESTDIR)/lib/libulfius.a
 	rm -f $(DESTDIR)/lib/$(OUTPUT).*
 	rm -f $(DESTDIR)/include/ulfius.h
+	rm -f $(DESTDIR)/include/yuarel.h
 
 debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 

@@ -1,0 +1,26 @@
+# travis configuration file
+# Copyright 2018 Ilya Shipitsin <chipitsine@gmail.com>
+#                Nicolas Mora <mail@babelouest.org>
+sudo: required
+
+language: c
+
+addons:
+  apt:
+    packages: [ libmicrohttpd-dev, libjansson-dev, check, libsubunit-dev, cppcheck ]
+
+matrix:
+  include:
+    - os: linux
+      compiler: gcc
+    - os: linux
+      compiler: clang
+    - env: LABEL=cppcheck
+      os: linux
+      script:
+        - cppcheck --force --enable=warning,missingInclude --error-exitcode=1 . >build.log 2>&1 || (cat build.log && exit 1)
+
+script:
+  - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on .
+  - make
+  - make test
