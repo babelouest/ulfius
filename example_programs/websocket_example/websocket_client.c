@@ -116,9 +116,11 @@ int main(int argc, char ** argv) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "Websocket closed");
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_open_websocket_client_connection");
+      o_free(websocket_user_data);
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_set_websocket_request");
+    o_free(websocket_user_data);
   }
   
   ulfius_clean_request(&request);

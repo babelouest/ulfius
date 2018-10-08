@@ -1559,6 +1559,7 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
             websocket->websocket_manager->tls = 0;
             if (ulfius_open_websocket(request, &y_url, websocket, response) != U_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_open_websocket");
+              ulfius_clear_websocket(websocket);
               ret = U_ERROR;
             } else {
               ret = U_OK;
@@ -1567,6 +1568,7 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
             websocket->websocket_manager->tls = 1;
             if (ulfius_open_websocket_tls(request, &y_url, websocket, response) != U_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_open_websocket_tls");
+              ulfius_clear_websocket(websocket);
               ret = U_ERROR;
             } else {
               ret = U_OK;
@@ -1579,6 +1581,7 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
               y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error creating or detaching websocket manager thread, return code: %d, detach code: %d",
                             thread_ret_websocket, thread_detach_websocket);
               ulfius_clear_websocket(websocket);
+              ret = U_ERROR;
             }
             websocket_client_handler->websocket = websocket;
           }
