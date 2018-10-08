@@ -34,13 +34,14 @@
   #ifndef _GNU_SOURCE
     #define _GNU_SOURCE
   #endif
+  #include <gnutls/gnutls.h>
   #include <poll.h>
   #ifndef POLLRDHUP
     #define POLLRDHUP 0x2000
   #endif
 #endif
+
 #include <pthread.h>
-#include <gnutls/gnutls.h>
 #include <microhttpd.h>
 
 #if defined(_WIN32) && !defined(U_DISABLE_WEBSOCKET)
