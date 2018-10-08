@@ -162,7 +162,6 @@ void websocket_onclose_file_callback (const struct _u_request * request,
 void websocket_manager_callback(const struct _u_request * request,
                                struct _websocket_manager * websocket_manager,
                                void * websocket_manager_user_data) {
-
   if (websocket_manager_user_data != NULL) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_manager_user_data is %s", websocket_manager_user_data);
   }
@@ -174,8 +173,9 @@ void websocket_manager_callback(const struct _u_request * request,
     }
   }
   
-  // Send text message with fragmentation
-  if (ulfius_websocket_wait_close(websocket_manager, 2000) == U_WEBSOCKET_STATUS_OPEN) {
+  // Send text message with fragmentation for ulfius clients only, browsers seem to dislike fragmented messages
+  if (o_strncmp(u_map_get(request->map_header, "User-Agent"), U_WEBSOCKET_USER_AGENT, o_strlen(U_WEBSOCKET_USER_AGENT)) == 0 &&
+      ulfius_websocket_wait_close(websocket_manager, 2000) == U_WEBSOCKET_STATUS_OPEN) {
     if (ulfius_websocket_send_fragmented_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen("Message with fragmentation from server"), "Message with fragmentation from server", 5) != U_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error send message with fragmentation");
     }
