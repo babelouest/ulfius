@@ -89,7 +89,7 @@ int main(void) {
 
 - Create websocket client application
 
-- Connect to a websocket with a simple websocket client command: `uwsc`
+- CLI to connect to a remote websocket: [uwsc](https://github.com/babelouest/ulfius/tree/master/tools/uwsc)
 
 ## Installation
 
