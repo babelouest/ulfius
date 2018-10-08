@@ -144,6 +144,7 @@ The available options for cmake are:
 - `-DBUILD_STATIC=[on|off]` (default `off`): Build the static archive in addition to the shared library
 - `-DBUILD_ULFIUS_TESTING=[on|off]` (default `off`): Build unit tests
 - `-DINSTALL_HEADER=[on|off]` (default `on`): Install header file `ulfius.h`
+- `-DBUILD_RPM=[on|off]` (default `off`): Build RPM package when running `make package`
 - `-DCMAKE_BUILD_TYPE=[Debug|Release]` (default `Release`): Compile with debugging symbols or not
 
 ### Install from a `.zip` archive
