@@ -81,7 +81,7 @@ static ssize_t read_data_from_socket(struct _websocket_manager * websocket_manag
         ret = -1;
         break;
       }
-    } while (ret < len);
+    } while (ret < (ssize_t)len);
   }
   return ret;
 }
@@ -656,7 +656,7 @@ static int ulfius_websocket_connection_handshake(struct _u_request * request, st
       response->binary_body_length = strtol(u_map_get(response->map_header, "Content-Length"), NULL, 10);
       response->binary_body = o_malloc(response->binary_body_length);
       if (response->binary_body != NULL) {
-        if (read_data_from_socket(websocket->websocket_manager, response->binary_body, response->binary_body_length) != response->binary_body_length) {
+        if (read_data_from_socket(websocket->websocket_manager, response->binary_body, response->binary_body_length) != (ssize_t)response->binary_body_length) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error read_data_from_socket for response->binary_body");
         }
       } else {
