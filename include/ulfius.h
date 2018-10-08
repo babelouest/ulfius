@@ -26,7 +26,7 @@
 #ifndef __ULFIUS_H__
 #define __ULFIUS_H__
 
-#define ULFIUS_VERSION 2.4.0
+#define ULFIUS_VERSION 2.4.1
 
 /** External dependencies **/
 
