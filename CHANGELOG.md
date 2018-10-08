@@ -10,6 +10,7 @@
 - Add websocket client framework
 - Add uwsc - Ulfius WebSocket Client - A simple command-line websocket client program
 - Add Travis CI
+- Add RPM in CMake script package
 
 ## 2.3.8
 
