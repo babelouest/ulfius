@@ -1,5 +1,9 @@
 # Ulfius Changelog
 
+## 2.4.2
+
+- Fix #79 where yuarel should be hidden from the outside world
+
 ## 2.4.1
 
 - Fix #78 where gnutls is not required if websocket is disabled
