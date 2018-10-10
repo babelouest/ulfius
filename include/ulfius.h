@@ -902,8 +902,6 @@ int u_map_empty(struct _u_map * u_map);
 
 #ifndef U_DISABLE_WEBSOCKET
 
-#include "yuarel.h"
-
 /**********************************
  * Websocket functions declarations
  **********************************/

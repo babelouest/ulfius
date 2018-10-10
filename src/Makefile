@@ -75,7 +75,6 @@ clean:
 install: all
 	cp $(OUTPUT).$(VERSION) $(DESTDIR)/lib
 	cp $(ULFIUS_INCLUDE)/ulfius.h $(DESTDIR)/include
-	cp $(ULFIUS_INCLUDE)/yuarel.h $(DESTDIR)/include
 	-ldconfig
 
 static-install: static
@@ -86,7 +85,6 @@ uninstall:
 	rm -f $(DESTDIR)/lib/$(OUTPUT) $(DESTDIR)/lib/libulfius.a
 	rm -f $(DESTDIR)/lib/$(OUTPUT).*
 	rm -f $(DESTDIR)/include/ulfius.h
-	rm -f $(DESTDIR)/include/yuarel.h
 
 debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 

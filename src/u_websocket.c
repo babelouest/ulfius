@@ -27,6 +27,7 @@
 #include "ulfius.h"
 
 #ifndef U_DISABLE_WEBSOCKET
+#include "yuarel.h"
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
