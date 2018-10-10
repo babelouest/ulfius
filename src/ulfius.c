@@ -175,7 +175,7 @@ static int ulfius_get_body_from_response(struct _u_response * response, void ** 
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
         response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
         response->binary_body = o_strdup(ULFIUS_HTTP_ERROR_BODY);
-        response->binary_body_length = strlen(ULFIUS_HTTP_ERROR_BODY);
+        response->binary_body_length = o_strlen(ULFIUS_HTTP_ERROR_BODY);
         if (response->binary_body == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->binary_body");
           return U_ERROR_MEMORY;
@@ -324,8 +324,8 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
     content_type = (char*)u_map_get_case(con_info->request->map_header, ULFIUS_HTTP_HEADER_CONTENT);
     
     // Set POST Processor if content-type is properly set
-    if (content_type != NULL && (0 == o_strncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) || 
-        0 == o_strncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA)))) {
+    if (content_type != NULL && (0 == o_strncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, o_strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) || 
+        0 == o_strncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, o_strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA)))) {
       con_info->has_post_processor = 1;
       con_info->post_processor = MHD_create_post_processor (connection, ULFIUS_POSTBUFFERSIZE, mhd_iterate_post_data, (void *) con_info);
       if (NULL == con_info->post_processor) {
@@ -354,8 +354,8 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
         con_info->request->binary_body_length += upload_data_size_current;
         // Handles request binary_body
         const char * content_type = u_map_get_case(con_info->request->map_header, ULFIUS_HTTP_HEADER_CONTENT);
-        if (0 == o_strncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) || 
-            0 == o_strncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA))) {
+        if (0 == o_strncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, o_strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) || 
+            0 == o_strncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, o_strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA))) {
           MHD_post_process (con_info->post_processor, upload_data, *upload_data_size);
         }
         *upload_data_size = 0;
@@ -484,7 +484,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for websocket->request");
                         mhd_ret = MHD_NO;
                       } else {
-                        response_buffer_len = strlen(ULFIUS_HTTP_ERROR_BODY);
+                        response_buffer_len = o_strlen(ULFIUS_HTTP_ERROR_BODY);
                         mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, mhd_response_flag );
                       }
                     }
@@ -496,7 +496,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
                       mhd_ret = MHD_NO;
                     } else {
-                      response_buffer_len = strlen(ULFIUS_HTTP_ERROR_BODY);
+                      response_buffer_len = o_strlen(ULFIUS_HTTP_ERROR_BODY);
                       mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, mhd_response_flag );
                     }
                   }
@@ -508,7 +508,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
                     mhd_ret = MHD_NO;
                   } else {
-                    response_buffer_len = strlen(ULFIUS_HTTP_ERROR_BODY);
+                    response_buffer_len = o_strlen(ULFIUS_HTTP_ERROR_BODY);
                     mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, mhd_response_flag );
                   }
                 }
@@ -564,7 +564,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
                     mhd_ret = MHD_NO;
                   } else {
-                    response_buffer_len = strlen(ULFIUS_HTTP_ERROR_BODY);
+                    response_buffer_len = o_strlen(ULFIUS_HTTP_ERROR_BODY);
                     mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, mhd_response_flag );
                   }
                 }
@@ -579,7 +579,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
                     response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
                     response->binary_body = o_strdup(ULFIUS_HTTP_ERROR_BODY);
-                    response->binary_body_length = strlen(ULFIUS_HTTP_ERROR_BODY);
+                    response->binary_body_length = o_strlen(ULFIUS_HTTP_ERROR_BODY);
                     if (response->binary_body == NULL) {
                       inner_error = U_ERROR_MEMORY;
                       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->binary_body");
@@ -596,7 +596,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
                     mhd_ret = MHD_NO;
                   } else {
-                    response_buffer_len = strlen(ULFIUS_HTTP_ERROR_BODY);
+                    response_buffer_len = o_strlen(ULFIUS_HTTP_ERROR_BODY);
                     mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, mhd_response_flag );
                     inner_error = U_CALLBACK_UNAUTHORIZED;
                   }
@@ -616,7 +616,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                   y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
                   mhd_ret = MHD_NO;
                 } else {
-                  response_buffer_len = strlen(ULFIUS_HTTP_ERROR_BODY);
+                  response_buffer_len = o_strlen(ULFIUS_HTTP_ERROR_BODY);
                   mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, mhd_response_flag );
                 }
                 break;
@@ -649,7 +649,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
         mhd_ret = MHD_NO;
       } else {
-        response_buffer_len = strlen(ULFIUS_HTTP_NOT_FOUND_BODY);
+        response_buffer_len = o_strlen(ULFIUS_HTTP_NOT_FOUND_BODY);
         mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, mhd_response_flag );
         mhd_ret = MHD_queue_response (connection, MHD_HTTP_NOT_FOUND, mhd_response);
         MHD_destroy_response (mhd_response);

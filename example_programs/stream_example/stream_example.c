@@ -116,7 +116,7 @@ ssize_t stream_data (void * cls, uint64_t pos, char * buf, size_t max) {
   sleep(1);
   if (pos <= 100) {
       snprintf(buf, max, "%s %" PRIu64 "\n", (char *)cls, pos);
-      return strlen(buf);
+      return o_strlen(buf);
   } else {
     return U_STREAM_END;
   }

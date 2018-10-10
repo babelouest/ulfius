@@ -4,7 +4,7 @@
  *
  * Copyright 2017-2018 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20180607
+ * Version 20181009
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -32,10 +32,10 @@
  * Return the filename extension
  */
 const char * get_filename_ext(const char *path) {
-    const char *dot = strrchr(path, '.');
+    const char *dot = o_strrchr(path, '.');
     if(!dot || dot == path) return "*";
-    if (strchr(dot, '?') != NULL) {
-      *strchr(dot, '?') = '\0';
+    if (o_strchr(dot, '?') != NULL) {
+      *o_strchr(dot, '?') = '\0';
     }
     return dot;
 }
@@ -88,12 +88,12 @@ int callback_static_file (const struct _u_request * request, struct _u_response 
       file_requested++;
     }
     
-    if (strchr(file_requested, '#') != NULL) {
-      *strchr(file_requested, '#') = '\0';
+    if (o_strchr(file_requested, '#') != NULL) {
+      *o_strchr(file_requested, '#') = '\0';
     }
     
-    if (strchr(file_requested, '?') != NULL) {
-      *strchr(file_requested, '?') = '\0';
+    if (o_strchr(file_requested, '?') != NULL) {
+      *o_strchr(file_requested, '?') = '\0';
     }
     
     if (file_requested == NULL || o_strlen(file_requested) == 0 || 0 == o_strcmp("/", file_requested)) {

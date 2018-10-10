@@ -71,7 +71,7 @@ static size_t write_header(void * buffer, size_t size, size_t nitems, void * use
   struct _u_response * response = (struct _u_response *) user_data;
   char * header = (char *)buffer, * key, * value, * saveptr, * tmp;
   
-  if (strchr(header, ':') != NULL) {
+  if (o_strchr(header, ':') != NULL) {
     if (response->map_header != NULL) {
       // Expecting a header (key: value)
       key = trimwhitespace(strtok_r(header, ":", &saveptr));
@@ -87,7 +87,7 @@ static size_t write_header(void * buffer, size_t size, size_t nitems, void * use
         o_free(tmp);
       }
     }
-  } else if (strlen(trimwhitespace(header)) > 0) {
+  } else if (o_strlen(trimwhitespace(header)) > 0) {
     // Expecting the HTTP/x.x header
     if (response->protocol != NULL) {
       o_free(response->protocol);
@@ -242,7 +242,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
             return U_ERROR_MEMORY;
           }
           if (has_params == 0) {
-            copy_request->http_url = o_realloc(copy_request->http_url, strlen(copy_request->http_url) + strlen(param) + 2);
+            copy_request->http_url = o_realloc(copy_request->http_url, o_strlen(copy_request->http_url) + o_strlen(param) + 2);
             if (copy_request->http_url == NULL) {
               y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for copy_request->http_url");
               o_free(param);
@@ -257,7 +257,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
             strcat(copy_request->http_url, param);
             has_params = 1;
           } else {
-            copy_request->http_url = o_realloc(copy_request->http_url, strlen(copy_request->http_url) + strlen(param) + 2);
+            copy_request->http_url = o_realloc(copy_request->http_url, o_strlen(copy_request->http_url) + o_strlen(param) + 2);
             if (copy_request->http_url == NULL) {
               y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for copy_request->http_url");
               o_free(param);
@@ -312,7 +312,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
           
           // Append parameter to body
           if (copy_request->binary_body_length == 0) {
-            len = strlen(param) + sizeof(char);
+            len = o_strlen(param) + sizeof(char);
             copy_request->binary_body = o_malloc(len);
             if (copy_request->binary_body == NULL) {
               y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for copy_request->binary_body");
@@ -324,11 +324,11 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
               curl_easy_cleanup(curl_handle);
               return U_ERROR_MEMORY;
             }
-            strcpy(copy_request->binary_body, "");
+            o_strcpy(copy_request->binary_body, "");
             strcat(copy_request->binary_body, param);
             copy_request->binary_body_length = len;
           } else {
-            len = (copy_request->binary_body_length + strlen(param) + sizeof(char));
+            len = (copy_request->binary_body_length + o_strlen(param) + sizeof(char));
             copy_request->binary_body = o_realloc(copy_request->binary_body, len);
             if (copy_request->binary_body == NULL) {
               y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for copy_request->binary_body");
@@ -341,7 +341,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
               return U_ERROR_MEMORY;
             }
             memcpy((char*)copy_request->binary_body + copy_request->binary_body_length, np, 1);
-            memcpy((char*)copy_request->binary_body + copy_request->binary_body_length + 1, param, strlen(param));
+            memcpy((char*)copy_request->binary_body + copy_request->binary_body_length + 1, param, o_strlen(param));
             copy_request->binary_body_length = len;
           }
           
@@ -653,7 +653,7 @@ static size_t smtp_payload_source(void * ptr, size_t size, size_t nmemb, void * 
 #else
       strftime(data, 128, "Date: %a, %d %b %Y %T %z\r\n", gmtime(&now));
 #endif
-      len = strlen(data);
+      len = o_strlen(data);
     }
   } else if (upload_ctx->lines_read == MAIL_TO) {
     data = msprintf("To: %s\r\n", upload_ctx->to);
@@ -661,35 +661,35 @@ static size_t smtp_payload_source(void * ptr, size_t size, size_t nmemb, void * 
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for MAIL_TO\n");
       return 0;
     }
-    len = strlen(data);
+    len = o_strlen(data);
   } else if (upload_ctx->lines_read == MAIL_FROM) {
     data = msprintf("From: %s\r\n", upload_ctx->from);
     if (data == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for MAIL_FROM\n");
       return 0;
     }
-    len = strlen(data);
+    len = o_strlen(data);
   } else if (upload_ctx->lines_read == MAIL_CC && upload_ctx->cc) {
     data = msprintf("Cc: %s\r\n", upload_ctx->cc);
     if (data == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for MAIL_CC\n");
       return 0;
     }
-    len = strlen(data);
+    len = o_strlen(data);
   } else if (upload_ctx->lines_read == MAIL_SUBJECT) {
     data = msprintf("Subject: %s\r\n", upload_ctx->subject);
     if (data == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for MAIL_SUBJECT\n");
       return 0;
     }
-    len = strlen(data);
+    len = o_strlen(data);
   } else if (upload_ctx->lines_read == MAIL_DATA) {
     data = msprintf("Content-Type: text/plain; charset=utf-8\r\n\r\n%s\r\n", upload_ctx->data);
     if (data == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for MAIL_DATA\n");
       return 0;
     }
-    len = strlen(data);
+    len = o_strlen(data);
   }
 
   if (upload_ctx->lines_read != MAIL_END) {

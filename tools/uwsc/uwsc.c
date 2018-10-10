@@ -54,7 +54,7 @@ static char * read_file(const char * filename, size_t * filesize) {
         *filesize = length;
       }
       fseek (f, 0, SEEK_SET);
-      buffer = malloc (length + 1);
+      buffer = o_malloc (length + 1);
       if (buffer) {
         fread (buffer, 1, length, f);
         buffer[length] = '\0';
@@ -259,7 +259,7 @@ int main (int argc, char ** argv) {
   char * url = NULL;
   struct _websocket_client_handler websocket_client_handler;
   
-  config = malloc(sizeof(struct _config));
+  config = o_malloc(sizeof(struct _config));
   if (config == NULL || !init_config(config)) {
     fprintf(stderr, "Error initialize configuration\n");
     exit_program(NULL, 1);

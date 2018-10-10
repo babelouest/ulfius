@@ -65,13 +65,13 @@ char * print_map(const struct _u_map * map) {
       line = o_malloc((len+1)*sizeof(char));
       snprintf(line, (len+1), "key is %s, length is %zu, value is %.*s", keys[i], u_map_get_length(map, keys[i]), (int)u_map_get_length(map, keys[i]), value);
       if (to_return != NULL) {
-        len = strlen(to_return) + strlen(line) + 1;
+        len = o_strlen(to_return) + o_strlen(line) + 1;
         to_return = o_realloc(to_return, (len+1)*sizeof(char));
-        if (strlen(to_return) > 0) {
+        if (o_strlen(to_return) > 0) {
           strcat(to_return, "\n");
         }
       } else {
-        to_return = o_malloc((strlen(line) + 1)*sizeof(char));
+        to_return = o_malloc((o_strlen(line) + 1)*sizeof(char));
         to_return[0] = 0;
       }
       strcat(to_return, line);
@@ -87,7 +87,7 @@ char * print_map(const struct _u_map * map) {
  * return the filename extension
  */
 const char * get_filename_ext(const char *path) {
-    const char *dot = strrchr(path, '.');
+    const char *dot = o_strrchr(path, '.');
     if(!dot || dot == path) return "*";
     return dot + 1;
 }

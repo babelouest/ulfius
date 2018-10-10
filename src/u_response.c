@@ -568,7 +568,7 @@ int ulfius_copy_response(struct _u_response * dest, const struct _u_response * s
  */
 int ulfius_set_string_body_response(struct _u_response * response, const unsigned int status, const char * binary_body) {
   if (response != NULL && binary_body != NULL) {
-    size_t binary_body_length = strlen(binary_body);
+    size_t binary_body_length = o_strlen(binary_body);
     // Free the binary_body available
     o_free(response->binary_body);
     response->binary_body = o_malloc(binary_body_length);
@@ -681,7 +681,7 @@ int ulfius_set_json_body_response(struct _u_response * response, const unsigned 
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->binary_body");
       return U_ERROR_MEMORY;
     }
-    response->binary_body_length = strlen((char*)response->binary_body);
+    response->binary_body_length = o_strlen((char*)response->binary_body);
     response->status = status;
     u_map_put(response->map_header, ULFIUS_HTTP_HEADER_CONTENT, ULFIUS_HTTP_ENCODING_JSON);
     return U_OK;

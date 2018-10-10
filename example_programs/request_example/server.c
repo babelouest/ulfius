@@ -34,10 +34,10 @@ char * print_map(const struct _u_map * map) {
       line = o_malloc((len+1)*sizeof(char));
       snprintf(line, (len+1), "key is %s, value is %s\n", keys[i], u_map_get(map, keys[i]));
       if (to_return != NULL) {
-        len = strlen(to_return) + strlen(line) + 1;
+        len = o_strlen(to_return) + o_strlen(line) + 1;
         to_return = o_realloc(to_return, (len+1)*sizeof(char));
       } else {
-        to_return = o_malloc((strlen(line) + 1)*sizeof(char));
+        to_return = o_malloc((o_strlen(line) + 1)*sizeof(char));
         to_return[0] = 0;
       }
       strcat(to_return, line);
@@ -56,10 +56,10 @@ int callback (const struct _u_request * request, struct _u_response * response, 
   char * url_params = print_map(request->map_url), * headers = print_map(request->map_header), * cookies = print_map(request->map_cookie), 
         * post_params = print_map(request->map_post_body);
   char request_body[request->binary_body_length + 1];
-  strncpy(request_body, request->binary_body, request->binary_body_length);
+  o_strncpy(request_body, request->binary_body, request->binary_body_length);
   request_body[request->binary_body_length] = '\0';
   response->binary_body = o_strdup("ok");
-  response->binary_body_length = strlen("ok");
+  response->binary_body_length = o_strlen("ok");
   response->status = 200;
   printf("######################################################\n###################### Callback ######################\n######################################################\n\nMethod is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n  raw body is \n%s\n\n  user data is %s\n\n",
                                   request->http_verb, request->http_url, url_params, cookies, headers, post_params, request_body, (char *)user_data);

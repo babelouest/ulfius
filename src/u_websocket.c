@@ -874,7 +874,7 @@ int ulfius_generate_handshake_answer(const char * key, char * out_digest) {
   int res, to_return = 0;
   
   key_data.data = (unsigned char*)msprintf("%s%s", key, U_WEBSOCKET_MAGIC_STRING);
-  key_data.size = strlen((const char *)key_data.data);
+  key_data.size = o_strlen((const char *)key_data.data);
   
   if (key_data.data != NULL && out_digest != NULL && (res = gnutls_fingerprint(GNUTLS_DIG_SHA1, &key_data, encoded_key, &encoded_key_size)) == GNUTLS_E_SUCCESS) {
     if (o_base64_encode(encoded_key, encoded_key_size, (unsigned char *)out_digest, &encoded_key_size_base64)) {

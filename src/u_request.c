@@ -499,7 +499,7 @@ int ulfius_set_json_body_request(struct _u_request * request, json_t * j_body) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for request->binary_body");
       return U_ERROR_MEMORY;
     }
-    request->binary_body_length = strlen((char*)request->binary_body);
+    request->binary_body_length = o_strlen((char*)request->binary_body);
     u_map_put(request->map_header, ULFIUS_HTTP_HEADER_CONTENT, ULFIUS_HTTP_ENCODING_JSON);
     return U_OK;
   } else {

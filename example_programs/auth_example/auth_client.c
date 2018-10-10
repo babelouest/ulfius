@@ -35,10 +35,10 @@ char * print_map(const struct _u_map * map) {
       line = o_malloc((len+1)*sizeof(char));
       snprintf(line, (len+1), "key is %s, value is %s\n", keys[i], u_map_get(map, keys[i]));
       if (to_return != NULL) {
-        len = strlen(to_return) + strlen(line) + 1;
+        len = o_strlen(to_return) + o_strlen(line) + 1;
         to_return = o_realloc(to_return, (len+1)*sizeof(char));
       } else {
-        to_return = o_malloc((strlen(line) + 1)*sizeof(char));
+        to_return = o_malloc((o_strlen(line) + 1)*sizeof(char));
         to_return[0] = 0;
       }
       strcat(to_return, line);
@@ -53,7 +53,7 @@ char * print_map(const struct _u_map * map) {
 void print_response(struct _u_response * response) {
   if (response != NULL) {
     char response_body[response->binary_body_length + 1];
-    strncpy(response_body, response->binary_body, response->binary_body_length);
+    o_strncpy(response_body, response->binary_body, response->binary_body_length);
     response_body[response->binary_body_length] = '\0';
     printf("status is\n%ld\n\nstring body is \n%s\n\n",
            response->status, response_body);

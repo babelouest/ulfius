@@ -58,13 +58,13 @@ char * print_map(const struct _u_map * map) {
       line = o_malloc((len+1)*sizeof(char));
       snprintf(line, (len+1), "key is %s, value is %s", keys[i], value);
       if (to_return != NULL) {
-        len = strlen(to_return) + strlen(line) + 1;
+        len = o_strlen(to_return) + o_strlen(line) + 1;
         to_return = o_realloc(to_return, (len+1)*sizeof(char));
-        if (strlen(to_return) > 0) {
+        if (o_strlen(to_return) > 0) {
           strcat(to_return, "\n");
         }
       } else {
-        to_return = o_malloc((strlen(line) + 1)*sizeof(char));
+        to_return = o_malloc((o_strlen(line) + 1)*sizeof(char));
         to_return[0] = 0;
       }
       strcat(to_return, line);
@@ -127,7 +127,7 @@ int main (int argc, char **argv) {
   ulfius_set_default_endpoint(&instance, &callback_default, NULL);
   
   // Start the framework
-  if (argc == 4 && strcmp("-secure", argv[1]) == 0) {
+  if (argc == 4 && o_strcmp("-secure", argv[1]) == 0) {
     // If command-line options are -secure <key_file> <cert_file>, then open an https connection
     char * key_pem = read_file(argv[2]), * cert_pem = read_file(argv[3]);
     ret = ulfius_start_secure_framework(&instance, key_pem, cert_pem);
@@ -139,7 +139,7 @@ int main (int argc, char **argv) {
   }
   
   if (ret == U_OK) {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "Start %sframework on port %d", ((argc == 4 && strcmp("-secure", argv[1]) == 0)?"secure ":""), instance.port);
+    y_log_message(Y_LOG_LEVEL_DEBUG, "Start %sframework on port %d", ((argc == 4 && o_strcmp("-secure", argv[1]) == 0)?"secure ":""), instance.port);
     
     // Wait for the user to press <enter> on the console to quit the application
     getchar();

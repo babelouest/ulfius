@@ -47,7 +47,7 @@ static char * read_file(const char * filename) {
       fseek (f, 0, SEEK_END);
       length = ftell (f);
       fseek (f, 0, SEEK_SET);
-      buffer = malloc (length + 1);
+      buffer = o_malloc (length + 1);
       if (buffer) {
         fread (buffer, 1, length, f);
         buffer[length] = '\0';
@@ -111,8 +111,8 @@ int main(int argc, char ** argv) {
     } else {
       ret = ulfius_start_secure_framework(&instance, key_file, cert_file);
     }
-    free(key_file);
-    free(cert_file);
+    o_free(key_file);
+    o_free(cert_file);
   } else {
     ret = ulfius_start_framework(&instance);
   }

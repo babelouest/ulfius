@@ -153,7 +153,7 @@ int u_map_has_key(const struct _u_map * u_map, const char * key) {
  * search is case sensitive
  */
 int u_map_has_value(const struct _u_map * u_map, const char * value) {
-  return u_map_has_value_binary(u_map, value, strlen(value));
+  return u_map_has_value_binary(u_map, value, o_strlen(value));
 }
 
 /**
@@ -180,7 +180,7 @@ int u_map_has_value_binary(const struct _u_map * u_map, const char * value, size
  */
 int u_map_put(struct _u_map * u_map, const char * key, const char * value) {
   if (value != NULL) {
-    return u_map_put_binary(u_map, key, value, 0, strlen(value)+1);
+    return u_map_put_binary(u_map, key, value, 0, o_strlen(value)+1);
   } else {
     return u_map_put_binary(u_map, key, NULL, 0, 0);
   }
@@ -195,7 +195,7 @@ int u_map_put(struct _u_map * u_map, const char * key, const char * value) {
 int u_map_put_binary(struct _u_map * u_map, const char * key, const char * value, uint64_t offset, size_t length) {
   int i;
   char * dup_key, * dup_value;
-  if (u_map != NULL && key != NULL && strlen(key) > 0) {
+  if (u_map != NULL && key != NULL && o_strlen(key) > 0) {
     for (i=0; i < u_map->nb_values; i++) {
       if (0 == o_strcmp(u_map->keys[i], key)) {
         // Key already exist, extend and/or replace value
@@ -335,7 +335,7 @@ int u_map_remove_from_key_case(struct _u_map * u_map, const char * key) {
  * return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
  */
 int u_map_remove_from_value(struct _u_map * u_map, const char * value) {
-  return u_map_remove_from_value_binary(u_map, value, strlen(value));
+  return u_map_remove_from_value_binary(u_map, value, o_strlen(value));
 }
 
 /**

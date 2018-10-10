@@ -35,13 +35,13 @@ char * print_map(const struct _u_map * map) {
       line = o_malloc((len+1)*sizeof(char));
       snprintf(line, (len+1), "key is %s, length is %zu, value is %.*s", keys[i], u_map_get_length(map, keys[i]), (int)u_map_get_length(map, keys[i]), value);
       if (to_return != NULL) {
-        len = strlen(to_return) + strlen(line) + 1;
+        len = o_strlen(to_return) + o_strlen(line) + 1;
         to_return = o_realloc(to_return, (len+1)*sizeof(char));
-        if (strlen(to_return) > 0) {
+        if (o_strlen(to_return) > 0) {
           strcat(to_return, "\n");
         }
       } else {
-        to_return = o_malloc((strlen(line) + 1)*sizeof(char));
+        to_return = o_malloc((o_strlen(line) + 1)*sizeof(char));
         to_return[0] = 0;
       }
       strcat(to_return, line);
@@ -187,13 +187,13 @@ int main (int argc, char **argv) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "iteration 12, map is\n%s\n", print);
     o_free(print);
     
-    u_map_put_binary(&map, "Makefile", "Replace the first characters", 0, strlen("Replace the first characters"));
+    u_map_put_binary(&map, "Makefile", "Replace the first characters", 0, o_strlen("Replace the first characters"));
     
     print = print_map(&map);
     y_log_message(Y_LOG_LEVEL_DEBUG, "iteration 12, map is\n%s\n", print);
     o_free(print);
     
-    u_map_put_binary(&map, "Makefile", "Append at the end of the value", u_map_get_length(&map, "Makefile"), strlen("Append at the end of the value"));
+    u_map_put_binary(&map, "Makefile", "Append at the end of the value", u_map_get_length(&map, "Makefile"), o_strlen("Append at the end of the value"));
     
     print = print_map(&map);
     y_log_message(Y_LOG_LEVEL_DEBUG, "iteration 12, map is\n%s\n", print);
