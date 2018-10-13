@@ -370,6 +370,38 @@ The priority is in descending order, which means that it starts with 0 (highest 
 
 To help passing parameters between callback functions of the same request, the value `struct _u_response.shared_data` can bse used. But it will not be allocated or freed by the framework, the program using this variable must free by itself.
 
+##### Multiple urls with similar pattern
+
+If you need to differentiate multiple urls with similar pattern, you can use priorities among multiple callback function.
+
+For example, if you have 2 endpoints with the following patterns:
+
+1- `/example/:id`
+2- `/example/findByStatus`
+
+You'll probably need the callback referred in 2- to be called and the callback referred in 1- not when the url called is the exact pattern as in 2-. Nevertheless, you'll need callback referred in 1- in all the other cases.
+
+In that case, you'll have to set a higher priority to the endpoint with the url 2- and return its callback function with the value `U_CALLBACK_COMPLETE`. Remember, if the first callback returns `U_CALLBACK_CONTINUE`, the second callback will be called afterwards.
+
+```C
+int callback_example_find_by_status(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  /* do something here... */
+  return U_CALLBACK_COMPLETE;
+}
+
+int callback_example_by_id(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  /* do something else there... */
+  return U_CALLBACK_CONTINUE;
+}
+
+int main() {
+  /* initialize program and instance */
+  ulfius_add_endpoint_by_val(instance, "GET", NULL, "/example/:id", 1, &callback_example_by_id, my_user_data);
+  ulfius_add_endpoint_by_val(instance, "GET", NULL, "/example/findByStatus", 0, &callback_example_find_by_status, my_user_data);
+  /* start instance and run program */
+}
+```
+
 ### Start and stop webservice
 
 #### Start webservice
