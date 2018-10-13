@@ -7,6 +7,7 @@
   - [Instance structure](#instance-structure)
   - [Endpoint structure](#endpoint-structure)
   - [Multiple callback functions](#multiple-callback-functions)
+  - [Multiple urls with similar pattern](#multiple-urls-with-similar-pattern)
 - [Start and stop webservice](#start-and-stop-webservice)
 - [Callback functions management](#callback-functions-management)
   - [Request structure](#request-structure)
@@ -370,7 +371,7 @@ The priority is in descending order, which means that it starts with 0 (highest 
 
 To help passing parameters between callback functions of the same request, the value `struct _u_response.shared_data` can bse used. But it will not be allocated or freed by the framework, the program using this variable must free by itself.
 
-##### Multiple urls with similar pattern
+#### Multiple urls with similar pattern
 
 If you need to differentiate multiple urls with similar pattern, you can use priorities among multiple callback function.
 
