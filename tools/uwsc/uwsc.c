@@ -26,7 +26,7 @@
 #include <yder.h>
 #include <ulfius.h>
 
-#define _UWSC_VERSION_ "0.5"
+#define _UWSC_VERSION_ "0.9"
 
 struct _config {
   char       * log_path;
@@ -188,7 +188,7 @@ static void print_help(FILE * output) {
   fprintf(output, "-s --non-secure\n");
   fprintf(output, "\tDo not check server certificate\n");
   fprintf(output, "-v --version\n");
-  fprintf(output, "\tPrint Glewlwyd's current version\n\n");
+  fprintf(output, "\tPrint uwsc's current version\n\n");
   fprintf(output, "-h --help\n");
   fprintf(output, "\tPrint this message\n\n");
 }
