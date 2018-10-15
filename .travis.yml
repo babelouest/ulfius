@@ -21,14 +21,14 @@ matrix:
         - cppcheck --force --enable=warning,missingInclude --error-exitcode=1 . >build.log 2>&1 || (cat build.log && exit 1)
 
 script:
-  - make
   - mkdir build && cd build
   - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on ..
   - make
   - sudo make install
   - make test
-  - cd ../example_programs
-  - make
+  - cd .. && make
+  - cd example_programs
   - mkdir build && cd build
   - cmake ...
   - make
+  - cd .. && make
