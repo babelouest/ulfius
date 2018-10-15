@@ -55,9 +55,10 @@ static char * read_file(const char * filename, size_t * filesize) {
       }
       fseek (f, 0, SEEK_SET);
       buffer = o_malloc (length + 1);
-      if (buffer) {
-        fread (buffer, 1, length, f);
-        buffer[length] = '\0';
+      if (buffer != NULL) {
+        if (fread (buffer, 1, length, f)) {
+          buffer[length] = '\0';
+        }
       }
       fclose (f);
     }
