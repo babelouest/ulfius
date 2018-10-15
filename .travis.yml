@@ -23,4 +23,8 @@ matrix:
 script:
   - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on .
   - make
+  - make install
   - make test
+  - cd example_programs
+  - cmake ..
+  - make
