@@ -26,9 +26,7 @@ script:
   - make
   - sudo make install
   - make test
-  - cd .. && make
-  - cd example_programs
+  - cd ../example_programs
   - mkdir build && cd build
-  - cmake ...
+  - cmake ..
   - make
-  - cd .. && make
