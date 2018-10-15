@@ -372,3 +372,13 @@ set(CPACK_SOURCE_IGNORE_FILES ${PACKAGE_IGNORED_FILES})
 include(CPack)
 
 add_custom_target(dist_u COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
+
+message(STATUS "Websocket support: ${WITH_WEBSOCKET}")
+message(STATUS "Outgoing requests support: ${WITH_CURL}")
+message(STATUS "Jansson library support: ${WITH_JANSSON}")
+message(STATUS "Build static library: ${BUILD_STATIC}")
+message(STATUS "Build uwsc application: ${BUILD_UWSC}")
+message(STATUS "Build testing tree: ${BUILD_ULFIUS_TESTING}")
+message(STATUS "Install the header files: ${INSTALL_HEADER}")
+message(STATUS "Build RPM package: ${BUILD_RPM}")
+
