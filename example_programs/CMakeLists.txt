@@ -82,15 +82,6 @@ else ()
 	endif ()
 endif ()
 
-include(FindMHD)
-find_package(MHD ${MHD_MIN_VERSION} REQUIRED)
-if (MHD_FOUND)
-		set(LIBS ${LIBS} ${MHD_LIBRARIES})
-    if (MHD_VERSION_STRING VERSION_LESS "0.9.53")
-      set(WITH_WEBSOCKET OFF)
-    endif ()
-endif ()
-
 option(WITH_CURL "Use Curl library" ON)
 
 if (WITH_CURL)
