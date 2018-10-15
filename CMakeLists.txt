@@ -165,6 +165,7 @@ option(BUILD_UWSC "Build uwsc application." ON)
 
 if (WITH_WEBSOCKET AND BUILD_UWSC)
     add_executable(uwsc ${UWSC_DIR}/uwsc.c ${INC_DIR}/ulfius.h ${INC_DIR}/u_private.h)
+    set_target_properties(uwsc PROPERTIES SKIP_BUILD_RPATH TRUE)
     add_dependencies(uwsc ulfius)
     target_link_libraries(uwsc ulfius)
     install(TARGETS uwsc RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
