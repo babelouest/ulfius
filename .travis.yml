@@ -26,9 +26,3 @@ script:
   - make
   - sudo make install
   - make test
-  - cd .. && make
-  - cd example_programs
-  - mkdir build && cd build
-  - cmake ...
-  - make
-  - cd .. && make
