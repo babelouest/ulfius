@@ -28,9 +28,6 @@ set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/ulfius/issues")
 include(GNUInstallDirs)
 include(CheckSymbolExists)
 
-option(WITH_WEBSOCKET "Websocket support" ON)
-option(WITH_CURL "Use Curl library" ON)
-option(WITH_JANSSON "Use jansson library" ON)
 # cmake modules
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules)
@@ -50,97 +47,10 @@ if (_GNU_SOURCE)
     add_definitions(-D_GNU_SOURCE)
 endif ()
 
-include(FindOrcania)
-set(ORCANIA_MIN_VERSION "1.1.1")
-find_package(Orcania ${ORCANIA_MIN_VERSION} REQUIRED)
-set(LIBS ${ORCANIA_LIBRARIES})
-
-include(FindYder)
-set(YDER_MIN_VERSION "1.1.1")
-find_package(Yder ${YDER_MIN_VERSION} REQUIRED)
-set(LIBS ${LIBS} ${YDER_LIBRARIES})
-
 include(FindUlfius)
 set(ULFIUS_MIN_VERSION "2.2")
 find_package(Ulfius ${ULFIUS_MIN_VERSION} REQUIRED)
-set(LIBS ${LIBS} ${ULFIUS_LIBRARIES})
-
-# websocket support
-
-if (WIN32)
-	set(WITH_WEBSOCKET OFF)
-endif ()
-
-if (NOT WITH_WEBSOCKET)
-	add_definitions(-DU_DISABLE_WEBSOCKET)
-  set(MHD_MIN_VERSION 0.9.51)
-else ()
-  set(MHD_MIN_VERSION 0.9.53)
-	include(FindGnuTLS)
-	find_package(GnuTLS REQUIRED)
-	if (GNUTLS_FOUND)
-			set(LIBS ${LIBS} ${GNUTLS_LIBRARIES})
-	endif ()
-endif ()
-
-if (WITH_CURL)
-	include(FindCURL)
-	find_package(CURL REQUIRED)
-	if (CURL_FOUND)
-			set(LIBS ${LIBS} ${CURL_LIBRARIES})
-	endif ()
-else ()
-    add_definitions(-DU_DISABLE_CURL)
-endif ()
-
-if (WITH_JANSSON)
-    include(FindJansson)
-		set(JANSSON_MIN_VERSION 2.4)
-    find_package(Jansson ${JANSSON_MIN_VERSION} REQUIRED)
-    if (JANSSON_FOUND)
-        set(LIBS ${LIBS} ${JANSSON_LIBRARIES})
-    endif ()
-else ()
-    add_definitions(-DU_DISABLE_JANSSON)
-endif ()
-
-set(Orcania_FIND_QUIETLY ON) # force to find Orcania quietly
-include(FindOrcania)
-find_package(Orcania 1.1 QUIET) # try to find Orcania
-if (NOT ORCANIA_FOUND)
-    include(DownloadProject)
-    download_project(PROJ orcania # ... otherwise, download archive
-                      URL "https://github.com/babelouest/orcania/archive/v${ORCANIA_VERSION_DOWNLOAD}.tar.gz"
-                      QUIET)
-    add_subdirectory(${orcania_SOURCE_DIR} ${orcania_BINARY_DIR})
-    include_directories(${orcania_SOURCE_DIR}/include)
-    include_directories(${orcania_SOURCE_DIR}/include)
-    add_dependencies(ulfius orcania)
-    add_dependencies(ulfius orcania)
-    set(ORCANIA_LIBRARIES orcania orcania)
-else()
-    set(LIBS ${LIBS} ${ORCANIA_LIBRARIES})
-    include_directories(${ORCANIA_INCLUDE_DIRS})
-endif ()
-
-set(Yder_FIND_QUIETLY ON) # force to find Yder quietly
-include(FindYder)
-find_package(Yder 1.1 QUIET) # try to find Yder
-if (NOT YDER_FOUND)
-    include(DownloadProject)
-    download_project(PROJ yder # ... otherwise, download archive
-                      URL "https://github.com/babelouest/yder/archive/v${YDER_VERSION_DOWNLOAD}.tar.gz"
-                      QUIET)
-    add_subdirectory(${yder_SOURCE_DIR} ${yder_BINARY_DIR})
-    include_directories(${yder_SOURCE_DIR}/include)
-    include_directories(${orcania_SOURCE_DIR}/include)
-    add_dependencies(ulfius yder)
-    add_dependencies(ulfius orcania)
-    set(YDER_LIBRARIES yder orcania)
-else()
-    set(LIBS ${LIBS} ${YDER_LIBRARIES})
-    include_directories(${YDER_INCLUDE_DIRS})
-endif ()
+set(LIBS ${LIBS} ${ULFIUS_LIBRARIES} "-lorcania -lyder")
 
 # examples
 
@@ -197,3 +107,8 @@ if (WITH_WEBSOCKET)
   add_executable(websocket_client ${CMAKE_CURRENT_SOURCE_DIR}/websocket_example/websocket_client.c ${STATIC_CALLBACK_DIR}/static_file_callback.c)
   target_link_libraries(websocket_client ${LIBS})
 endif ()
+
+message(STATUS "Websocket support: ${WITH_WEBSOCKET}")
+message(STATUS "Outgoing requests support: ${WITH_CURL}")
+message(STATUS "Jansson library support: ${WITH_JANSSON}")
+
