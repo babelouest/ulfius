@@ -26,9 +26,9 @@
 #define _ULFIUS_CFG_H_
 
 #define ULFIUS_VERSION ${PROJECT_VERSION}
-#cmakedefine DISABLE_JANSSON
-#cmakedefine DISABLE_CURL
-#cmakedefine DISABLE_WEBSOCKET
+#cmakedefine U_DISABLE_JANSSON
+#cmakedefine U_DISABLE_CURL
+#cmakedefine U_DISABLE_WEBSOCKET
 
 #endif /* _ULFIUS_CFG_H_ */
 

@@ -57,20 +57,20 @@ config:
 	@cp $(CONFIG_TEMPLATE) $(CONFIG_FILE)
 	@sed -i -e 's/$${PROJECT_VERSION}/$(VERSION)/g' $(CONFIG_FILE)        
 	@if [ "$(DISABLE_JANSSON)" = "1" ]; then \
-		sed -i -e 's/\#cmakedefine DISABLE_JANSSON/\#define U_DISABLE_JANSSON/g' $(CONFIG_FILE); \
+		sed -i -e 's/\#cmakedefine U_DISABLE_JANSSON/\#define U_DISABLE_JANSSON/g' $(CONFIG_FILE); \
 	else \
-		sed -i -e 's/\#cmakedefine DISABLE_JANSSON/\/* #undef U_DISABLE_JANSSON *\//g' $(CONFIG_FILE); \
+		sed -i -e 's/\#cmakedefine U_DISABLE_JANSSON/\/* #undef U_DISABLE_JANSSON *\//g' $(CONFIG_FILE); \
 	fi
 	@if [ "$(DISABLE_CURL)" = "1" ]; then \
-		sed -i -e 's/\#cmakedefine DISABLE_CURL/\#define U_DISABLE_CURL/g' $(CONFIG_FILE); \
+		sed -i -e 's/\#cmakedefine U_DISABLE_CURL/\#define U_DISABLE_CURL/g' $(CONFIG_FILE); \
 	else \
-		sed -i -e 's/\#cmakedefine DISABLE_CURL/\/* #undef U_DISABLE_CURL *\//g' $(CONFIG_FILE); \
+		sed -i -e 's/\#cmakedefine U_DISABLE_CURL/\/* #undef U_DISABLE_CURL *\//g' $(CONFIG_FILE); \
 	fi
 	@pkg-config --atleast-version=0.9.53 libmicrohttpd; \
 	if [ $$? -ne 0 ] || [ "$(DISABLE_WEBSOCKET)" = "1" ]; then \
-		sed -i -e 's/\#cmakedefine DISABLE_WEBSOCKET/\#define U_DISABLE_WEBSOCKET/g' $(CONFIG_FILE); \
+		sed -i -e 's/\#cmakedefine U_DISABLE_WEBSOCKET/\#define U_DISABLE_WEBSOCKET/g' $(CONFIG_FILE); \
 	else \
-		sed -i -e 's/\#cmakedefine DISABLE_WEBSOCKET/\/* #undef U_DISABLE_WEBSOCKET *\//g' $(CONFIG_FILE); \
+		sed -i -e 's/\#cmakedefine U_DISABLE_WEBSOCKET/\/* #undef U_DISABLE_WEBSOCKET *\//g' $(CONFIG_FILE); \
 	fi
 	@echo Config file $(CONFIG_FILE) generated
 
