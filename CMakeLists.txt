@@ -145,11 +145,6 @@ else ()
     set(DISABLE_JANSSON ON)
 endif ()
 
-# build ulfius-cfg.h file
-configure_file(${INC_DIR}/ulfius-cfg.h.in ${PROJECT_BINARY_DIR}/ulfius-cfg.h)
-set (CMAKE_EXTRA_INCLUDE_FILES ${PROJECT_BINARY_DIR})
-include_directories(${PROJECT_BINARY_DIR})
-
 # static library
 
 option(BUILD_STATIC "Build static library." OFF)
@@ -190,22 +185,22 @@ endif ()
 
 set(Orcania_FIND_QUIETLY ON) # force to find Orcania quietly
 include(FindOrcania)
-find_package(Orcania 1.1 QUIET) # try to find Orcania
+find_package(Orcania 1.1 QUIET) # try to find orcania
 if (NOT ORCANIA_FOUND)
     include(DownloadProject)
     download_project(PROJ orcania # ... otherwise, download archive
-                      URL "https://github.com/babelouest/orcania/archive/v${ORCANIA_VERSION_DOWNLOAD}.tar.gz"
-                      QUIET)
+        URL "https://github.com/babelouest/orcania/archive/v${ORCANIA_VERSION_DOWNLOAD}.tar.gz"
+        QUIET)
     add_subdirectory(${orcania_SOURCE_DIR} ${orcania_BINARY_DIR})
     include_directories(${orcania_SOURCE_DIR}/include)
-    include_directories(${orcania_SOURCE_DIR}/include)
     add_dependencies(ulfius orcania)
-    set(ORCANIA_LIBRARIES orcania orcania)
+    set(ORCANIA_LIBRARIES orcania)
+    set(LIBS ${LIBS} ${ORCANIA_LIBRARIES})
+    include_directories(${orcania_BINARY_DIR})
 else()
     set(LIBS ${LIBS} ${ORCANIA_LIBRARIES})
     include_directories(${ORCANIA_INCLUDE_DIRS})
 endif ()
-target_link_libraries(ulfius ${LIBS} ${ORCANIA_LIBRARIES})
 
 set(SEARCH_ORCANIA OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during yder search and download
 set(Yder_FIND_QUIETLY ON) # force to find Yder quietly
@@ -218,10 +213,9 @@ if (NOT YDER_FOUND)
                       QUIET)
     add_subdirectory(${yder_SOURCE_DIR} ${yder_BINARY_DIR})
     include_directories(${yder_SOURCE_DIR}/include)
-    include_directories(${orcania_SOURCE_DIR}/include)
     add_dependencies(ulfius yder)
-    add_dependencies(ulfius orcania)
     set(YDER_LIBRARIES yder orcania)
+    include_directories(${yder_BINARY_DIR})
 else()
     set(LIBS ${LIBS} ${YDER_LIBRARIES})
     include_directories(${YDER_INCLUDE_DIRS})
@@ -241,6 +235,11 @@ if (WITH_WEBSOCKET)
 else ()
   set (PKGCONF_REQ_PRIVATE "${PKGCONF_REQ_PRIVATE}, libmicrohttpd > 0.9.51")
 endif ()
+
+# build ulfius-cfg.h file
+configure_file(${INC_DIR}/ulfius-cfg.h.in ${PROJECT_BINARY_DIR}/ulfius-cfg.h)
+set (CMAKE_EXTRA_INCLUDE_FILES ${PROJECT_BINARY_DIR})
+include_directories(${PROJECT_BINARY_DIR})
 
 # tests
 
