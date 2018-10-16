@@ -22,11 +22,11 @@ matrix:
 
 script:
   - mkdir build && cd build
-  - cmake -DBUILD_ULFIUS_TESTING=on ..
+  - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on ..
   - make test package
-  - cmake -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off ..
+  - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off ..
   - make test package
-  - cmake -DBUILD_ULFIUS_TESTING=on -DWITH_JANSSON=off ..
+  - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_JANSSON=off ..
   - make test package
-  - cmake -DBUILD_ULFIUS_TESTING=on -DWITH_CURL=off ..
+  - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_CURL=off ..
   - make test package
