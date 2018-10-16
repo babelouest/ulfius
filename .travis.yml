@@ -21,6 +21,50 @@ matrix:
         - cppcheck --force --enable=warning,missingInclude --error-exitcode=1 . >build.log 2>&1 || (cat build.log && exit 1)
 
 script:
-  - mkdir build && cd build
+  - mkdir build
+  - mkdir /example_programs/build
+  - cd build
   - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on ..
   - make test package
+  - cd ../example_programs/build
+  - make
+  - cd ../../build
+  - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=off ..
+  - make test package
+  - cd ../example_programs/build
+  - make
+  - cd ../../build
+  - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=on ..
+  - make test package
+  - cd ../example_programs/build
+  - make
+  - cd ../../build
+  - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=off ..
+  - make test package
+  - cd ../example_programs/build
+  - make
+  - cd ../../build
+  - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=on ..
+  - make test package
+  - cd ../example_programs/build
+  - make
+  - cd ../../build
+  - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=off ..
+  - make test package
+  - cd ../example_programs/build
+  - make
+  - cd ../../build
+  - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=on ..
+  - make test package
+  - cd ../example_programs/build
+  - make
+  - cd ../../build
+  - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=off ..
+  - make test package
+  - cd ../example_programs/build
+  - make
+  - cd ../../build
+  - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=on ..
+  - make test package
+  - cd ../example_programs/build
+  - make
