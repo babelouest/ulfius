@@ -26,45 +26,62 @@ script:
   - cd build
   - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on ..
   - make test package
+  - sudo make install
   - cd ../example_programs/build
+  - cmake ..
   - make
   - cd ../../build
   - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=off ..
   - make test package
+  - sudo make install
   - cd ../example_programs/build
+  - cmake ..
   - make
   - cd ../../build
   - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=on ..
   - make test package
+  - sudo make install
   - cd ../example_programs/build
+  - cmake ..
   - make
   - cd ../../build
   - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=off ..
   - make test package
+  - sudo make install
   - cd ../example_programs/build
+  - cmake ..
   - make
   - cd ../../build
   - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=on ..
   - make test package
+  - sudo make install
   - cd ../example_programs/build
+  - cmake ..
   - make
   - cd ../../build
   - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=off ..
   - make test package
+  - sudo make install
   - cd ../example_programs/build
+  - cmake ..
   - make
   - cd ../../build
   - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=on ..
   - make test package
+  - sudo make install
   - cd ../example_programs/build
+  - cmake ..
   - make
   - cd ../../build
   - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=off ..
   - make test package
+  - sudo make install
   - cd ../example_programs/build
+  - cmake ..
   - make
   - cd ../../build
   - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=on ..
+  - sudo make install
   - make test package
   - cd ../example_programs/build
   - make
