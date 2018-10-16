@@ -50,7 +50,7 @@ endif ()
 include(FindUlfius)
 set(ULFIUS_MIN_VERSION "2.2")
 find_package(Ulfius ${ULFIUS_MIN_VERSION} REQUIRED)
-set(LIBS ${LIBS} ${ULFIUS_LIBRARIES} "-lorcania -lyder")
+set(LIBS ${LIBS} ${ULFIUS_LIBRARIES} "-lorcania -lyder -ljansson")
 
 # examples
 
