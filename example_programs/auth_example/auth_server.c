@@ -14,9 +14,6 @@
 #include <yder.h>
 #include <orcania.h>
 
-#define U_DISABLE_JANSSON
-#define U_DISABLE_CURL
-#define U_DISABLE_WEBSOCKET
 #include <ulfius.h>
 
 #define PORT 2884

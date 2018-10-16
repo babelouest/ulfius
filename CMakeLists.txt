@@ -28,13 +28,13 @@ set(PROJECT_HOMEPAGE_URL "https://github.com/babelouest/ulfius/")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/ulfius/issues")
 set(LIBRARY_VERSION_MAJOR "2")
 set(LIBRARY_VERSION_MINOR "4")
-set(LIBRARY_VERSION_PATCH "2")
+set(LIBRARY_VERSION_PATCH "3")
 
 set(PROJECT_VERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}.${LIBRARY_VERSION_PATCH}")
 set(LIBRARY_VERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}.${LIBRARY_VERSION_PATCH}")
 set(LIBRARY_SOVERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}")
-set(YDER_VERSION_DOWNLOAD "1.4.2")
-set(ORCANIA_VERSION_DOWNLOAD "1.2.6")
+set(YDER_VERSION_DOWNLOAD "1.4.3")
+set(ORCANIA_VERSION_DOWNLOAD "1.2.7")
 
 # cmake modules
 
@@ -108,6 +108,12 @@ if (MHD_FOUND)
     endif ()
 endif ()
 
+if (WITH_WEBSOCKET)
+    set(DISABLE_WEBSOCKET OFF)
+else ()
+    set(DISABLE_WEBSOCKET ON)
+endif ()
+
 option(WITH_CURL "Use Curl library" ON)
 
 if (WITH_CURL)
@@ -116,8 +122,10 @@ if (WITH_CURL)
     if (CURL_FOUND)
         set(LIBS ${LIBS} ${CURL_LIBRARIES})
         include_directories(${CURL_INCLUDE_DIRS})
+        set(DISABLE_CURL OFF)
     endif ()
 else ()
+    set(DISABLE_CURL ON)
     add_definitions(-DU_DISABLE_CURL)
 endif ()
 
@@ -125,15 +133,22 @@ option(WITH_JANSSON "Use jansson library" ON)
 
 if (WITH_JANSSON)
     include(FindJansson)
-        set(JANSSON_MIN_VERSION 2.4)
+    set(JANSSON_MIN_VERSION 2.4)
     find_package(Jansson ${JANSSON_MIN_VERSION} REQUIRED)
     if (JANSSON_FOUND)
         include_directories(${JANSSON_INCLUDE_DIRS})
         set(LIBS ${LIBS} ${JANSSON_LIBRARIES})
+        set(DISABLE_JANSSON OFF)
     endif ()
 else ()
     add_definitions(-DU_DISABLE_JANSSON)
+    set(DISABLE_JANSSON ON)
 endif ()
+
+# build ulfius-cfg.h file
+configure_file(${INC_DIR}/ulfius-cfg.h.in ${PROJECT_BINARY_DIR}/ulfius-cfg.h)
+set (CMAKE_EXTRA_INCLUDE_FILES ${PROJECT_BINARY_DIR})
+include_directories(${PROJECT_BINARY_DIR})
 
 # static library
 
@@ -151,7 +166,7 @@ endif ()
 add_library(ulfius SHARED ${LIB_SRC})
 set_target_properties(ulfius PROPERTIES
         COMPILE_OPTIONS -Wextra
-        PUBLIC_HEADER ${INC_DIR}/ulfius.h
+        PUBLIC_HEADER "${INC_DIR}/ulfius.h;${PROJECT_BINARY_DIR}/ulfius-cfg.h"
         VERSION "${LIBRARY_VERSION}"
         SOVERSION "${LIBRARY_SOVERSION}")
 if (WIN32)
@@ -164,7 +179,7 @@ target_link_libraries(ulfius ${LIBS})
 option(BUILD_UWSC "Build uwsc application." ON)
 
 if (WITH_WEBSOCKET AND BUILD_UWSC)
-    add_executable(uwsc ${UWSC_DIR}/uwsc.c ${INC_DIR}/ulfius.h ${INC_DIR}/u_private.h)
+    add_executable(uwsc ${UWSC_DIR}/uwsc.c ${INC_DIR}/ulfius.h ${INC_DIR}/u_private.h ${PROJECT_BINARY_DIR}/ulfius-cfg.h)
     set_target_properties(uwsc PROPERTIES SKIP_BUILD_RPATH TRUE)
     add_dependencies(uwsc ulfius)
     target_link_libraries(uwsc ulfius)
@@ -184,7 +199,6 @@ if (NOT ORCANIA_FOUND)
     add_subdirectory(${orcania_SOURCE_DIR} ${orcania_BINARY_DIR})
     include_directories(${orcania_SOURCE_DIR}/include)
     include_directories(${orcania_SOURCE_DIR}/include)
-    add_dependencies(ulfius orcania)
     add_dependencies(ulfius orcania)
     set(ORCANIA_LIBRARIES orcania orcania)
 else()
@@ -376,8 +390,8 @@ add_custom_target(dist_u COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
 message(STATUS "Websocket support: ${WITH_WEBSOCKET}")
 message(STATUS "Outgoing requests support: ${WITH_CURL}")
 message(STATUS "Jansson library support: ${WITH_JANSSON}")
-message(STATUS "Build static library: ${BUILD_STATIC}")
 message(STATUS "Build uwsc application: ${BUILD_UWSC}")
+message(STATUS "Build static library: ${BUILD_STATIC}")
 message(STATUS "Build testing tree: ${BUILD_ULFIUS_TESTING}")
 message(STATUS "Install the header files: ${INSTALL_HEADER}")
 message(STATUS "Build RPM package: ${BUILD_RPM}")

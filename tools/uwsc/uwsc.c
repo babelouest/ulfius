@@ -28,6 +28,8 @@
 
 #define _UWSC_VERSION_ "0.9"
 
+#ifndef U_DISABLE_WEBSOCKET
+
 struct _config {
   char       * log_path;
   char       * binary_file_send;
@@ -367,3 +369,14 @@ int main (int argc, char ** argv) {
   exit_program(&config, 0);
   return 0;
 }
+
+#else
+
+#include <stdio.h>
+
+int main() {
+  fprintf(stderr, "Websocket not supported in your Ulfius library, you must rebuild ulfius and uwsc with Websocket support\n");
+  return 1;
+}
+
+#endif // U_DISABLE_WEBSOCKET

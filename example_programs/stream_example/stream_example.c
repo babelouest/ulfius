@@ -17,9 +17,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#define U_DISABLE_JANSSON
-#define U_DISABLE_CURL
-#define U_DISABLE_WEBSOCKET
 #include <ulfius.h>
 
 #define PORT 7876

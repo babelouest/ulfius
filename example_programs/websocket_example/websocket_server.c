@@ -19,8 +19,6 @@
 #include <orcania.h>
 #include <yder.h>
 
-#define U_DISABLE_JANSSON
-#define U_DISABLE_CURL
 #include <ulfius.h>
 
 #include "../../example_callbacks/static_file/static_file_callback.h"
@@ -30,7 +28,12 @@
 #define PREFIX_STATIC "/static"
 
 #if defined(U_DISABLE_WEBSOCKET)
-  #error Ulfius is not available with WebSockets support
+
+int main() {
+  fprintf(stderr, "Websocket not supported, please recompile ulfius with websocket support\n");
+  return 1;
+}
+
 #else
 
 int callback_websocket (const struct _u_request * request, struct _u_response * response, void * user_data);

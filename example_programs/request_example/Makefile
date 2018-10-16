@@ -27,22 +27,22 @@ debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
 debug: client server mail
 
-libulfius.so:
+../../src/libulfius.so:
 	cd $(ULFIUS_LOCATION) && $(MAKE) debug WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET
 
-client.o: client.c libulfius.so
+client.o: client.c ../../src/libulfius.so
 	$(CC) $(CFLAGS) client.c -DDEBUG -g -O0
 
 client: client.o
 	$(CC) -o client client.o $(LIBS)
 
-server.o: server.c libulfius.so
+server.o: server.c ../../src/libulfius.so
 	$(CC) $(CFLAGS) server.c -DDEBUG -g -O0
 
 server: server.o
 	$(CC) -o server server.o $(LIBS)
 
-mail.o: mail.c libulfius.so
+mail.o: mail.c ../../src/libulfius.so
 	$(CC) $(CFLAGS) mail.c -DDEBUG -g -O0
 
 mail: mail.o

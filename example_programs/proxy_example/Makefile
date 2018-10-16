@@ -27,13 +27,13 @@ debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
 debug: proxy
 
-libulfius.so:
+../../src/libulfius.so:
 	cd $(ULFIUS_LOCATION) && $(MAKE) debug JANSSONFLAG=-DU_DISABLE_JANSSON WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET
 
 proxy.o: proxy.c
 	$(CC) $(CFLAGS) proxy.c -DDEBUG -g -O0
 
-proxy: libulfius.so proxy.o
+proxy: ../../src/libulfius.so proxy.o
 	$(CC) -o proxy proxy.o $(LIBS)
 
 test: proxy

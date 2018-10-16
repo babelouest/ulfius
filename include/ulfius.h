@@ -26,7 +26,7 @@
 #ifndef __ULFIUS_H__
 #define __ULFIUS_H__
 
-#define ULFIUS_VERSION 2.4.2
+#include "ulfius-cfg.h"
 
 /** External dependencies **/
 

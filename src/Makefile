@@ -20,28 +20,61 @@
 #
 
 ULFIUS_INCLUDE=../include
+CONFIG_TEMPLATE=$(ULFIUS_INCLUDE)/ulfius-cfg.h.in
+CONFIG_FILE=$(ULFIUS_INCLUDE)/ulfius-cfg.h
 DESTDIR=/usr/local
 CC=gcc
-CFLAGS+=-c -pedantic -std=gnu99 -fPIC -Wall -D_REENTRANT -I$(DESTDIR)/include -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS) $(JANSSONFLAG) $(CURLFLAG) $(WEBSOCKETFLAG) $(CPPFLAGS)
+CFLAGS+=-c -pedantic -std=gnu99 -fPIC -Wall -D_REENTRANT -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS) $(JANSSONFLAG) $(CURLFLAG) $(WEBSOCKETFLAG) $(CPPFLAGS)
 LIBS=-L$(DESTDIR)/lib -lc -lmicrohttpd -lyder -lorcania -lpthread $(LDFLAGS)
 OUTPUT=libulfius.so
-VERSION=2.4.2
+VERSION=2.4.3
 
 ifndef JANSSONFLAG
+DISABLE_JANSSON=0
 LJANSSON=-ljansson
+else
+DISABLE_JANSSON=1
 endif
 
 ifndef CURLFLAG
+DISABLE_CURL=0
 LCURL=-lcurl
+else
+DISABLE_CURL=1
 endif
 
 ifndef WEBSOCKETFLAG
+DISABLE_WEBSOCKET=0
 LWEBSOCKET=-lgnutls
+else
+DISABLE_WEBSOCKET=1
 endif
 
 all: release
 
-libulfius.so: ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
+config:
+	@if [ -f $(CONFIG_FILE) ]; then rm -f $(CONFIG_FILE); fi
+	@cp $(CONFIG_TEMPLATE) $(CONFIG_FILE)
+	@sed -i -e 's/$${PROJECT_VERSION}/$(VERSION)/g' $(CONFIG_FILE)        
+	@if [ "$(DISABLE_JANSSON)" = "1" ]; then \
+		sed -i -e 's/\#cmakedefine DISABLE_JANSSON/\#define U_DISABLE_JANSSON/g' $(CONFIG_FILE); \
+	else \
+		sed -i -e 's/\#cmakedefine DISABLE_JANSSON/\/* #undef U_DISABLE_JANSSON *\//g' $(CONFIG_FILE); \
+	fi
+	@if [ "$(DISABLE_CURL)" = "1" ]; then \
+		sed -i -e 's/\#cmakedefine DISABLE_CURL/\#define U_DISABLE_CURL/g' $(CONFIG_FILE); \
+	else \
+		sed -i -e 's/\#cmakedefine DISABLE_CURL/\/* #undef U_DISABLE_CURL *\//g' $(CONFIG_FILE); \
+	fi
+	@pkg-config --atleast-version=0.9.53 libmicrohttpd; \
+	if [ $$? -ne 0 ] || [ "$(DISABLE_WEBSOCKET)" = "1" ]; then \
+		sed -i -e 's/\#cmakedefine DISABLE_WEBSOCKET/\#define U_DISABLE_WEBSOCKET/g' $(CONFIG_FILE); \
+	else \
+		sed -i -e 's/\#cmakedefine DISABLE_WEBSOCKET/\/* #undef U_DISABLE_WEBSOCKET *\//g' $(CONFIG_FILE); \
+	fi
+	@echo Config file $(CONFIG_FILE) generated
+
+libulfius.so: config ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
 	$(CC) -shared -fPIC -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o $(LIBS) $(LJANSSON) $(LCURL) $(LWEBSOCKET)
 	ln -sf $(OUTPUT).$(VERSION) $(OUTPUT)
 
@@ -70,21 +103,24 @@ yuarel.o: $(ULFIUS_INCLUDE)/yuarel.h yuarel.c
 	$(CC) $(CFLAGS) yuarel.c
 
 clean:
-	rm -f *.o *.so *.a $(OUTPUT) $(OUTPUT).*
+	rm -f *.o *.so *.a $(OUTPUT) $(OUTPUT).* $(CONFIG_FILE)
 
 install: all
-	cp $(OUTPUT).$(VERSION) $(DESTDIR)/lib
-	cp $(ULFIUS_INCLUDE)/ulfius.h $(DESTDIR)/include
+	install $(OUTPUT).$(VERSION) $(DESTDIR)/lib
+	install $(ULFIUS_INCLUDE)/ulfius.h $(DESTDIR)/include
+	install $(CONFIG_FILE) $(DESTDIR)/include
 	-ldconfig
 
 static-install: static
-	cp libulfius.a $(DESTDIR)/lib
-	cp $(ULFIUS_INCLUDE)/ulfius.h $(DESTDIR)/include
+	install libulfius.a $(DESTDIR)/lib
+	install $(ULFIUS_INCLUDE)/ulfius.h $(DESTDIR)/include
+	install $(CONFIG_FILE) $(DESTDIR)/include
 
 uninstall:
 	rm -f $(DESTDIR)/lib/$(OUTPUT) $(DESTDIR)/lib/libulfius.a
 	rm -f $(DESTDIR)/lib/$(OUTPUT).*
 	rm -f $(DESTDIR)/include/ulfius.h
+	rm -f $(DESTDIR)/include/ulfius-cfg.h
 
 debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 

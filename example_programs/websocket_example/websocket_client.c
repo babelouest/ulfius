@@ -22,12 +22,15 @@
 #define PORT "9275"
 #define PREFIX_WEBSOCKET "/websocket"
 
-#define U_DISABLE_JANSSON
-#define U_DISABLE_CURL
 #include <ulfius.h>
 
 #if defined(U_DISABLE_WEBSOCKET)
-  #error Ulfius is not available with WebSockets support
+
+int main() {
+  fprintf(stderr, "Websocket not supported, please recompile ulfius with websocket support\n");
+  return 1;
+}
+
 #else
 
 void websocket_manager_callback(const struct _u_request * request,

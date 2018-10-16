@@ -14,8 +14,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#define U_DISABLE_JANSSON
-#define U_DISABLE_WEBSOCKET
 #include <ulfius.h>
 
 #define SERVER_URL "http://localhost:2884/auth/basic"

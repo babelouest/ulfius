@@ -27,10 +27,10 @@ debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
 debug: auth_client auth_server
 
-libulfius.so:
+../../src/libulfius.so:
 	cd $(ULFIUS_LOCATION) && $(MAKE) debug JANSSONFLAG=-DU_DISABLE_JANSSON WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET
 
-auth_client.o: auth_client.c libulfius.so
+auth_client.o: auth_client.c ../../src/libulfius.so
 	$(CC) $(CFLAGS) auth_client.c -DDEBUG -g -O0
 
 auth_client: auth_client.o
@@ -39,7 +39,7 @@ auth_client: auth_client.o
 test_auth_client: auth_client
 	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./auth_client
 
-auth_server.o: auth_server.c libulfius.so
+auth_server.o: auth_server.c ../../src/libulfius.so
 	$(CC) $(CFLAGS) auth_server.c -DDEBUG -g -O0
 
 auth_server: auth_server.o

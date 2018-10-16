@@ -22,7 +22,11 @@ matrix:
 
 script:
   - mkdir build && cd build
-  - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on ..
-  - make
-  - sudo make install
-  - make test
+  - cmake -DBUILD_ULFIUS_TESTING=on ..
+  - make test package
+  - cmake -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off ..
+  - make test package
+  - cmake -DBUILD_ULFIUS_TESTING=on -DWITH_JANSSON=off ..
+  - make test package
+  - cmake -DBUILD_ULFIUS_TESTING=on -DWITH_CURL=off ..
+  - make test package

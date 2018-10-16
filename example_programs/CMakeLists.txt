@@ -28,6 +28,9 @@ set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/ulfius/issues")
 include(GNUInstallDirs)
 include(CheckSymbolExists)
 
+option(WITH_WEBSOCKET "Websocket support" ON)
+option(WITH_CURL "Use Curl library" ON)
+option(WITH_JANSSON "Use jansson library" ON)
 # cmake modules
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules)
@@ -64,8 +67,6 @@ set(LIBS ${LIBS} ${ULFIUS_LIBRARIES})
 
 # websocket support
 
-option(WITH_WEBSOCKET "Websocket support" ON)
-
 if (WIN32)
 	set(WITH_WEBSOCKET OFF)
 endif ()
@@ -82,8 +83,6 @@ else ()
 	endif ()
 endif ()
 
-option(WITH_CURL "Use Curl library" ON)
-
 if (WITH_CURL)
 	include(FindCURL)
 	find_package(CURL REQUIRED)
@@ -93,8 +92,6 @@ if (WITH_CURL)
 else ()
     add_definitions(-DU_DISABLE_CURL)
 endif ()
-
-option(WITH_JANSSON "Use jansson library" ON)
 
 if (WITH_JANSSON)
     include(FindJansson)
@@ -152,23 +149,25 @@ set(STATIC_CALLBACK_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../example_callbacks/static_
 add_executable(simple_example ${CMAKE_CURRENT_SOURCE_DIR}/simple_example/simple_example.c)
 target_link_libraries(simple_example ${LIBS})
 
-add_executable(auth_client ${CMAKE_CURRENT_SOURCE_DIR}/auth_example/auth_client.c)
-target_link_libraries(auth_client ${LIBS})
-
 add_executable(auth_server ${CMAKE_CURRENT_SOURCE_DIR}/auth_example/auth_server.c)
 target_link_libraries(auth_server ${LIBS})
 
 add_executable(multiple_callbacks_example ${CMAKE_CURRENT_SOURCE_DIR}/multiple_callbacks_example/multiple_callbacks_example.c)
 target_link_libraries(multiple_callbacks_example ${LIBS})
 
-add_executable(stream_client ${CMAKE_CURRENT_SOURCE_DIR}/stream_example/stream_client.c)
-target_link_libraries(stream_client ${LIBS})
-
 add_executable(stream_example ${CMAKE_CURRENT_SOURCE_DIR}/stream_example/stream_example.c)
 target_link_libraries(stream_example ${LIBS})
 
 add_executable(test_u_map ${CMAKE_CURRENT_SOURCE_DIR}/test_u_map/test_u_map.c)
 target_link_libraries(test_u_map ${LIBS})
+
+if (WITH_CURL)
+  add_executable(auth_client ${CMAKE_CURRENT_SOURCE_DIR}/auth_example/auth_client.c)
+  target_link_libraries(auth_client ${LIBS})
+
+  add_executable(stream_client ${CMAKE_CURRENT_SOURCE_DIR}/stream_example/stream_client.c)
+  target_link_libraries(stream_client ${LIBS})
+endif ()
 
 if (WITH_JANSSON)
   add_executable(injection_example ${CMAKE_CURRENT_SOURCE_DIR}/injection_example/injection_example.c)

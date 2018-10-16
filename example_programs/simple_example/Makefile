@@ -28,13 +28,13 @@ debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
 debug: simple_example
 
-libulfius.so:
+../../src/libulfius.so:
 	cd $(ULFIUS_LOCATION) && $(MAKE) debug CURLFLAG=-DU_DISABLE_CURL WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET
 
 simple_example.o: simple_example.c
 	$(CC) $(CFLAGS) simple_example.c -DDEBUG -g -O0
 
-simple_example: libulfius.so simple_example.o
+simple_example: ../../src/libulfius.so simple_example.o
 	$(CC) -o simple_example simple_example.o $(LIBS)
 
 test: simple_example

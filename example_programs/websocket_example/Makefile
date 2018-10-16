@@ -29,17 +29,17 @@ debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
 debug: websocket_server websocket_client
 
-libulfius.so:
+../../src/libulfius.so:
 	cd $(ULFIUS_LOCATION) && $(MAKE) debug JANSSONFLAG=-DU_DISABLE_JANSSON
 
 static_file_callback.o: $(STATIC_FILE_LOCATION)/static_file_callback.c
 	$(CC) $(CFLAGS) $(STATIC_FILE_LOCATION)/static_file_callback.c
 
-websocket_server: libulfius.so static_file_callback.o websocket_server.c
+websocket_server: ../../src/libulfius.so static_file_callback.o websocket_server.c
 	$(CC) $(CFLAGS) websocket_server.c
 	$(CC) -o websocket_server websocket_server.o static_file_callback.o $(LIBS)
 
-websocket_client: libulfius.so websocket_client.c
+websocket_client: ../../src/libulfius.so websocket_client.c
 	$(CC) $(CFLAGS) websocket_client.c 
 	$(CC) -o websocket_client websocket_client.o $(LIBS)
 

@@ -27,19 +27,19 @@ debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
 debug: stream_example stream_client
 
-libulfius.so:
+../../src/libulfius.so:
 	cd $(ULFIUS_LOCATION) && $(MAKE) debug JANSSONFLAG=-DU_DISABLE_JANSSON WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET
 
 stream_example.o: stream_example.c
 	$(CC) $(CFLAGS) stream_example.c -DDEBUG -g -O0
 
-stream_example: libulfius.so stream_example.o
+stream_example: ../../src/libulfius.so stream_example.o
 	$(CC) -o stream_example stream_example.o $(LIBS)
 
 stream_client.o: stream_client.c
 	$(CC) $(CFLAGS) stream_client.c -DDEBUG -g -O0
 
-stream_client: libulfius.so stream_client.o
+stream_client: ../../src/libulfius.so stream_client.o
 	$(CC) -o stream_client stream_client.o $(LIBS)
 
 test_example: stream_example

@@ -27,13 +27,13 @@ debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
 debug: sheep_counter
 
-libulfius.so:
+../../src/libulfius.so:
 	cd $(ULFIUS_LOCATION) && $(MAKE) debug CURLFLAG=-DU_DISABLE_CURL WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET
 
 sheep_counter.o: sheep_counter.c
 	$(CC) $(CFLAGS) sheep_counter.c -DDEBUG -g -O0
 
-sheep_counter: libulfius.so sheep_counter.o
+sheep_counter: ../../src/libulfius.so sheep_counter.o
 	$(CC) -o sheep_counter sheep_counter.o $(LIBS)
 
 test: sheep_counter

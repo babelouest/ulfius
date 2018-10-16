@@ -1,5 +1,10 @@
 # Ulfius Changelog
 
+## 2.4.3
+
+- Add config file ulfius-cfg.h dynamically built with the options
+- Adapt examples with new ulfius-cfg.h file
+
 ## 2.4.2
 
 - Fix #79 where yuarel should be hidden from the outside world
