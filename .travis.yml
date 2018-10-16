@@ -36,6 +36,6 @@ script:
   - make package
   - sudo make install
   - cd ../example_programs/build
-  - sudo make uninstall && rm -rf *
+  - rm -rf *
   - cmake ..
   - make
