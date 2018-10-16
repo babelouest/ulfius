@@ -28,12 +28,14 @@ script:
   - make test package
   - sudo make install
   - cd ../example_programs/build
-  - rm -rf * && cmake ..
+  - cmake ..
   - make
   - cd ../../build
-  - rm -rf * && cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=off ..
+  - sudo make uninstall && rm -rf *
+  - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=off ..
   - make package
   - sudo make install
   - cd ../example_programs/build
-  - rm -rf * && cmake ..
+  - sudo make uninstall && rm -rf *
+  - cmake ..
   - make
