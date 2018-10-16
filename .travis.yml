@@ -22,7 +22,7 @@ matrix:
 
 script:
   - mkdir build
-  - mkdir /example_programs/build
+  - mkdir example_programs/build
   - cd build
   - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on ..
   - make test package
