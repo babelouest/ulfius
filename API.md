@@ -53,35 +53,6 @@ Include file `ulfius.h` in your source file:
 #include <ulfius.h>
 ```
 
-If you have disabled `libcurl` during the build, define the macro `U_DISABLE_CURL` before including `ulfius.h`:
-
-```C
-#define U_DISABLE_CURL
-#include <ulfius.h>
-```
-
-If you have disabled `libjansson` during the build, define the macro `U_DISABLE_JANSSON` before including `ulfius.h`:
-
-```C
-#define U_DISABLE_JANSSON
-#include <ulfius.h>
-```
-
-If you have disabled `libgnutls` during the build, define the macro `U_DISABLE_WEBSOCKET` before including `ulfius.h`:
-
-```C
-#define U_DISABLE_WEBSOCKET
-#include <ulfius.h>
-```
-
-If you have disabled more than one library, for example both `libcurl` and `libjansson`, define both macros before including `ulfius.h`:
-
-```C
-#define U_DISABLE_CURL
-#define U_DISABLE_JANSSON
-#include <ulfius.h>
-```
-
 On your linker command, add ulfius as a dependency library, e.g. `-lulfius` for gcc.
 
 ### Return values
