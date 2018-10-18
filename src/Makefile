@@ -24,7 +24,7 @@ CONFIG_TEMPLATE=$(ULFIUS_INCLUDE)/ulfius-cfg.h.in
 CONFIG_FILE=$(ULFIUS_INCLUDE)/ulfius-cfg.h
 DESTDIR=/usr/local
 CC=gcc
-CFLAGS+=-c -pedantic -std=gnu99 -fPIC -Wall -D_REENTRANT -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS) $(JANSSONFLAG) $(CURLFLAG) $(WEBSOCKETFLAG) $(CPPFLAGS)
+CFLAGS+=-c -pedantic -std=gnu99 -fPIC -Wall -D_REENTRANT -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS)
 LIBS=-L$(DESTDIR)/lib -lc -lmicrohttpd -lyder -lorcania -lpthread $(LDFLAGS)
 OUTPUT=libulfius.so
 VERSION=2.4.3
