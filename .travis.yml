@@ -102,7 +102,7 @@ script:
   - rm -rf *
   - cmake ..
   - make
-  - cd ../src
+  - cd ../../src
   - make
   - make clean debug CURLFLAG=-DU_DISABLE_CURL JANSSONFLAG=-DU_DISABLE_JANSSON WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET
   - make clean debug CURLFLAG=-DU_DISABLE_CURL JANSSONFLAG=-DU_DISABLE_JANSSON
