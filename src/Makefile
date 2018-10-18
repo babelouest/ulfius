@@ -52,8 +52,7 @@ endif
 
 all: release
 
-config:
-	@if [ -f $(CONFIG_FILE) ]; then rm -f $(CONFIG_FILE); fi
+$(CONFIG_FILE):
 	@cp $(CONFIG_TEMPLATE) $(CONFIG_FILE)
 	@sed -i -e 's/$${PROJECT_VERSION}/$(VERSION)/g' $(CONFIG_FILE)        
 	@if [ "$(DISABLE_JANSSON)" = "1" ]; then \
@@ -74,11 +73,11 @@ config:
 	fi
 	@echo Config file $(CONFIG_FILE) generated
 
-libulfius.so: config ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
+libulfius.so: $(CONFIG_FILE) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
 	$(CC) -shared -fPIC -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o $(LIBS) $(LJANSSON) $(LCURL) $(LWEBSOCKET)
 	ln -sf $(OUTPUT).$(VERSION) $(OUTPUT)
 
-libulfius.a: ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o
+libulfius.a: $(CONFIG_FILE) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o
 	ar rcs libulfius.a ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o
 
 ulfius.o: $(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h ulfius.c
@@ -107,14 +106,14 @@ clean:
 
 install: all
 	install $(OUTPUT).$(VERSION) $(DESTDIR)/lib
-	install $(ULFIUS_INCLUDE)/ulfius.h $(DESTDIR)/include
-	install $(CONFIG_FILE) $(DESTDIR)/include
+	install -m644 $(ULFIUS_INCLUDE)/ulfius.h $(DESTDIR)/include
+	install -m644 $(CONFIG_FILE) $(DESTDIR)/include
 	-ldconfig
 
 static-install: static
 	install libulfius.a $(DESTDIR)/lib
-	install $(ULFIUS_INCLUDE)/ulfius.h $(DESTDIR)/include
-	install $(CONFIG_FILE) $(DESTDIR)/include
+	install -m644 $(ULFIUS_INCLUDE)/ulfius.h $(DESTDIR)/include
+	install -m644 $(CONFIG_FILE) $(DESTDIR)/include
 
 uninstall:
 	rm -f $(DESTDIR)/lib/$(OUTPUT) $(DESTDIR)/lib/libulfius.a
