@@ -32,7 +32,7 @@
 #=============================================================================
 
 find_package(PkgConfig QUIET)
-pkg_check_modules(PC_ORCANIA QUIET orcania)
+pkg_check_modules(PC_ORCANIA QUIET liborcania)
 
 find_path(ORCANIA_INCLUDE_DIR
         NAMES orcania.h
@@ -47,10 +47,17 @@ if (PC_ORCANIA_VERSION)
     set(ORCANIA_VERSION_STRING ${PC_ORCANIA_VERSION})
 elseif (ORCANIA_INCLUDE_DIR AND EXISTS "${ORCANIA_INCLUDE_DIR}/orcania.h")
     set(regex_orcania_version "^#define[ \t]+ORCANIA_VERSION[ \t]+([^\"]+).*")
-    file(STRINGS "${ORCANIA_INCLUDE_DIR}/orcania-cfg.h" orcania_version REGEX "${regex_orcania_version}")
+    file(STRINGS "${ORCANIA_INCLUDE_DIR}/orcania.h" orcania_version REGEX "${regex_orcania_version}")
     string(REGEX REPLACE "${regex_orcania_version}" "\\1" ORCANIA_VERSION_STRING "${orcania_version}")
     unset(regex_orcania_version)
     unset(orcania_version)
+    if (NOT ORCANIA_VERSION_STRING)
+       set(regex_orcania_version "^#define[ \t]+ORCANIA_VERSION[ \t]+([^\"]+).*")
+        file(STRINGS "${ORCANIA_INCLUDE_DIR}/orcania-cfg.h" orcania_version REGEX "${regex_orcania_version}")
+        string(REGEX REPLACE "${regex_orcania_version}" "\\1" ORCANIA_VERSION_STRING "${orcania_version}")
+        unset(regex_orcania_version)
+        unset(orcania_version)
+    endif ()
 endif ()
 
 include(FindPackageHandleStandardArgs)

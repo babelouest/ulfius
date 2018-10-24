@@ -32,7 +32,7 @@
 #=============================================================================
 
 find_package(PkgConfig QUIET)
-pkg_check_modules(PC_YDER QUIET yder)
+pkg_check_modules(PC_YDER QUIET libyder)
 
 find_path(YDER_INCLUDE_DIR
         NAMES yder.h
@@ -47,10 +47,17 @@ if (PC_YDER_VERSION)
     set(YDER_VERSION_STRING ${PC_YDER_VERSION})
 elseif (YDER_INCLUDE_DIR AND EXISTS "${YDER_INCLUDE_DIR}/yder.h")
     set(regex_yder_version "^#define[ \t]+YDER_VERSION[ \t]+([^\"]+).*")
-    file(STRINGS "${YDER_INCLUDE_DIR}/yder-cfg.h" yder_version REGEX "${regex_yder_version}")
+    file(STRINGS "${YDER_INCLUDE_DIR}/yder.h" yder_version REGEX "${regex_yder_version}")
     string(REGEX REPLACE "${regex_yder_version}" "\\1" YDER_VERSION_STRING "${yder_version}")
     unset(regex_yder_version)
     unset(yder_version)
+    if (NOT YDER_VERSION_STRING)
+        set(regex_yder_version "^#define[ \t]+YDER_VERSION[ \t]+([^\"]+).*")
+        file(STRINGS "${YDER_INCLUDE_DIR}/yder-cfg.h" yder_version REGEX "${regex_yder_version}")
+        string(REGEX REPLACE "${regex_yder_version}" "\\1" YDER_VERSION_STRING "${yder_version}")
+        unset(regex_yder_version)
+        unset(yder_version)
+    endif ()
 endif ()
 
 include(FindPackageHandleStandardArgs)
