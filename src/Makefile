@@ -27,7 +27,7 @@ CC=gcc
 CFLAGS+=-c -pedantic -std=gnu99 -fPIC -Wall -D_REENTRANT -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS) $(CPPFLAGS)
 LIBS=-L$(DESTDIR)/lib -lc -lmicrohttpd -lyder -lorcania -lpthread $(LDFLAGS)
 OUTPUT=libulfius.so
-VERSION=2.4.3
+VERSION=2.4.4
 
 ifndef JANSSONFLAG
 DISABLE_JANSSON=0

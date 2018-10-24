@@ -1,5 +1,9 @@
 # Ulfius Changelog
 
+## 2.4.4
+
+- CMake scripts improvements
+
 ## 2.4.3
 
 - Add config file ulfius-cfg.h dynamically built with the options
