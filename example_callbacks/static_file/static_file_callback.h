@@ -1,6 +1,6 @@
 /**
  *
- * Version 20180607
+ * Version 20181110
  *
  * struct static_file_config must be initialized with proper values
  * files_path: path (relative or absolute) to the DocumentRoot folder
@@ -65,7 +65,8 @@ struct _static_file_config {
   char          * files_path;
   char          * url_prefix;
   struct _u_map * mime_types;
-	char          * redirect_on_404;
+  struct _u_map * map_header;
+  char          * redirect_on_404;
 };
 
 int callback_static_file (const struct _u_request * request, struct _u_response * response, void * user_data);

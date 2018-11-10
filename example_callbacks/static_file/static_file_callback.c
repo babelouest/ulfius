@@ -4,7 +4,7 @@
  *
  * Copyright 2017-2018 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20181009
+ * Version 20181110
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -32,10 +32,10 @@
  * Return the filename extension
  */
 const char * get_filename_ext(const char *path) {
-    const char *dot = o_strrchr(path, '.');
+    const char *dot = strrchr(path, '.');
     if(!dot || dot == path) return "*";
-    if (o_strchr(dot, '?') != NULL) {
-      *o_strchr(dot, '?') = '\0';
+    if (strchr(dot, '?') != NULL) {
+      *strchr(dot, '?') = '\0';
     }
     return dot;
 }
@@ -44,20 +44,20 @@ const char * get_filename_ext(const char *path) {
  * Streaming callback function to ease sending large files
  */
 static ssize_t callback_static_file_stream(void * cls, uint64_t pos, char * buf, size_t max) {
-	if (cls != NULL) {
-		return fread (buf, 1, max, (FILE *)cls);
-	} else {
-		return U_STREAM_END;
-	}
+  if (cls != NULL) {
+    return fread (buf, 1, max, (FILE *)cls);
+  } else {
+    return U_STREAM_END;
+  }
 }
 
 /**
  * Cleanup FILE* structure when streaming is complete
  */
 static void callback_static_file_stream_free(void * cls) {
-	if (cls != NULL) {
-		fclose((FILE *)cls);
-	}
+  if (cls != NULL) {
+    fclose((FILE *)cls);
+  }
 }
 
 /**
@@ -69,13 +69,13 @@ int callback_static_file (const struct _u_request * request, struct _u_response 
   char * file_requested, * file_path, * url_dup_save;
   const char * content_type;
 
-	/*
-	 * Comment this if statement if you put static files url not in root, like /app
-	 */
-	if (response->shared_data != NULL) {
-		return U_CALLBACK_CONTINUE;
-	}
-	
+  /*
+   * Comment this if statement if you put static files url not in root, like /app
+   */
+  if (response->shared_data != NULL) {
+    return U_CALLBACK_CONTINUE;
+  }
+  
   if (user_data != NULL && ((struct _static_file_config *)user_data)->files_path != NULL) {
     file_requested = o_strdup(request->http_url);
     url_dup_save = file_requested;
@@ -88,12 +88,12 @@ int callback_static_file (const struct _u_request * request, struct _u_response 
       file_requested++;
     }
     
-    if (o_strchr(file_requested, '#') != NULL) {
-      *o_strchr(file_requested, '#') = '\0';
+    if (strchr(file_requested, '#') != NULL) {
+      *strchr(file_requested, '#') = '\0';
     }
     
-    if (o_strchr(file_requested, '?') != NULL) {
-      *o_strchr(file_requested, '?') = '\0';
+    if (strchr(file_requested, '?') != NULL) {
+      *strchr(file_requested, '?') = '\0';
     }
     
     if (file_requested == NULL || o_strlen(file_requested) == 0 || 0 == o_strcmp("/", file_requested)) {
@@ -109,17 +109,18 @@ int callback_static_file (const struct _u_request * request, struct _u_response 
         fseek (f, 0, SEEK_END);
         length = ftell (f);
         fseek (f, 0, SEEK_SET);
-				
+        
         content_type = u_map_get_case(((struct _static_file_config *)user_data)->mime_types, get_filename_ext(file_requested));
         if (content_type == NULL) {
           content_type = u_map_get(((struct _static_file_config *)user_data)->mime_types, "*");
           y_log_message(Y_LOG_LEVEL_WARNING, "Static File Server - Unknown mime type for extension %s", get_filename_ext(file_requested));
         }
         u_map_put(response->map_header, "Content-Type", content_type);
-				
-				if (ulfius_set_stream_response(response, 200, callback_static_file_stream, callback_static_file_stream_free, length, STATIC_FILE_CHUNK, f) != U_OK) {
-					y_log_message(Y_LOG_LEVEL_ERROR, "callback_static_file - Error ulfius_set_stream_response");
-				}
+        u_map_copy_into(response->map_header, ((struct _static_file_config *)user_data)->map_header);
+        
+        if (ulfius_set_stream_response(response, 200, callback_static_file_stream, callback_static_file_stream_free, length, STATIC_FILE_CHUNK, f) != U_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_static_file - Error ulfius_set_stream_response");
+        }
       }
     } else {
       if (((struct _static_file_config *)user_data)->redirect_on_404 == NULL) {
