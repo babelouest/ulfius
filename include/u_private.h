@@ -64,7 +64,25 @@ int ulfius_set_response_header(struct MHD_Response * response, const struct _u_m
  */
 int ulfius_set_response_cookie(struct MHD_Response * mhd_response, const struct _u_response * response);
 
-const char * utf8_check(const char * s);
+/**
+ * The utf8_check() function scans the '\0'-terminated string starting
+ * at s. It returns a pointer to the first byte of the first malformed
+ * or overlong UTF-8 sequence found, or NULL if the string contains
+ * only correct UTF-8. It also spots UTF-8 sequences that could cause
+ * trouble if converted to UTF-16, namely surrogate characters
+ * (U+D800..U+DFFF) and non-Unicode positions (U+FFFE..U+FFFF). This
+ * routine is very likely to find a malformed sequence if the input
+ * uses any other encoding than UTF-8. It therefore can be used as a
+ * very effective heuristic for distinguishing between UTF-8 and other
+ * encodings.
+ *
+ * I wrote this code mainly as a specification of functionality; there
+ * are no doubt performance optimizations possible for certain CPUs.
+ *
+ * Markus Kuhn <http://www.cl.cam.ac.uk/~mgk25/> -- 2005-03-30
+ * License: http://www.cl.cam.ac.uk/~mgk25/short-license.html
+ */
+const unsigned char * utf8_check(const char * s_orig);
 
 #ifndef U_DISABLE_WEBSOCKET
 
