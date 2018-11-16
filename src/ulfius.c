@@ -29,6 +29,102 @@
 #include "u_private.h"
 #include "ulfius.h"
 
+/*
+ * The utf8_check() function scans the '\0'-terminated string starting
+ * at s. It returns a pointer to the first byte of the first malformed
+ * or overlong UTF-8 sequence found, or NULL if the string contains
+ * only correct UTF-8. It also spots UTF-8 sequences that could cause
+ * trouble if converted to UTF-16, namely surrogate characters
+ * (U+D800..U+DFFF) and non-Unicode positions (U+FFFE..U+FFFF). This
+ * routine is very likely to find a malformed sequence if the input
+ * uses any other encoding than UTF-8. It therefore can be used as a
+ * very effective heuristic for distinguishing between UTF-8 and other
+ * encodings.
+ *
+ * I wrote this code mainly as a specification of functionality; there
+ * are no doubt performance optimizations possible for certain CPUs.
+ *
+ * Markus Kuhn <http://www.cl.cam.ac.uk/~mgk25/> -- 2005-03-30
+ * License: http://www.cl.cam.ac.uk/~mgk25/short-license.html
+ */
+
+const char * utf8_check(const char * s) {
+  while (*s) {
+    if (*s < 0x80) {
+      /* 0xxxxxxx */
+      s++;
+    } else if ((s[0] & 0xe0) == 0xc0) {
+      /* 110XXXXx 10xxxxxx */
+      if ((s[1] & 0xc0) != 0x80 ||
+	  (s[0] & 0xfe) == 0xc0) {                        /* overlong? */
+	return s;
+      } else {
+	s += 2;
+      }
+    } else if ((s[0] & 0xf0) == 0xe0) {
+      /* 1110XXXX 10Xxxxxx 10xxxxxx */
+      if ((s[1] & 0xc0) != 0x80 ||
+	  (s[2] & 0xc0) != 0x80 ||
+	  (s[0] == 0xe0 && (s[1] & 0xe0) == 0x80) ||      /* overlong? */
+	  (s[0] == 0xed && (s[1] & 0xe0) == 0xa0) ||      /* surrogate? */
+	  (s[0] == 0xef && s[1] == 0xbf &&
+	   (s[2] & 0xfe) == 0xbe)) {                      /* U+FFFE or U+FFFF? */
+	return s;
+      } else {
+	s += 3;
+      }
+    } else if ((s[0] & 0xf8) == 0xf0) {
+      /* 11110XXX 10XXxxxx 10xxxxxx 10xxxxxx */
+      if ((s[1] & 0xc0) != 0x80 ||
+	  (s[2] & 0xc0) != 0x80 ||
+	  (s[3] & 0xc0) != 0x80 ||
+	  (s[0] == 0xf0 && (s[1] & 0xf0) == 0x80) ||      /* overlong? */
+	  (s[0] == 0xf4 && s[1] > 0x8f) || s[0] > 0xf4) { /* > U+10FFFF? */
+	return s;
+      } else {
+	s += 4;
+      }
+    } else {
+      return s;
+    }
+  }
+
+  return NULL;
+}
+
+/**
+ * Fill a map with the key/values specified
+ */
+static int ulfius_fill_map_check_utf8(void * cls, enum MHD_ValueKind kind, const char * key, const char * value) {
+  char * tmp;
+  int res;
+  UNUSED(kind);
+  
+  if (cls == NULL || key == NULL) {
+    // Invalid parameters
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error invalid parameters for ulfius_fill_map_check_utf8");
+    return MHD_NO;
+  } else if (utf8_check(key) == NULL && utf8_check(value) == NULL) {
+    if (u_map_get(((struct _u_map *)cls), key) != NULL) {
+      // u_map already has a value with this this key, appending value separated with a comma ',')
+      tmp = msprintf("%s,%s", u_map_get(((struct _u_map *)cls), key), (value==NULL?"":value));
+      res = u_map_put(((struct _u_map *)cls), key, tmp);
+      o_free(tmp);
+      if (res == U_OK) {
+        return MHD_YES;
+      } else {
+        return MHD_NO;
+      }
+    } else if (u_map_put(((struct _u_map *)cls), key, (value==NULL?"":value)) == U_OK) {
+      return MHD_YES;
+    } else {
+      return MHD_NO;
+    }
+  } else {
+    return MHD_YES;
+  }
+}
+
 /**
  * Fill a map with the key/values specified
  */
@@ -224,8 +320,8 @@ static void mhd_request_completed (void *cls, struct MHD_Connection *connection,
  * return MHD_NO on error
  */
 static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, const char * key,
-                      const char * filename, const char * content_type,
-                      const char * transfer_encoding, const char * data, uint64_t off, size_t size) {
+                                  const char * filename, const char * content_type,
+                                  const char * transfer_encoding, const char * data, uint64_t off, size_t size) {
   
   struct connection_info_struct * con_info = coninfo_cls;
   size_t cur_size = size;
@@ -238,6 +334,8 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
     } else {
       return MHD_NO;
     }
+  } else if (con_info->u_instance->check_utf8 && (utf8_check(key) != NULL || utf8_check(data) != NULL || (filename != NULL && utf8_check(filename) != NULL))) {
+    return MHD_YES;
   } else {
     data_dup = o_strndup(data, size); // Force value to end with a NULL character
     if (con_info->max_post_param_size > 0) {
@@ -318,9 +416,15 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
       return MHD_NO;
     }
     memcpy(con_info->request->client_address, so_client, sizeof(struct sockaddr));
-    MHD_get_connection_values (connection, MHD_HEADER_KIND, ulfius_fill_map, con_info->request->map_header);
-    MHD_get_connection_values (connection, MHD_GET_ARGUMENT_KIND, ulfius_fill_map, &con_info->map_url_initial);
-    MHD_get_connection_values (connection, MHD_COOKIE_KIND, ulfius_fill_map, con_info->request->map_cookie);
+    if (con_info->u_instance->check_utf8) {
+      MHD_get_connection_values (connection, MHD_HEADER_KIND, ulfius_fill_map_check_utf8, con_info->request->map_header);
+      MHD_get_connection_values (connection, MHD_GET_ARGUMENT_KIND, ulfius_fill_map_check_utf8, &con_info->map_url_initial);
+      MHD_get_connection_values (connection, MHD_COOKIE_KIND, ulfius_fill_map_check_utf8, con_info->request->map_cookie);
+    } else {
+      MHD_get_connection_values (connection, MHD_HEADER_KIND, ulfius_fill_map, con_info->request->map_header);
+      MHD_get_connection_values (connection, MHD_GET_ARGUMENT_KIND, ulfius_fill_map, &con_info->map_url_initial);
+      MHD_get_connection_values (connection, MHD_COOKIE_KIND, ulfius_fill_map, con_info->request->map_cookie);
+    }
     content_type = (char*)u_map_get_case(con_info->request->map_header, ULFIUS_HTTP_HEADER_CONTENT);
     
     // Set POST Processor if content-type is properly set
@@ -401,7 +505,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
           current_endpoint = current_endpoint_list[i];
           u_map_empty(con_info->request->map_url);
           u_map_copy_into(con_info->request->map_url, &con_info->map_url_initial);
-          if (ulfius_parse_url(url, current_endpoint, con_info->request->map_url) != U_OK) {
+          if (ulfius_parse_url(url, current_endpoint, con_info->request->map_url, con_info->u_instance->check_utf8) != U_OK) {
             o_free(response);
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error parsing url: ", url);
             mhd_ret = MHD_NO;
@@ -1246,6 +1350,7 @@ int ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, str
     u_instance->endpoint_list = NULL;
     u_instance->default_headers = o_malloc(sizeof(struct _u_map));
     u_instance->mhd_response_copy_data = 0;
+    u_instance->check_utf8 = 1;
     if (u_instance->default_headers == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for u_instance->default_headers");
       ulfius_clean_instance(u_instance);

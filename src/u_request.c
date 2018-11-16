@@ -173,7 +173,7 @@ struct _u_endpoint ** ulfius_endpoint_match(const char * method, const char * ur
  * fills map with the keys/values defined in the url that are described in the endpoint format url
  * return U_OK on success
  */
-int ulfius_parse_url(const char * url, const struct _u_endpoint * endpoint, struct _u_map * map) {
+int ulfius_parse_url(const char * url, const struct _u_endpoint * endpoint, struct _u_map * map, int check_utf8) {
   char * saveptr = NULL, * cur_word = NULL, * url_cpy = NULL, * url_cpy_addr = NULL;
   char * saveptr_format = NULL, * saveptr_prefix = NULL, * cur_word_format = NULL, * url_format_cpy = NULL, * url_format_cpy_addr = NULL;
 
@@ -201,7 +201,7 @@ int ulfius_parse_url(const char * url, const struct _u_endpoint * endpoint, stru
       cur_word_format = strtok_r( url_format_cpy, ULFIUS_URL_SEPARATOR, &saveptr_format );
     }
     while (cur_word_format != NULL && cur_word != NULL) {
-      if (cur_word_format[0] == ':' || cur_word_format[0] == '@') {
+      if ((cur_word_format[0] == ':' || cur_word_format[0] == '@') && (!check_utf8 || utf8_check(cur_word) == NULL)) {
         if (u_map_has_key(map, cur_word_format+1)) {
           char * concat_url_param = msprintf("%s,%s", u_map_get(map, cur_word_format+1), cur_word);
           if (concat_url_param == NULL) {

@@ -6,9 +6,9 @@
 #include <errno.h>
 #include <time.h>
 #ifndef _WIN32
-	#include <netinet/in.h>
+  #include <netinet/in.h>
 #else
-	#include <unistd.h>
+  #include <unistd.h>
 #endif
 #include <inttypes.h>
 
@@ -164,6 +164,30 @@ size_t my_write_body(void * contents, size_t size, size_t nmemb, void * user_dat
   return size * nmemb;
 }
 
+int callback_check_utf8_ignored(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  ck_assert_int_eq(u_map_has_key(request->map_header, "utf8_param"), 0);
+  ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param1"), 0);
+  ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param2"), 0);
+  ck_assert_int_eq(u_map_has_key(request->map_post_body, "utf8_param"), 0);
+  ck_assert_int_eq(u_map_has_key(request->map_header, "utf8_param_valid"), 1);
+  ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param_valid1"), 1);
+  ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param_valid2"), 1);
+  ck_assert_int_eq(u_map_has_key(request->map_post_body, "utf8_param_valid"), 1);
+  return U_OK;
+}
+
+int callback_check_utf8_not_ignored(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  ck_assert_int_eq(u_map_has_key(request->map_header, "utf8_param"), 1);
+  ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param1"), 1);
+  ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param2"), 1);
+  ck_assert_int_eq(u_map_has_key(request->map_post_body, "utf8_param"), 1);
+  ck_assert_int_eq(u_map_has_key(request->map_header, "utf8_param_valid"), 1);
+  ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param_valid1"), 1);
+  ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param_valid2"), 1);
+  ck_assert_int_eq(u_map_has_key(request->map_post_body, "utf8_param_valid"), 1);
+  return U_OK;
+}
+
 START_TEST(test_ulfius_simple_endpoint)
 {
   struct _u_instance u_instance;
@@ -299,6 +323,7 @@ START_TEST(test_ulfius_simple_endpoint)
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
   
+  ulfius_stop_framework(&u_instance);
   ulfius_clean_instance(&u_instance);
 }
 END_TEST
@@ -369,6 +394,7 @@ START_TEST(test_ulfius_endpoint_parameters)
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
   
+  ulfius_stop_framework(&u_instance);
   ulfius_clean_instance(&u_instance);
 }
 END_TEST
@@ -419,6 +445,7 @@ START_TEST(test_ulfius_endpoint_injection)
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
   
+  ulfius_stop_framework(&u_instance);
   ulfius_clean_instance(&u_instance);
 }
 END_TEST
@@ -493,6 +520,7 @@ START_TEST(test_ulfius_endpoint_multiple)
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
   
+  ulfius_stop_framework(&u_instance);
   ulfius_clean_instance(&u_instance);
 }
 END_TEST
@@ -519,22 +547,88 @@ START_TEST(test_ulfius_endpoint_stream)
 }
 END_TEST
 
+START_TEST(test_ulfius_utf8_not_ignored)
+{
+  char * invalid_utf8_seq2 = msprintf("value %c%c", 0xC3, 0x28);
+  char * invalid_utf8_seq3 = msprintf("value %c%c%c", 0xE2, 0x28, 0xA1);
+  char * invalid_utf8_seq4 = msprintf("value %c%c%c%c", 0xF0, 0x90, 0x28, 0xBC);
+  char * valid_utf8 = "valid value ȸ Ɇ  ɤ ¯\\_(ツ)_/¯";
+  struct _u_instance u_instance;
+  struct _u_request request;
+  
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
+  u_instance.check_utf8 = 0;
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "POST", "utf8", ":utf8_param1/:utf8_param_valid", 0, &callback_check_utf8_not_ignored, NULL), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
+  
+  ulfius_init_request(&request);
+  request.http_url = msprintf("http://localhost:8080/utf8/%s/%s/?utf8_param3=%s&utf8_param_valid2=%s", invalid_utf8_seq3, valid_utf8, invalid_utf8_seq2, valid_utf8);
+  request.http_verb = o_strdup("POST");
+  u_map_put(request.map_header, "utf8_param", invalid_utf8_seq3);
+  u_map_put(request.map_header, "utf8_param_valid", valid_utf8);
+  u_map_put(request.map_post_body, "utf8_param", invalid_utf8_seq4);
+  u_map_put(request.map_post_body, "utf8_param_valid", valid_utf8);
+  ck_assert_int_eq(ulfius_send_http_request(&request, NULL), U_OK);
+  ulfius_clean_request(&request);
+  
+  o_free(invalid_utf8_seq2);
+  o_free(invalid_utf8_seq3);
+  o_free(invalid_utf8_seq4);
+  ulfius_stop_framework(&u_instance);
+  ulfius_clean_instance(&u_instance);
+}
+END_TEST
+
+START_TEST(test_ulfius_utf8_ignored)
+{
+  char * invalid_utf8_seq2 = msprintf("invalid value %c%c", 0xC3, 0x28);
+  char * invalid_utf8_seq3 = msprintf("invalid value %c%c%c", 0xE2, 0x28, 0xA1);
+  char * invalid_utf8_seq4 = msprintf("invalid value %c%c%c%c", 0xF0, 0x90, 0x28, 0xBC);
+  char * valid_utf8 = "valid value ȸ Ɇ  ɤ ¯\\_(ツ)_/¯";
+  struct _u_instance u_instance;
+  struct _u_request request;
+  
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
+  ck_assert_int_eq(u_instance.check_utf8, 1);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "POST", "utf8", ":utf8_param1/:utf8_param_valid", 0, &callback_check_utf8_ignored, NULL), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
+  
+  ulfius_init_request(&request);
+  request.http_url = msprintf("http://localhost:8080/utf8/%s/%s/?utf8_param3=%s&utf8_param_valid2=%s", invalid_utf8_seq3, valid_utf8, invalid_utf8_seq2, valid_utf8);
+  request.http_verb = o_strdup("POST");
+  u_map_put(request.map_header, "utf8_param", invalid_utf8_seq3);
+  u_map_put(request.map_header, "utf8_param_valid", valid_utf8);
+  u_map_put(request.map_post_body, "utf8_param", invalid_utf8_seq4);
+  u_map_put(request.map_post_body, "utf8_param_valid", valid_utf8);
+  ck_assert_int_eq(ulfius_send_http_request(&request, NULL), U_OK);
+  ulfius_clean_request(&request);
+  
+  o_free(invalid_utf8_seq2);
+  o_free(invalid_utf8_seq3);
+  o_free(invalid_utf8_seq4);
+  ulfius_stop_framework(&u_instance);
+  ulfius_clean_instance(&u_instance);
+}
+END_TEST
+
 static Suite *ulfius_suite(void)
 {
-	Suite *s;
-	TCase *tc_core;
+  Suite *s;
+  TCase *tc_core;
 
-	s = suite_create("Ulfius framework function tests");
-	tc_core = tcase_create("test_ulfius_framework");
-	tcase_add_test(tc_core, test_ulfius_simple_endpoint);
-	tcase_add_test(tc_core, test_ulfius_endpoint_parameters);
-	tcase_add_test(tc_core, test_ulfius_endpoint_injection);
-	tcase_add_test(tc_core, test_ulfius_endpoint_multiple);
-	tcase_add_test(tc_core, test_ulfius_endpoint_stream);
-	tcase_set_timeout(tc_core, 30);
-	suite_add_tcase(s, tc_core);
+  s = suite_create("Ulfius framework function tests");
+  tc_core = tcase_create("test_ulfius_framework");
+  tcase_add_test(tc_core, test_ulfius_simple_endpoint);
+  tcase_add_test(tc_core, test_ulfius_endpoint_parameters);
+  tcase_add_test(tc_core, test_ulfius_endpoint_injection);
+  tcase_add_test(tc_core, test_ulfius_endpoint_multiple);
+  tcase_add_test(tc_core, test_ulfius_endpoint_stream);
+  tcase_add_test(tc_core, test_ulfius_utf8_not_ignored);
+  tcase_add_test(tc_core, test_ulfius_utf8_ignored);
+  tcase_set_timeout(tc_core, 30);
+  suite_add_tcase(s, tc_core);
 
-	return s;
+  return s;
 }
 
 int main(int argc, char *argv[])
@@ -551,5 +645,5 @@ int main(int argc, char *argv[])
   srunner_free(sr);
   
   y_close_logs();
-	return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+  return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

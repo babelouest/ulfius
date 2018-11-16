@@ -48,7 +48,7 @@ struct _u_endpoint ** ulfius_endpoint_match(const char * method, const char * ur
  * fills map with the keys/values defined in the url that are described in the endpoint format url
  * return U_OK on success
  */
-int ulfius_parse_url(const char * url, const struct _u_endpoint * endpoint, struct _u_map * map);
+int ulfius_parse_url(const char * url, const struct _u_endpoint * endpoint, struct _u_map * map, int check_utf8);
 
 /**
  * ulfius_set_response_header
@@ -63,6 +63,8 @@ int ulfius_set_response_header(struct MHD_Response * response, const struct _u_m
  * return the number of added headers, -1 on error
  */
 int ulfius_set_response_cookie(struct MHD_Response * mhd_response, const struct _u_response * response);
+
+const char * utf8_check(const char * s);
 
 #ifndef U_DISABLE_WEBSOCKET
 

@@ -152,6 +152,9 @@ The `struct _u_instance` is defined as:
  * file_upload_callback:   callback function to manage file upload by blocks
  * file_upload_cls:        any pointer to pass to the file_upload_callback function
  * mhd_response_copy_data: to choose between MHD_RESPMEM_MUST_COPY and MHD_RESPMEM_MUST_FREE
+ * check_utf8:             check that all parameters values in the request (url, header and post_body)
+ *                         are valid utf8 strings, if a parameter value has non utf8 character, the value
+ *                         will be ignored, default 1
  * 
  */
 struct _u_instance {
@@ -179,6 +182,7 @@ struct _u_instance {
                                                        void * cls);
   void                        * file_upload_cls;
   int                           mhd_response_copy_data;
+  int                           check_utf8;
 };
 ```
 
@@ -764,7 +768,7 @@ The Ulfius framework will automatically free the variables referenced by the req
 
 #### Character encoding
 
-You may be careful with characters encoding if you use non UTF8 characters in your application or webservice, and especially if you use different encodings in the same application. Ulfius has not been fully tested in cases like that.
+You may be careful with characters encoding if you use non UTF8 characters in your application or webservice source code, and especially if you use different encodings in the same application. Ulfius may not work properly.
 
 #### Cookie management
 
