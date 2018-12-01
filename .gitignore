@@ -29,4 +29,7 @@ tools/uwsc/uwsc
 tools/uwsc/valgrind.txt
 *.key
 *.pem
+*.csr
+*.srl
+*.pfx
 *.log
