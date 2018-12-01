@@ -347,26 +347,26 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
     con_info->u_instance = (struct _u_instance *)cls;
   }
 
+  if (con_info->callback_first_iteration) {
+
 #ifndef U_DISABLE_WEBSOCKET
-  ci = MHD_get_connection_info (connection, MHD_CONNECTION_INFO_GNUTLS_SESSION);
-  if (((struct _u_instance *)cls)->use_client_cert_auth && ci != NULL && ci->tls_session != NULL) {
-    if ((ret_cert = gnutls_certificate_verify_peers2(ci->tls_session, &client_cert_status)) != 0) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error gnutls_certificate_verify_peers2 %d", ret_cert);
-    } else {
-      pcert = gnutls_certificate_get_peers(ci->tls_session, &listsize);
-      if ((pcert == NULL) || (listsize == 0)) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Failed to retrieve client certificate chain");
-      } else if (gnutls_x509_crt_init(&(con_info->request->client_cert))) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Failed to initialize client certificate");
-      } else if (gnutls_x509_crt_import(con_info->request->client_cert, &pcert[0], GNUTLS_X509_FMT_DER)) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Failed to import client certificate");
-        gnutls_x509_crt_deinit(con_info->request->client_cert);
+    ci = MHD_get_connection_info (connection, MHD_CONNECTION_INFO_GNUTLS_SESSION);
+    if (((struct _u_instance *)cls)->use_client_cert_auth && ci != NULL && ci->tls_session != NULL) {
+      if ((ret_cert = gnutls_certificate_verify_peers2(ci->tls_session, &client_cert_status)) != 0 && ret_cert != GNUTLS_E_NO_CERTIFICATE_FOUND) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error gnutls_certificate_verify_peers2");
+      } else if (!ret_cert) {
+        pcert = gnutls_certificate_get_peers(ci->tls_session, &listsize);
+        if ((pcert == NULL) || (listsize == 0)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Failed to retrieve client certificate chain");
+        } else if (gnutls_x509_crt_init(&(con_info->request->client_cert))) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Failed to initialize client certificate");
+        } else if (gnutls_x509_crt_import(con_info->request->client_cert, &pcert[0], GNUTLS_X509_FMT_DER)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Failed to import client certificate");
+          gnutls_x509_crt_deinit(con_info->request->client_cert);
+        }
       }
     }
-  }
 #endif
-
-  if (con_info->callback_first_iteration) {
     con_info->callback_first_iteration = 0;
     so_client = MHD_get_connection_info (connection, MHD_CONNECTION_INFO_CLIENT_ADDRESS)->client_addr;
     con_info->has_post_processor = 0;
