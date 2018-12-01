@@ -821,7 +821,11 @@ static struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance
  * return U_OK on success
  */
 int ulfius_start_framework(struct _u_instance * u_instance) {
-  return ulfius_start_secure_client_cert_framework(u_instance, NULL, NULL, NULL);
+#ifndef U_DISABLE_WEBSOCKET
+  return ulfius_start_secure_client_cert_framework(u_instance, key_pem, cert_pem, NULL);
+#else
+  return ulfius_start_secure_framework(u_instance, NULL, NULL);
+#endif
 }
 
 /**
@@ -835,6 +839,8 @@ int ulfius_start_framework(struct _u_instance * u_instance) {
  */
 int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem) {
 #ifndef U_DISABLE_WEBSOCKET
+  return ulfius_start_secure_client_cert_framework(u_instance, key_pem, cert_pem, NULL);
+#else
   // Check parameters and validate u_instance and endpoint_list that there is no mistake
   if (u_instance == NULL) {
     y_log_message(Y_LOG_LEVEL_ERROR, "ulfius_start_secure_framework - Error, u_instance is NULL");
@@ -844,7 +850,6 @@ int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * 
     return U_ERROR_PARAMS;
   }
   if (ulfius_validate_instance(u_instance) == U_OK) {
-    u_instance->use_client_cert_auth = 0;
     u_instance->mhd_daemon = ulfius_run_mhd_daemon(u_instance, key_pem, cert_pem, NULL);
     
     if (u_instance->mhd_daemon == NULL) {
@@ -859,8 +864,6 @@ int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * 
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_start_secure_framework - error input parameters");
     return U_ERROR_PARAMS;
   }
-#else
-  return ulfius_start_secure_client_cert_framework(u_instance, key_pem, cert_pem, NULL);
 #endif
 }
 
