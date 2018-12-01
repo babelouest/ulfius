@@ -307,16 +307,24 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
  * return MHD_NO on error
  */
 static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * connection,
-                                  const char * url, const char * method,
-                                  const char * version, const char * upload_data,
-                                  size_t * upload_data_size, void ** con_cls) {
+                                         const char * url, const char * method,
+                                         const char * version, const char * upload_data,
+                                         size_t * upload_data_size, void ** con_cls) {
 
   struct _u_endpoint * endpoint_list = ((struct _u_instance *)cls)->endpoint_list, ** current_endpoint_list = NULL, * current_endpoint = NULL;
   struct connection_info_struct * con_info = * con_cls;
   int mhd_ret = MHD_NO, callback_ret = U_OK, i, close_loop = 0, inner_error = U_OK, mhd_response_flag;
 #ifndef U_DISABLE_WEBSOCKET
+  // Websocket variables
   int upgrade_protocol = 0;
   char * protocol = NULL, * extension = NULL;
+
+  // Client certificate authentication variables
+  const union MHD_ConnectionInfo * ci;
+  unsigned int listsize;
+  const gnutls_datum_t * pcert;
+  gnutls_certificate_status_t client_cert_status;
+  int ret_cert;
 #endif
   char * content_type, * auth_realm = NULL;
   struct _u_response * response = NULL;
@@ -337,9 +345,27 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
   
   if (con_info->u_instance == NULL) {
     con_info->u_instance = (struct _u_instance *)cls;
-  
   }
-  
+
+#ifndef U_DISABLE_WEBSOCKET
+  ci = MHD_get_connection_info (connection, MHD_CONNECTION_INFO_GNUTLS_SESSION);
+  if (((struct _u_instance *)cls)->use_client_cert_auth && ci != NULL && ci->tls_session != NULL) {
+    if ((ret_cert = gnutls_certificate_verify_peers2(ci->tls_session, &client_cert_status)) != 0) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error gnutls_certificate_verify_peers2 %d", ret_cert);
+    } else {
+      pcert = gnutls_certificate_get_peers(ci->tls_session, &listsize);
+      if ((pcert == NULL) || (listsize == 0)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Failed to retrieve client certificate chain");
+      } else if (gnutls_x509_crt_init(&(con_info->request->client_cert))) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Failed to initialize client certificate");
+      } else if (gnutls_x509_crt_import(con_info->request->client_cert, &pcert[0], GNUTLS_X509_FMT_DER)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Failed to import client certificate");
+        gnutls_x509_crt_deinit(con_info->request->client_cert);
+      }
+    }
+  }
+#endif
+
   if (con_info->callback_first_iteration) {
     con_info->callback_first_iteration = 0;
     so_client = MHD_get_connection_info (connection, MHD_CONNECTION_INFO_CLIENT_ADDRESS)->client_addr;
@@ -710,8 +736,10 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
  * return a pointer to the mhd_daemon on success, NULL on error
  * 
  */
-static struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem) {
+static struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem, const char * root_ca_perm) {
   unsigned int mhd_flags = MHD_USE_THREAD_PER_CONNECTION;
+  int index;
+
 #ifdef DEBUG
   mhd_flags |= MHD_USE_DEBUG;
 #endif
@@ -723,7 +751,7 @@ static struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance
 #endif
   
   if (u_instance->mhd_daemon == NULL) {
-    struct MHD_OptionItem mhd_ops[7];
+    struct MHD_OptionItem mhd_ops[8];
     
     // Default options
     mhd_ops[0].option = MHD_OPTION_NOTIFY_COMPLETED;
@@ -738,43 +766,41 @@ static struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance
     mhd_ops[2].value = (intptr_t)ulfius_uri_logger;
     mhd_ops[2].ptr_value = NULL;
     
-    mhd_ops[3].option = MHD_OPTION_END;
-    mhd_ops[3].value = 0;
-    mhd_ops[3].ptr_value = NULL;
-    
+    index = 3;
+
     if (key_pem != NULL && cert_pem != NULL) {
       // HTTPS parameters
       mhd_flags |= MHD_USE_SSL;
-      mhd_ops[3].option = MHD_OPTION_HTTPS_MEM_KEY;
-      mhd_ops[3].value = 0;
-      mhd_ops[3].ptr_value = (void*)key_pem;
+      mhd_ops[index].option = MHD_OPTION_HTTPS_MEM_KEY;
+      mhd_ops[index].value = 0;
+      mhd_ops[index].ptr_value = (void*)key_pem;
+     
+      mhd_ops[index + 1].option = MHD_OPTION_HTTPS_MEM_CERT;
+      mhd_ops[index + 1].value = 0;
+      mhd_ops[index + 1].ptr_value = (void*)cert_pem;
       
-      mhd_ops[4].option = MHD_OPTION_HTTPS_MEM_CERT;
-      mhd_ops[4].value = 0;
-      mhd_ops[4].ptr_value = (void*)cert_pem;
-      
-      mhd_ops[5].option = MHD_OPTION_END;
-      mhd_ops[5].value = 0;
-      mhd_ops[5].ptr_value = NULL;
+      index += 2;
 
-      if (u_instance->timeout > 0) {
-        mhd_ops[5].option = MHD_OPTION_CONNECTION_TIMEOUT;
-        mhd_ops[5].value = u_instance->timeout;
-        mhd_ops[5].ptr_value = NULL;
-        
-        mhd_ops[6].option = MHD_OPTION_END;
-        mhd_ops[6].value = 0;
-        mhd_ops[6].ptr_value = NULL;
+      if (root_ca_perm != NULL) {
+        mhd_ops[index].option = MHD_OPTION_HTTPS_MEM_TRUST;
+        mhd_ops[index].value = 0;
+        mhd_ops[index].ptr_value = (void *)root_ca_perm;
+
+        index++;
       }
-    } else if (u_instance->timeout > 0) {
-      mhd_ops[3].option = MHD_OPTION_CONNECTION_TIMEOUT;
-      mhd_ops[3].value = u_instance->timeout;
-      mhd_ops[3].ptr_value = NULL;
-      
-      mhd_ops[4].option = MHD_OPTION_END;
-      mhd_ops[4].value = 0;
-      mhd_ops[4].ptr_value = NULL; 
     }
+    if (u_instance->timeout > 0) {
+      mhd_ops[index].option = MHD_OPTION_CONNECTION_TIMEOUT;
+      mhd_ops[index].value = u_instance->timeout;
+      mhd_ops[index].ptr_value = NULL;
+      
+      index++;
+    }
+
+    mhd_ops[index].option = MHD_OPTION_END;
+    mhd_ops[index].value = 0;
+    mhd_ops[index].ptr_value = NULL;
+
     return MHD_start_daemon (
       mhd_flags, u_instance->port, NULL, NULL, &ulfius_webservice_dispatcher, (void *)u_instance, 
       MHD_OPTION_ARRAY, mhd_ops,
@@ -795,22 +821,7 @@ static struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance
  * return U_OK on success
  */
 int ulfius_start_framework(struct _u_instance * u_instance) {
-  // Validate u_instance and endpoint_list that there is no mistake
-  if (ulfius_validate_instance(u_instance) == U_OK) {
-    u_instance->mhd_daemon = ulfius_run_mhd_daemon(u_instance, NULL, NULL);
-    
-    if (u_instance->mhd_daemon == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error MHD_start_daemon, aborting");
-      u_instance->status = U_STATUS_ERROR;
-      return U_ERROR_LIBMHD;
-    } else {
-      u_instance->status = U_STATUS_RUNNING;
-      return U_OK;
-    }
-  } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "ulfius_start_framework - error input parameters");
-    return U_ERROR_PARAMS;
-  }
+  return ulfius_start_secure_client_cert_framework(u_instance, NULL, NULL, NULL);
 }
 
 /**
@@ -823,9 +834,18 @@ int ulfius_start_framework(struct _u_instance * u_instance) {
  * return U_OK on success
  */
 int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem) {
-  // Validate u_instance and endpoint_list that there is no mistake
-  if (ulfius_validate_instance(u_instance) == U_OK && key_pem != NULL && cert_pem != NULL) {
-    u_instance->mhd_daemon = ulfius_run_mhd_daemon(u_instance, key_pem, cert_pem);
+#ifndef U_DISABLE_WEBSOCKET
+  // Check parameters and validate u_instance and endpoint_list that there is no mistake
+  if (u_instance == NULL) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "ulfius_start_secure_framework - Error, u_instance is NULL");
+    return U_ERROR_PARAMS;
+  } else if ((key_pem == NULL && cert_pem != NULL) || (key_pem != NULL && cert_pem == NULL)) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "ulfius_start_secure_framework - Error, you must specify key_pem and cert_pem");
+    return U_ERROR_PARAMS;
+  }
+  if (ulfius_validate_instance(u_instance) == U_OK) {
+    u_instance->use_client_cert_auth = 0;
+    u_instance->mhd_daemon = ulfius_run_mhd_daemon(u_instance, key_pem, cert_pem, NULL);
     
     if (u_instance->mhd_daemon == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error MHD_start_daemon, aborting");
@@ -836,10 +856,60 @@ int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * 
       return U_OK;
     }
   } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "ulfius_start_secure_framework - error input parameters");
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_start_secure_framework - error input parameters");
+    return U_ERROR_PARAMS;
+  }
+#else
+  return ulfius_start_secure_client_cert_framework(u_instance, key_pem, cert_pem, NULL);
+#endif
+}
+
+#ifndef U_DISABLE_WEBSOCKET
+/**
+ * ulfius_start_secure_client_cert_framework
+ * Initializes the framework and run the webservice based on the parameters given using an HTTPS connection
+ * And using a root server to authenticate client connections
+ * 
+ * u_instance:    pointer to a struct _u_instance that describe its port and bind address
+ * key_pem:       private key for the server
+ * cert_pem:      server certificate
+ * root_ca_pem:   client root CA you're willing to trust for this instance
+ * return U_OK on success
+ */
+int ulfius_start_secure_client_cert_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem, const char * root_ca_pem) {
+  // Check parameters and validate u_instance and endpoint_list that there is no mistake
+  if (u_instance == NULL) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_start_secure_client_cert_framework - Error, u_instance is NULL");
+    return U_ERROR_PARAMS;
+  } else if ((key_pem == NULL && cert_pem != NULL) || (key_pem != NULL && cert_pem == NULL)) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_start_secure_client_cert_framework - Error, you must specify key_pem and cert_pem");
+    return U_ERROR_PARAMS;
+  } else if (root_ca_pem != NULL && (key_pem == NULL || cert_pem == NULL)) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_start_secure_client_cert_framework - Error, you must specify key_pem and cert_pem in addition to root_ca_pem");
+    return U_ERROR_PARAMS;
+  }
+  if (root_ca_pem != NULL) {
+    u_instance->use_client_cert_auth = 1;
+  } else {
+    u_instance->use_client_cert_auth = 0;
+  }
+  if (ulfius_validate_instance(u_instance) == U_OK) {
+    u_instance->mhd_daemon = ulfius_run_mhd_daemon(u_instance, key_pem, cert_pem, root_ca_pem);
+    
+    if (u_instance->mhd_daemon == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error MHD_start_daemon, aborting");
+      u_instance->status = U_STATUS_ERROR;
+      return U_ERROR_LIBMHD;
+    } else {
+      u_instance->status = U_STATUS_RUNNING;
+      return U_OK;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_start_secure_client_cert_framework - error input parameters");
     return U_ERROR_PARAMS;
   }
 }
+#endif
 
 /**
  * ulfius_stop_framework
@@ -1300,6 +1370,7 @@ int ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, str
     u_instance->file_upload_callback = NULL;
     u_instance->file_upload_cls = NULL;
 #ifndef U_DISABLE_WEBSOCKET
+    u_instance->use_client_cert_auth = 0;
     u_instance->websocket_handler = o_malloc(sizeof(struct _websocket_handler));
     if (u_instance->websocket_handler == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for u_instance->websocket_handler");

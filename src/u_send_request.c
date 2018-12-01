@@ -202,6 +202,28 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
           return U_ERROR_LIBCURL;
         }
       }
+
+#ifndef U_DISABLE_WEBSOCKET
+      // Set client certificate authentication if defined
+      if (request->client_cert_file != NULL && request->client_key_file != NULL) {
+        if (curl_easy_setopt(curl_handle, CURLOPT_SSLCERT, request->client_cert_file) != CURLE_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting client certificate file");
+          ulfius_clean_request_full(copy_request);
+          curl_easy_cleanup(curl_handle);
+          return U_ERROR_LIBCURL;
+        } else if (curl_easy_setopt(curl_handle, CURLOPT_SSLKEY, request->client_key_file) != CURLE_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting client key file");
+          ulfius_clean_request_full(copy_request);
+          curl_easy_cleanup(curl_handle);
+          return U_ERROR_LIBCURL;
+        } else if (request->client_key_password != NULL && curl_easy_setopt(curl_handle, CURLOPT_KEYPASSWD, request->client_key_password) != CURLE_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting client key password");
+          ulfius_clean_request_full(copy_request);
+          curl_easy_cleanup(curl_handle);
+          return U_ERROR_LIBCURL;
+        }
+      }
+#endif
       
       // Set proxy if defined
       if (copy_request->proxy != NULL) {

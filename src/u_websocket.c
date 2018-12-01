@@ -1111,7 +1111,7 @@ int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websock
                 websocket_manager->connected = 0;
               }
               if (ulfius_push_websocket_message(websocket_manager->message_list_incoming, message) != U_OK) {
-                y_log_message(Y_LOG_LEVEL_ERROR, "Error pushing new websocket message in list");
+                y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error pushing new websocket message in list");
               }
             } else {
               websocket_manager->connected = 0;

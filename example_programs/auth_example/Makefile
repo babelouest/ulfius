@@ -16,7 +16,7 @@ CC=gcc
 ULFIUS_LOCATION=../../src
 ULFIUS_INCLUDE=../../include
 CFLAGS=-c -Wall -I$(ULFIUS_INCLUDE) -D_REENTRANT $(ADDITIONALFLAGS)
-LIBS=-lc -lulfius -lyder -lorcania -L$(ULFIUS_LOCATION)
+LIBS=-lc -lgnutls -lulfius -lyder -lorcania -L$(ULFIUS_LOCATION)
 
 all: auth_client auth_server
 
@@ -28,7 +28,7 @@ debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 debug: auth_client auth_server
 
 ../../src/libulfius.so:
-	cd $(ULFIUS_LOCATION) && $(MAKE) debug JANSSONFLAG=-DU_DISABLE_JANSSON WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET
+	cd $(ULFIUS_LOCATION) && $(MAKE) debug JANSSONFLAG=-DU_DISABLE_JANSSON
 
 auth_client.o: auth_client.c ../../src/libulfius.so
 	$(CC) $(CFLAGS) auth_client.c -DDEBUG -g -O0

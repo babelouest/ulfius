@@ -11,6 +11,9 @@
  */
 
 #include <stdio.h>
+#include <gnutls/gnutls.h>
+#include <gnutls/x509.h>
+
 #include <yder.h>
 #include <orcania.h>
 
@@ -22,10 +25,28 @@
 #define USER "test"
 #define PASSWORD "testpassword"
 
+char * read_file(const char * filename) {
+  char * buffer = NULL;
+  long length;
+  FILE * f = fopen (filename, "rb");
+  if (f != NULL) {
+    fseek (f, 0, SEEK_END);
+    length = ftell (f);
+    fseek (f, 0, SEEK_SET);
+    buffer = o_malloc (length + 1);
+    if (buffer != NULL) {
+      fread (buffer, 1, length, f);
+      buffer[length] = '\0';
+    }
+    fclose (f);
+  }
+  return buffer;
+}
+
 /**
  * Auth function for basic authentication
  */
-int auth_basic (const struct _u_request * request, struct _u_response * response, void * user_data) {
+int callback_auth_basic_body (const struct _u_request * request, struct _u_response * response, void * user_data) {
   y_log_message(Y_LOG_LEVEL_DEBUG, "basic auth user: %s", request->auth_basic_user);
   y_log_message(Y_LOG_LEVEL_DEBUG, "basic auth password: %s", request->auth_basic_password);
   y_log_message(Y_LOG_LEVEL_DEBUG, "basic auth param: %s", (char *)user_data);
@@ -46,6 +67,29 @@ int callback_auth_basic (const struct _u_request * request, struct _u_response *
   return U_CALLBACK_CONTINUE;
 }
 
+/**
+ * Callback function on client certificate authentication
+ */
+int callback_auth_client_cert (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  char * buf;
+  size_t lbuf = 0;
+
+  if (request->client_cert != NULL) {
+    gnutls_x509_crt_get_dn(request->client_cert, NULL, &lbuf);
+    buf = o_malloc(lbuf + 1);
+    if (buf != NULL) {
+      gnutls_x509_crt_get_dn(request->client_cert, buf, &lbuf);
+      buf[lbuf] = '\0';
+      y_log_message(Y_LOG_LEVEL_DEBUG, "dn of the client: %s", buf);
+      ulfius_set_string_body_response(response, 200, buf);
+      o_free(buf);
+    }
+  } else {
+    ulfius_set_string_body_response(response, 400, "Invalid client certificate");
+  }
+  return U_CALLBACK_CONTINUE;
+}
+
 int main (int argc, char **argv) {
   // Initialize the instance
   struct _u_instance instance;
@@ -58,13 +102,30 @@ int main (int argc, char **argv) {
   }
   
   // Endpoint list declaration
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/basic", 0, &auth_basic, "auth param");
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/basic", 0, &callback_auth_basic_body, "auth param");
   ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/basic", 1, &callback_auth_basic, NULL);
   ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/default", 1, &callback_auth_basic, NULL);
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/default", 0, &auth_basic, NULL);
+  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/default", 0, &callback_auth_basic_body, NULL);
+  if (argc > 3) {
+    ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/client_cert", 0, &callback_auth_client_cert, NULL);
+  }
   
   // Start the framework
-  if (ulfius_start_framework(&instance) == U_OK) {
+  if (argc > 3) {
+    char * server_key = read_file(argv[1]), * server_pem = read_file(argv[2]), * root_ca_pem = read_file(argv[3]);
+    if (ulfius_start_secure_client_cert_framework(&instance, server_key, server_pem, root_ca_pem) == U_OK) {
+      printf("Start secure framework on port %u\n", instance.port);
+    
+      // Wait for the user to press <enter> on the console to quit the application
+      printf("Press <enter> to quit server\n");
+      getchar();
+    } else {
+      printf("Error starting secure framework\n");
+    }
+    o_free(server_key);
+    o_free(server_pem);
+    o_free(root_ca_pem);
+  } else if (ulfius_start_framework(&instance) == U_OK) {
     printf("Start framework on port %u\n", instance.port);
     
     // Wait for the user to press <enter> on the console to quit the application
