@@ -132,8 +132,11 @@ struct _u_cookie {
  * client_cert:               x509 certificate of the client if the instance uses client certificate authentication and the client is authenticated
  *                            available only if websocket support is enabled
  * client_cert_file:          path to client certificate file for sending http requests with certificate authentication
+ *                            available only if websocket support is enabled
  * client_key_file:           path to client key file for sending http requests with certificate authentication
+ *                            available only if websocket support is enabled
  * client_key_password:       password to unlock client key file
+ *                            available only if websocket support is enabled
  */
 struct _u_request {
   char *               http_protocol;
