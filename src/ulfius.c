@@ -822,7 +822,7 @@ static struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance
  */
 int ulfius_start_framework(struct _u_instance * u_instance) {
 #ifndef U_DISABLE_WEBSOCKET
-  return ulfius_start_secure_client_cert_framework(u_instance, key_pem, cert_pem, NULL);
+  return ulfius_start_secure_client_cert_framework(u_instance, NULL, NULL, NULL);
 #else
   return ulfius_start_secure_framework(u_instance, NULL, NULL);
 #endif
