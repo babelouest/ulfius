@@ -33,3 +33,4 @@ tools/uwsc/valgrind.txt
 *.srl
 *.pfx
 *.log
+*.p12
