@@ -1,5 +1,11 @@
 # Ulfius Changelog
 
+## 2.5.0
+
+- Add struct _u_endpoint.check_utf8 to check all request parameters and values to be valid utf8 strings
+- Add client certificate authentication for webservice and send request library
+- Fix build config file bug when using -jxx option to Makefile #84
+
 ## 2.4.4
 
 - CMake scripts improvements
