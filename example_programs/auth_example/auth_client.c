@@ -38,7 +38,9 @@ int main (int argc, char **argv) {
   
   y_init_logs("auth_client", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "logs start");
   
+#ifndef U_DISABLE_WEBSOCKET
   if (argc <= 2) {
+#endif
     ulfius_init_request(&req_list[0]);
     req_list[0].http_verb = o_strdup("GET");
     req_list[0].http_url = o_strdup(SERVER_URL);
@@ -142,6 +144,7 @@ int main (int argc, char **argv) {
     ulfius_clean_request(&req_list[3]);
     ulfius_clean_request(&req_list[4]);
     ulfius_clean_request(&req_list[5]);
+#ifndef U_DISABLE_WEBSOCKET
   } else {
     ulfius_init_request(&req_list[0]);
     req_list[0].http_verb = o_strdup("GET");
@@ -163,6 +166,7 @@ int main (int argc, char **argv) {
     ulfius_clean_response(&response);
     ulfius_clean_request(&req_list[0]);
   }
+#endif
   
   y_close_logs();
   return 0;

@@ -67,6 +67,7 @@ int callback_auth_basic (const struct _u_request * request, struct _u_response *
   return U_CALLBACK_CONTINUE;
 }
 
+#ifndef U_DISABLE_WEBSOCKET
 /**
  * Callback function on client certificate authentication
  */
@@ -89,6 +90,7 @@ int callback_auth_client_cert (const struct _u_request * request, struct _u_resp
   }
   return U_CALLBACK_CONTINUE;
 }
+#endif
 
 int main (int argc, char **argv) {
   // Initialize the instance
@@ -106,10 +108,13 @@ int main (int argc, char **argv) {
   ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/basic", 1, &callback_auth_basic, NULL);
   ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/default", 1, &callback_auth_basic, NULL);
   ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/default", 0, &callback_auth_basic_body, NULL);
+#ifndef U_DISABLE_WEBSOCKET
   if (argc > 3) {
     ulfius_add_endpoint_by_val(&instance, "GET", PREFIX, "/client_cert", 0, &callback_auth_client_cert, NULL);
   }
+#endif
   
+#ifndef U_DISABLE_WEBSOCKET
   // Start the framework
   if (argc > 3) {
     char * server_key = read_file(argv[1]), * server_pem = read_file(argv[2]), * root_ca_pem = read_file(argv[3]);
@@ -126,14 +131,17 @@ int main (int argc, char **argv) {
     o_free(server_pem);
     o_free(root_ca_pem);
   } else if (ulfius_start_framework(&instance) == U_OK) {
+#endif
     printf("Start framework on port %u\n", instance.port);
     
     // Wait for the user to press <enter> on the console to quit the application
     printf("Press <enter> to quit server\n");
     getchar();
+#ifndef U_DISABLE_WEBSOCKET
   } else {
     printf("Error starting framework\n");
   }
+#endif
 
   printf("End framework\n");
   ulfius_stop_framework(&instance);
