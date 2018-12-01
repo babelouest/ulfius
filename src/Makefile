@@ -27,7 +27,7 @@ CC=gcc
 CFLAGS+=-c -pedantic -std=gnu99 -fPIC -Wall -D_REENTRANT -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS) $(CPPFLAGS)
 LIBS=-L$(DESTDIR)/lib -lc -lmicrohttpd -lyder -lorcania -lpthread $(LDFLAGS)
 OUTPUT=libulfius.so
-VERSION=2.4.4
+VERSION=2.5.0
 
 ifndef JANSSONFLAG
 DISABLE_JANSSON=0
@@ -73,33 +73,19 @@ $(CONFIG_FILE):
 	fi
 	@echo Config file $(CONFIG_FILE) generated
 
-libulfius.so: $(CONFIG_FILE) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
+%.o: %.c glewlwyd.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) $<
+
+target: ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
+
+libulfius.so: $(CONFIG_FILE)
+	@$(MAKE) --no-print-directory target
 	$(CC) -shared -fPIC -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o $(LIBS) $(LJANSSON) $(LCURL) $(LWEBSOCKET)
 	ln -sf $(OUTPUT).$(VERSION) $(OUTPUT)
 
-libulfius.a: $(CONFIG_FILE) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o
-	ar rcs libulfius.a ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o
-
-ulfius.o: $(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h ulfius.c
-	$(CC) $(CFLAGS) ulfius.c
-
-u_map.o: $(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h u_map.c
-	$(CC) $(CFLAGS) u_map.c
-
-u_request.o: $(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h u_request.c
-	$(CC) $(CFLAGS) u_request.c
-
-u_response.o: $(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h u_response.c
-	$(CC) $(CFLAGS) u_response.c
-
-u_websocket.o: $(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h u_websocket.c
-	$(CC) $(CFLAGS) u_websocket.c
-
-u_send_request.o: $(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h u_send_request.c
-	$(CC) $(CFLAGS) u_send_request.c
-
-yuarel.o: $(ULFIUS_INCLUDE)/yuarel.h yuarel.c
-	$(CC) $(CFLAGS) yuarel.c
+libulfius.a: $(CONFIG_FILE) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
+	@$(MAKE) --no-print-directory target
+	ar rcs libulfius.a ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
 
 clean:
 	rm -f *.o *.so *.a $(OUTPUT) $(OUTPUT).* $(CONFIG_FILE)
