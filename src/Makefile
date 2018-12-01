@@ -73,17 +73,17 @@ $(CONFIG_FILE):
 	fi
 	@echo Config file $(CONFIG_FILE) generated
 
-%.o: %.c glewlwyd.h
+%.o: %.c $(CONFIG_FILE) $(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h $(ULFIUS_INCLUDE)/yuarel.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) $<
 
 target: ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
 
-libulfius.so: $(CONFIG_FILE)
+libulfius.so: ulfius.c u_map.c u_request.c u_response.c u_send_request.c u_websocket.c yuarel.c
 	@$(MAKE) --no-print-directory target
 	$(CC) -shared -fPIC -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o $(LIBS) $(LJANSSON) $(LCURL) $(LWEBSOCKET)
 	ln -sf $(OUTPUT).$(VERSION) $(OUTPUT)
 
-libulfius.a: $(CONFIG_FILE) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
+libulfius.a: ulfius.c u_map.c u_request.c u_response.c u_send_request.c u_websocket.c yuarel.c
 	@$(MAKE) --no-print-directory target
 	ar rcs libulfius.a ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
 
