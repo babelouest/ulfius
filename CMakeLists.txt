@@ -270,6 +270,9 @@ if (BUILD_ULFIUS_TESTING)
         endif ()
 
         set(TESTS core u_map framework)
+        if (WITH_WEBSOCKET)
+            set(TESTS ${TESTS} websocket)
+        endif ()
 
         configure_file(
                 "${CMAKE_MODULE_PATH}/CTestCustom.cmake.in"
