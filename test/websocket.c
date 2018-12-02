@@ -7,7 +7,7 @@
 #include <time.h>
 
 #include <check.h>
-#include "ulfius.h"
+#include <ulfius.h>
 
 #define WEBSOCKET_URL "http://localhost:8378/websocket"
 #define DEFAULT_PROTOCOL "proto"
@@ -16,6 +16,7 @@
 #define PORT 9275
 #define PREFIX_WEBSOCKET "/websocket"
 
+#ifndef U_DISABLE_WEBSOCKET
 void websocket_manager_callback_empty (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_manager_user_data) {
 }
 
@@ -135,6 +136,7 @@ START_TEST(test_websocket_ulfius_websocket_client)
   ulfius_clean_response(&response);
 }
 END_TEST
+#endif
 
 static Suite *ulfius_suite(void)
 {
@@ -143,10 +145,12 @@ static Suite *ulfius_suite(void)
 
 	s = suite_create("Ulfius websocket functions tests");
 	tc_websocket = tcase_create("test_ulfius_websocket");
+#ifndef U_DISABLE_WEBSOCKET
 	tcase_add_test(tc_websocket, test_websocket_ulfius_set_websocket_response);
 	tcase_add_test(tc_websocket, test_websocket_ulfius_set_websocket_request);
 	tcase_add_test(tc_websocket, test_websocket_ulfius_open_websocket_client_connection_error);
 	tcase_add_test(tc_websocket, test_websocket_ulfius_websocket_client);
+#endif
 	tcase_set_timeout(tc_websocket, 30);
 	suite_add_tcase(s, tc_websocket);
 

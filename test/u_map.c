@@ -7,7 +7,7 @@
 #include <time.h>
 
 #include <check.h>
-#include "../include/ulfius.h"
+#include <ulfius.h>
 
 START_TEST(test_u_map_init)
 {
