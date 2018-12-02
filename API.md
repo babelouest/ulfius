@@ -392,7 +392,7 @@ int main() {
 
 #### Start webservice
 
-The starting point function are `ulfius_start_framework`, `ulfius_start_secure_framework` or `ulfius_start_secure_client_cert_framework`:
+The starting point function are `ulfius_start_framework`, `ulfius_start_secure_framework` or `ulfius_start_secure_ca_trust_framework`:
 
 ```C
 /**
@@ -417,7 +417,7 @@ int ulfius_start_framework(struct _u_instance * u_instance);
 int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem);
 
 /**
- * ulfius_start_secure_client_cert_framework
+ * ulfius_start_secure_ca_trust_framework
  * Initializes the framework and run the webservice based on the parameters given using an HTTPS connection
  * And using a root server to authenticate client connections
  * 
@@ -427,13 +427,13 @@ int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * 
  * root_ca_pem:   client root CA you're willing to trust for this instance
  * return U_OK on success
  */
-int ulfius_start_secure_client_cert_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem, const char * root_ca_pem);
+int ulfius_start_secure_ca_trust_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem, const char * root_ca_pem);
 ```
 
-In your program, where you want to start the web server, execute the function `ulfius_start_framework(struct _u_instance * u_instance)` for a non-secure http connection. Use the function `ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem)` for a secure https connection, using a valid private key and a valid corresponding server certificate, see openssl documentation for certificate generation. Finally, use the function `int ulfius_start_secure_client_cert_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem, const char * root_ca_pem)` to start a secure https connection and be able to authenticate clients with a certificate.
+In your program, where you want to start the web server, execute the function `ulfius_start_framework(struct _u_instance * u_instance)` for a non-secure http connection. Use the function `ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem)` for a secure https connection, using a valid private key and a valid corresponding server certificate, see openssl documentation for certificate generation. Finally, use the function `int ulfius_start_secure_ca_trust_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem, const char * root_ca_pem)` to start a secure https connection and be able to authenticate clients with a certificate.
 Those function accept the previously declared `instance` as first parameter. You can reuse the same callback function as much as you want for different endpoints. On success, these functions returns `U_OK`, otherwise an error code.
 
-Note: for security concerns, after running `ulfius_start_secure_framework` or `ulfius_start_secure_client_cert_framework`, you can free the parameters `key_pem`, `cert_pem` and `root_ca_pem` if you want to.
+Note: for security concerns, after running `ulfius_start_secure_framework` or `ulfius_start_secure_ca_trust_framework`, you can free the parameters `key_pem`, `cert_pem` and `root_ca_pem` if you want to.
 
 #### Stop webservice
 

@@ -822,7 +822,7 @@ static struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance
  */
 int ulfius_start_framework(struct _u_instance * u_instance) {
 #ifndef U_DISABLE_WEBSOCKET
-  return ulfius_start_secure_client_cert_framework(u_instance, NULL, NULL, NULL);
+  return ulfius_start_secure_ca_trust_framework(u_instance, NULL, NULL, NULL);
 #else
   return ulfius_start_secure_framework(u_instance, NULL, NULL);
 #endif
@@ -839,7 +839,7 @@ int ulfius_start_framework(struct _u_instance * u_instance) {
  */
 int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem) {
 #ifndef U_DISABLE_WEBSOCKET
-  return ulfius_start_secure_client_cert_framework(u_instance, key_pem, cert_pem, NULL);
+  return ulfius_start_secure_ca_trust_framework(u_instance, key_pem, cert_pem, NULL);
 #else
   // Check parameters and validate u_instance and endpoint_list that there is no mistake
   if (u_instance == NULL) {
@@ -869,7 +869,7 @@ int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * 
 
 #ifndef U_DISABLE_WEBSOCKET
 /**
- * ulfius_start_secure_client_cert_framework
+ * ulfius_start_secure_ca_trust_framework
  * Initializes the framework and run the webservice based on the parameters given using an HTTPS connection
  * And using a root server to authenticate client connections
  * 
@@ -879,16 +879,16 @@ int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * 
  * root_ca_pem:   client root CA you're willing to trust for this instance
  * return U_OK on success
  */
-int ulfius_start_secure_client_cert_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem, const char * root_ca_pem) {
+int ulfius_start_secure_ca_trust_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem, const char * root_ca_pem) {
   // Check parameters and validate u_instance and endpoint_list that there is no mistake
   if (u_instance == NULL) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_start_secure_client_cert_framework - Error, u_instance is NULL");
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_start_secure_ca_trust_framework - Error, u_instance is NULL");
     return U_ERROR_PARAMS;
   } else if ((key_pem == NULL && cert_pem != NULL) || (key_pem != NULL && cert_pem == NULL)) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_start_secure_client_cert_framework - Error, you must specify key_pem and cert_pem");
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_start_secure_ca_trust_framework - Error, you must specify key_pem and cert_pem");
     return U_ERROR_PARAMS;
   } else if (root_ca_pem != NULL && (key_pem == NULL || cert_pem == NULL)) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_start_secure_client_cert_framework - Error, you must specify key_pem and cert_pem in addition to root_ca_pem");
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_start_secure_ca_trust_framework - Error, you must specify key_pem and cert_pem in addition to root_ca_pem");
     return U_ERROR_PARAMS;
   }
   if (root_ca_pem != NULL) {
@@ -908,7 +908,7 @@ int ulfius_start_secure_client_cert_framework(struct _u_instance * u_instance, c
       return U_OK;
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_start_secure_client_cert_framework - error input parameters");
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_start_secure_ca_trust_framework - error input parameters");
     return U_ERROR_PARAMS;
   }
 }

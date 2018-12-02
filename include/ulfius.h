@@ -352,7 +352,7 @@ int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * 
 
 #ifndef U_DISABLE_WEBSOCKET
 /**
- * ulfius_start_secure_client_cert_framework
+ * ulfius_start_secure_ca_trust_framework
  * Initializes the framework and run the webservice based on the parameters given using an HTTPS connection
  * And using a root server to authenticate client connections
  * 
@@ -362,7 +362,7 @@ int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * 
  * root_ca_pem:   client root CA you're willing to trust for this instance
  * return U_OK on success
  */
-int ulfius_start_secure_client_cert_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem, const char * root_ca_pem);
+int ulfius_start_secure_ca_trust_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem, const char * root_ca_pem);
 #endif
 
 /**
