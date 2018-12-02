@@ -9,6 +9,26 @@
  * 
  * License MIT
  *
+ * How-to generate certificates using openssl for local tests only
+ * 
+ * Server key and certificate
+ * openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout server.key -out server.crt
+ * 
+ * Certificate authority
+ * openssl genrsa -out ca.key 4096
+ * openssl req -new -x509 -days 365 -key ca.key -out ca.crt
+ * 
+ * Run auth_server with the following command
+ * $ ./auth_server server.key server.crt ca.crt
+ * 
+ * Client Key and CSR
+ * openssl genrsa -out client.key 4096
+ * openssl req -new -key client.key -out client.csr
+ * openssl x509 -req -days 365 -in client.csr -CA ca.crt -CAkey ca.key -set_serial 01 -out client.crt
+ * 
+ * Run auth_client with the following command
+ * ./auth_client client.crt client.key <password>
+ *
  */
 
 #include <stdio.h>

@@ -8,6 +8,25 @@
  * 
  * License MIT
  *
+ * How-to generate certificates using openssl for local tests only
+ * 
+ * Server key and certificate
+ * openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout server.key -out server.crt
+ * 
+ * Certificate authority
+ * openssl genrsa -out ca.key 4096
+ * openssl req -new -x509 -days 365 -key ca.key -out ca.crt
+ * 
+ * Run auth_server with the following command
+ * $ ./auth_server server.key server.crt ca.crt
+ * 
+ * Client Key and CSR
+ * openssl genrsa -out client.key 4096
+ * openssl req -new -key client.key -out client.csr
+ * openssl x509 -req -days 365 -in client.csr -CA ca.crt -CAkey ca.key -set_serial 01 -out client.crt
+ * 
+ * Run auth_client with the following command
+ * ./auth_client client.crt client.key <password>
  */
 
 #include <stdio.h>
@@ -72,19 +91,27 @@ int callback_auth_basic (const struct _u_request * request, struct _u_response *
  * Callback function on client certificate authentication
  */
 int callback_auth_client_cert (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  char * buf;
-  size_t lbuf = 0;
+  char * dn = NULL, * issuer_dn = NULL, * response_message;
+  size_t lbuf = 0, libuf = 0;
 
   if (request->client_cert != NULL) {
     gnutls_x509_crt_get_dn(request->client_cert, NULL, &lbuf);
-    buf = o_malloc(lbuf + 1);
-    if (buf != NULL) {
-      gnutls_x509_crt_get_dn(request->client_cert, buf, &lbuf);
-      buf[lbuf] = '\0';
-      y_log_message(Y_LOG_LEVEL_DEBUG, "dn of the client: %s", buf);
-      ulfius_set_string_body_response(response, 200, buf);
-      o_free(buf);
+    gnutls_x509_crt_get_issuer_dn(request->client_cert, NULL, &libuf);
+    dn = o_malloc(lbuf + 1);
+    issuer_dn = o_malloc(libuf + 1);
+    if (dn != NULL && issuer_dn != NULL) {
+      gnutls_x509_crt_get_dn(request->client_cert, dn, &lbuf);
+      gnutls_x509_crt_get_issuer_dn(request->client_cert, issuer_dn, &libuf);
+      dn[lbuf] = '\0';
+      issuer_dn[libuf] = '\0';
+      y_log_message(Y_LOG_LEVEL_DEBUG, "dn of the client: %s", dn);
+      y_log_message(Y_LOG_LEVEL_DEBUG, "dn of the issuer: %s", issuer_dn);
+      response_message = msprintf("client dn: '%s', ussued by: '%s'", dn, issuer_dn);
+      ulfius_set_string_body_response(response, 200, response_message);
+      o_free(response_message);
     }
+    o_free(dn);
+    o_free(issuer_dn);
   } else {
     ulfius_set_string_body_response(response, 400, "Invalid client certificate");
   }
@@ -118,7 +145,7 @@ int main (int argc, char **argv) {
   // Start the framework
   if (argc > 3) {
     char * server_key = read_file(argv[1]), * server_pem = read_file(argv[2]), * root_ca_pem = read_file(argv[3]);
-    if (ulfius_start_secure_client_cert_framework(&instance, server_key, server_pem, root_ca_pem) == U_OK) {
+    if (ulfius_start_secure_ca_trust_framework(&instance, server_key, server_pem, root_ca_pem) == U_OK) {
       printf("Start secure framework on port %u\n", instance.port);
     
       // Wait for the user to press <enter> on the console to quit the application
