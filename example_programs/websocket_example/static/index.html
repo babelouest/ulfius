@@ -28,22 +28,20 @@
       } else {
         mySocket = new WebSocket("ws://" + location.hostname + ":" + location.port + "/websocket" + (echo?"/echo":""), ["plop"]);
       }
-      if (mySocket) {
-        mySocket.onmessage = function (event) {
-          if (event.data instanceof Blob) {
-            var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Binary message received: </strong>" + event.data.size + " bytes</p><hr>"
-          } else {
-            var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Text message received: </strong>" + event.data + "</p><hr>"
-          }
-          $("#message").append(message);
-        };
-        mySocket.onclose = function () {
-          mySocket = false;
-          var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Websocket closed</strong></p><hr>"
-          $("#message").append(message);
-          $("#connect" + (echo?"Echo":"")).val("Connect websocket " + (echo?"echo":"standard"));
-        };
-      }
+      mySocket.onmessage = function (event) {
+        if (event.data instanceof Blob) {
+          var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Binary message received: </strong>" + event.data.size + " bytes</p><hr>"
+        } else {
+          var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Text message received: </strong>" + event.data + "</p><hr>"
+        }
+        $("#message").append(message);
+      };
+      mySocket.onclose = function () {
+        mySocket = false;
+        var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Websocket closed</strong></p><hr>"
+        $("#message").append(message);
+        $("#connect" + (echo?"Echo":"")).val("Connect websocket " + (echo?"echo":"standard"));
+      };
     }
     
     $("#connect").click(function() {
@@ -104,21 +102,19 @@
           } else {
             mySocket = new WebSocket("ws://" + location.hostname + ":" + location.port + "/websocket/file", ["file"]);
           }
-          if (mySocket) {
-            mySocket.binaryType = "arraybuffer";
-            mySocket.onopen = function () {
-              var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Send bytes length: </strong>" + curFileData.byteLength + "</p><hr>"
-              $("#message").append(message);
-              mySocket.send(curFileData);
-            };
-            
-            mySocket.onmessage = function (event) {
-              var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Message received after binary: </strong>" + event.data + "</p><hr>"
-              $("#message").append(message);
-              mySocket.close();
-              mySocket = false;
-            };
-          }
+          mySocket.binaryType = "arraybuffer";
+          mySocket.onopen = function () {
+            var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Send bytes length: </strong>" + curFileData.byteLength + "</p><hr>"
+            $("#message").append(message);
+            mySocket.send(curFileData);
+          };
+          
+          mySocket.onmessage = function (event) {
+            var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Message received after binary: </strong>" + event.data + "</p><hr>"
+            $("#message").append(message);
+            mySocket.close();
+            mySocket = false;
+          };
         }
       }
       fr.readAsArrayBuffer(curFile);
@@ -134,21 +130,19 @@
           } else {
             mySocket = new WebSocket("ws://" + location.hostname + ":" + location.port + "/websocket/file", ["file"]);
           }
-          if (mySocket) {
-            mySocket.binaryType = "arraybuffer";
-            mySocket.onopen = function () {
-              var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Send bytes length: </strong>" + curFileText.length + "</p><hr>"
-              $("#message").append(message);
-              mySocket.send(curFileText);
-            };
-            
-            mySocket.onmessage = function (event) {
-              var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Message received after binary: </strong>" + event.data + "</p><hr>"
-              $("#message").append(message);
-              mySocket.close();
-              mySocket = false;
-            };
-          }
+          mySocket.binaryType = "arraybuffer";
+          mySocket.onopen = function () {
+            var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Send bytes length: </strong>" + curFileText.length + "</p><hr>"
+            $("#message").append(message);
+            mySocket.send(curFileText);
+          };
+          
+          mySocket.onmessage = function (event) {
+            var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Message received after binary: </strong>" + event.data + "</p><hr>"
+            $("#message").append(message);
+            mySocket.close();
+            mySocket = false;
+          };
         }
       }
       fr.readAsText(curFile);
