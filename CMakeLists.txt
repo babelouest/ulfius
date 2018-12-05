@@ -142,6 +142,35 @@ else ()
     set(U_DISABLE_JANSSON ON)
 endif ()
 
+# TO MY FUTURE SELF
+# The following 2 blocks are put BEFORE searching for Orcania and Yder by design
+# Otherwise it will lead to cmake errors
+# DON'T MOVE IT BELOW PLEASE!
+
+# static library
+
+option(BUILD_STATIC "Build static library." OFF)
+
+if (BUILD_STATIC)
+    add_library(ulfius_static STATIC ${LIB_SRC})
+    target_compile_definitions(ulfius_static PUBLIC -DO_STATIC_LIBRARY)
+    set_target_properties(ulfius_static PROPERTIES
+                          OUTPUT_NAME ulfius)
+endif ()
+
+# shared library
+
+add_library(ulfius SHARED ${LIB_SRC})
+set_target_properties(ulfius PROPERTIES
+    COMPILE_OPTIONS -Wextra
+    PUBLIC_HEADER "${INC_DIR}/ulfius.h;${PROJECT_BINARY_DIR}/ulfius-cfg.h"
+    VERSION "${LIBRARY_VERSION}"
+    SOVERSION "${LIBRARY_SOVERSION}")
+if (WIN32)
+    set_target_properties(ulfius PROPERTIES SUFFIX "-${LIBRARY_VERSION_MAJOR}.dll")
+endif ()
+target_link_libraries(ulfius ${LIBS})
+
 # dependencies
 
 option(SEARCH_ORCANIA_U "Search for ORCANIA library" ON)
@@ -196,30 +225,6 @@ if (WITH_YDER)
 else ()
     set(U_DISABLE_YDER ON)
 endif ()
-
-# static library
-
-option(BUILD_STATIC "Build static library." OFF)
-
-if (BUILD_STATIC)
-    add_library(ulfius_static STATIC ${LIB_SRC})
-    target_compile_definitions(ulfius_static PUBLIC -DO_STATIC_LIBRARY)
-    set_target_properties(ulfius_static PROPERTIES
-                          OUTPUT_NAME ulfius)
-endif ()
-
-# shared library
-
-add_library(ulfius SHARED ${LIB_SRC})
-set_target_properties(ulfius PROPERTIES
-    COMPILE_OPTIONS -Wextra
-    PUBLIC_HEADER "${INC_DIR}/ulfius.h;${PROJECT_BINARY_DIR}/ulfius-cfg.h"
-    VERSION "${LIBRARY_VERSION}"
-    SOVERSION "${LIBRARY_SOVERSION}")
-if (WIN32)
-    set_target_properties(ulfius PROPERTIES SUFFIX "-${LIBRARY_VERSION_MAJOR}.dll")
-endif ()
-target_link_libraries(ulfius ${LIBS})
 
 # build uwsc
 
