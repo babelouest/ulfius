@@ -23,9 +23,11 @@ ULFIUS_INCLUDE=../include
 ULFIUS_LOCATION=../src
 CC=gcc
 CFLAGS=-Wall -D_REENTRANT -I$(ULFIUS_INCLUDE) -DDEBUG -g -O0
-LIBS=-lc -lorcania -lyder -lulfius -lgnutls -lcheck -lpthread -lm -lrt -lsubunit -L$(ULFIUS_LOCATION)
+LIBS=-lc -lorcania -lulfius -lgnutls -lcheck -lpthread -lm -lrt -lsubunit -L$(ULFIUS_LOCATION)
 # Use this LIBS below if you don't have/need gnutls
 #LIBS=-lc -lorcania -lyder -lulfius -lcheck -lpthread -lm -lrt -lsubunit -L$(ULFIUS_LOCATION)
+# Use this LIBS below if you use yder logs
+#LIBS=-lc -lorcania -lyder -lulfius -lgnutls -lcheck -lpthread -lm -lrt -lsubunit -L$(ULFIUS_LOCATION)
 
 all: test
 
