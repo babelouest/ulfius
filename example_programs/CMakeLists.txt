@@ -49,14 +49,16 @@ if (_GNU_SOURCE)
 endif ()
 
 include(FindUlfius)
-set(ULFIUS_MIN_VERSION "2.2")
+set(ULFIUS_MIN_VERSION "2.5")
 find_package(Ulfius ${ULFIUS_MIN_VERSION} REQUIRED)
 set(LIBS ${LIBS} ${ULFIUS_LIBRARIES} "-lorcania -ljansson")
 include_directories(${ULFIUS_INCLUDE_DIRS})
 
-option(WITH_YDER "Using Yder library" ON)
-if (WITH_YDER)
-      set(LIBS ${LIBS} "-lyder")
+include(FindYder)
+find_package(Yder)
+if (YDER_FOUND)
+    set(LIBS ${LIBS} "-lyder")
+    include_directories(${YDER_INCLUDE_DIRS})
 endif ()
 
 # examples
