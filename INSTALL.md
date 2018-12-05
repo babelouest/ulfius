@@ -71,34 +71,40 @@ $ make && sudo make install
 
 #### Disable Ulfius dependencies
 
-To disable libcurl functions, append the option `CURLFLAG=-DU_DISABLE_CURL` to the make command when you build Ulfius:
+To disable libcurl functions, append the option `CURLFLAG=1` to the make command when you build Ulfius:
 
 ```shell
-$ make CURLFLAG=-DU_DISABLE_CURL
+$ make CURLFLAG=1
 ```
 
 If libcurl functions are disabled, `libcurl4-gnutls-dev` is no longer mandatory for install.
 
-To disable libjansson functions, append the option `JANSSONFLAG=-DU_DISABLE_JANSSON` to the make command when you build Ulfius and Orcania:
+To disable libjansson functions, append the option `JANSSONFLAG=1` to the make command when you build Ulfius and Orcania:
 
 ```shell
-$ make JANSSONFLAG=-DU_DISABLE_JANSSON
+$ make JANSSONFLAG=1
 ```
 
 If libjansson functions are disabled, `libjansson-dev` is no longer mandatory for install.
 
-To disable websocket implementation and avoid installing libgnutls, append the option `WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET` to the make command when you build Ulfius:
+To disable websocket implementation and avoid installing libgnutls, append the option `WEBSOCKETFLAG=1` to the make command when you build Ulfius:
 
 ```shell
-$ make WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET
+$ make WEBSOCKETFLAG=1
 ```
 
 If websocket functions are disabled, `libgnutls-dev` is no longer mandatory for install.
 
+To disable yder library (you will no longer have log messages available!), append the option `YDERFLAG=1` to the make command when you build Ulfius:
+
+```shell
+$ make YDERFLAG=1
+```
+
 To disable two or more libraries, append options, example:
 
 ```shell
-$ make CURLFLAG=-DU_DISABLE_CURL JANSSONFLAG=-DU_DISABLE_JANSSON
+$ make CURLFLAG=1 JANSSONFLAG=1
 ```
 
 #### Installation directory
@@ -140,6 +146,7 @@ The available options for cmake are:
 - `-DWITH_CURL=[on|off]` (default `on`): Build with libcurl dependency
 - `-DWITH_WEBSOCKET=[on|off]` (default `on`): Build with websocket functions, not available for Windows, requires libmicrohttpd 0.9.53 minimum and GnuTLS installed.
 - `-DWITH_JOURNALD=[on|off]` (default `on`): Build with journald (SystemD) support for logging
+- `-DWITH_YDER=[on|off]` (default `on`): Build with Yder library for logging messages
 - `-DBUILD_UWSC=[on|off]` (default `on`): Build uwsc
 - `-DBUILD_STATIC=[on|off]` (default `off`): Build the static archive in addition to the shared library
 - `-DBUILD_ULFIUS_TESTING=[on|off]` (default `off`): Build unit tests
