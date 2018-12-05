@@ -18,24 +18,15 @@ EXAMPLES_LOCATION=./example_programs
 UWSC_LOCATION=./tools/uwsc
 TESTS_LOCATION=./test
 
-ifeq (($(JANSSONFLAG)),"")
-ADD_JANSSONFLAG="JANSSONFLAG=-DU_DISABLE_JANSSON"
-endif
-
-ifeq (($(CURLFLAG)),"")
-ADD_CURLFLAG="CURLFLAG=-DU_DISABLE_CURL"
-endif
-
-ifeq (($(WEBSOCKETFLAG)),"")
-ADD_WEBSOCKETFLAG="WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET"
-endif
-
-all: libulfius.so uwsc
-	cd $(EXAMPLES_LOCATION) && $(MAKE) debug
+all:
+	cd $(LIBULFIUS_LOCATION) && $(MAKE) $*
+	cd $(EXAMPLES_LOCATION) && $(MAKE) $*
+	cd $(UWSC_LOCATION) && $(MAKE) $*
 
 debug:
-	cd $(LIBULFIUS_LOCATION) && $(MAKE) debug $(ADD_JANSSONFLAG) $(ADD_CURLFLAG) $(ADD_WEBSOCKETFLAG)
-	cd $(EXAMPLES_LOCATION) && $(MAKE) debug
+	cd $(LIBULFIUS_LOCATION) && $(MAKE) debug $*
+	cd $(EXAMPLES_LOCATION) && $(MAKE) debug $*
+	cd $(UWSC_LOCATION) && $(MAKE) debug $*
 
 clean:
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) clean
@@ -49,9 +40,3 @@ install:
 
 uninstall:
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) uninstall
-
-libulfius.so:
-	cd $(LIBULFIUS_LOCATION) && $(MAKE) $(ADD_JANSSONFLAG) $(ADD_CURLFLAG) $(ADD_WEBSOCKETFLAG)
-
-uwsc: libulfius.so
-	cd $(UWSC_LOCATION) && $(MAKE)
