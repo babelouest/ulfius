@@ -7,7 +7,7 @@ language: c
 
 addons:
   apt:
-    packages: [ libjansson-dev, libgnutls-dev, check, libsubunit-dev, cppcheck ]
+    packages: [ libmicrohttpd-dev, libjansson-dev, check, libsubunit-dev, cppcheck ]
 
 matrix:
   include:
@@ -19,12 +19,6 @@ matrix:
       os: linux
       script:
         - cppcheck --force --enable=warning,missingInclude --error-exitcode=1 . >build.log 2>&1 || (cat build.log && exit 1)
-
-install:
-- wget https://ftp.gnu.org/gnu/libmicrohttpd/libmicrohttpd-0.9.59.tar.gz
-- tar xzf libmicrohttpd-0.9.59.tar.gz
-- pushd libmicrohttpd-0.9.59 && ./configure && make && sudo make install && popd
-- rm -rf libmicrohttpd-0.9.59
 
 script:
   - mkdir build
