@@ -40,3 +40,7 @@ install:
 
 uninstall:
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) uninstall
+
+tests:
+	cd $(LIBULFIUS_LOCATION) && $(MAKE) debug $*
+	cd $(TESTS_LOCATION) && $(MAKE)
