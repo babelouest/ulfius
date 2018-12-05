@@ -7,7 +7,7 @@ language: c
 
 addons:
   apt:
-    packages: [ libjansson-dev, check, libsubunit-dev, cppcheck ]
+    packages: [ libjansson-dev, libgnutls-dev, check, libsubunit-dev, cppcheck ]
 
 matrix:
   include:
