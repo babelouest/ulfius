@@ -16,9 +16,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <orcania.h>
-#include <yder.h>
-
 #include <ulfius.h>
 
 #include "../../example_callbacks/static_file/static_file_callback.h"

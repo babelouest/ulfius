@@ -12,7 +12,6 @@
  */
 
 #include <string.h>
-#include <yder.h>
 #include <stdio.h>
 
 #include <ulfius.h>

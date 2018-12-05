@@ -33,9 +33,6 @@
 #include <gnutls/gnutls.h>
 #include <gnutls/x509.h>
 
-#include <yder.h>
-#include <orcania.h>
-
 #include <ulfius.h>
 
 #define PORT 2884

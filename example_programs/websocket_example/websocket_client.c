@@ -16,9 +16,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <orcania.h>
-#include <yder.h>
-
 #define PORT "9275"
 #define PREFIX_WEBSOCKET "/websocket"
 
