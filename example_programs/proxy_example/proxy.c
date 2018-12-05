@@ -15,6 +15,7 @@
 #include <jansson.h>
 
 #include <ulfius.h>
+#include <u_example.h>
 
 #define PORT 7799
 #define PROXY_DEST "https://www.wikipedia.org"

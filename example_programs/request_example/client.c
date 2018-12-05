@@ -15,6 +15,7 @@
 #include <jansson.h>
 
 #include <ulfius.h>
+#include <u_example.h>
 
 #define SERVER_URL_PREFIX "http://localhost:7778/curl"
 

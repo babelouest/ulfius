@@ -15,7 +15,8 @@
 CC=gcc
 ULFIUS_LOCATION=../../src
 ULFIUS_INCLUDE=../../include
-CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS) -I$(ULFIUS_INCLUDE)
+EXAMPLE_INCLUDE=../include
+CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS) -I$(ULFIUS_INCLUDE) -I$(EXAMPLE_INCLUDE)
 LIBS=-lc -ljansson -lyder -lorcania -lulfius -L$(ULFIUS_LOCATION)
 
 all: client server mail

@@ -17,6 +17,7 @@
 #include <arpa/inet.h>
 
 #include <ulfius.h>
+#include <u_example.h>
 
 #define PORT 4528
 #define PREFIX "/inject"

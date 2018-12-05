@@ -15,7 +15,8 @@
 CC=gcc
 ULFIUS_LOCATION=../../src
 ULFIUS_INCLUDE=../../include
-CFLAGS=-c -Wall -I$(ULFIUS_INCLUDE) -I$(STATIC_FILE_LOCATION) $(ADDITIONALFLAGS)
+EXAMPLE_INCLUDE=../include
+CFLAGS=-c -Wall -I$(ULFIUS_INCLUDE) -I$(EXAMPLE_INCLUDE) -I$(STATIC_FILE_LOCATION) $(ADDITIONALFLAGS)
 STATIC_FILE_LOCATION=../../example_callbacks/static_file
 LIBS=-lc -lulfius -lyder -lorcania -L$(ULFIUS_LOCATION)
 #SECUREFLAG=-https test.key test.pem

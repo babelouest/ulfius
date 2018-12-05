@@ -15,8 +15,13 @@
 CC=gcc
 ULFIUS_LOCATION=../../src
 ULFIUS_INCLUDE=../../include
-CFLAGS=-c -Wall -I$(ULFIUS_INCLUDE) -D_REENTRANT $(ADDITIONALFLAGS)
-LIBS=-lc -lgnutls -lulfius -lyder -lorcania -L$(ULFIUS_LOCATION)
+EXAMPLE_INCLUDE=../include
+CFLAGS=-c -Wall -I$(ULFIUS_INCLUDE) -I$(EXAMPLE_INCLUDE) -D_REENTRANT $(ADDITIONALFLAGS)
+LIBS=-lc -lgnutls -lulfius -lorcania -L$(ULFIUS_LOCATION)
+
+ifdef YDERFLAG
+LIBS=$(LIBS) -lyder
+endif
 
 all: auth_client auth_server
 

@@ -34,6 +34,7 @@
 #include <gnutls/x509.h>
 
 #include <ulfius.h>
+#include <u_example.h>
 
 #define PORT 2884
 #define PREFIX "/auth"

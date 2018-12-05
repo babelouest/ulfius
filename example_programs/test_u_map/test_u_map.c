@@ -15,6 +15,7 @@
 #include <stdio.h>
 
 #include <ulfius.h>
+#include <u_example.h>
 
 /**
  * decode a u_map into a string

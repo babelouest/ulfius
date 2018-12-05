@@ -15,7 +15,8 @@
 CC=gcc
 ULFIUS_LOCATION=../../src
 ULFIUS_INCLUDE=../../include
-CFLAGS=-c -Wall -I$(ULFIUS_INCLUDE) -D_REENTRANT $(ADDITIONALFLAGS)
+EXAMPLE_INCLUDE=../include
+CFLAGS=-c -Wall -I$(ULFIUS_INCLUDE) -I$(EXAMPLE_INCLUDE) -D_REENTRANT $(ADDITIONALFLAGS)
 LIBS=-lc -lorcania -lulfius -lyder -L$(ULFIUS_LOCATION)
 
 all: stream_example stream_client
