@@ -7,7 +7,7 @@ language: c
 
 addons:
   apt:
-    packages: [ libmicrohttpd-dev, libjansson-dev, check, libsubunit-dev, cppcheck ]
+    packages: [ libjansson-dev, check, libsubunit-dev, cppcheck ]
 
 matrix:
   include:
@@ -19,6 +19,12 @@ matrix:
       os: linux
       script:
         - cppcheck --force --enable=warning,missingInclude --error-exitcode=1 . >build.log 2>&1 || (cat build.log && exit 1)
+
+install:
+- wget https://ftp.gnu.org/gnu/libmicrohttpd/libmicrohttpd-0.9.60.tar.gz
+- tar xzf libmicrohttpd-0.9.60.tar.gz
+- pushd libmicrohttpd-0.9.60 && ./configure && make && sudo make install && popd
+- rm -rf libmicrohttpd-0.9.60
 
 script:
   - mkdir build
@@ -32,7 +38,7 @@ script:
   - make
   - cd ../../build
   - sudo make uninstall && rm -rf *
-  - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=off ..
+  - cmake -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=off ..
   - make package
   - sudo make install
   - cd ../example_programs/build
@@ -41,7 +47,7 @@ script:
   - make
   - cd ../../build
   - sudo make uninstall && rm -rf *
-  - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=on ..
+  - cmake -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=on ..
   - make package
   - sudo make install
   - cd ../example_programs/build
@@ -50,7 +56,7 @@ script:
   - make
   - cd ../../build
   - sudo make uninstall && rm -rf *
-  - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=off ..
+  - cmake -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=off ..
   - make package
   - sudo make install
   - cd ../example_programs/build
@@ -59,7 +65,7 @@ script:
   - make
   - cd ../../build
   - sudo make uninstall && rm -rf *
-  - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=on ..
+  - cmake -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=on ..
   - make package
   - sudo make install
   - cd ../example_programs/build
@@ -68,7 +74,7 @@ script:
   - make
   - cd ../../build
   - sudo make uninstall && rm -rf *
-  - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=off ..
+  - cmake -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=off ..
   - make package
   - sudo make install
   - cd ../example_programs/build
@@ -77,7 +83,7 @@ script:
   - make
   - cd ../../build
   - sudo make uninstall && rm -rf *
-  - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=on ..
+  - cmake -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=on ..
   - make package
   - sudo make install
   - cd ../example_programs/build
@@ -86,7 +92,7 @@ script:
   - make
   - cd ../../build
   - sudo make uninstall && rm -rf *
-  - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=off ..
+  - cmake -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=off ..
   - make package
   - sudo make install
   - cd ../example_programs/build
@@ -95,21 +101,99 @@ script:
   - make
   - cd ../../build
   - sudo make uninstall && rm -rf *
-  - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=on ..
+  - cmake -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=on ..
   - make package
   - sudo make install
   - cd ../example_programs/build
   - rm -rf *
   - cmake ..
   - make
+  - cd ../../build
+  - sudo make uninstall && rm -rf *
+  - cmake -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=off ..
+  - make package
+  - sudo make install
+  - cd ../example_programs/build
+  - rm -rf *
+  - cmake ..
+  - make
+  - cd ../../build
+  - sudo make uninstall && rm -rf *
+  - cmake -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=on ..
+  - make package
+  - sudo make install
+  - cd ../example_programs/build
+  - rm -rf *
+  - cmake ..
+  - make
+  - cd ../../build
+  - sudo make uninstall && rm -rf *
+  - cmake -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=off ..
+  - make package
+  - sudo make install
+  - cd ../example_programs/build
+  - rm -rf *
+  - cmake ..
+  - make
+  - cd ../../build
+  - sudo make uninstall && rm -rf *
+  - cmake -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=on ..
+  - make package
+  - sudo make install
+  - cd ../example_programs/build
+  - rm -rf *
+  - cmake ..
+  - make
+  - cd ../../build
+  - sudo make uninstall && rm -rf *
+  - cmake -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=off ..
+  - make package
+  - sudo make install
+  - cd ../example_programs/build
+  - rm -rf *
+  - cmake ..
+  - make
+  - cd ../../build
+  - sudo make uninstall && rm -rf *
+  - cmake -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=on ..
+  - make package
+  - sudo make install
+  - cd ../example_programs/build
+  - rm -rf *
+  - cmake ..
+  - make
+  - cd ../../build
+  - sudo make uninstall && rm -rf *
+  - cmake -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=off ..
+  - make package
+  - sudo make install
+  - cd ../example_programs/build
+  - rm -rf *
+  - cmake ..
+  - make
+  - cd ../../build
+  - sudo make uninstall && rm -rf *
+  - cmake -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=on ..
+  - make package
+  - sudo make install
+  - cd ../example_programs/build
+  - rm -rf *
   - cd ../../src
   - make
-  - make clean debug CURLFLAG=-DU_DISABLE_CURL JANSSONFLAG=-DU_DISABLE_JANSSON WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET
-  - make clean debug CURLFLAG=-DU_DISABLE_CURL JANSSONFLAG=-DU_DISABLE_JANSSON
-  - make clean debug CURLFLAG=-DU_DISABLE_CURL WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET
-  - make clean debug CURLFLAG=-DU_DISABLE_CURL
-  - make clean debug JANSSONFLAG=-DU_DISABLE_JANSSON WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET
-  - make clean debug CURLFLAG=-DU_DISABLE_CURL JANSSONFLAG=-DU_DISABLE_JANSSON
-  - make clean debug CURLFLAG=-DU_DISABLE_CURL WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET
-  - make clean debug CURLFLAG=-DU_DISABLE_CURL
+  - make clean debug CURLFLAG=1 JANSSONFLAG=1 WEBSOCKETFLAG=1 YDERFLAG=1
+  - make clean debug CURLFLAG=1 JANSSONFLAG=1 YDERFLAG=1
+  - make clean debug CURLFLAG=1 WEBSOCKETFLAG=1 YDERFLAG=1
+  - make clean debug CURLFLAG=1 YDERFLAG=1
+  - make clean debug JANSSONFLAG=1 WEBSOCKETFLAG=1 YDERFLAG=1
+  - make clean debug CURLFLAG=1 JANSSONFLAG=1 YDERFLAG=1
+  - make clean debug CURLFLAG=1 WEBSOCKETFLAG=1 YDERFLAG=1
+  - make clean debug CURLFLAG=1 YDERFLAG=1
+  - make clean debug CURLFLAG=1 JANSSONFLAG=1 WEBSOCKETFLAG=1
+  - make clean debug CURLFLAG=1 JANSSONFLAG=1
+  - make clean debug CURLFLAG=1 WEBSOCKETFLAG=1
+  - make clean debug CURLFLAG=1
+  - make clean debug JANSSONFLAG=1 WEBSOCKETFLAG=1
+  - make clean debug CURLFLAG=1 JANSSONFLAG=1
+  - make clean debug CURLFLAG=1 WEBSOCKETFLAG=1
+  - make clean debug CURLFLAG=1
 
