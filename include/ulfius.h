@@ -54,8 +54,33 @@
 #endif
 
 /** Angharad libraries **/
-#include <yder.h>
 #include <orcania.h>
+
+/** To disable all yder log messages, this flag must be enabled **/
+#ifndef U_DISABLE_YDER
+  #include <yder.h>
+#else
+
+#define Y_LOG_MODE_NONE     0
+#define Y_LOG_MODE_CONSOLE  0
+#define Y_LOG_MODE_SYSLOG   0
+#define Y_LOG_MODE_FILE     0
+#define Y_LOG_MODE_JOURNALD 0
+#define Y_LOG_MODE_CALLBACK 0
+#define Y_LOG_MODE_CURRENT  0
+
+#define Y_LOG_LEVEL_NONE    0
+#define Y_LOG_LEVEL_DEBUG   0
+#define Y_LOG_LEVEL_INFO    0
+#define Y_LOG_LEVEL_WARNING 0
+#define Y_LOG_LEVEL_ERROR   0
+#define Y_LOG_LEVEL_CURRENT 0
+
+int y_init_logs(const char * app, const unsigned long init_mode, const unsigned long init_level, const char * init_log_file, const char * message);
+int y_set_logs_callback(void (* y_callback_log_message) (void * cls, const char * app_name, const time_t date, const unsigned long level, const char * message), void * cls, const char * message);
+void y_log_message(const unsigned long type, const char * message, ...);
+int y_close_logs();
+#endif
 
 #ifndef U_DISABLE_JANSSON
 #include <jansson.h>

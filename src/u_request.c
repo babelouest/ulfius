@@ -619,6 +619,7 @@ int ulfius_import_client_certificate_pem(struct _u_request * request, const char
     g_cert.size = o_strlen(str_cert);
     if (gnutls_x509_crt_init(&request->client_cert)) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error gnutls_x509_crt_init");
+      ret = U_ERROR;
     } else if (gnutls_x509_crt_import(request->client_cert, &g_cert, GNUTLS_X509_FMT_PEM) == 0) {
       ret = U_OK;
     } else {

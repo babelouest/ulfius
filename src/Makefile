@@ -24,8 +24,8 @@ CONFIG_TEMPLATE=$(ULFIUS_INCLUDE)/ulfius-cfg.h.in
 CONFIG_FILE=$(ULFIUS_INCLUDE)/ulfius-cfg.h
 DESTDIR=/usr/local
 CC=gcc
-CFLAGS+=-c -pedantic -std=gnu99 -fPIC -Wall -D_REENTRANT -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS) $(CPPFLAGS)
-LIBS=-L$(DESTDIR)/lib -lc -lmicrohttpd -lyder -lorcania -lpthread $(LDFLAGS)
+CFLAGS=-c -pedantic -std=gnu99 -fPIC -Wall -D_REENTRANT -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS) $(CPPFLAGS)
+LIBS=-L$(DESTDIR)/lib -lc -lmicrohttpd -lorcania -lpthread $(LDFLAGS)
 OUTPUT=libulfius.so
 VERSION=2.5.0
 
@@ -50,6 +50,15 @@ else
 DISABLE_WEBSOCKET=1
 endif
 
+ifndef YDERFLAG
+DISABLE_YDER=0
+LYDER=-lyder
+else
+DISABLE_YDER=1
+endif
+
+.PHONY: all clean
+
 all: release
 
 $(CONFIG_FILE):
@@ -71,20 +80,23 @@ $(CONFIG_FILE):
 	else \
 		sed -i -e 's/\#cmakedefine U_DISABLE_WEBSOCKET/\/* #undef U_DISABLE_WEBSOCKET *\//g' $(CONFIG_FILE); \
 	fi
+	@if [ "$(DISABLE_YDER)" = "1" ]; then \
+		sed -i -e 's/\#cmakedefine U_DISABLE_YDER/\#define U_DISABLE_YDER/g' $(CONFIG_FILE); \
+	else \
+		sed -i -e 's/\#cmakedefine U_DISABLE_YDER/\/* #undef U_DISABLE_YDER *\//g' $(CONFIG_FILE); \
+	fi
 	@echo Config file $(CONFIG_FILE) generated
-
-%.o: %.c $(CONFIG_FILE) $(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h $(ULFIUS_INCLUDE)/yuarel.h
-	$(CC) $(CFLAGS) $(CPPFLAGS) $<
 
 target: ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
 
-libulfius.so: ulfius.c u_map.c u_request.c u_response.c u_send_request.c u_websocket.c yuarel.c
-	@$(MAKE) --no-print-directory target
-	$(CC) -shared -fPIC -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o $(LIBS) $(LJANSSON) $(LCURL) $(LWEBSOCKET)
+%.o: %.c $(CONFIG_FILE) $(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h $(ULFIUS_INCLUDE)/yuarel.h
+	$(CC) $(CFLAGS) $<
+
+libulfius.so: ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
+	$(CC) -shared -fPIC -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o $(LIBS) $(LYDER) $(LJANSSON) $(LCURL) $(LWEBSOCKET)
 	ln -sf $(OUTPUT).$(VERSION) $(OUTPUT)
 
-libulfius.a: ulfius.c u_map.c u_request.c u_response.c u_send_request.c u_websocket.c yuarel.c
-	@$(MAKE) --no-print-directory target
+libulfius.a: ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
 	ar rcs libulfius.a ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
 
 clean:
@@ -122,3 +134,4 @@ static: libulfius.a
 static-debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
 static-debug: libulfius.a
+

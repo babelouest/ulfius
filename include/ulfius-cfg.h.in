@@ -29,6 +29,7 @@
 #cmakedefine U_DISABLE_JANSSON
 #cmakedefine U_DISABLE_CURL
 #cmakedefine U_DISABLE_WEBSOCKET
+#cmakedefine U_DISABLE_YDER
 
 #endif /* _ULFIUS_CFG_H_ */
 
