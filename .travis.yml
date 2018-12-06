@@ -25,7 +25,8 @@ script:
   - mkdir example_programs/build
   - cd build
   - cmake -DWITH_JOURNALD=off -DBUILD_ULFIUS_TESTING=on ..
-  - make test package
+  - make test || (cat Testing/Temporary/LastTest.log && false)
+  - make package
   - sudo make install
   - cd ../example_programs/build
   - cmake ..
