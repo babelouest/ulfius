@@ -57,6 +57,24 @@ else
 DISABLE_YDER=1
 endif
 
+ifndef FREERTOSFLAG
+WITH_FREERTOS=0
+else
+WITH_FREERTOS=1
+endif
+
+ifndef LWIPFLAG
+WITH_LWIP=0
+else
+CFLAGS+= $(shell pkg-config --cflags lwip)
+LIBS+= $(shell pkg-config --libs lwip)
+WITH_LWIP=1
+endif
+
+ifeq ($(WITH_FREERTOS)$(WITH_LWIP),11)
+$(error FREERTOSFLAG and LWIPFLAG can't be enabled together)
+endif
+
 .PHONY: all clean
 
 all: release
@@ -84,6 +102,16 @@ $(CONFIG_FILE):
 		sed -i -e 's/\#cmakedefine U_DISABLE_YDER/\#define U_DISABLE_YDER/g' $(CONFIG_FILE); \
 	else \
 		sed -i -e 's/\#cmakedefine U_DISABLE_YDER/\/* #undef U_DISABLE_YDER *\//g' $(CONFIG_FILE); \
+	fi
+	@if [ "$(WITH_FREERTOS)" = "1" ]; then \
+		sed -i -e 's/\#cmakedefine U_WITH_FREERTOS/\#define U_WITH_FREERTOS/g' $(CONFIG_FILE); \
+	else \
+		sed -i -e 's/\#cmakedefine U_WITH_FREERTOS/\/* #undef U_WITH_FREERTOS *\//g' $(CONFIG_FILE); \
+	fi
+	@if [ "$(WITH_LWIP)" = "1" ]; then \
+		sed -i -e 's/\#cmakedefine U_WITH_LWIP/\#define U_WITH_LWIP/g' $(CONFIG_FILE); \
+	else \
+		sed -i -e 's/\#cmakedefine U_WITH_LWIP/\/* #undef U_WITH_LWIP *\//g' $(CONFIG_FILE); \
 	fi
 	@echo Config file $(CONFIG_FILE) generated
 

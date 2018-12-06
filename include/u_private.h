@@ -31,6 +31,21 @@
 /** Macro to avoid compiler warning when some parameters are unused and that's ok **/
 #define UNUSED(x) (void)(x)
 
+/**
+ * For using Ulfius in embedded systems
+ * Thanks to Dirk Uhlemann
+ */
+#ifdef U_WITH_FREERTOS
+  #include <FreeRTOS_Sockets.h>
+  #define  sockaddr  freertos_sockaddr
+  typedef  unsigned long int  socklen_t;
+#else
+  #ifdef U_WITH_LWIP
+    #include <lwip/sockets.h>
+  #endif // U_WITH_LWIP
+#endif // U_WITH_FREERTOS
+
+
 /**********************************
  * Internal functions declarations
  **********************************/

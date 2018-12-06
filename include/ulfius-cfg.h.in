@@ -30,6 +30,8 @@
 #cmakedefine U_DISABLE_CURL
 #cmakedefine U_DISABLE_WEBSOCKET
 #cmakedefine U_DISABLE_YDER
+#cmakedefine U_WITH_FREERTOS
+#cmakedefine U_WITH_LWIP
 
 #endif /* _ULFIUS_CFG_H_ */
 
