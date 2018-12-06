@@ -107,6 +107,20 @@ To disable two or more libraries, append options, example:
 $ make CURLFLAG=1 JANSSONFLAG=1
 ```
 
+#### Enable embedded systems flags
+
+To build Ulfius on [FreeRTOS](https://www.freertos.org/), append the option `FREERTOSFLAG=1` to the make command when you build Ulfius:
+
+```shell
+$ make FREERTOSFLAG=1
+```
+
+To build Ulfius with the [LWIP](https://savannah.nongnu.org/projects/lwip/) library, append the option `LWIPFLAG=1` to the make command when you build Ulfius:
+
+```shell
+$ make LWIPFLAG=1
+```
+
 #### Installation directory
 
 By default, the shared libraries and the header files will be installed in the `/usr/local` location. To change this setting, you can modify the `DESTDIR` value in the `src/Makefile`, `lib/orcania/src/Makefile` and `lib/yder/src/Makefile` files.
