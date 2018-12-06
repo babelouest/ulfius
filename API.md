@@ -823,19 +823,32 @@ struct _u_cookie {
   char * path;
   int    secure;
   int    http_only;
+  int    same_site;
 };
 ```
 
-You can use the function `ulfius_add_cookie_to_response` in your callback function to facilitate cookies management. This function is defined as:
+You can use the functions `ulfius_add_cookie_to_response` or `ulfius_add_same_site_cookie_to_response` in your callback function to facilitate cookies management. Thess functions are defined as:
 
 ```C
 /**
- * ulfius_add_cookie_to_header
+ * ulfius_add_cookie_to_response
  * add a cookie to the cookie map
  * return U_OK on success
  */
 int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const uint max_age, 
                                   const char * domain, const char * path, const int secure, const int http_only);
+
+/**
+ * ulfius_add_same_site_cookie_to_response
+ * add a cookie to the cookie map with a SameSite attribute
+ * the same_site parameter must have one of the following values:
+ * - U_COOKIE_SAME_SITE_NONE   - No SameSite attribute
+ * - U_COOKIE_SAME_SITE_STRICT - SameSite attribute set to 'Strict'
+ * - U_COOKIE_SAME_SITE_LAX    - SameSite attribute set to 'Lax'
+ * return U_OK on success
+ */
+int ulfius_add_same_site_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age,
+                                            const char * domain, const char * path, const int secure, const int http_only, const int same_site);
 ```
 
 ### File upload

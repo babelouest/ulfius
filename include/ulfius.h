@@ -105,6 +105,10 @@ int y_close_logs();
 #define U_CALLBACK_UNAUTHORIZED 2
 #define U_CALLBACK_ERROR        3
 
+#define U_COOKIE_SAME_SITE_NONE   0
+#define U_COOKIE_SAME_SITE_STRICT 1
+#define U_COOKIE_SAME_SITE_LAX    2
+
 /*************
  * Structures
  *************/
@@ -132,6 +136,7 @@ struct _u_cookie {
   char * path;
   int    secure;
   int    http_only;
+  int    same_site;
 };
 
 /**
@@ -613,12 +618,24 @@ int ulfius_send_smtp_email(const char * host,
 #endif
 
 /**
- * ulfius_add_cookie_to_header
+ * ulfius_add_cookie_to_response
  * add a cookie to the cookie map
  * return U_OK on success
  */
 int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age, 
-                      const char * domain, const char * path, const int secure, const int http_only);
+                                  const char * domain, const char * path, const int secure, const int http_only);
+
+/**
+ * ulfius_add_same_site_cookie_to_response
+ * add a cookie to the cookie map with a SameSite attribute
+ * the same_site parameter must have one of the following values:
+ * - U_COOKIE_SAME_SITE_NONE   - No SameSite attribute
+ * - U_COOKIE_SAME_SITE_STRICT - SameSite attribute set to 'Strict'
+ * - U_COOKIE_SAME_SITE_LAX    - SameSite attribute set to 'Lax'
+ * return U_OK on success
+ */
+int ulfius_add_same_site_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age, 
+                                            const char * domain, const char * path, const int secure, const int http_only, const int same_site);
 
 /**
  * ulfius_add_header_to_response

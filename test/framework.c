@@ -194,8 +194,12 @@ int callback_function_cookie_param(const struct _u_request * request, struct _u_
   char * body;
   
   body = msprintf("param1 is %s", u_map_get(request->map_cookie, "param1"));
-  ulfius_set_string_body_response(response, 200, body);
-  ulfius_add_cookie_to_response(response, "param2", "value_cookie", NULL, 100, "localhost", "/cookie", 0, 1);
+  ck_assert_int_eq(ulfius_set_string_body_response(response, 200, body), U_OK);
+  ck_assert_int_eq(ulfius_add_cookie_to_response(response, "param2", "value_cookie", NULL, 100, "localhost", "/cookie", 0, 1), U_OK);
+  ck_assert_int_eq(ulfius_add_same_site_cookie_to_response(response, "cookieSameSiteStrict", "value_cookie", NULL, 100, "localhost", "/cookie", 0, 1, U_COOKIE_SAME_SITE_STRICT), U_OK);
+  ck_assert_int_eq(ulfius_add_same_site_cookie_to_response(response, "cookieSameSiteLax", "value_cookie", NULL, 100, "localhost", "/cookie", 0, 1, U_COOKIE_SAME_SITE_LAX), U_OK);
+  ck_assert_int_eq(ulfius_add_same_site_cookie_to_response(response, "cookieSameSiteNone", "value_cookie", NULL, 100, "localhost", "/cookie", 0, 1, U_COOKIE_SAME_SITE_NONE), U_OK);
+  ck_assert_int_ne(ulfius_add_same_site_cookie_to_response(response, "cookieSameSiteError", "value_cookie", NULL, 100, "localhost", "/cookie", 0, 1, 42), U_OK);
   o_free(body);
   return U_CALLBACK_CONTINUE;
 }
@@ -441,6 +445,7 @@ START_TEST(test_ulfius_endpoint_parameters)
   struct _u_instance u_instance;
   struct _u_request request;
   struct _u_response response;
+  const char * set_cookie;
   
   ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "param", "/:param1/@param2/", 0, &callback_function_param, NULL), U_OK);
@@ -498,7 +503,12 @@ START_TEST(test_ulfius_endpoint_parameters)
   ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
   ck_assert_int_eq(response.status, 200);
   ck_assert_int_eq(o_strncmp(response.binary_body, "param1 is value7", o_strlen("param1 is value7")), 0);
-  ck_assert_str_eq(u_map_get(response.map_header, "Set-Cookie"), "param2=value_cookie; Max-Age=100; Domain=localhost; Path=/cookie; HttpOnly");
+
+  set_cookie = u_map_get(response.map_header, "Set-Cookie");
+  ck_assert_ptr_ne(o_strstr(set_cookie, "param2=value_cookie; Max-Age=100; Domain=localhost; Path=/cookie; HttpOnly"), NULL);
+  ck_assert_ptr_ne(o_strstr(set_cookie, "cookieSameSiteStrict=value_cookie; Max-Age=100; Domain=localhost; Path=/cookie; HttpOnly; SameSite=Strict"), NULL);
+  ck_assert_ptr_ne(o_strstr(set_cookie, "cookieSameSiteLax=value_cookie; Max-Age=100; Domain=localhost; Path=/cookie; HttpOnly; SameSite=Lax"), NULL);
+  ck_assert_ptr_ne(o_strstr(set_cookie, "cookieSameSiteNone=value_cookie; Max-Age=100; Domain=localhost; Path=/cookie; HttpOnly"), NULL);
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
   
