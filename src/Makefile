@@ -81,39 +81,51 @@ all: release
 
 $(CONFIG_FILE):
 	@cp $(CONFIG_TEMPLATE) $(CONFIG_FILE)
+	@echo Config file $(CONFIG_FILE) generated
 	@sed -i -e 's/$${PROJECT_VERSION}/$(VERSION)/g' $(CONFIG_FILE)        
 	@if [ "$(DISABLE_JANSSON)" = "1" ]; then \
 		sed -i -e 's/\#cmakedefine U_DISABLE_JANSSON/\#define U_DISABLE_JANSSON/g' $(CONFIG_FILE); \
+		echo "JANSSON SUPPORT    DISABLED"; \
 	else \
 		sed -i -e 's/\#cmakedefine U_DISABLE_JANSSON/\/* #undef U_DISABLE_JANSSON *\//g' $(CONFIG_FILE); \
+		echo "JANSSON SUPPORT    ENABLED"; \
 	fi
 	@if [ "$(DISABLE_CURL)" = "1" ]; then \
 		sed -i -e 's/\#cmakedefine U_DISABLE_CURL/\#define U_DISABLE_CURL/g' $(CONFIG_FILE); \
+		echo "CURL SUPPORT       DISABLED"; \
 	else \
 		sed -i -e 's/\#cmakedefine U_DISABLE_CURL/\/* #undef U_DISABLE_CURL *\//g' $(CONFIG_FILE); \
+		echo "CURL SUPPORT       ENABLED"; \
 	fi
 	@pkg-config --atleast-version=0.9.53 libmicrohttpd; \
 	if [ $$? -ne 0 ] || [ "$(DISABLE_WEBSOCKET)" = "1" ]; then \
 		sed -i -e 's/\#cmakedefine U_DISABLE_WEBSOCKET/\#define U_DISABLE_WEBSOCKET/g' $(CONFIG_FILE); \
+		echo "WEBSOCKET SUPPORT  DISABLED"; \
 	else \
 		sed -i -e 's/\#cmakedefine U_DISABLE_WEBSOCKET/\/* #undef U_DISABLE_WEBSOCKET *\//g' $(CONFIG_FILE); \
+		echo "WEBSOCKET SUPPORT  ENABLED"; \
 	fi
 	@if [ "$(DISABLE_YDER)" = "1" ]; then \
 		sed -i -e 's/\#cmakedefine U_DISABLE_YDER/\#define U_DISABLE_YDER/g' $(CONFIG_FILE); \
+		echo "YDER SUPPORT       DISABLED"; \
 	else \
 		sed -i -e 's/\#cmakedefine U_DISABLE_YDER/\/* #undef U_DISABLE_YDER *\//g' $(CONFIG_FILE); \
+		echo "YDER SUPPORT       ENABLED"; \
 	fi
 	@if [ "$(WITH_FREERTOS)" = "1" ]; then \
 		sed -i -e 's/\#cmakedefine U_WITH_FREERTOS/\#define U_WITH_FREERTOS/g' $(CONFIG_FILE); \
+		echo "FREERTOS SUPPORT   ENABLED"; \
 	else \
 		sed -i -e 's/\#cmakedefine U_WITH_FREERTOS/\/* #undef U_WITH_FREERTOS *\//g' $(CONFIG_FILE); \
+		echo "FREERTOS SUPPORT   DISABLED"; \
 	fi
 	@if [ "$(WITH_LWIP)" = "1" ]; then \
 		sed -i -e 's/\#cmakedefine U_WITH_LWIP/\#define U_WITH_LWIP/g' $(CONFIG_FILE); \
+		echo "LWIP SUPPORT       ENABLED"; \
 	else \
 		sed -i -e 's/\#cmakedefine U_WITH_LWIP/\/* #undef U_WITH_LWIP *\//g' $(CONFIG_FILE); \
+		echo "LWIP SUPPORT       DISABLED"; \
 	fi
-	@echo Config file $(CONFIG_FILE) generated
 
 target: ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
 
