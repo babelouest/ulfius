@@ -121,6 +121,8 @@ To build Ulfius with the [LWIP](https://savannah.nongnu.org/projects/lwip/) libr
 $ make LWIPFLAG=1
 ```
 
+Those two options are exclusive, you can't use them both at the same time.
+
 #### Installation directory
 
 By default, the shared libraries and the header files will be installed in the `/usr/local` location. To change this setting, you can modify the `DESTDIR` value in the `src/Makefile`, `lib/orcania/src/Makefile` and `lib/yder/src/Makefile` files.
