@@ -17,7 +17,11 @@ ULFIUS_LOCATION=../../src
 ULFIUS_INCLUDE=../../include
 EXAMPLE_INCLUDE=../include
 CFLAGS=-c -Wall -I$(ULFIUS_INCLUDE) -I$(EXAMPLE_INCLUDE) -D_REENTRANT $(ADDITIONALFLAGS)
-LIBS=-lc -lulfius -lyder -lorcania -ljansson -L$(ULFIUS_LOCATION)
+LIBS=-lc -lulfius -lorcania -ljansson -L$(ULFIUS_LOCATION)
+
+ifndef YDERFLAG
+LIBS+= -lyder
+endif
 
 all: sheep_counter
 

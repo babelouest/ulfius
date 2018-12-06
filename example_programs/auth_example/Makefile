@@ -19,8 +19,8 @@ EXAMPLE_INCLUDE=../include
 CFLAGS=-c -Wall -I$(ULFIUS_INCLUDE) -I$(EXAMPLE_INCLUDE) -D_REENTRANT $(ADDITIONALFLAGS)
 LIBS=-lc -lgnutls -lulfius -lorcania -L$(ULFIUS_LOCATION)
 
-ifdef YDERFLAG
-LIBS=$(LIBS) -lyder
+ifndef YDERFLAG
+LIBS+= -lyder
 endif
 
 all: auth_client auth_server

@@ -17,7 +17,11 @@ ULFIUS_LOCATION=../../src
 ULFIUS_INCLUDE=../../include
 EXAMPLE_INCLUDE=../include
 CFLAGS=-c -Wall -D_REENTRANT $(ADDITIONALFLAGS) -I$(ULFIUS_INCLUDE) -I$(EXAMPLE_INCLUDE)
-LIBS=-lc -ljansson -lyder -lorcania -lulfius -L$(ULFIUS_LOCATION)
+LIBS=-lc -ljansson -lorcania -lulfius -L$(ULFIUS_LOCATION)
+
+ifndef YDERFLAG
+LIBS+= -lyder
+endif
 
 all: client server mail
 

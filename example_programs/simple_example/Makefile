@@ -18,7 +18,11 @@ ULFIUS_INCLUDE=../../include
 EXAMPLE_INCLUDE=../include
 CC=gcc
 CFLAGS=-c -Wall -I$(ULFIUS_INCLUDE) -I$(EXAMPLE_INCLUDE) -D_REENTRANT $(ADDITIONALFLAGS)
-LIBS=-L$(LIBYDER_LOCATION) -lc -lulfius -lyder -lorcania -L$(ULFIUS_LOCATION)
+LIBS=-L$(LIBYDER_LOCATION) -lc -lulfius -lorcania -L$(ULFIUS_LOCATION)
+
+ifndef YDERFLAG
+LIBS+= -lyder
+endif
 
 all: simple_example
 
