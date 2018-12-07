@@ -314,7 +314,7 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
     if (filename != NULL) {
       filename_param = msprintf("%s_filename", key);
       if (u_map_put((struct _u_map *)con_info->request->map_post_body, filename_param, filename) != U_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "ulfius - Error u_map_put filename value");
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error u_map_put filename value");
       }
       o_free(filename_param);
     }
@@ -871,10 +871,10 @@ int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * 
 #else
   // Check parameters and validate u_instance and endpoint_list that there is no mistake
   if (u_instance == NULL) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "ulfius_start_secure_framework - Error, u_instance is NULL");
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_start_secure_framework - Error, u_instance is NULL");
     return U_ERROR_PARAMS;
   } else if ((key_pem == NULL && cert_pem != NULL) || (key_pem != NULL && cert_pem == NULL)) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "ulfius_start_secure_framework - Error, you must specify key_pem and cert_pem");
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_start_secure_framework - Error, you must specify key_pem and cert_pem");
     return U_ERROR_PARAMS;
   }
   if (ulfius_validate_instance(u_instance) == U_OK) {
