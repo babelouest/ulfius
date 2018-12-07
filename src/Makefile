@@ -26,6 +26,7 @@ DESTDIR=/usr/local
 CC=gcc
 CFLAGS=-c -pedantic -std=gnu99 -fPIC -Wall -D_REENTRANT -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS) $(CPPFLAGS)
 LIBS=-L$(DESTDIR)/lib -lc -lmicrohttpd -lorcania -lpthread $(LDFLAGS)
+OBJECTS=ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
 OUTPUT=libulfius.so
 VERSION=2.5.0
 
@@ -127,17 +128,17 @@ $(CONFIG_FILE):
 		echo "LWIP SUPPORT       DISABLED"; \
 	fi
 
-target: ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
+target: $(OBJECTS)
 
 %.o: %.c $(CONFIG_FILE) $(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h $(ULFIUS_INCLUDE)/yuarel.h
 	$(CC) $(CFLAGS) $<
 
-libulfius.so: ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
-	$(CC) -shared -fPIC -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o $(LIBS) $(LYDER) $(LJANSSON) $(LCURL) $(LWEBSOCKET)
+libulfius.so: $(OBJECTS)
+	$(CC) -shared -fPIC -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) $(OBJECTS) $(LIBS) $(LYDER) $(LJANSSON) $(LCURL) $(LWEBSOCKET)
 	ln -sf $(OUTPUT).$(VERSION) $(OUTPUT)
 
-libulfius.a: ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
-	ar rcs libulfius.a ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
+libulfius.a: $(OBJECTS)
+	ar rcs libulfius.a $(OBJECTS)
 
 clean:
 	rm -f *.o *.so *.a $(OUTPUT) $(OUTPUT).* $(CONFIG_FILE)
