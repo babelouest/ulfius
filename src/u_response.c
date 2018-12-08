@@ -384,9 +384,12 @@ int ulfius_clean_response(struct _u_response * response) {
     response->map_cookie = NULL;
     response->binary_body = NULL;
 #ifndef U_DISABLE_WEBSOCKET
-    o_free(((struct _websocket_handle *)response->websocket_handle)->websocket_protocol);
-    o_free(((struct _websocket_handle *)response->websocket_handle)->websocket_extensions);
-    o_free(response->websocket_handle);
+    /* ulfius_clean_response might be called without websocket_handle being initialized */
+    if ((struct _websocket_handle *)response->websocket_handle) {
+      o_free(((struct _websocket_handle *)response->websocket_handle)->websocket_protocol);
+      o_free(((struct _websocket_handle *)response->websocket_handle)->websocket_extensions);
+      o_free(response->websocket_handle);
+    }
 #endif
     return U_OK;
   } else {
