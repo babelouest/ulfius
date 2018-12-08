@@ -299,16 +299,22 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
     } else {
       return MHD_NO;
     }
-  } else if (con_info->u_instance->check_utf8 && (utf8_check(key) != NULL || utf8_check(data) != NULL || (filename != NULL && utf8_check(filename) != NULL))) {
-    return MHD_YES;
   } else {
-    data_dup = o_strndup(data, size); // Force value to end with a NULL character
-    if (con_info->max_post_param_size > 0) {
-      if (off > con_info->max_post_param_size) {
+    if (con_info->u_instance) {
+      if (con_info->u_instance->check_utf8 && (utf8_check(key) != NULL || utf8_check(data) != NULL || (filename != NULL && utf8_check(filename) != NULL))) {
         return MHD_YES;
-      } else if (off + size > con_info->max_post_param_size) {
-        cur_size = con_info->max_post_param_size - off;
+      } else {
+        data_dup = o_strndup(data, size); // Force value to end with a NULL character
+        if (con_info->max_post_param_size > 0) {
+          if (off > con_info->max_post_param_size) {
+            return MHD_YES;
+          } else if (off + size > con_info->max_post_param_size) {
+            cur_size = con_info->max_post_param_size - off;
+          }
+        }
       }
+    } else {
+      return MHD_NO;
     }
     
     if (filename != NULL) {
@@ -1356,13 +1362,16 @@ void ulfius_clean_instance(struct _u_instance * u_instance) {
     u_instance->bind_address = NULL;
     u_instance->default_endpoint = NULL;
 #ifndef U_DISABLE_WEBSOCKET
-    if (((struct _websocket_handler *)u_instance->websocket_handler)->pthread_init && 
-        (pthread_mutex_destroy(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_lock) ||
-        pthread_cond_destroy(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_cond))) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error destroying websocket_close_lock or websocket_close_cond");
+    /* ulfius_clean_instance might be called without websocket_handler being initialized */
+    if ((struct _websocket_handler *)u_instance->websocket_handler) {
+        if (((struct _websocket_handler *)u_instance->websocket_handler)->pthread_init && 
+            (pthread_mutex_destroy(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_lock) ||
+            pthread_cond_destroy(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_cond))) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error destroying websocket_close_lock or websocket_close_cond");
+        }
+        o_free(u_instance->websocket_handler);
+        u_instance->websocket_handler = NULL;
     }
-    o_free(u_instance->websocket_handler);
-    u_instance->websocket_handler = NULL;
 #endif
   }
 }

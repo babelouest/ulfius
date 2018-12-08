@@ -715,6 +715,10 @@ static size_t smtp_payload_source(void * ptr, size_t size, size_t nmemb, void * 
     }
     len = o_strlen(data);
   }
+  if (data == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error while processing upload_ctx->lines_read\n");
+      return 0;
+  }
 
   if (upload_ctx->lines_read != MAIL_END) {
     memcpy(ptr, data, (len+1));
