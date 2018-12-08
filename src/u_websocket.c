@@ -50,17 +50,15 @@
 static int is_websocket_data_available(struct _websocket_manager * websocket_manager) {
   int ret = 0, poll_ret = 0;
   
-  do {
-    poll_ret = poll(&websocket_manager->fds, 1, U_WEBSOCKET_USEC_WAIT);
-    if (poll_ret == -1) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error poll websocket read");
-      websocket_manager->connected = 0;
-    } else if (websocket_manager->fds.revents & (POLLRDHUP|POLLERR|POLLHUP|POLLNVAL)) {
-      websocket_manager->connected = 0;
-    } else if (poll_ret > 0) {
-      ret = 1;
-    }
-  } while (ret == -1);
+  poll_ret = poll(&websocket_manager->fds, 1, U_WEBSOCKET_USEC_WAIT);
+  if (poll_ret == -1) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error poll websocket read");
+    websocket_manager->connected = 0;
+  } else if (websocket_manager->fds.revents & (POLLRDHUP|POLLERR|POLLHUP|POLLNVAL)) {
+    websocket_manager->connected = 0;
+  } else if (poll_ret > 0) {
+    ret = 1;
+  }
   return ret;
 }
 
@@ -366,7 +364,7 @@ static int ulfius_read_incoming_message(struct _websocket_manager * websocket_ma
             if (header[1] & U_WEBSOCKET_MASK) {
               (*message)->has_mask = 1;
               len = read_data_from_socket(websocket_manager, masking_key, 4);
-              if (len != 4) {
+              if (len != 4 && len >= 0) {
                 y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error reading websocket for mask");
                 ret = U_ERROR;
               } else if (len < 0) {
@@ -397,7 +395,7 @@ static int ulfius_read_incoming_message(struct _websocket_manager * websocket_ma
               memcpy((*message)->data+(*message)->data_len, payload_data, msg_len);
             }
             (*message)->data_len += msg_len;
-          } else if (!len) {
+          } else if ((unsigned int)len != msg_len && len >= 0) {
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error reading websocket for payload_data");
             ret = U_ERROR;
           } else if (len < 0) {
@@ -1111,7 +1109,7 @@ int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websock
                 websocket_manager->connected = 0;
               }
               if (ulfius_push_websocket_message(websocket_manager->message_list_incoming, message) != U_OK) {
-                y_log_message(Y_LOG_LEVEL_ERROR, "Error pushing new websocket message in list");
+                y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error pushing new websocket message in list");
               }
             } else {
               websocket_manager->connected = 0;

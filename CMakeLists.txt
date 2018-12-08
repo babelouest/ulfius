@@ -27,13 +27,13 @@ set(PROJECT_DESCRIPTION "Web Framework to build REST APIs, Webservices or any HT
 set(PROJECT_HOMEPAGE_URL "https://github.com/babelouest/ulfius/")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/ulfius/issues")
 set(LIBRARY_VERSION_MAJOR "2")
-set(LIBRARY_VERSION_MINOR "4")
-set(LIBRARY_VERSION_PATCH "4")
+set(LIBRARY_VERSION_MINOR "5")
+set(LIBRARY_VERSION_PATCH "0")
 
 set(PROJECT_VERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}.${LIBRARY_VERSION_PATCH}")
 set(LIBRARY_VERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}.${LIBRARY_VERSION_PATCH}")
 set(LIBRARY_SOVERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}")
-set(ORCANIA_VERSION_DOWNLOAD "1.2.8")
+set(ORCANIA_VERSION_DOWNLOAD "1.2.9")
 set(YDER_VERSION_DOWNLOAD "1.4.4")
 
 # cmake modules
@@ -142,6 +142,11 @@ else ()
     set(U_DISABLE_JANSSON ON)
 endif ()
 
+# TO MY FUTURE SELF
+# The following 2 blocks are put BEFORE searching for Orcania and Yder by design
+# Otherwise it will lead to cmake errors
+# DON'T MOVE IT BELOW PLEASE!
+
 # static library
 
 option(BUILD_STATIC "Build static library." OFF)
@@ -150,33 +155,21 @@ if (BUILD_STATIC)
     add_library(ulfius_static STATIC ${LIB_SRC})
     target_compile_definitions(ulfius_static PUBLIC -DO_STATIC_LIBRARY)
     set_target_properties(ulfius_static PROPERTIES
-                    OUTPUT_NAME ulfius)
+                          OUTPUT_NAME ulfius)
 endif ()
 
 # shared library
 
 add_library(ulfius SHARED ${LIB_SRC})
 set_target_properties(ulfius PROPERTIES
-        COMPILE_OPTIONS -Wextra
-        PUBLIC_HEADER "${INC_DIR}/ulfius.h;${PROJECT_BINARY_DIR}/ulfius-cfg.h"
-        VERSION "${LIBRARY_VERSION}"
-        SOVERSION "${LIBRARY_SOVERSION}")
+    COMPILE_OPTIONS -Wextra
+    PUBLIC_HEADER "${INC_DIR}/ulfius.h;${PROJECT_BINARY_DIR}/ulfius-cfg.h"
+    VERSION "${LIBRARY_VERSION}"
+    SOVERSION "${LIBRARY_SOVERSION}")
 if (WIN32)
     set_target_properties(ulfius PROPERTIES SUFFIX "-${LIBRARY_VERSION_MAJOR}.dll")
 endif ()
 target_link_libraries(ulfius ${LIBS})
-
-# build uwsc
-
-option(BUILD_UWSC "Build uwsc application." ON)
-
-if (WITH_WEBSOCKET AND BUILD_UWSC)
-    add_executable(uwsc ${UWSC_DIR}/uwsc.c ${INC_DIR}/ulfius.h ${INC_DIR}/u_private.h ${PROJECT_BINARY_DIR}/ulfius-cfg.h)
-    set_target_properties(uwsc PROPERTIES SKIP_BUILD_RPATH TRUE)
-    add_dependencies(uwsc ulfius)
-    target_link_libraries(uwsc ulfius)
-    install(TARGETS uwsc RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-endif ()
 
 # dependencies
 
@@ -202,28 +195,47 @@ if (SEARCH_ORCANIA_U)
     endif ()
 endif ()
 
-set(SEARCH_ORCANIA OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during yder search and download
-
+option(WITH_YDER "Use Yder library to log messages" ON)
 option(SEARCH_YDER "Search for Yder library" ON)
-if (SEARCH_YDER)
-    set(Yder_FIND_QUIETLY ON) # force to find Yder quietly
-    include(FindYder)
-    find_package(Yder 1.1 QUIET) # try to find Yder
-    if (NOT YDER_FOUND)
-        include(DownloadProject)
-        download_project(PROJ yder # ... otherwise, download archive
-                          URL "https://github.com/babelouest/yder/archive/v${YDER_VERSION_DOWNLOAD}.tar.gz"
-                          QUIET)
-        add_subdirectory(${yder_SOURCE_DIR} ${yder_BINARY_DIR})
-        include_directories(${yder_SOURCE_DIR}/include)
-        add_dependencies(ulfius yder)
-        set(YDER_LIBRARIES yder orcania)
-        include_directories(${yder_BINARY_DIR})
-    else()
-        set(LIBS ${LIBS} ${YDER_LIBRARIES})
-        include_directories(${YDER_INCLUDE_DIRS})
+
+if (WITH_YDER)
+    set(U_DISABLE_YDER OFF)
+    set(SEARCH_ORCANIA OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during yder search and download
+
+    if (SEARCH_YDER)
+        set(Yder_FIND_QUIETLY ON) # force to find Yder quietly
+        include(FindYder)
+        find_package(Yder 1.1 QUIET) # try to find Yder
+        if (NOT YDER_FOUND)
+            include(DownloadProject)
+            download_project(PROJ yder # ... otherwise, download archive
+                              URL "https://github.com/babelouest/yder/archive/v${YDER_VERSION_DOWNLOAD}.tar.gz"
+                              QUIET)
+            add_subdirectory(${yder_SOURCE_DIR} ${yder_BINARY_DIR})
+            include_directories(${yder_SOURCE_DIR}/include)
+            add_dependencies(ulfius yder)
+            set(YDER_LIBRARIES yder orcania)
+            include_directories(${yder_BINARY_DIR})
+        else()
+            set(LIBS ${LIBS} ${YDER_LIBRARIES})
+            include_directories(${YDER_INCLUDE_DIRS})
+        endif ()
+        target_link_libraries(ulfius ${LIBS} ${YDER_LIBRARIES})
     endif ()
-    target_link_libraries(ulfius ${LIBS} ${YDER_LIBRARIES})
+else ()
+    set(U_DISABLE_YDER ON)
+endif ()
+
+# build uwsc
+
+option(BUILD_UWSC "Build uwsc application." ON)
+
+if (WITH_WEBSOCKET AND BUILD_UWSC)
+    add_executable(uwsc ${UWSC_DIR}/uwsc.c ${INC_DIR}/ulfius.h ${INC_DIR}/u_private.h ${PROJECT_BINARY_DIR}/ulfius-cfg.h)
+    set_target_properties(uwsc PROPERTIES SKIP_BUILD_RPATH TRUE)
+    add_dependencies(uwsc ulfius)
+    target_link_libraries(uwsc ulfius ${LIBS})
+    install(TARGETS uwsc RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif ()
 
 set(PKGCONF_REQ "")
@@ -270,6 +282,9 @@ if (BUILD_ULFIUS_TESTING)
         endif ()
 
         set(TESTS core u_map framework)
+        if (WITH_WEBSOCKET)
+            set(TESTS ${TESTS} websocket)
+        endif ()
 
         configure_file(
                 "${CMAKE_MODULE_PATH}/CTestCustom.cmake.in"
@@ -393,6 +408,7 @@ add_custom_target(dist_u COMMAND ${CMAKE_MAKE_PROGRAM} package_source)
 message(STATUS "Websocket support: ${WITH_WEBSOCKET}")
 message(STATUS "Outgoing requests support: ${WITH_CURL}")
 message(STATUS "Jansson library support: ${WITH_JANSSON}")
+message(STATUS "Yder support: ${WITH_YDER}")
 message(STATUS "Build uwsc application: ${BUILD_UWSC}")
 message(STATUS "Build static library: ${BUILD_STATIC}")
 message(STATUS "Build testing tree: ${BUILD_ULFIUS_TESTING}")

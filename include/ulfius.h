@@ -35,6 +35,7 @@
     #define _GNU_SOURCE
   #endif
   #include <gnutls/gnutls.h>
+  #include <gnutls/x509.h>
   #include <poll.h>
   #ifndef POLLRDHUP
     #define POLLRDHUP 0x2000
@@ -53,8 +54,33 @@
 #endif
 
 /** Angharad libraries **/
-#include <yder.h>
 #include <orcania.h>
+
+/** To disable all yder log messages, this flag must be enabled **/
+#ifndef U_DISABLE_YDER
+  #include <yder.h>
+#else
+
+#define Y_LOG_MODE_NONE     0
+#define Y_LOG_MODE_CONSOLE  0
+#define Y_LOG_MODE_SYSLOG   0
+#define Y_LOG_MODE_FILE     0
+#define Y_LOG_MODE_JOURNALD 0
+#define Y_LOG_MODE_CALLBACK 0
+#define Y_LOG_MODE_CURRENT  0
+
+#define Y_LOG_LEVEL_NONE    0
+#define Y_LOG_LEVEL_DEBUG   0
+#define Y_LOG_LEVEL_INFO    0
+#define Y_LOG_LEVEL_WARNING 0
+#define Y_LOG_LEVEL_ERROR   0
+#define Y_LOG_LEVEL_CURRENT 0
+
+int y_init_logs(const char * app, const unsigned long init_mode, const unsigned long init_level, const char * init_log_file, const char * message);
+int y_set_logs_callback(void (* y_callback_log_message) (void * cls, const char * app_name, const time_t date, const unsigned long level, const char * message), void * cls, const char * message);
+void y_log_message(const unsigned long type, const char * message, ...);
+int y_close_logs();
+#endif
 
 #ifndef U_DISABLE_JANSSON
 #include <jansson.h>
@@ -78,6 +104,10 @@
 #define U_CALLBACK_COMPLETE     1
 #define U_CALLBACK_UNAUTHORIZED 2
 #define U_CALLBACK_ERROR        3
+
+#define U_COOKIE_SAME_SITE_NONE   0
+#define U_COOKIE_SAME_SITE_STRICT 1
+#define U_COOKIE_SAME_SITE_LAX    2
 
 /*************
  * Structures
@@ -106,6 +136,7 @@ struct _u_cookie {
   char * path;
   int    secure;
   int    http_only;
+  int    same_site;
 };
 
 /**
@@ -128,7 +159,14 @@ struct _u_cookie {
  * map_post_body:             map containing the post body variables (if available)
  * binary_body:               pointer to raw body
  * binary_body_length:        length of raw body
- * 
+ * client_cert:               x509 certificate of the client if the instance uses client certificate authentication and the client is authenticated
+ *                            available only if websocket support is enabled
+ * client_cert_file:          path to client certificate file for sending http requests with certificate authentication
+ *                            available only if websocket support is enabled
+ * client_key_file:           path to client key file for sending http requests with certificate authentication
+ *                            available only if websocket support is enabled
+ * client_key_password:       password to unlock client key file
+ *                            available only if websocket support is enabled
  */
 struct _u_request {
   char *               http_protocol;
@@ -146,6 +184,12 @@ struct _u_request {
   struct _u_map *      map_post_body;
   void *               binary_body;
   size_t               binary_body_length;
+#ifndef U_DISABLE_WEBSOCKET
+  gnutls_x509_crt_t    client_cert;
+  char *               client_cert_file;
+  char *               client_key_file;
+  char *               client_key_password;
+#endif
 };
 
 /**
@@ -244,6 +288,8 @@ struct _u_endpoint {
  * check_utf8:             check that all parameters values in the request (url, header and post_body)
  *                         are valid utf8 strings, if a parameter value has non utf8 character, the value
  *                         will be ignored, default 1
+ * use_client_cert_auth:   Internal variable use to indicate if the instance uses client certificate authentication
+ *                         Do not change this value, available only if websocket support is enabled
  * 
  */
 struct _u_instance {
@@ -272,6 +318,9 @@ struct _u_instance {
   void                        * file_upload_cls;
   int                           mhd_response_copy_data;
   int                           check_utf8;
+#ifndef U_DISABLE_WEBSOCKET
+  int                           use_client_cert_auth;
+#endif
 };
 
 /**
@@ -330,6 +379,21 @@ int ulfius_start_framework(struct _u_instance * u_instance);
  * return U_OK on success
  */
 int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem);
+
+#ifndef U_DISABLE_WEBSOCKET
+/**
+ * ulfius_start_secure_ca_trust_framework
+ * Initializes the framework and run the webservice based on the parameters given using an HTTPS connection
+ * And using a root server to authenticate client connections
+ * 
+ * u_instance:    pointer to a struct _u_instance that describe its port and bind address
+ * key_pem:       private key for the server
+ * cert_pem:      server certificate
+ * root_ca_pem:   client root CA you're willing to trust for this instance
+ * return U_OK on success
+ */
+int ulfius_start_secure_ca_trust_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem, const char * root_ca_pem);
+#endif
 
 /**
  * ulfius_stop_framework
@@ -554,12 +618,24 @@ int ulfius_send_smtp_email(const char * host,
 #endif
 
 /**
- * ulfius_add_cookie_to_header
+ * ulfius_add_cookie_to_response
  * add a cookie to the cookie map
  * return U_OK on success
  */
 int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age, 
-                      const char * domain, const char * path, const int secure, const int http_only);
+                                  const char * domain, const char * path, const int secure, const int http_only);
+
+/**
+ * ulfius_add_same_site_cookie_to_response
+ * add a cookie to the cookie map with a SameSite attribute
+ * the same_site parameter must have one of the following values:
+ * - U_COOKIE_SAME_SITE_NONE   - No SameSite attribute
+ * - U_COOKIE_SAME_SITE_STRICT - SameSite attribute set to 'Strict'
+ * - U_COOKIE_SAME_SITE_LAX    - SameSite attribute set to 'Lax'
+ * return U_OK on success
+ */
+int ulfius_add_same_site_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age, 
+                                            const char * domain, const char * path, const int secure, const int http_only, const int same_site);
 
 /**
  * ulfius_add_header_to_response
@@ -1245,6 +1321,23 @@ struct _websocket_handler {
   pthread_cond_t                websocket_close_cond;
   int                           pthread_init;
 };
+
+/*
+ * ulfius_export_client_certificate_pem
+ * Exports the client certificate using PEM format
+ * request: struct _u_request used
+ * returned value must be u_free'd after use
+ */
+char * ulfius_export_client_certificate_pem(const struct _u_request * request);
+
+/*
+ * ulfius_import_client_certificate_pem
+ * Imports the client certificate using PEM format
+ * request: struct _u_request used
+ * str_cert: client certificate in PEM format
+ * return U_OK on success;
+ */
+int ulfius_import_client_certificate_pem(struct _u_request * request, const char * str_cert);
 
 #endif // U_DISABLE_WEBSOCKET
 

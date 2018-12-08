@@ -18,6 +18,7 @@
 #include <sys/stat.h>
 
 #include <ulfius.h>
+#include <u_example.h>
 
 #define PORT 7876
 #define PREFIX "/stream"

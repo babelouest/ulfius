@@ -13,7 +13,91 @@
 #include <inttypes.h>
 
 #include <check.h>
-#include "../include/ulfius.h"
+#include <ulfius.h>
+
+#define CERT_KEY "-----BEGIN PRIVATE KEY-----\
+MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDr90HrswgEmln/\
+rXeNqYq0boIvas5wu27hmeHDdGGKtkCWIWGAo9GUy45xqsI4mDl3bOWS+pmb/3yi\
++nhe+BmYHvEqUFo1JfUcVMxaNEbdd9REytMjKdOS+kkLf++BBRoZI/g8DggIu+Ri\
+dOSypk+pUECyQxROsyCrB/FgXuKbyC4QNl7fqZxMSpzw7jsWCZiwFv4pu8kMqzDG\
+2wTl/r/4STyK4Pj2TVa/JVzbZbH7VfcjT8MdMsXvKhlmPywjbqo70Hnmt3cnakYF\
+X+07ncx/5mjYYd3eSFgiNXr7WNw2rhFKtfTUcjrqSw9FDxmHFWUU76mwJyUo02N9\
+ViakSoQpAgMBAAECggEBAJp/VBwdJpzM6yxqyaJpZbXpvTeKuQw6zMjN1nIBG3SV\
+DAjAZnSxziGcffGSmoQvt0CoflAT4MuxJkwXrwSPcUKWz9Sis82kwq4AH6TYIaYU\
+NVmtazzUwAC1+2maJJjXXFUlpfy8Oypsy4ZjfvIxzmrPbuzI2t0Ej9kr5DDzL3BL\
+CWQ/U7w7y4KC0Pnq1ueIzM+UJIfvI0ldUcXHWsAnjyQzwgFBC35qDOfDTw0YUJv+\
+ElfFFcGYCA+9wlQyhM/zhAWqKgZ2mwAS6WykgbSc7j4NDjlmZwf4ZuTxbDUV1kBX\
+pPH21snqO42CFpw9hRUAA0W0XydCIfUhH8/6tH9enQECgYEA+rM9f6cUk3c7aLWs\
+hnauVqJuyGhgCkMyF9sSxgfcs87OVLNuGgaTIfwcT/7oxAY8G7sY44cbk1ZRhh7y\
+6kf01xqiJeXxBQei1qiJxMb2gukvpeY81s2Mg9og5d9qbEhLzp8TdiRJHxLIiGwF\
+xOM69CpugKN4T0Zum7EBGeSvmBECgYEA8PRG5SRTE4JwzGtLuTbMbjYTqyEjXAkB\
+zo33a92znA0EXEeLCl845EUgzUkSkeN/T/uyWRjj0hrPU99UaaXHt3bc+lrDHrc7\
+WFAR3QoAfFFJPIqqwiHcBDdTeAozQ8IOqFIxspl72RukuRdeQR3EdfcF9TUZyUbU\
+k8SuRioggpkCgYA2scgnA3KvwYGKlKgxJc9fQ0zcGDlrw8E4BymPXsO9zs6hGAxb\
+TTfoYDJlGX361kli22zQpvdTK6/ZjQL+LfiyvTLHBeWRbVsPbfGwpp+9a9ZjYVnA\
+m1OeqIYo4Jc9TICNcZMzYTM6vkRVzwtrKw//mQpGsmNbGEilWvaciZHtoQKBgQDo\
+FDBQtir6SJIConm9/ETtBlLtai6Xj+lYnK6qC1DaxkLj6tjF9a9jVh3g/DfRopBW\
+ZnSCkpGkJcR54Up5s35ofCkdTdxPsmaLihuaje6nztc+Y8VS1LAIs41GunRkF/5s\
+KzbI8kIyfAitag+Toms+v93SLwIWNo27gh3lYOANSQKBgQDIidSO3fzB+jzJh7R0\
+Yy9ADWbBsLxc8u+sBdxmZBGl+l4YZWNPlQsnsafwcpJWT3le6N7Ri3iuOZw9KiGe\
+QDkc7olxUZZ3pshg+cOORK6jVE8v6FeUlLnxpeAWa4C4JDawGPTOBct6bVBl5sxi\
+7GaqDcEK1TSxc4cUaiiPDNNXQA==\
+-----END PRIVATE KEY-----"
+#define CERT_PEM "-----BEGIN CERTIFICATE-----\
+MIIDhTCCAm2gAwIBAgIJANrO2RnCbURLMA0GCSqGSIb3DQEBCwUAMFkxCzAJBgNV\
+BAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBX\
+aWRnaXRzIFB0eSBMdGQxEjAQBgNVBAMMCWxvY2FsaG9zdDAeFw0xNzA0MjgxNTA0\
+NDVaFw0xODA0MjgxNTA0NDVaMFkxCzAJBgNVBAYTAkFVMRMwEQYDVQQIDApTb21l\
+LVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQxEjAQBgNV\
+BAMMCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAOv3\
+QeuzCASaWf+td42pirRugi9qznC7buGZ4cN0YYq2QJYhYYCj0ZTLjnGqwjiYOXds\
+5ZL6mZv/fKL6eF74GZge8SpQWjUl9RxUzFo0Rt131ETK0yMp05L6SQt/74EFGhkj\
++DwOCAi75GJ05LKmT6lQQLJDFE6zIKsH8WBe4pvILhA2Xt+pnExKnPDuOxYJmLAW\
+/im7yQyrMMbbBOX+v/hJPIrg+PZNVr8lXNtlsftV9yNPwx0yxe8qGWY/LCNuqjvQ\
+eea3dydqRgVf7TudzH/maNhh3d5IWCI1evtY3DauEUq19NRyOupLD0UPGYcVZRTv\
+qbAnJSjTY31WJqRKhCkCAwEAAaNQME4wHQYDVR0OBBYEFPFfmGA3jO9koBZNGNZC\
+T/dZHZyHMB8GA1UdIwQYMBaAFPFfmGA3jO9koBZNGNZCT/dZHZyHMAwGA1UdEwQF\
+MAMBAf8wDQYJKoZIhvcNAQELBQADggEBAIc8Yuom4vz82izNEV+9bcCvuabcVwLH\
+Qgpv5Nzy/W+1hDoqfMfKNwOSdUB7jZoDaNDG1WhjKGGCLTAx4Hx+q1LwUXvu4Bs1\
+woocge65bl85h10l2TxxnlT5BIJezm5r3NiZSwOK2zxxIEyL4vh+b/xqQblBEkR3\
+e4/A4Ugn9Egh8GdpF4klGp4MjjpRyAVI7BDaleAhvDSfPmm7ylHJ2y7CLI9ApOQY\
+glwRuTmowAZQtaSiE1Ox7QtWj858HDzzTZyFWRG/MNqQptn7AMTPJv3DivNfDNPj\
+fYxFAheH3CjryHqqR9DD+d9396W8mqEaUp+plMwSjpcTDSR4rEQkUJg=\
+-----END CERTIFICATE-----"
+#define CERT_CA "-----BEGIN CERTIFICATE-----\
+MIIF9zCCA9+gAwIBAgIUQhoxaAC0kHeq1DNRL8fA0/WZCsYwDQYJKoZIhvcNAQEL\
+BQAwgYoxCzAJBgNVBAYTAkNBMQ8wDQYDVQQIDAZRdWViZWMxDzANBgNVBAcMBlF1\
+ZWJlYzEPMA0GA1UECgwGVWxmaXVzMRAwDgYDVQQLDAd0ZXN0LWNhMRIwEAYDVQQD\
+DAlsb2NhbGhvc3QxIjAgBgkqhkiG9w0BCQEWE3dlYm1hc3RlckBsb2NhbGhvc3Qw\
+HhcNMTgxMjAyMTkzNTA1WhcNMTkxMjAyMTkzNTA1WjCBijELMAkGA1UEBhMCQ0Ex\
+DzANBgNVBAgMBlF1ZWJlYzEPMA0GA1UEBwwGUXVlYmVjMQ8wDQYDVQQKDAZVbGZp\
+dXMxEDAOBgNVBAsMB3Rlc3QtY2ExEjAQBgNVBAMMCWxvY2FsaG9zdDEiMCAGCSqG\
+SIb3DQEJARYTd2VibWFzdGVyQGxvY2FsaG9zdDCCAiIwDQYJKoZIhvcNAQEBBQAD\
+ggIPADCCAgoCggIBALG4KdvHcAsKqaNe4RPVvGUA7P+N9+8vs8dTBQ16VEUGHCp5\
+bWdqpvWdiHfxKmCZVtVUkYGwOsFmsbOsAfQgF1gcqTFyIRCwdt2PbvWso2n3S+aJ\
+gCdqzYMpCoW09/1izAGqXVWrWhtBEFJiFSx0wbkzEF87ATLv1eox0g1C3y9LuIv0\
+T1nK36jPzC/S7hazCd4IXlzPMy858VJn8qv09TeexYLEEcvn70vTQzoOKQKAWTDO\
+BgwSDcfmez2uXktIuJR7EW3weaj6xJQWpnB8eb+A3H82TtP/EhB20ipc/X/lNBaj\
+58yKj5XJwVAoteIGYDV7PBzwFhyqhbErDNsMDcR2CrNLIzpdG/BpIwVbAyjoYCUm\
+OGxw8k+WXfyvTyS9TTi//sZbNRaVGAir63LFwCh0YbJ36DfKpjPrUoqDkO93iX3C\
+x12Nq5Mry8v6PgQsPt+sqZsDYW2BU0ib/pb4cksgBZakJcMFLcYi5tlCqFis1ehn\
+QjAZWn+kGCc4Tmy/l9mBBdRiYpP77QH6QVh4bPHzxaYiOoLfBajE6dWCXdLYOu+m\
+oZQmlcRWuP5AhKi0QAaI1/RAKGpO0dEUH7Dnl5TqR8twC88ZetkZPEJYHb3Vsy7U\
+aA0EvoHi1xTdh0tPN7AL0RRD8ekyh273CUMHg3vI0qjv29MWSBzCDa9X2SL5AgMB\
+AAGjUzBRMB0GA1UdDgQWBBQkE2nQu0XaDkJdLSQsgjTIXULLGDAfBgNVHSMEGDAW\
+gBQkE2nQu0XaDkJdLSQsgjTIXULLGDAPBgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3\
+DQEBCwUAA4ICAQASrWMYrsMtIfUsN3srEAZqutcVAN7PWbzVNAjWXEqbw/HV7m8J\
+w09MTfmwmQEhw4d7fwzfax5vqKeqfRb7i8f+HzR8b9egCn8n4hWUjiAhS1Naj8OP\
+RCrvPyVI1/h3iMZZXlITljtgk7rZn5Yv/WjKz/l32KIHwMzmk5aTGkmr0oyWxj1Y\
+eJymZ0RYih+X4hUvAlW3a3AlKbvq7KW9bYU4LHJWixgP16tXOR8k0aPKpyVuNCzN\
+7/23vfPeawQuW7C23+IuDuPyrpivw4dbcKNcy1KfGXmc8kQDIv6uPqdWa5ngvVua\
+SHb23nA4HG3k5ed8iqarDmu4nU9TTu8qTaMKSuEAjRsPnehO/Fi/m3mMSnGEXxa1\
+WWl1wZxvFoD4IsexNZaZcii9f0Ctn3KbL7HwlJliogc2jDVHheS5aVsVnl2UsNJf\
+x4nYzPZ6bdLawcviwo9eQWXlEjoKYyBTL1LFNt9S/iEW3WUOaaLJVH7+uHOn4/6N\
+wiMh3OqcyePyB+MKr3tvsmYZyYVwCW/pRmATM+F4ol23OWhXyYN+AFdXiMBjwdUX\
+jAwgDammq/ymxfgKE7IX8z9+f+8UVcBaiXVUTWzgSHnjjPW8+9WExUws8BFD7+81\
+G66c7c4qxP2fq5vQiYJUVEpNd4Z4+EbvMDrg4CsTVaoI1OWlHWcBfNHupw==\
+-----END CERTIFICATE-----"
 
 /**
  * decode a u_map into a string
@@ -110,8 +194,12 @@ int callback_function_cookie_param(const struct _u_request * request, struct _u_
   char * body;
   
   body = msprintf("param1 is %s", u_map_get(request->map_cookie, "param1"));
-  ulfius_set_string_body_response(response, 200, body);
-  ulfius_add_cookie_to_response(response, "param2", "value_cookie", NULL, 100, "localhost", "/cookie", 0, 1);
+  ck_assert_int_eq(ulfius_set_string_body_response(response, 200, body), U_OK);
+  ck_assert_int_eq(ulfius_add_cookie_to_response(response, "param2", "value_cookie", NULL, 100, "localhost", "/cookie", 0, 1), U_OK);
+  ck_assert_int_eq(ulfius_add_same_site_cookie_to_response(response, "cookieSameSiteStrict", "value_cookie", NULL, 100, "localhost", "/cookie", 0, 1, U_COOKIE_SAME_SITE_STRICT), U_OK);
+  ck_assert_int_eq(ulfius_add_same_site_cookie_to_response(response, "cookieSameSiteLax", "value_cookie", NULL, 100, "localhost", "/cookie", 0, 1, U_COOKIE_SAME_SITE_LAX), U_OK);
+  ck_assert_int_eq(ulfius_add_same_site_cookie_to_response(response, "cookieSameSiteNone", "value_cookie", NULL, 100, "localhost", "/cookie", 0, 1, U_COOKIE_SAME_SITE_NONE), U_OK);
+  ck_assert_int_ne(ulfius_add_same_site_cookie_to_response(response, "cookieSameSiteError", "value_cookie", NULL, 100, "localhost", "/cookie", 0, 1, 42), U_OK);
   o_free(body);
   return U_CALLBACK_CONTINUE;
 }
@@ -187,6 +275,30 @@ int callback_check_utf8_not_ignored(const struct _u_request * request, struct _u
   ck_assert_int_eq(u_map_has_key(request->map_post_body, "utf8_param_valid"), 1);
   return U_OK;
 }
+
+#ifndef U_DISABLE_WEBSOCKET
+int callback_auth_client_cert (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  char * dn;
+  size_t lbuf = 0;
+  
+  ck_assert_ptr_ne(request->client_cert, NULL);
+  gnutls_x509_crt_get_dn(request->client_cert, NULL, &lbuf);
+  dn = o_malloc(lbuf + 1);
+  gnutls_x509_crt_get_dn(request->client_cert, dn, &lbuf);
+  dn[lbuf] = '\0';
+  ck_assert_str_eq(dn, "C=CA,ST=Quebec,L=Quebec,O=Ulfius,OU=test-client,CN=localhost,EMAIL=webmaster@localhost");
+  ck_assert_int_eq(ulfius_set_string_body_response(response, 200, dn), U_OK);
+  o_free(dn);
+
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_no_auth_client_cert (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  ck_assert_ptr_eq(request->client_cert, NULL);
+  
+  return U_CALLBACK_CONTINUE;
+}
+#endif
 
 START_TEST(test_ulfius_simple_endpoint)
 {
@@ -333,6 +445,7 @@ START_TEST(test_ulfius_endpoint_parameters)
   struct _u_instance u_instance;
   struct _u_request request;
   struct _u_response response;
+  const char * set_cookie;
   
   ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "param", "/:param1/@param2/", 0, &callback_function_param, NULL), U_OK);
@@ -390,7 +503,12 @@ START_TEST(test_ulfius_endpoint_parameters)
   ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
   ck_assert_int_eq(response.status, 200);
   ck_assert_int_eq(o_strncmp(response.binary_body, "param1 is value7", o_strlen("param1 is value7")), 0);
-  ck_assert_str_eq(u_map_get(response.map_header, "Set-Cookie"), "param2=value_cookie; Max-Age=100; Domain=localhost; Path=/cookie; HttpOnly");
+
+  set_cookie = u_map_get(response.map_header, "Set-Cookie");
+  ck_assert_ptr_ne(o_strstr(set_cookie, "param2=value_cookie; Max-Age=100; Domain=localhost; Path=/cookie; HttpOnly"), NULL);
+  ck_assert_ptr_ne(o_strstr(set_cookie, "cookieSameSiteStrict=value_cookie; Max-Age=100; Domain=localhost; Path=/cookie; HttpOnly; SameSite=Strict"), NULL);
+  ck_assert_ptr_ne(o_strstr(set_cookie, "cookieSameSiteLax=value_cookie; Max-Age=100; Domain=localhost; Path=/cookie; HttpOnly; SameSite=Lax"), NULL);
+  ck_assert_ptr_ne(o_strstr(set_cookie, "cookieSameSiteNone=value_cookie; Max-Age=100; Domain=localhost; Path=/cookie; HttpOnly"), NULL);
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
   
@@ -611,6 +729,70 @@ START_TEST(test_ulfius_utf8_ignored)
 }
 END_TEST
 
+#ifndef U_DISABLE_WEBSOCKET
+START_TEST(test_ulfius_server_ca_trust)
+{
+  struct _u_instance u_instance;
+  
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "stream", NULL, 0, &callback_function_stream, NULL), U_OK);
+  ck_assert_int_ne(ulfius_start_secure_ca_trust_framework(&u_instance, NULL, CERT_PEM, CERT_CA), U_OK);
+  ck_assert_int_ne(ulfius_start_secure_ca_trust_framework(&u_instance, CERT_KEY, NULL, CERT_CA), U_OK);
+  ck_assert_int_eq(ulfius_start_secure_ca_trust_framework(&u_instance, CERT_KEY, CERT_PEM, CERT_CA), U_OK);
+  
+  ulfius_stop_framework(&u_instance);
+  ulfius_clean_instance(&u_instance);
+}
+END_TEST
+
+START_TEST(test_ulfius_client_certificate)
+{
+  struct _u_instance u_instance;
+  struct _u_request request;
+  struct _u_response response;
+  
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "cert_auth", NULL, 0, &callback_auth_client_cert, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "nocert_auth", NULL, 0, &callback_no_auth_client_cert, NULL), U_OK);
+  ck_assert_int_eq(ulfius_start_secure_ca_trust_framework(&u_instance, CERT_KEY, CERT_PEM, CERT_CA), U_OK);
+
+  ulfius_init_request(&request);
+  request.http_url = o_strdup("https://localhost:8080/nocert_auth");
+  request.check_server_certificate = 0;
+  request.client_key_file = o_strdup("client.key");
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 200);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+  
+  ulfius_init_request(&request);
+  request.http_url = o_strdup("https://localhost:8080/nocert_auth");
+  request.check_server_certificate = 0;
+  request.client_cert_file = o_strdup("client.crt");
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 200);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+  
+  ulfius_init_request(&request);
+  request.http_url = o_strdup("https://localhost:8080/cert_auth");
+  request.check_server_certificate = 0;
+  request.client_cert_file = o_strdup("client.crt");
+  request.client_key_file = o_strdup("client.key");
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 200);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+  
+  ulfius_stop_framework(&u_instance);
+  ulfius_clean_instance(&u_instance);
+}
+END_TEST
+#endif
+
 static Suite *ulfius_suite(void)
 {
   Suite *s;
@@ -625,6 +807,10 @@ static Suite *ulfius_suite(void)
   tcase_add_test(tc_core, test_ulfius_endpoint_stream);
   tcase_add_test(tc_core, test_ulfius_utf8_not_ignored);
   tcase_add_test(tc_core, test_ulfius_utf8_ignored);
+#ifndef U_DISABLE_WEBSOCKET
+  tcase_add_test(tc_core, test_ulfius_server_ca_trust);
+  tcase_add_test(tc_core, test_ulfius_client_certificate);
+#endif
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 
@@ -636,7 +822,7 @@ int main(int argc, char *argv[])
   int number_failed;
   Suite *s;
   SRunner *sr;
-  y_init_logs("Ulfius", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Ulfius core tests");
+  //y_init_logs("Ulfius", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Ulfius core tests");
   s = ulfius_suite();
   sr = srunner_create(s);
 
@@ -644,6 +830,6 @@ int main(int argc, char *argv[])
   number_failed = srunner_ntests_failed(sr);
   srunner_free(sr);
   
-  y_close_logs();
+  //y_close_logs();
   return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

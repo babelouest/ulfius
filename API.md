@@ -34,14 +34,17 @@
   - [Send HTTP request API](#send-http-request-api)
   - [Send SMTP request API](#send-http-request-api)
 - [struct _u_map API](#struct-_u_map-api)
-- [What's new in Ulfius 2.2?](#)
-- [What's new in Ulfius 2.1?](#)
-- [What's new in Ulfius 2.0?](#)
-  - [Multiple callback functions](#)
-  - [Keep only binary_body in struct _u_request and struct _u_response](#)
-  - [Websocket service](#)
-  - [Remove libjansson and libcurl hard dependency](#)
-  - [Ready-to-use callback functions](#)
+- [What's new in Ulfius 2.5?](#whats-new-in-ulfius-25)
+- [What's new in Ulfius 2.4?](#whats-new-in-ulfius-24)
+- [What's new in Ulfius 2.3?](#whats-new-in-ulfius-23)
+- [What's new in Ulfius 2.2?](#whats-new-in-ulfius-22)
+- [What's new in Ulfius 2.1?](#whats-new-in-ulfius-21)
+- [What's new in Ulfius 2.0?](#whats-new-in-ulfius-20)
+  - [Multiple callback functions](#multiple-callback-functions-1)
+  - [Keep only binary_body in struct _u_request and struct _u_response](#keep-only-binary_body-in-struct-_u_request-and-struct-_u_response)
+  - [Websocket service](#websocket-service)
+  - [Remove libjansson and libcurl hard dependency](#remove-libjansson-and-libcurl-hard-dependency)
+  - [Ready-to-use callback functions](#ready-to-use-callback-functions)
 - [Update existing programs from Ulfius 2.0 to 2.1](#update-existing-programs-from-ulfius-20-to-21)
 - [Update existing programs from Ulfius 1.x to 2.0](#update-existing-programs-from-ulfius-1x-to-20)
 
@@ -155,6 +158,8 @@ The `struct _u_instance` is defined as:
  * check_utf8:             check that all parameters values in the request (url, header and post_body)
  *                         are valid utf8 strings, if a parameter value has non utf8 character, the value
  *                         will be ignored, default 1
+ * use_client_cert_auth:   Internal variable use to indicate if the instance uses client certificate authentication
+ *                         Do not change this value, available only if websocket support is enabled
  * 
  */
 struct _u_instance {
@@ -183,6 +188,9 @@ struct _u_instance {
   void                        * file_upload_cls;
   int                           mhd_response_copy_data;
   int                           check_utf8;
+#ifndef U_DISABLE_WEBSOCKET
+  int                           use_client_cert_auth;
+#endif
 };
 ```
 
@@ -384,7 +392,7 @@ int main() {
 
 #### Start webservice
 
-The starting point function are `ulfius_start_framework` or `ulfius_start_secure_framework`:
+The starting point function are `ulfius_start_framework`, `ulfius_start_secure_framework` or `ulfius_start_secure_ca_trust_framework`:
 
 ```C
 /**
@@ -407,11 +415,25 @@ int ulfius_start_framework(struct _u_instance * u_instance);
  * return U_OK on success
  */
 int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem);
+
+/**
+ * ulfius_start_secure_ca_trust_framework
+ * Initializes the framework and run the webservice based on the parameters given using an HTTPS connection
+ * And using a root server to authenticate client connections
+ * 
+ * u_instance:    pointer to a struct _u_instance that describe its port and bind address
+ * key_pem:       private key for the server
+ * cert_pem:      server certificate
+ * root_ca_pem:   client root CA you're willing to trust for this instance
+ * return U_OK on success
+ */
+int ulfius_start_secure_ca_trust_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem, const char * root_ca_pem);
 ```
 
-In your program, where you want to start the web server, execute the function `ulfius_start_framework(struct _u_instance * u_instance)` for a non-secure http connection or `ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem)` for a secure https connection, using a valid private key and a valid corresponding server certificate, see openssl documentation for certificate generation. Those function accept the previously declared `instance` as first parameter. You can reuse the same callback function as much as you want for different endpoints. On success, these functions returns `U_CALLBACK_CONTINUE` or `U_CALLBACK_COMPLETE`, otherwise an error code.
+In your program, where you want to start the web server, execute the function `ulfius_start_framework(struct _u_instance * u_instance)` for a non-secure http connection. Use the function `ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem)` for a secure https connection, using a valid private key and a valid corresponding server certificate, see openssl documentation for certificate generation. Finally, use the function `int ulfius_start_secure_ca_trust_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem, const char * root_ca_pem)` to start a secure https connection and be able to authenticate clients with a certificate.
+Those function accept the previously declared `instance` as first parameter. You can reuse the same callback function as much as you want for different endpoints. On success, these functions returns `U_OK`, otherwise an error code.
 
-Note: for security concerns, after running `ulfius_start_secure_framework`, you can free the parameters `key_pem` and `cert_pem` if you want to.
+Note: for security concerns, after running `ulfius_start_secure_framework` or `ulfius_start_secure_ca_trust_framework`, you can free the parameters `key_pem`, `cert_pem` and `root_ca_pem` if you want to.
 
 #### Stop webservice
 
@@ -467,7 +489,14 @@ The request variable is defined as:
  * map_post_body:             map containing the post body variables (if available)
  * binary_body:               pointer to raw body
  * binary_body_length:        length of raw body
- * 
+ * client_cert:               x509 certificate of the client if the instance uses client certificate authentication and the client is authenticated
+ *                            available only if websocket support is enabled
+ * client_cert_file:          path to client certificate file for sending http requests with certificate authentication
+ *                            available only if websocket support is enabled
+ * client_key_file:           path to client key file for sending http requests with certificate authentication
+ *                            available only if websocket support is enabled
+ * client_key_password:       password to unlock client key file
+ *                            available only if websocket support is enabled
  */
 struct _u_request {
   char *               http_protocol;
@@ -485,6 +514,12 @@ struct _u_request {
   struct _u_map *      map_post_body;
   void *               binary_body;
   size_t               binary_body_length;
+#ifndef U_DISABLE_WEBSOCKET
+  gnutls_x509_crt_t    client_cert;
+  char *               client_cert_file;
+  char *               client_key_file;
+  char *               client_key_password;
+#endif
 };
 ```
 
@@ -625,7 +660,9 @@ The callback returned value can have the following values:
 - `U_CALLBACK_CONTINUE`: The framework can transfer the request and the response to the next callback function in priority order if there is one, or complete the transaction and send back the response to the client.
 - `U_CALLBACK_COMPLETE`: The framework must complete the transaction and send the response to the client without calling any further callback function.
 - `U_CALLBACK_UNAUTHORIZED`: The framework must complete the transaction without calling any further callback function and send an unauthorized response to the client with the status 401, the body specified and the `auth_realm` value if specified.
-- `U_CALLBACK_ERROR`: An error occured during execution, the framework must complete the transaction without calling any further callback function and send an error 500 to the client.
+- `U_CALLBACK_ERROR`: An error occured during execution, the framework will complete the transaction without calling any further callback function and send an error 500 to the client.
+
+Except for the return values `U_CALLBACK_UNAUTHORIZED` and `U_CALLBACK_ERROR`, the callback return value isn't useful to specify the response sent back to the client. Use the `struct _u_response` variable in your callback function to set all values in the HTTP response.
 
 #### Use JSON in request and response body
 
@@ -788,19 +825,32 @@ struct _u_cookie {
   char * path;
   int    secure;
   int    http_only;
+  int    same_site;
 };
 ```
 
-You can use the function `ulfius_add_cookie_to_response` in your callback function to facilitate cookies management. This function is defined as:
+You can use the functions `ulfius_add_cookie_to_response` or `ulfius_add_same_site_cookie_to_response` in your callback function to facilitate cookies management. Thess functions are defined as:
 
 ```C
 /**
- * ulfius_add_cookie_to_header
+ * ulfius_add_cookie_to_response
  * add a cookie to the cookie map
  * return U_OK on success
  */
 int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const uint max_age, 
                                   const char * domain, const char * path, const int secure, const int http_only);
+
+/**
+ * ulfius_add_same_site_cookie_to_response
+ * add a cookie to the cookie map with a SameSite attribute
+ * the same_site parameter must have one of the following values:
+ * - U_COOKIE_SAME_SITE_NONE   - No SameSite attribute
+ * - U_COOKIE_SAME_SITE_STRICT - SameSite attribute set to 'Strict'
+ * - U_COOKIE_SAME_SITE_LAX    - SameSite attribute set to 'Lax'
+ * return U_OK on success
+ */
+int ulfius_add_same_site_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age,
+                                            const char * domain, const char * path, const int secure, const int http_only, const int same_site);
 ```
 
 ### File upload
@@ -1451,8 +1501,18 @@ Add websocket client functionality. Allow to create a websocket client connectio
 
 Add a command-line websocket client: `uwsc`.
 
+## What's new in Ulfius 2.5?
+
+Add option to ignore non utf8 strings in incoming requests.
+Allow client certificate authentication
+
+## What's new in Ulfius 2.4?
+
+Improve websockets support, add a websocket client API, and a new tool called `uwsc`: a CLI to connect to websockets services.
+
 ## What's new in Ulfius 2.3?
 
+Not much on the API, a lot on the build process.
 Install via CMake script.
 
 ## What's new in Ulfius 2.2?

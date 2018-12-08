@@ -24,10 +24,11 @@ CONFIG_TEMPLATE=$(ULFIUS_INCLUDE)/ulfius-cfg.h.in
 CONFIG_FILE=$(ULFIUS_INCLUDE)/ulfius-cfg.h
 DESTDIR=/usr/local
 CC=gcc
-CFLAGS+=-c -pedantic -std=gnu99 -fPIC -Wall -D_REENTRANT -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS) $(CPPFLAGS)
-LIBS=-L$(DESTDIR)/lib -lc -lmicrohttpd -lyder -lorcania -lpthread $(LDFLAGS)
+CFLAGS=-c -pedantic -std=gnu99 -fPIC -Wall -D_REENTRANT -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS) $(CPPFLAGS)
+LIBS=-L$(DESTDIR)/lib -lc -lmicrohttpd -lorcania -lpthread $(LDFLAGS)
+OBJECTS=ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
 OUTPUT=libulfius.so
-VERSION=2.4.4
+VERSION=2.5.0
 
 ifndef JANSSONFLAG
 DISABLE_JANSSON=0
@@ -50,56 +51,94 @@ else
 DISABLE_WEBSOCKET=1
 endif
 
+ifndef YDERFLAG
+DISABLE_YDER=0
+LYDER=-lyder
+else
+DISABLE_YDER=1
+endif
+
+ifndef FREERTOSFLAG
+WITH_FREERTOS=0
+else
+WITH_FREERTOS=1
+endif
+
+ifndef LWIPFLAG
+WITH_LWIP=0
+else
+CFLAGS+= $(shell pkg-config --cflags lwip)
+LIBS+= $(shell pkg-config --libs lwip)
+WITH_LWIP=1
+endif
+
+ifeq ($(WITH_FREERTOS)$(WITH_LWIP),11)
+$(error FREERTOSFLAG and LWIPFLAG can't be enabled together)
+endif
+
+.PHONY: all clean
+
 all: release
 
 $(CONFIG_FILE):
 	@cp $(CONFIG_TEMPLATE) $(CONFIG_FILE)
+	@echo Config file $(CONFIG_FILE) generated
 	@sed -i -e 's/$${PROJECT_VERSION}/$(VERSION)/g' $(CONFIG_FILE)        
 	@if [ "$(DISABLE_JANSSON)" = "1" ]; then \
 		sed -i -e 's/\#cmakedefine U_DISABLE_JANSSON/\#define U_DISABLE_JANSSON/g' $(CONFIG_FILE); \
+		echo "JANSSON SUPPORT    DISABLED"; \
 	else \
 		sed -i -e 's/\#cmakedefine U_DISABLE_JANSSON/\/* #undef U_DISABLE_JANSSON *\//g' $(CONFIG_FILE); \
+		echo "JANSSON SUPPORT    ENABLED"; \
 	fi
 	@if [ "$(DISABLE_CURL)" = "1" ]; then \
 		sed -i -e 's/\#cmakedefine U_DISABLE_CURL/\#define U_DISABLE_CURL/g' $(CONFIG_FILE); \
+		echo "CURL SUPPORT       DISABLED"; \
 	else \
 		sed -i -e 's/\#cmakedefine U_DISABLE_CURL/\/* #undef U_DISABLE_CURL *\//g' $(CONFIG_FILE); \
+		echo "CURL SUPPORT       ENABLED"; \
 	fi
 	@pkg-config --atleast-version=0.9.53 libmicrohttpd; \
 	if [ $$? -ne 0 ] || [ "$(DISABLE_WEBSOCKET)" = "1" ]; then \
 		sed -i -e 's/\#cmakedefine U_DISABLE_WEBSOCKET/\#define U_DISABLE_WEBSOCKET/g' $(CONFIG_FILE); \
+		echo "WEBSOCKET SUPPORT  DISABLED"; \
 	else \
 		sed -i -e 's/\#cmakedefine U_DISABLE_WEBSOCKET/\/* #undef U_DISABLE_WEBSOCKET *\//g' $(CONFIG_FILE); \
+		echo "WEBSOCKET SUPPORT  ENABLED"; \
 	fi
-	@echo Config file $(CONFIG_FILE) generated
+	@if [ "$(DISABLE_YDER)" = "1" ]; then \
+		sed -i -e 's/\#cmakedefine U_DISABLE_YDER/\#define U_DISABLE_YDER/g' $(CONFIG_FILE); \
+		echo "YDER SUPPORT       DISABLED"; \
+	else \
+		sed -i -e 's/\#cmakedefine U_DISABLE_YDER/\/* #undef U_DISABLE_YDER *\//g' $(CONFIG_FILE); \
+		echo "YDER SUPPORT       ENABLED"; \
+	fi
+	@if [ "$(WITH_FREERTOS)" = "1" ]; then \
+		sed -i -e 's/\#cmakedefine U_WITH_FREERTOS/\#define U_WITH_FREERTOS/g' $(CONFIG_FILE); \
+		echo "FREERTOS SUPPORT   ENABLED"; \
+	else \
+		sed -i -e 's/\#cmakedefine U_WITH_FREERTOS/\/* #undef U_WITH_FREERTOS *\//g' $(CONFIG_FILE); \
+		echo "FREERTOS SUPPORT   DISABLED"; \
+	fi
+	@if [ "$(WITH_LWIP)" = "1" ]; then \
+		sed -i -e 's/\#cmakedefine U_WITH_LWIP/\#define U_WITH_LWIP/g' $(CONFIG_FILE); \
+		echo "LWIP SUPPORT       ENABLED"; \
+	else \
+		sed -i -e 's/\#cmakedefine U_WITH_LWIP/\/* #undef U_WITH_LWIP *\//g' $(CONFIG_FILE); \
+		echo "LWIP SUPPORT       DISABLED"; \
+	fi
 
-libulfius.so: $(CONFIG_FILE) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
-	$(CC) -shared -fPIC -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o $(LIBS) $(LJANSSON) $(LCURL) $(LWEBSOCKET)
+target: $(OBJECTS)
+
+%.o: %.c $(CONFIG_FILE) $(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h $(ULFIUS_INCLUDE)/yuarel.h
+	$(CC) $(CFLAGS) $<
+
+libulfius.so: $(OBJECTS)
+	$(CC) -shared -fPIC -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) $(OBJECTS) $(LIBS) $(LYDER) $(LJANSSON) $(LCURL) $(LWEBSOCKET)
 	ln -sf $(OUTPUT).$(VERSION) $(OUTPUT)
 
-libulfius.a: $(CONFIG_FILE) ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o
-	ar rcs libulfius.a ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o
-
-ulfius.o: $(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h ulfius.c
-	$(CC) $(CFLAGS) ulfius.c
-
-u_map.o: $(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h u_map.c
-	$(CC) $(CFLAGS) u_map.c
-
-u_request.o: $(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h u_request.c
-	$(CC) $(CFLAGS) u_request.c
-
-u_response.o: $(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h u_response.c
-	$(CC) $(CFLAGS) u_response.c
-
-u_websocket.o: $(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h u_websocket.c
-	$(CC) $(CFLAGS) u_websocket.c
-
-u_send_request.o: $(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h u_send_request.c
-	$(CC) $(CFLAGS) u_send_request.c
-
-yuarel.o: $(ULFIUS_INCLUDE)/yuarel.h yuarel.c
-	$(CC) $(CFLAGS) yuarel.c
+libulfius.a: $(OBJECTS)
+	ar rcs libulfius.a $(OBJECTS)
 
 clean:
 	rm -f *.o *.so *.a $(OUTPUT) $(OUTPUT).* $(CONFIG_FILE)
@@ -136,3 +175,4 @@ static: libulfius.a
 static-debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
 static-debug: libulfius.a
+

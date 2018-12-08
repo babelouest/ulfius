@@ -19,6 +19,7 @@ project(ulfius_examples C)
 
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 # library info
 
@@ -48,19 +49,25 @@ if (_GNU_SOURCE)
 endif ()
 
 include(FindUlfius)
-set(ULFIUS_MIN_VERSION "2.2")
+set(ULFIUS_MIN_VERSION "2.5")
 find_package(Ulfius ${ULFIUS_MIN_VERSION} REQUIRED)
-set(LIBS ${LIBS} ${ULFIUS_LIBRARIES} "-lorcania -lyder -ljansson")
+set(LIBS ${LIBS} ${ULFIUS_LIBRARIES} "-lorcania -ljansson")
+include_directories(${ULFIUS_INCLUDE_DIRS})
+
+include(FindYder)
+find_package(Yder)
+if (YDER_FOUND)
+    set(LIBS ${LIBS} "-lyder")
+    include_directories(${YDER_INCLUDE_DIRS})
+endif ()
 
 # examples
 
 set(STATIC_CALLBACK_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../example_callbacks/static_file/)
+include_directories(${STATIC_CALLBACK_DIR})
 
 add_executable(simple_example ${CMAKE_CURRENT_SOURCE_DIR}/simple_example/simple_example.c)
 target_link_libraries(simple_example ${LIBS})
-
-add_executable(auth_server ${CMAKE_CURRENT_SOURCE_DIR}/auth_example/auth_server.c)
-target_link_libraries(auth_server ${LIBS})
 
 add_executable(multiple_callbacks_example ${CMAKE_CURRENT_SOURCE_DIR}/multiple_callbacks_example/multiple_callbacks_example.c)
 target_link_libraries(multiple_callbacks_example ${LIBS})
@@ -72,9 +79,6 @@ add_executable(test_u_map ${CMAKE_CURRENT_SOURCE_DIR}/test_u_map/test_u_map.c)
 target_link_libraries(test_u_map ${LIBS})
 
 if (WITH_CURL)
-  add_executable(auth_client ${CMAKE_CURRENT_SOURCE_DIR}/auth_example/auth_client.c)
-  target_link_libraries(auth_client ${LIBS})
-
   add_executable(stream_client ${CMAKE_CURRENT_SOURCE_DIR}/stream_example/stream_client.c)
   target_link_libraries(stream_client ${LIBS})
 endif ()
@@ -106,9 +110,18 @@ if (WITH_WEBSOCKET)
   target_link_libraries(websocket_server ${LIBS})
   add_executable(websocket_client ${CMAKE_CURRENT_SOURCE_DIR}/websocket_example/websocket_client.c ${STATIC_CALLBACK_DIR}/static_file_callback.c)
   target_link_libraries(websocket_client ${LIBS})
+
+  add_executable(auth_server ${CMAKE_CURRENT_SOURCE_DIR}/auth_example/auth_server.c)
+  target_link_libraries(auth_server ${LIBS} gnutls)
+
+  if (WITH_CURL)
+    add_executable(auth_client ${CMAKE_CURRENT_SOURCE_DIR}/auth_example/auth_client.c)
+    target_link_libraries(auth_client ${LIBS})
+  endif ()
 endif ()
 
 message(STATUS "Websocket support: ${WITH_WEBSOCKET}")
 message(STATUS "Outgoing requests support: ${WITH_CURL}")
 message(STATUS "Jansson library support: ${WITH_JANSSON}")
+message(STATUS "Yder library support: ${WITH_YDER}")
 

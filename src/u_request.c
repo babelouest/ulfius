@@ -268,6 +268,12 @@ int ulfius_init_request(struct _u_request * request) {
     request->client_address = NULL;
     request->binary_body = NULL;
     request->binary_body_length = 0;
+#ifndef U_DISABLE_WEBSOCKET
+    request->client_cert = NULL;
+    request->client_cert_file = NULL;
+    request->client_key_file = NULL;
+    request->client_key_password = NULL;
+#endif
     return U_OK;
   } else {
     return U_ERROR_PARAMS;
@@ -305,6 +311,12 @@ int ulfius_clean_request(struct _u_request * request) {
     request->map_cookie = NULL;
     request->map_post_body = NULL;
     request->binary_body = NULL;
+#ifndef U_DISABLE_WEBSOCKET
+    gnutls_x509_crt_deinit(request->client_cert);
+    o_free(request->client_cert_file);
+    o_free(request->client_key_file);
+    o_free(request->client_key_password);
+#endif
     return U_OK;
   } else {
     return U_ERROR_PARAMS;
@@ -346,47 +358,47 @@ int ulfius_copy_request(struct _u_request * dest, const struct _u_request * sour
     if (dest->client_address != NULL) {
       memcpy(dest->client_address, source->client_address, sizeof(struct sockaddr));
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for dest->client_address");
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for dest->client_address");
       ret = U_ERROR_MEMORY;
     }
     
     if (ret == U_OK && u_map_clean(dest->map_url) == U_OK && u_map_init(dest->map_url) == U_OK) {
       if (u_map_copy_into(dest->map_url, source->map_url) != U_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Error u_map_copy_into dest->map_url");
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error u_map_copy_into dest->map_url");
         ret = U_ERROR;
       }
     } else if (ret == U_OK) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error reinit dest->map_url");
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error reinit dest->map_url");
       ret = U_ERROR_MEMORY;
     }
     
     if (ret == U_OK && u_map_clean(dest->map_header) == U_OK && u_map_init(dest->map_header) == U_OK) {
       if (u_map_copy_into(dest->map_header, source->map_header) != U_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Error u_map_copy_into dest->map_header");
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error u_map_copy_into dest->map_header");
         ret = U_ERROR;
       }
     } else if (ret == U_OK) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error reinit dest->map_header");
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error reinit dest->map_header");
       ret = U_ERROR_MEMORY;
     }
     
     if (ret == U_OK && u_map_clean(dest->map_cookie) == U_OK && u_map_init(dest->map_cookie) == U_OK) {
       if (u_map_copy_into(dest->map_cookie, source->map_cookie) != U_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Error u_map_copy_into dest->map_cookie");
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error u_map_copy_into dest->map_cookie");
         ret = U_ERROR;
       }
     } else if (ret == U_OK) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error reinit dest->map_cookie");
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error reinit dest->map_cookie");
       ret = U_ERROR_MEMORY;
     }
     
     if (ret == U_OK && u_map_clean(dest->map_post_body) == U_OK && u_map_init(dest->map_post_body) == U_OK) {
       if (u_map_copy_into(dest->map_post_body, source->map_post_body) != U_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Error u_map_copy_into dest->map_post_body");
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error u_map_copy_into dest->map_post_body");
         ret = U_ERROR;
       }
     } else if (ret == U_OK) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error reinit dest->map_post_body");
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error reinit dest->map_post_body");
       ret = U_ERROR_MEMORY;
     }
     
@@ -396,10 +408,26 @@ int ulfius_copy_request(struct _u_request * dest, const struct _u_request * sour
       if (dest->binary_body != NULL) {
         memcpy(dest->binary_body, source->binary_body, source->binary_body_length);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Error allocating resources for dest->binary_body");
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for dest->binary_body");
         ret = U_ERROR_MEMORY;
       }
     }
+
+#ifndef U_DISABLE_WEBSOCKET
+    if (ret == U_OK && source->client_cert != NULL) {
+      if (gnutls_x509_crt_init(&dest->client_cert) == 0) {
+        char * str_cert = ulfius_export_client_certificate_pem(source);
+        if (ulfius_import_client_certificate_pem(dest, str_cert) != U_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_import_client_certificate_pem");
+          ret = U_ERROR;
+        }
+        o_free(str_cert);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error gnutls_x509_crt_init");
+        ret = U_ERROR;
+      }
+    }
+#endif
     
     return ret;
   } else {
@@ -473,6 +501,23 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request) 
         new_request->binary_body = NULL;
       }
       new_request->binary_body_length = request->binary_body_length;
+#ifndef U_DISABLE_WEBSOCKET
+      if (request->client_cert != NULL) {
+        if (gnutls_x509_crt_init(&new_request->client_cert) == 0) {
+          char * str_cert = ulfius_export_client_certificate_pem(request);
+          if (ulfius_import_client_certificate_pem(new_request, str_cert) != U_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_import_client_certificate_pem");
+            ulfius_clean_request_full(new_request);
+            return NULL;
+          }
+          o_free(str_cert);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error gnutls_x509_crt_init");
+          ulfius_clean_request_full(new_request);
+          return NULL;
+        }
+      }
+#endif
     } else {
       o_free(new_request);
       new_request = NULL;
@@ -532,5 +577,59 @@ json_t * ulfius_get_json_body_request(const struct _u_request * request, json_er
     }
   }
   return NULL;
+}
+#endif
+
+#ifndef U_DISABLE_WEBSOCKET
+/*
+ * ulfius_export_client_certificate_pem
+ * Exports the client certificate using PEM format
+ * request: struct _u_request used
+ * returned value must be u_free'd after use
+ */
+char * ulfius_export_client_certificate_pem(const struct _u_request * request) {
+  char * str_cert = NULL;
+  gnutls_datum_t g_cert;
+
+  if (request != NULL && request->client_cert != NULL) {
+    if (gnutls_x509_crt_export2(request->client_cert, GNUTLS_X509_FMT_PEM, &g_cert) == 0) {
+      str_cert = o_strndup((const char *)g_cert.data, g_cert.size);
+      gnutls_free(g_cert.data);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error gnutls_x509_crt_export2");
+    }
+  }
+
+  return str_cert;
+}
+
+/*
+ * ulfius_import_client_certificate_pem
+ * Imports the client certificate using PEM format
+ * request: struct _u_request used
+ * str_cert: client certificate in PEM format
+ * return U_OK on success;
+ */
+int ulfius_import_client_certificate_pem(struct _u_request * request, const char * str_cert) {
+  int ret;
+  gnutls_datum_t g_cert;
+
+  if (request != NULL && str_cert != NULL) {
+    g_cert.data = (unsigned char *)str_cert;
+    g_cert.size = o_strlen(str_cert);
+    if (gnutls_x509_crt_init(&request->client_cert)) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error gnutls_x509_crt_init");
+      ret = U_ERROR;
+    } else if (gnutls_x509_crt_import(request->client_cert, &g_cert, GNUTLS_X509_FMT_PEM) == 0) {
+      ret = U_OK;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error gnutls_x509_crt_import");
+      ret = U_ERROR;
+    }
+  } else {
+    ret = U_ERROR_PARAMS;
+  }
+
+  return ret;
 }
 #endif

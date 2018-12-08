@@ -20,6 +20,7 @@
 #endif
 
 #include <ulfius.h>
+#include <u_example.h>
 
 #define PORT 8537
 #define PREFIX "/test"

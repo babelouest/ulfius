@@ -12,6 +12,7 @@
  */
 
 #include <ulfius.h>
+#include <u_example.h>
 
 #define MAIL_SERVER "localhost"
 #define MAIL_SENDER "test@example.org"

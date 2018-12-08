@@ -31,9 +31,9 @@
  * Add a cookie in the cookie map as defined in the RFC 6265
  * Returned value must be free'd after use
  */
-static char * ulfius_get_cookie_header(const struct _u_cookie * cookie) {
+static char * ulfius_generate_cookie_header(const struct _u_cookie * cookie) {
   char * attr_expires = NULL, * attr_max_age = NULL, * attr_domain = NULL, * attr_path = NULL;
-  char * attr_secure = NULL, * attr_http_only = NULL, * cookie_header_value = NULL;
+  char * attr_secure = NULL, * attr_http_only = NULL, * cookie_header_value = NULL, * same_site = NULL;
 
   if (cookie != NULL) {
     if (cookie->expires != NULL) {
@@ -120,11 +120,19 @@ static char * ulfius_get_cookie_header(const struct _u_cookie * cookie) {
     } else {
       attr_http_only = o_strdup("");
     }
+
+    if (cookie->same_site  == U_COOKIE_SAME_SITE_STRICT) {
+      same_site = o_strdup("; SameSite=Strict");
+    } else if (cookie->same_site == U_COOKIE_SAME_SITE_LAX) {
+      same_site = o_strdup("; SameSite=Lax");
+    } else {
+      same_site = o_strdup("");
+    }
     
     if (attr_expires == NULL || attr_max_age == NULL || attr_domain == NULL || attr_path == NULL || attr_secure == NULL || attr_http_only == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for ulfius_get_cookie_header");
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for ulfius_generate_cookie_header");
     } else {
-      cookie_header_value = msprintf("%s=%s%s%s%s%s%s%s", cookie->key, cookie->value, attr_expires, attr_max_age, attr_domain, attr_path, attr_secure, attr_http_only);
+      cookie_header_value = msprintf("%s=%s%s%s%s%s%s%s%s", cookie->key, cookie->value, attr_expires, attr_max_age, attr_domain, attr_path, attr_secure, attr_http_only, same_site);
       if (cookie_header_value == NULL) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for cookie_header_value");
       }
@@ -135,12 +143,14 @@ static char * ulfius_get_cookie_header(const struct _u_cookie * cookie) {
     o_free(attr_path);
     o_free(attr_secure);
     o_free(attr_http_only);
+    o_free(same_site);
     attr_expires = NULL;
     attr_max_age = NULL;
     attr_domain = NULL;
     attr_path = NULL;
     attr_secure = NULL;
     attr_http_only = NULL;
+    same_site = NULL;
     return cookie_header_value;
   } else {
     return NULL;
@@ -182,7 +192,7 @@ int ulfius_set_response_cookie(struct MHD_Response * mhd_response, const struct 
   char * header;
   if (mhd_response != NULL && response != NULL) {
     for (i=0; i<response->nb_cookies; i++) {
-      header = ulfius_get_cookie_header(&response->map_cookie[i]);
+      header = ulfius_generate_cookie_header(&response->map_cookie[i]);
       if (header != NULL) {
         ret = MHD_add_response_header (mhd_response, MHD_HTTP_HEADER_SET_COOKIE, header);
         o_free(header);
@@ -202,14 +212,28 @@ int ulfius_set_response_cookie(struct MHD_Response * mhd_response, const struct 
 }
 
 /**
- * ulfius_add_cookie_to_header
+ * ulfius_add_cookie_to_response
  * add a cookie to the cookie map
  * return U_OK on success
  */
 int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age, 
                                   const char * domain, const char * path, const int secure, const int http_only) {
+  return ulfius_add_same_site_cookie_to_response(response, key, value, expires, max_age, domain, path, secure, http_only, U_COOKIE_SAME_SITE_NONE);
+}
+
+/**
+ * ulfius_add_same_site_cookie_to_response
+ * add a cookie to the cookie map with a SameSite attribute
+ * the same_site parameter must have one of the following values:
+ * - U_COOKIE_SAME_SITE_NONE   - No SameSite attribute
+ * - U_COOKIE_SAME_SITE_STRICT - SameSite attribute set to 'Strict'
+ * - U_COOKIE_SAME_SITE_LAX    - SameSite attribute set to 'Lax'
+ * return U_OK on success
+ */
+int ulfius_add_same_site_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age, 
+                                            const char * domain, const char * path, const int secure, const int http_only, const int same_site) {
   unsigned int i;
-  if (response != NULL && key != NULL) {
+  if (response != NULL && key != NULL && (same_site == U_COOKIE_SAME_SITE_NONE || same_site == U_COOKIE_SAME_SITE_STRICT || same_site == U_COOKIE_SAME_SITE_LAX)) {
     // Look for cookies with the same key
     for (i=0; i<response->nb_cookies; i++) {
       if (0 == o_strcmp(response->map_cookie[i].key, key)) {
@@ -225,6 +249,7 @@ int ulfius_add_cookie_to_response(struct _u_response * response, const char * ke
         response->map_cookie[i].max_age = max_age;
         response->map_cookie[i].secure = secure;
         response->map_cookie[i].http_only = http_only;
+        response->map_cookie[i].same_site = same_site;
         if ((value != NULL && response->map_cookie[i].value == NULL) ||
             (expires != NULL && response->map_cookie[i].expires == NULL) ||
             (domain != NULL && response->map_cookie[i].domain == NULL) ||
@@ -263,6 +288,7 @@ int ulfius_add_cookie_to_response(struct _u_response * response, const char * ke
     response->map_cookie[response->nb_cookies].path = o_strdup(path);
     response->map_cookie[response->nb_cookies].secure = secure;
     response->map_cookie[response->nb_cookies].http_only = http_only;
+    response->map_cookie[response->nb_cookies].same_site = same_site;
     if ((key != NULL && response->map_cookie[response->nb_cookies].key == NULL) || (value != NULL && response->map_cookie[response->nb_cookies].value == NULL) || 
         (expires != NULL && response->map_cookie[response->nb_cookies].expires == NULL) || (domain != NULL && response->map_cookie[response->nb_cookies].domain == NULL) ||
         (path != NULL && response->map_cookie[response->nb_cookies].path == NULL)) {
@@ -319,6 +345,7 @@ int ulfius_copy_cookie(struct _u_cookie * dest, const struct _u_cookie * source)
     dest->path = o_strdup(source->path);
     dest->secure = source->secure;
     dest->http_only = source->http_only;
+    dest->same_site = source->same_site;
     if (dest->path == NULL || dest->domain == NULL || dest->expires == NULL || dest->value == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for ulfius_copy_cookie");
       o_free(dest->path);

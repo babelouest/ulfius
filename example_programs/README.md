@@ -41,7 +41,7 @@ The available options for `cmake` are:
 
 ### Good ol' Makefile
 
-You can either use the `Makefile` available in the `example_programs` folder or each `Makefile` in each subfolders.
+You can either use the `Makefile` available in the `example_programs` folder or each `Makefile` in each subfolders. If your ulfius library is built with options like `make CURLFLAG=1`, you must use the same option to build the examples.
 
 ```shell
 $ # Build all example programs

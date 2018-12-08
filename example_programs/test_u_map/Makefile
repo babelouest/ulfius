@@ -15,8 +15,13 @@
 CC=gcc
 ULFIUS_LOCATION=../../src
 ULFIUS_INCLUDE=../../include
-CFLAGS=-c -Wall -I$(ULFIUS_INCLUDE) -D_REENTRANT $(ADDITIONALFLAGS)
-LIBS=-lc -lorcania -lulfius -lyder -L$(ULFIUS_LOCATION)
+EXAMPLE_INCLUDE=../include
+CFLAGS=-c -Wall -I$(ULFIUS_INCLUDE) -I$(EXAMPLE_INCLUDE) -D_REENTRANT $(ADDITIONALFLAGS)
+LIBS=-lc -lorcania -lulfius -L$(ULFIUS_LOCATION)
+
+ifndef YDERFLAG
+LIBS+= -lyder
+endif
 
 all: test_u_map
 

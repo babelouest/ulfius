@@ -22,8 +22,6 @@
  */
 
 #include <string.h>
-#include <orcania.h>
-#include <yder.h>
 #include <ulfius.h>
 
 #include "static_file_callback.h"

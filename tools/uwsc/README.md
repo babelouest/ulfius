@@ -8,7 +8,7 @@ This program is free software; you can redistribute it and/or modify it under th
 
 ## Overview
 
-Can connect to websocket services, both ws:// (http) or wss:// (https). When the websocket is connected, messages from the server are displayed in the terminal and messages can be send to the service via a prompt `> `.
+Can connect to websocket services, both ws:// (http) or wss:// (https). When the websocket is connected, messages from the server are displayed in the terminal and messages can be sent to the service via a prompt `> `.
 
 To quit uwsc during connection, enter the message `!q`.
 

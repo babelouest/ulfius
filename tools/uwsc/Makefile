@@ -17,8 +17,12 @@ ULFIUS_INCLUDE=../../include
 ULFIUS_LOCATION=../../src
 DESTDIR=/usr/local
 
+ifndef YDERFLAG
+LYDER=-lyder
+endif
+
 CFLAGS=-c -Wall -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS)
-LIBS=-lc -lulfius -lyder -lorcania -L$(ULFIUS_LOCATION)
+LIBS=-lc -lulfius -lorcania $(LYDER) -L$(ULFIUS_LOCATION)
 
 REMOTE_URL=http://localhost:9275/websocket/echo
 COMMAND=./uwsc --output-log-file=out.log $(REMOTE_URL)

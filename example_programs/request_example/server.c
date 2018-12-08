@@ -15,6 +15,7 @@
 #include <jansson.h>
 
 #include <ulfius.h>
+#include <u_example.h>
 
 #define PORT 7778
 #define PREFIX "/curl"

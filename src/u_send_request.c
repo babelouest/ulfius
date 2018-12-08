@@ -202,6 +202,28 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
           return U_ERROR_LIBCURL;
         }
       }
+
+#ifndef U_DISABLE_WEBSOCKET
+      // Set client certificate authentication if defined
+      if (request->client_cert_file != NULL && request->client_key_file != NULL) {
+        if (curl_easy_setopt(curl_handle, CURLOPT_SSLCERT, request->client_cert_file) != CURLE_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting client certificate file");
+          ulfius_clean_request_full(copy_request);
+          curl_easy_cleanup(curl_handle);
+          return U_ERROR_LIBCURL;
+        } else if (curl_easy_setopt(curl_handle, CURLOPT_SSLKEY, request->client_key_file) != CURLE_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting client key file");
+          ulfius_clean_request_full(copy_request);
+          curl_easy_cleanup(curl_handle);
+          return U_ERROR_LIBCURL;
+        } else if (request->client_key_password != NULL && curl_easy_setopt(curl_handle, CURLOPT_KEYPASSWD, request->client_key_password) != CURLE_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting client key password");
+          ulfius_clean_request_full(copy_request);
+          curl_easy_cleanup(curl_handle);
+          return U_ERROR_LIBCURL;
+        }
+      }
+#endif
       
       // Set proxy if defined
       if (copy_request->proxy != NULL) {
@@ -641,17 +663,19 @@ static size_t smtp_payload_source(void * ptr, size_t size, size_t nmemb, void * 
   }
 
   if (upload_ctx->lines_read == MAIL_DATE) {
-    time_t now;
-    time(&now);
+    time_t now_sec;
+    struct tm now;
+    time(&now_sec);
     data = o_malloc(128*sizeof(char));
     if (data == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for MAIL_DATE\n");
       return 0;
     } else {
+      gmtime_r(&now_sec, &now);
 #ifdef _WIN32
-      strftime(data, 128, "Date: %a, %d %b %Y %H:%M:%S %z\r\n", gmtime(&now));
+      strftime(data, 128, "Date: %a, %d %b %Y %H:%M:%S %z\r\n", &now);
 #else
-      strftime(data, 128, "Date: %a, %d %b %Y %T %z\r\n", gmtime(&now));
+      strftime(data, 128, "Date: %a, %d %b %Y %T %z\r\n", &now);
 #endif
       len = o_strlen(data);
     }

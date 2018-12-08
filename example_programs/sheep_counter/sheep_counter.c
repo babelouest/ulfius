@@ -17,6 +17,7 @@
 #include <jansson.h>
 
 #include <ulfius.h>
+#include <u_example.h>
 
 #define PORT 7437
 #define PREFIX "/sheep"

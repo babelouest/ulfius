@@ -27,6 +27,4 @@ test/framework
 test/websocket
 tools/uwsc/uwsc
 tools/uwsc/valgrind.txt
-*.key
-*.pem
 *.log
