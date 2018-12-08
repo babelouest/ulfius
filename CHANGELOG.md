@@ -3,7 +3,7 @@
 ## 2.5.0
 
 - Add struct _u_endpoint.check_utf8 to check all request parameters and values to be valid utf8 strings
-- Add client certificate authentication for webservice and send request library
+- Add client certificate authentication for webservice and send request library (issue #83)
 - Fix build config file bug when using -jxx option to Makefile (issue #84)
 - Allow to disable Yder logging library, to use Ulfius in embedded systems like FreeRTOS
   where console, syslog or journald are not available, and file logging is overkill
