@@ -662,7 +662,7 @@ The callback returned value can have the following values:
 - `U_CALLBACK_UNAUTHORIZED`: The framework must complete the transaction without calling any further callback function and send an unauthorized response to the client with the status 401, the body specified and the `auth_realm` value if specified.
 - `U_CALLBACK_ERROR`: An error occured during execution, the framework must complete the transaction without calling any further callback function and send an error 500 to the client.
 
-The callback function return value is not necessary the HTTP status your application will return to the client. Use the `struct _u_response` variable in your callback function to specify the HTTP response to the client.
+Except for the return values `U_CALLBACK_UNAUTHORIZED` and `U_CALLBACK_ERROR`, the callback return value isn't useful to specify the response sent back to the client. Use the `struct _u_response` variable in your callback function to set all values in the HTTP response.
 
 #### Use JSON in request and response body
 
