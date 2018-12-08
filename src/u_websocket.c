@@ -644,7 +644,6 @@ static int ulfius_websocket_connection_handshake(struct _u_request * request, st
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_get_next_line_from_http_response, abort parsing response");
         close(websocket->websocket_manager->tcp_sock);
         websocket->websocket_manager->tcp_sock = -1;
-        ret = U_ERROR;
         break;
       }
     } while (1);
