@@ -164,7 +164,13 @@ struct _u_endpoint ** ulfius_endpoint_match(const char * method, const char * ur
       splitted_url = NULL;
     }
   }
-  qsort(endpoint_returned, count, sizeof(struct endpoint_list *), &compare_endpoint_priorities);
+  /* 
+   * only sort if endpoint_returned is != NULL
+   * can be NULL either after initial o_malloc() or after o_realloc()
+   */
+  if (endpoint_returned != NULL) {
+    qsort(endpoint_returned, count, sizeof(struct endpoint_list *), &compare_endpoint_priorities);
+  }
   return endpoint_returned;
 }
 
