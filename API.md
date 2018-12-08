@@ -660,7 +660,7 @@ The callback returned value can have the following values:
 - `U_CALLBACK_CONTINUE`: The framework can transfer the request and the response to the next callback function in priority order if there is one, or complete the transaction and send back the response to the client.
 - `U_CALLBACK_COMPLETE`: The framework must complete the transaction and send the response to the client without calling any further callback function.
 - `U_CALLBACK_UNAUTHORIZED`: The framework must complete the transaction without calling any further callback function and send an unauthorized response to the client with the status 401, the body specified and the `auth_realm` value if specified.
-- `U_CALLBACK_ERROR`: An error occured during execution, the framework must complete the transaction without calling any further callback function and send an error 500 to the client.
+- `U_CALLBACK_ERROR`: An error occured during execution, the framework will complete the transaction without calling any further callback function and send an error 500 to the client.
 
 Except for the return values `U_CALLBACK_UNAUTHORIZED` and `U_CALLBACK_ERROR`, the callback return value isn't useful to specify the response sent back to the client. Use the `struct _u_response` variable in your callback function to set all values in the HTTP response.
 
