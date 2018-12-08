@@ -662,6 +662,8 @@ The callback returned value can have the following values:
 - `U_CALLBACK_UNAUTHORIZED`: The framework must complete the transaction without calling any further callback function and send an unauthorized response to the client with the status 401, the body specified and the `auth_realm` value if specified.
 - `U_CALLBACK_ERROR`: An error occured during execution, the framework must complete the transaction without calling any further callback function and send an error 500 to the client.
 
+The callback function return value is not necessary the HTTP status your application will return to the client. Use the `struct _u_response` variable in your callback function to specify the HTTP response to the client.
+
 #### Use JSON in request and response body
 
 In Ulfius 2.0, hard dependency with `libjansson` has been removed, the jansson library is now optional but enabled by default.
