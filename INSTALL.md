@@ -39,13 +39,15 @@ If there's no package available for your distribution, you can recompile it manu
 
 ### Prerequisites
 
-Ulfius requires the following dependencies
+Ulfius requires the following dependencies.
 
 - libmicrohttpd (required), minimum 0.9.53 if you require Websockets support
 - libjansson (optional), minimum 2.4, required for json support
 - libgnutls, libgcrypt (optional), required for Websockets and https support
 - libcurl (optional), required to send http/smtp requests
 - libsystemd (optional), required for [yder](https://github.com/babelouest/yder) to log messages in journald
+
+Note: the build stacks require a compiler (`gcc` or `clang`), `make`, `cmake` (if using cmake build), and `pkg-config`.
 
 For example, to install all the external dependencies on Debian Stretch, run as root:
 
