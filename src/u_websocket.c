@@ -384,7 +384,12 @@ static int ulfius_read_incoming_message(struct _websocket_manager * websocket_ma
         if (ret == U_OK) {
           payload_data = o_malloc(msg_len*sizeof(uint8_t));
           len = read_data_from_socket(websocket_manager, payload_data, msg_len);
-          if ((unsigned int)len == msg_len) {
+          if (len < 0) {
+            ret = U_ERROR_DISCONNECTED;
+          } else if ((unsigned int)len != msg_len) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error reading websocket for payload_data");
+            ret = U_ERROR;
+          } else {
             // If mask, decode message
             (*message)->data = o_realloc((*message)->data, (msg_len+(*message)->data_len)*sizeof(uint8_t));
             if ((*message)->has_mask) {
@@ -395,11 +400,6 @@ static int ulfius_read_incoming_message(struct _websocket_manager * websocket_ma
               memcpy((*message)->data+(*message)->data_len, payload_data, msg_len);
             }
             (*message)->data_len += msg_len;
-          } else if ((unsigned int)len != msg_len && len >= 0) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error reading websocket for payload_data");
-            ret = U_ERROR;
-          } else if (len < 0) {
-            ret = U_ERROR_DISCONNECTED;
           }
           o_free(payload_data);
         }
