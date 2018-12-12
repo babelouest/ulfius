@@ -20,12 +20,10 @@ TESTS_LOCATION=./test
 
 all:
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) $*
-	cd $(EXAMPLES_LOCATION) && $(MAKE) $*
 	cd $(UWSC_LOCATION) && $(MAKE) $*
 
 debug:
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) debug $*
-	cd $(EXAMPLES_LOCATION) && $(MAKE) debug $*
 	cd $(UWSC_LOCATION) && $(MAKE) debug $*
 
 clean:
@@ -34,6 +32,9 @@ clean:
 	cd $(UWSC_LOCATION) && $(MAKE) clean
 	cd $(TESTS_LOCATION) && $(MAKE) clean
 
+examples:
+	cd $(EXAMPLES_LOCATION) && $(MAKE) $*
+
 install:
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) install
 	cd $(UWSC_LOCATION) && $(MAKE) install
@@ -41,6 +42,5 @@ install:
 uninstall:
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) uninstall
 
-tests:
-	cd $(LIBULFIUS_LOCATION) && $(MAKE) debug $*
+check:
 	cd $(TESTS_LOCATION) && $(MAKE)
