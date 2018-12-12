@@ -21,7 +21,7 @@ ifndef YDERFLAG
 LYDER=-lyder
 endif
 
-CFLAGS+=-c -Wall -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS)
+CFLAGS+=-c -Wall -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS) $(CPPFLAGS)
 LIBS=-lc -lulfius -lorcania $(LYDER) -L$(ULFIUS_LOCATION)
 
 REMOTE_URL=http://localhost:9275/websocket/echo
