@@ -139,12 +139,12 @@ static void uwsc_manager_callback (const struct _u_request * request, struct _we
       if (fgets(message, 256, stdin) != NULL) {
         if (o_strlen(message)) {
           if (0 == o_strncmp(message, "!q", o_strlen("!q"))) {
-            printf("\b\bQuit uwsc\n");
+            fprintf(stdout, "\b\bQuit uwsc\n");
             if (ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_CLOSE, 0, NULL) != U_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "Error sending close message");
             }
           } else {
-            printf("\b\bSend '%.*s'\n> ", (int)(o_strlen(message)-1), message);
+            fprintf(stdout, "\b\bSend '%.*s'\n> ", (int)(o_strlen(message)-1), message);
             fflush(stdout);
             if (ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(message)-1, message) != U_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "Error sending message '%.*s'", (int)(o_strlen(message)-1), message);
@@ -166,13 +166,16 @@ static void uwsc_manager_incoming (const struct _u_request * request, struct _we
   struct _config * config = (struct _config *)websocket_incoming_user_data;
   
   if (message->opcode == U_WEBSOCKET_OPCODE_CLOSE) {
-    printf("\b\bConnection closed by the server, press <enter> to exit\n> ");
+    fprintf(stdout, "\b\bConnection closed by the server, press <enter> to exit\n> ");
+    fflush(stdout);
   }
   if (!config->non_listening) {
     if (message->opcode == U_WEBSOCKET_OPCODE_TEXT) {
-      printf("\b\bServer message: '%.*s'\n> ", (int)message->data_len, message->data);
+      fprintf(stdout, "\b\bServer message: '%.*s'\n> ", (int)message->data_len, message->data);
+      fflush(stdout);
     } else if (message->opcode == U_WEBSOCKET_OPCODE_BINARY) {
-      printf("\b\bServer sent binary message, length %zu\n> ", message->data_len);
+      fprintf(stdout, "\b\bServer sent binary message, length %zu\n> ", message->data_len);
+      fflush(stdout);
     }
   }
   last_message = ulfius_websocket_pop_first_message(websocket_manager->message_list_incoming);
@@ -345,7 +348,7 @@ int main (int argc, char ** argv) {
         break;
       case 'v':
         // Print version and exit
-        printf("%s\n", _UWSC_VERSION_);
+        fprintf(stdout, "%s\n", _UWSC_VERSION_);
         exit_program(&config, 0);
         break;
       case 'h':
@@ -372,9 +375,10 @@ int main (int argc, char ** argv) {
   
   if (ulfius_set_websocket_request(config->request, url, config->protocol, config->extensions) == U_OK) {
     if (ulfius_open_websocket_client_connection(config->request, &uwsc_manager_callback, config, &uwsc_manager_incoming, config, NULL, NULL, &websocket_client_handler, config->response) == U_OK) {
-      printf("Websocket connected, you can send text messages of maximum 256 characters.\nTo exit uwsc, type !q<enter>\n> ");
+      fprintf(stdout, "Websocket connected, you can send text messages of maximum 256 characters.\nTo exit uwsc, type !q<enter>\n> ");
+      fflush(stdout);
       ulfius_websocket_client_connection_wait_close(&websocket_client_handler, 0);
-      printf("Websocket closed\n");
+      fprintf(stdout, "Websocket closed\n");
       ulfius_websocket_client_connection_close(&websocket_client_handler);
     } else {
       fprintf(stderr, "Error connecting to websocket\n");
