@@ -512,8 +512,7 @@ void * ulfius_thread_websocket(void * data) {
       pthread_mutex_lock(&websocket->websocket_manager->status_lock);
       pthread_cond_broadcast(&websocket->websocket_manager->status_cond);
       pthread_mutex_unlock(&websocket->websocket_manager->status_lock);
-    }
-    if (websocket->websocket_manager->type == U_WEBSOCKET_SERVER) {
+    } else if (websocket->websocket_manager->type == U_WEBSOCKET_SERVER) {
       ulfius_clear_websocket(websocket);
     }
   } else {
@@ -1440,6 +1439,44 @@ int ulfius_websocket_wait_close(struct _websocket_manager * websocket_manager, u
 /** Client websocket functions **/
 /********************************/
 
+static long random_at_most(long max) {
+  unsigned long
+  // max <= RAND_MAX < ULONG_MAX, so this is okay.
+  num_bins = (unsigned long) max + 1,
+  num_rand = (unsigned long) RAND_MAX + 1,
+  bin_size = num_rand / num_bins,
+  defect   = num_rand % num_bins;
+
+  long x;
+  do {
+   x = random();
+  }
+  // This is carefully written not to overflow
+  while (num_rand - defect <= (unsigned long)x);
+
+  // Truncated division is intentional
+  return x/bin_size;
+}
+
+/**
+ * Generates a random string and store it in str
+ */
+static char * rand_string(char * str, size_t str_size) {
+  const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  size_t n;
+  
+  if (str_size > 0 && str != NULL) {
+    for (n = 0; n < str_size; n++) {
+      long key = random_at_most((sizeof(charset)) - 2);
+      str[n] = charset[key];
+    }
+    str[str_size] = '\0';
+    return str;
+  } else {
+    return NULL;
+  }
+}
+
 /**
  * Set values for a struct _u_request to open a websocket
  * request must be previously initialized
@@ -1450,7 +1487,7 @@ int ulfius_set_websocket_request(struct _u_request * request,
                                   const char * websocket_protocol,
                                   const char * websocket_extensions) {
   int ret;
-  char rand_int[17] = {0}, rand_int_base64[25] = {0};
+  char rand_str[17] = {0}, rand_str_base64[25] = {0};
   size_t out_len;
   
   if (request != NULL && url != NULL) {
@@ -1472,12 +1509,12 @@ int ulfius_set_websocket_request(struct _u_request * request,
     u_map_put(request->map_header, "Content-Length", "0");
     u_map_put(request->map_header, "User-Agent", U_WEBSOCKET_USER_AGENT "/" STR(ULFIUS_VERSION));
     srand(time(NULL));
-    sprintf(rand_int, "%04d%04d%04d%04d", rand(), rand(), rand(), rand());
-    if (!o_base64_encode((unsigned char *)rand_int, 16, (unsigned char *)rand_int_base64, &out_len)) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error o_base64_encode with the input string %s", rand_int);
+    rand_string(rand_str, 16);
+    if (!o_base64_encode((unsigned char *)rand_str, 16, (unsigned char *)rand_str_base64, &out_len)) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error o_base64_encode with the input string %s", rand_str);
       ret = U_ERROR;
     } else {
-      u_map_put(request->map_header, "Sec-WebSocket-Key", rand_int_base64);
+      u_map_put(request->map_header, "Sec-WebSocket-Key", rand_str_base64);
       ret = U_OK;
     }
   } else {
