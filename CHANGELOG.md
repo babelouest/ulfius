@@ -1,5 +1,9 @@
 # Ulfius Changelog
 
+## 2.5.1
+
+- Fix uwsc crash on some systems
+
 ## 2.5.0
 
 - Add struct _u_endpoint.check_utf8 to check all request parameters and values to be valid utf8 strings
