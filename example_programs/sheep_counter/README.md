@@ -16,7 +16,7 @@ Open in your browser the url [http://localhost:7437/index.html](http://localhost
 
 The API endpoints are the following:
 
-- `POST http://localhost:7437/sheep`: Initialise the counter with the specified `nbsheep` value provided in the json body (default 0) and return the new `nbsheep` value in the response as a json
+- `POST http://localhost:7437/sheep`: Initialise the counter with the specified `nbsheep` value provided in the json body (default 0) and return the new `nbsheep` value in the response as a json. The JSON body must be a single numeric value.
 - `PUT http://localhost:7437/sheep`: Add a sheep to the current counter and return the new `nbsheep` value in the response as a json
 - `DELETE http://localhost:7437/sheep`: Reset the sheep counter to 0 and return the new `nbsheep` value in the response as a json
 
