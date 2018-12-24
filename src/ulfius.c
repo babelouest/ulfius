@@ -69,7 +69,7 @@ static int ulfius_fill_map_check_utf8(void * cls, enum MHD_ValueKind kind, const
     // Invalid parameters
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error invalid parameters for ulfius_fill_map_check_utf8");
     return MHD_NO;
-  } else if (utf8_check(key) == NULL && utf8_check(value) == NULL) {
+  } else if (utf8_check(key) == NULL && (value == NULL || utf8_check(value) == NULL)) {
     if (u_map_get(((struct _u_map *)cls), key) != NULL) {
       // u_map already has a value with this this key, appending value separated with a comma ',')
       tmp = msprintf("%s,%s", u_map_get(((struct _u_map *)cls), key), (value==NULL?"":value));
@@ -301,7 +301,7 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
     }
   } else {
     if (con_info->u_instance) {
-      if (con_info->u_instance->check_utf8 && (utf8_check(key) != NULL || utf8_check(data) != NULL || (filename != NULL && utf8_check(filename) != NULL))) {
+      if (con_info->u_instance->check_utf8 && (utf8_check(key) != NULL || data == NULL || utf8_check(data) != NULL || (filename != NULL && utf8_check(filename) != NULL))) {
         return MHD_YES;
       } else {
         data_dup = o_strndup(data, size); // Force value to end with a NULL character
