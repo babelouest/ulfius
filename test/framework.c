@@ -680,12 +680,13 @@ START_TEST(test_ulfius_utf8_not_ignored)
   ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
   
   ulfius_init_request(&request);
-  request.http_url = msprintf("http://localhost:8080/utf8/%s/%s/?utf8_param3=%s&utf8_param_valid2=%s", invalid_utf8_seq3, valid_utf8, invalid_utf8_seq2, valid_utf8);
+  request.http_url = msprintf("http://localhost:8080/utf8/%s/%s/?utf8_param3=%s&utf8_param_valid2=%s&utf8_param_empty=&utf8_param_null", invalid_utf8_seq3, valid_utf8, invalid_utf8_seq2, valid_utf8);
   request.http_verb = o_strdup("POST");
   u_map_put(request.map_header, "utf8_param", invalid_utf8_seq3);
   u_map_put(request.map_header, "utf8_param_valid", valid_utf8);
   u_map_put(request.map_post_body, "utf8_param", invalid_utf8_seq4);
   u_map_put(request.map_post_body, "utf8_param_valid", valid_utf8);
+  u_map_put(request.map_post_body, "utf8_param_empty", "");
   ck_assert_int_eq(ulfius_send_http_request(&request, NULL), U_OK);
   ulfius_clean_request(&request);
   
