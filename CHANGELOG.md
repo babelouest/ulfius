@@ -1,5 +1,9 @@
 # Ulfius Changelog
 
+## 2.5.2
+
+- Fix utf8 check on NULL value
+
 ## 2.5.1
 
 - Fix uwsc crash on some systems
