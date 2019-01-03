@@ -352,7 +352,9 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
   // Websocket variables
   int upgrade_protocol = 0;
   char * protocol = NULL, * extension = NULL;
+#endif
 
+#ifndef U_DISABLE_GNUTLS
   // Client certificate authentication variables
   const union MHD_ConnectionInfo * ci;
   unsigned int listsize;
@@ -383,7 +385,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
 
   if (con_info->callback_first_iteration) {
 
-#ifndef U_DISABLE_WEBSOCKET
+#ifndef U_DISABLE_GNUTLS
     ci = MHD_get_connection_info (connection, MHD_CONNECTION_INFO_GNUTLS_SESSION);
     if (((struct _u_instance *)cls)->use_client_cert_auth && ci != NULL && ci->tls_session != NULL) {
       if ((ret_cert = gnutls_certificate_verify_peers2(ci->tls_session, &client_cert_status)) != 0 && ret_cert != GNUTLS_E_NO_CERTIFICATE_FOUND) {
@@ -855,7 +857,7 @@ static struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance
  * return U_OK on success
  */
 int ulfius_start_framework(struct _u_instance * u_instance) {
-#ifndef U_DISABLE_WEBSOCKET
+#ifndef U_DISABLE_GNUTLS
   return ulfius_start_secure_ca_trust_framework(u_instance, NULL, NULL, NULL);
 #else
   return ulfius_start_secure_framework(u_instance, NULL, NULL);
@@ -872,7 +874,7 @@ int ulfius_start_framework(struct _u_instance * u_instance) {
  * return U_OK on success
  */
 int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem) {
-#ifndef U_DISABLE_WEBSOCKET
+#ifndef U_DISABLE_GNUTLS
   return ulfius_start_secure_ca_trust_framework(u_instance, key_pem, cert_pem, NULL);
 #else
   // Check parameters and validate u_instance and endpoint_list that there is no mistake
@@ -901,7 +903,7 @@ int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * 
 #endif
 }
 
-#ifndef U_DISABLE_WEBSOCKET
+#ifndef U_DISABLE_GNUTLS
 /**
  * ulfius_start_secure_ca_trust_framework
  * Initializes the framework and run the webservice based on the parameters given using an HTTPS connection
@@ -1409,8 +1411,10 @@ int ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, str
     u_instance->max_post_body_size = 0;
     u_instance->file_upload_callback = NULL;
     u_instance->file_upload_cls = NULL;
-#ifndef U_DISABLE_WEBSOCKET
+#ifndef U_DISABLE_GNUTLS
     u_instance->use_client_cert_auth = 0;
+#endif
+#ifndef U_DISABLE_WEBSOCKET
     u_instance->websocket_handler = o_malloc(sizeof(struct _websocket_handler));
     if (u_instance->websocket_handler == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for u_instance->websocket_handler");

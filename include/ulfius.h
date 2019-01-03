@@ -30,12 +30,15 @@
 
 /** External dependencies **/
 
-#ifndef U_DISABLE_WEBSOCKET
+#ifndef U_DISABLE_GNUTLS
   #ifndef _GNU_SOURCE
     #define _GNU_SOURCE
   #endif
   #include <gnutls/gnutls.h>
   #include <gnutls/x509.h>
+#endif
+
+#ifndef U_DISABLE_WEBSOCKET
   #include <poll.h>
   #ifndef POLLRDHUP
     #define POLLRDHUP 0x2000
@@ -184,7 +187,7 @@ struct _u_request {
   struct _u_map *      map_post_body;
   void *               binary_body;
   size_t               binary_body_length;
-#ifndef U_DISABLE_WEBSOCKET
+#ifndef U_DISABLE_GNUTLS
   gnutls_x509_crt_t    client_cert;
   char *               client_cert_file;
   char *               client_key_file;
@@ -318,7 +321,7 @@ struct _u_instance {
   void                        * file_upload_cls;
   int                           mhd_response_copy_data;
   int                           check_utf8;
-#ifndef U_DISABLE_WEBSOCKET
+#ifndef U_DISABLE_GNUTLS
   int                           use_client_cert_auth;
 #endif
 };
@@ -380,7 +383,7 @@ int ulfius_start_framework(struct _u_instance * u_instance);
  */
 int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem);
 
-#ifndef U_DISABLE_WEBSOCKET
+#ifndef U_DISABLE_GNUTLS
 /**
  * ulfius_start_secure_ca_trust_framework
  * Initializes the framework and run the webservice based on the parameters given using an HTTPS connection
@@ -1322,6 +1325,9 @@ struct _websocket_handler {
   int                           pthread_init;
 };
 
+#endif // U_DISABLE_WEBSOCKET
+
+#ifndef U_DISABLE_GNUTLS
 /*
  * ulfius_export_client_certificate_pem
  * Exports the client certificate using PEM format
@@ -1339,6 +1345,6 @@ char * ulfius_export_client_certificate_pem(const struct _u_request * request);
  */
 int ulfius_import_client_certificate_pem(struct _u_request * request, const char * str_cert);
 
-#endif // U_DISABLE_WEBSOCKET
+#endif // U_DISABLE_GNUTLS
 
 #endif // __ULFIUS_H__

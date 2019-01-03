@@ -203,7 +203,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
         }
       }
 
-#ifndef U_DISABLE_WEBSOCKET
+#ifndef U_DISABLE_GNUTLS
       // Set client certificate authentication if defined
       if (request->client_cert_file != NULL && request->client_key_file != NULL) {
         if (curl_easy_setopt(curl_handle, CURLOPT_SSLCERT, request->client_cert_file) != CURLE_OK) {
