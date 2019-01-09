@@ -111,8 +111,8 @@ endif ()
 # GNU TLS support
 option(WITH_GNUTLS "GNU TLS support" ON)
 
-# XXX: this should not be forced, as WS can work on HTTP too.
-# Too lazy to fix
+# In theory websockets do not require TLS.
+# Forcing to prevent backwards compatibility issues.
 if (WITH_WEBSOCKET)
     set(WITH_GNUTLS ON)
 endif ()
