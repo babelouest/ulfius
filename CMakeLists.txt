@@ -78,11 +78,33 @@ set(LIB_SRC
     ${SRC_DIR}/yuarel.c
     ${SRC_DIR}/ulfius.c)
 
+# GNU TLS support
+option(WITH_GNUTLS "GNU TLS support" ON)
+
+if (WITH_GNUTLS)
+    include(FindGnuTLS)
+    find_package(GnuTLS REQUIRED)
+    if (GNUTLS_FOUND)
+        set(LIBS ${LIBS} ${GNUTLS_LIBRARIES})
+    endif ()
+endif ()
+
+if (WITH_GNUTLS)
+    set(U_DISABLE_GNUTLS OFF)
+else ()
+    set(U_DISABLE_GNUTLS ON)
+endif ()
+
 # websocket support
 
 option(WITH_WEBSOCKET "Websocket support" ON)
 
 if (WIN32)
+    set(WITH_WEBSOCKET OFF)
+endif ()
+
+# current websocket implementation depends on GNU TLS
+if (NOT WITH_GNUTLS)
     set(WITH_WEBSOCKET OFF)
 endif ()
 
@@ -106,29 +128,6 @@ if (WITH_WEBSOCKET)
     set(U_DISABLE_WEBSOCKET OFF)
 else ()
     set(U_DISABLE_WEBSOCKET ON)
-endif ()
-
-# GNU TLS support
-option(WITH_GNUTLS "GNU TLS support" ON)
-
-# In theory websockets do not require TLS.
-# Forcing to prevent backwards compatibility issues.
-if (WITH_WEBSOCKET)
-    set(WITH_GNUTLS ON)
-endif ()
-
-if (WITH_GNUTLS)
-    include(FindGnuTLS)
-    find_package(GnuTLS REQUIRED)
-    if (GNUTLS_FOUND)
-        set(LIBS ${LIBS} ${GNUTLS_LIBRARIES})
-    endif ()
-endif ()
-
-if (WITH_GNUTLS)
-    set(U_DISABLE_GNUTLS OFF)
-else ()
-    set(U_DISABLE_GNUTLS ON)
 endif ()
 
 option(WITH_CURL "Use Curl library" ON)
@@ -248,7 +247,11 @@ endif ()
 
 option(BUILD_UWSC "Build uwsc application." ON)
 
-if (WITH_WEBSOCKET AND BUILD_UWSC)
+if (NOT WITH_WEBSOCKET)
+    set(BUILD_UWSC OFF)
+endif ()
+
+if (BUILD_UWSC)
     add_executable(uwsc ${UWSC_DIR}/uwsc.c ${INC_DIR}/ulfius.h ${INC_DIR}/u_private.h ${PROJECT_BINARY_DIR}/ulfius-cfg.h)
     set_target_properties(uwsc PROPERTIES SKIP_BUILD_RPATH TRUE)
     add_dependencies(uwsc ulfius)

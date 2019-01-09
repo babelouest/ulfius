@@ -89,13 +89,19 @@ $ make JANSSONFLAG=1
 
 If libjansson functions are disabled, `libjansson-dev` is no longer mandatory for install.
 
-To disable websocket implementation and avoid installing libgnutls, append the option `WEBSOCKETFLAG=1` to the make command when you build Ulfius:
+To disable GNU TLS extensions (HTTPS client certificate support) and avoid installing libgnutls, append the option `GNUTLSFLAG=1` to the make command when you build Ulfius:
+
+```shell
+$ make GNUTLSFLAG=1
+```
+
+If GNU TLS extensions are disabled, `libgnutls-dev` is no longer mandatory for install. However, this will also disable websocket support, since it depends on libgnutls.
+
+To disable websocket implementation, append the option `WEBSOCKETFLAG=1` to the make command when you build Ulfius:
 
 ```shell
 $ make WEBSOCKETFLAG=1
 ```
-
-If websocket functions are disabled, `libgnutls-dev` is no longer mandatory for install.
 
 To disable yder library (you will no longer have log messages available!), append the option `YDERFLAG=1` to the make command when you build Ulfius:
 
@@ -162,7 +168,8 @@ $ make && sudo make install
 The available options for cmake are:
 - `-DWITH_JANSSON=[on|off]` (default `on`): Build with Jansson dependency
 - `-DWITH_CURL=[on|off]` (default `on`): Build with libcurl dependency
-- `-DWITH_WEBSOCKET=[on|off]` (default `on`): Build with websocket functions, not available for Windows, requires libmicrohttpd 0.9.53 minimum and GnuTLS installed.
+- `-DWITH_GNUTLS=[on|off]` (default `on`): Build with GNU TLS extensions (HTTPS client certificate support), requires GnuTLS library.
+- `-DWITH_WEBSOCKET=[on|off]` (default `on`): Build with websocket functions, not available for Windows, requires libmicrohttpd 0.9.53 minimum.
 - `-DWITH_JOURNALD=[on|off]` (default `on`): Build with journald (SystemD) support for logging
 - `-DWITH_YDER=[on|off]` (default `on`): Build with Yder library for logging messages
 - `-DBUILD_UWSC=[on|off]` (default `on`): Build uwsc
