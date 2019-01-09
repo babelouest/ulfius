@@ -78,6 +78,10 @@ set(LIB_SRC
     ${SRC_DIR}/yuarel.c
     ${SRC_DIR}/ulfius.c)
 
+# pthread libraries
+find_package (Threads)
+set(LIBS ${LIBS} ${CMAKE_THREAD_LIBS_INIT})
+
 # websocket support
 
 option(WITH_WEBSOCKET "Websocket support" ON)
