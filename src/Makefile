@@ -46,9 +46,16 @@ endif
 
 ifndef WEBSOCKETFLAG
 DISABLE_WEBSOCKET=0
-LWEBSOCKET=-lgnutls
+GNUTLSFLAG=1
 else
 DISABLE_WEBSOCKET=1
+endif
+
+ifndef GNUTLSFLAG
+DISABLE_GNUTLS=0
+LWEBSOCKET=-lgnutls
+else
+DISABLE_GNUTLS=1
 endif
 
 ifndef YDERFLAG
@@ -105,6 +112,13 @@ $(CONFIG_FILE):
 	else \
 		sed -i -e 's/\#cmakedefine U_DISABLE_WEBSOCKET/\/* #undef U_DISABLE_WEBSOCKET *\//g' $(CONFIG_FILE); \
 		echo "WEBSOCKET SUPPORT  ENABLED"; \
+	fi
+	@if [ "$(DISABLE_GNUTLS)" = "1" ]; then \
+		sed -i -e 's/\#cmakedefine U_DISABLE_GNUTLS/\#define U_DISABLE_GNUTLS/g' $(CONFIG_FILE); \
+		echo "GNUTLS SUPPORT     DISABLED"; \
+	else \
+		sed -i -e 's/\#cmakedefine U_DISABLE_GNUTLS/\/* #undef U_DISABLE_GNUTLS *\//g' $(CONFIG_FILE); \
+		echo "GNUTLS SUPPORT     ENABLED"; \
 	fi
 	@if [ "$(DISABLE_YDER)" = "1" ]; then \
 		sed -i -e 's/\#cmakedefine U_DISABLE_YDER/\#define U_DISABLE_YDER/g' $(CONFIG_FILE); \

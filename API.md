@@ -188,7 +188,7 @@ struct _u_instance {
   void                        * file_upload_cls;
   int                           mhd_response_copy_data;
   int                           check_utf8;
-#ifndef U_DISABLE_WEBSOCKET
+#ifndef U_DISABLE_GNUTLS
   int                           use_client_cert_auth;
 #endif
 };
@@ -514,7 +514,7 @@ struct _u_request {
   struct _u_map *      map_post_body;
   void *               binary_body;
   size_t               binary_body_length;
-#ifndef U_DISABLE_WEBSOCKET
+#ifndef U_DISABLE_GNUTLS
   gnutls_x509_crt_t    client_cert;
   char *               client_cert_file;
   char *               client_key_file;
@@ -1563,11 +1563,29 @@ If you need to communicate between callback functions for any purpose, you can u
 
 the values `string_body` and `json_body` have been removed from the structures `struct _u_request` and `struct _u_response`. This may be painless in the response if you used only the functions `ulfius_set_xxx_body_response`. Otherwise, you should make small arrangements to your code.
 
+### GNU TLS extension
+Ulfius GNU TLS extension allows sending HTTPS requests with client certificate and enables additional client certificate validation option for HTTS server.
+
+Using websocket requires [libgnutls](https://www.gnutls.org/).
+
+This extension can be disabled with `GNUTLSFLAG` option when using make:
+
+```shell
+$ make GNUTLS=1 WEBSOCKETFLAG=1
+```
+
+or with `WITH_GNUTLS=OFF` for cmake:
+
+```shell
+$ cd build
+$ cmake .. -DWITH_GNUTLS=OFF -DWITH_WEBSOCKET=OFF
+```
+
 ### Websocket service
 
 Ulfius now allows websockets communication between the client and the server. Check the [API.md](API.md#websockets-communication) file for implementation details.
 
-Using websocket requires [libgnutls](https://www.gnutls.org/). It also requires a recent version of [Libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/), at least 0.9.53.
+Websocket service requires enabled GNU TLS extension and a recent version of [Libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/), at least 0.9.53.
 
 If you dont need or can't use this feature, you can disable it by adding the option `WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET` to the make command when you build Ulfius:
 
