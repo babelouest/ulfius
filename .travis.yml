@@ -196,7 +196,7 @@ script:
   - sudo make install
   - cd ../example_programs/build
   - rm -rf *
-  - cd ../../
+  - cmake ..
   - make
 
   - cd ../../build
