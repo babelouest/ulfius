@@ -8,7 +8,7 @@ language: c
 dist: xenial
 addons:
   apt:
-    packages: [ libjansson-dev, check, libsubunit-dev, libsystemd-dev, cppcheck ]
+    packages: [ libgnutls28-dev, libjansson-dev, check, libsubunit-dev, libsystemd-dev, cppcheck ]
 
 matrix:
   include:
