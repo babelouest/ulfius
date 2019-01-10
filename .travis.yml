@@ -318,6 +318,8 @@ script:
   - sudo make install
   - cd ../example_programs/build
   - rm -rf *
+  - cmake ..
+  - make
   - cd ../../
   - make
   - make clean debug CURLFLAG=1 JANSSONFLAG=1 WEBSOCKETFLAG=1 YDERFLAG=1
@@ -336,5 +338,21 @@ script:
   - make clean debug CURLFLAG=1 JANSSONFLAG=1
   - make clean debug CURLFLAG=1 WEBSOCKETFLAG=1
   - make clean debug CURLFLAG=1
+  - make clean debug GNUTLSFLAG=1 CURLFLAG=1 JANSSONFLAG=1 WEBSOCKETFLAG=1 YDERFLAG=1
+  - make clean debug GNUTLSFLAG=1 CURLFLAG=1 JANSSONFLAG=1 YDERFLAG=1
+  - make clean debug GNUTLSFLAG=1 CURLFLAG=1 WEBSOCKETFLAG=1 YDERFLAG=1
+  - make clean debug GNUTLSFLAG=1 CURLFLAG=1 YDERFLAG=1
+  - make clean debug GNUTLSFLAG=1 JANSSONFLAG=1 WEBSOCKETFLAG=1 YDERFLAG=1
+  - make clean debug GNUTLSFLAG=1 CURLFLAG=1 JANSSONFLAG=1 YDERFLAG=1
+  - make clean debug GNUTLSFLAG=1 CURLFLAG=1 WEBSOCKETFLAG=1 YDERFLAG=1
+  - make clean debug GNUTLSFLAG=1 CURLFLAG=1 YDERFLAG=1
+  - make clean debug GNUTLSFLAG=1 CURLFLAG=1 JANSSONFLAG=1 WEBSOCKETFLAG=1
+  - make clean debug GNUTLSFLAG=1 CURLFLAG=1 JANSSONFLAG=1
+  - make clean debug GNUTLSFLAG=1 CURLFLAG=1 WEBSOCKETFLAG=1
+  - make clean debug GNUTLSFLAG=1 CURLFLAG=1
+  - make clean debug GNUTLSFLAG=1 JANSSONFLAG=1 WEBSOCKETFLAG=1
+  - make clean debug GNUTLSFLAG=1 CURLFLAG=1 JANSSONFLAG=1
+  - make clean debug GNUTLSFLAG=1 CURLFLAG=1 WEBSOCKETFLAG=1
+  - make clean debug GNUTLSFLAG=1 CURLFLAG=1
   - make clean debug check
 
