@@ -8,7 +8,7 @@ language: c
 dist: xenial
 addons:
   apt:
-    packages: [ libmicrohttpd-dev, libjansson-dev, check, libsubunit-dev, cppcheck ]
+    packages: [ libmicrohttpd-dev, libjansson-dev, check, libsubunit-dev, libsystemd-dev, cppcheck ]
 
 matrix:
   include:
