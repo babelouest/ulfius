@@ -5,6 +5,7 @@ sudo: required
 
 language: c
 
+dist: xenial
 addons:
   apt:
     packages: [ libmicrohttpd-dev, libjansson-dev, check, libsubunit-dev, cppcheck ]
