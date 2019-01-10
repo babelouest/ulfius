@@ -34,7 +34,7 @@ debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 debug: simple_example
 
 ../../src/libulfius.so:
-	cd $(ULFIUS_LOCATION) && $(MAKE) debug CURLFLAG=-DU_DISABLE_CURL GNUTLSFLAG=-DU_DISABLE_GNUTLS
+	cd $(ULFIUS_LOCATION) && $(MAKE) debug CURLFLAG=1 GNUTLSFLAG=1
 
 simple_example.o: simple_example.c
 	$(CC) $(CFLAGS) simple_example.c -DDEBUG -g -O0

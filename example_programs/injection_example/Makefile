@@ -33,7 +33,7 @@ debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 debug: injection_example
 
 ../../src/libulfius.so:
-	cd $(ULFIUS_LOCATION) && $(MAKE) debug JANSSONFLAG=-DU_DISABLE_JANSSON CURLFLAG=-DU_DISABLE_CURL GNUTLSFLAG=-DU_DISABLE_GNUTLS
+	cd $(ULFIUS_LOCATION) && $(MAKE) debug JANSSONFLAG=1 CURLFLAG=1 GNUTLSFLAG=1
 
 injection_example.o: injection_example.c
 	$(CC) $(CFLAGS) injection_example.c -DDEBUG -g -O0
