@@ -28,6 +28,7 @@
 #define ULFIUS_VERSION ${PROJECT_VERSION}
 #cmakedefine U_DISABLE_JANSSON
 #cmakedefine U_DISABLE_CURL
+#cmakedefine U_DISABLE_GNUTLS
 #cmakedefine U_DISABLE_WEBSOCKET
 #cmakedefine U_DISABLE_YDER
 #cmakedefine U_WITH_FREERTOS

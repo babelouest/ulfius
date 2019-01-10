@@ -35,7 +35,7 @@ debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 debug: websocket_server websocket_client
 
 ../../src/libulfius.so:
-	cd $(ULFIUS_LOCATION) && $(MAKE) debug JANSSONFLAG=-DU_DISABLE_JANSSON
+	cd $(ULFIUS_LOCATION) && $(MAKE) debug JANSSONFLAG=1
 
 static_file_callback.o: $(STATIC_FILE_LOCATION)/static_file_callback.c
 	$(CC) $(CFLAGS) $(STATIC_FILE_LOCATION)/static_file_callback.c

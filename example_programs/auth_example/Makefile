@@ -33,7 +33,7 @@ debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 debug: auth_client auth_server
 
 ../../src/libulfius.so:
-	cd $(ULFIUS_LOCATION) && $(MAKE) debug JANSSONFLAG=-DU_DISABLE_JANSSON
+	cd $(ULFIUS_LOCATION) && $(MAKE) debug JANSSONFLAG=1 WEBSOCKETFLAG=1
 
 auth_client.o: auth_client.c ../../src/libulfius.so
 	$(CC) $(CFLAGS) auth_client.c -DDEBUG -g -O0

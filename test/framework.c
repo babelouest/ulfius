@@ -276,7 +276,7 @@ int callback_check_utf8_not_ignored(const struct _u_request * request, struct _u
   return U_OK;
 }
 
-#ifndef U_DISABLE_WEBSOCKET
+#ifndef U_DISABLE_GNUTLS
 int callback_auth_client_cert (const struct _u_request * request, struct _u_response * response, void * user_data) {
   char * dn;
   size_t lbuf = 0;
@@ -730,7 +730,7 @@ START_TEST(test_ulfius_utf8_ignored)
 }
 END_TEST
 
-#ifndef U_DISABLE_WEBSOCKET
+#ifndef U_DISABLE_GNUTLS
 START_TEST(test_ulfius_server_ca_trust)
 {
   struct _u_instance u_instance;
@@ -808,7 +808,7 @@ static Suite *ulfius_suite(void)
   tcase_add_test(tc_core, test_ulfius_endpoint_stream);
   tcase_add_test(tc_core, test_ulfius_utf8_not_ignored);
   tcase_add_test(tc_core, test_ulfius_utf8_ignored);
-#ifndef U_DISABLE_WEBSOCKET
+#ifndef U_DISABLE_GNUTLS
   tcase_add_test(tc_core, test_ulfius_server_ca_trust);
   tcase_add_test(tc_core, test_ulfius_client_certificate);
 #endif

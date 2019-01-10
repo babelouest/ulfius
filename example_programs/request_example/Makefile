@@ -33,7 +33,7 @@ debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 debug: client server mail
 
 ../../src/libulfius.so:
-	cd $(ULFIUS_LOCATION) && $(MAKE) debug WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET
+	cd $(ULFIUS_LOCATION) && $(MAKE) debug GNUTLSFLAG=1
 
 client.o: client.c ../../src/libulfius.so
 	$(CC) $(CFLAGS) client.c -DDEBUG -g -O0

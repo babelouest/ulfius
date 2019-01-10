@@ -188,7 +188,7 @@ struct _u_instance {
   void                        * file_upload_cls;
   int                           mhd_response_copy_data;
   int                           check_utf8;
-#ifndef U_DISABLE_WEBSOCKET
+#ifndef U_DISABLE_GNUTLS
   int                           use_client_cert_auth;
 #endif
 };
@@ -514,7 +514,7 @@ struct _u_request {
   struct _u_map *      map_post_body;
   void *               binary_body;
   size_t               binary_body_length;
-#ifndef U_DISABLE_WEBSOCKET
+#ifndef U_DISABLE_GNUTLS
   gnutls_x509_crt_t    client_cert;
   char *               client_cert_file;
   char *               client_key_file;
