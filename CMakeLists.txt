@@ -93,12 +93,6 @@ if (WITH_GNUTLS)
     endif ()
 endif ()
 
-if (WITH_GNUTLS)
-    set(U_DISABLE_GNUTLS OFF)
-else ()
-    set(U_DISABLE_GNUTLS ON)
-endif ()
-
 # websocket support
 
 option(WITH_WEBSOCKET "Websocket support" ON)
@@ -112,10 +106,16 @@ if (NOT WITH_GNUTLS)
     set(WITH_WEBSOCKET OFF)
 endif ()
 
-if (NOT WITH_WEBSOCKET)
-    set(MHD_MIN_VERSION 0.9.51)
-else ()
+if (WITH_WEBSOCKET)
     set(MHD_MIN_VERSION 0.9.53)
+else ()
+    set(MHD_MIN_VERSION 0.9.51)
+endif ()
+
+if (WITH_GNUTLS)
+    set(U_DISABLE_GNUTLS OFF)
+else ()
+    set(U_DISABLE_GNUTLS ON)
 endif ()
 
 include(FindMHD)
