@@ -1,5 +1,12 @@
 # Ulfius Changelog
 
+## 2.5.3
+
+- Add flag to build Ulfius with GnuTLS support without Websockets
+- Improve Travis CI script
+- Fix CMake build process that didn't obviously linked Ulfius with pthreads
+- Add command to run tests with valgrind
+
 ## 2.5.2
 
 - Fix utf8 check on NULL value
