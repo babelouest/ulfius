@@ -1695,8 +1695,14 @@ int ulfius_websocket_client_connection_status(struct _websocket_client_handler *
  * wether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
  */
 int ulfius_websocket_client_connection_wait_close(struct _websocket_client_handler * websocket_client_handler, unsigned int timeout) {
+  int ret;
+  
   if (websocket_client_handler != NULL) {
-    return ulfius_websocket_wait_close(websocket_client_handler->websocket->websocket_manager, timeout);
+    ret = ulfius_websocket_wait_close(websocket_client_handler->websocket->websocket_manager, timeout);
+    if (ret == U_WEBSOCKET_STATUS_CLOSE && websocket_client_handler->websocket != NULL) {
+      ulfius_clear_websocket(websocket_client_handler->websocket);
+    }
+    return ret;
   } else {
     return U_WEBSOCKET_STATUS_ERROR;
   }
