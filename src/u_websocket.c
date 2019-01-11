@@ -1621,8 +1621,8 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
             websocket_client_handler->websocket = websocket;
           }
         } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for websocket");
-            ret = U_ERROR_MEMORY;
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for websocket");
+          ret = U_ERROR_MEMORY;
         }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Unknown scheme, please use one of the following: 'http', 'https', 'ws', 'wss'");
