@@ -70,5 +70,6 @@ check: test
 memcheck: $(ULFIUS_LIBRARY) u_map core framework websocket
 	-CK_FORK=no LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} $(VALGRIND_COMMAND) ./u_map 2>valgrind-u_map.txt
 	-CK_FORK=no LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} $(VALGRIND_COMMAND) ./core 2>valgrind-core.txt
-	-CK_FORK=no LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} $(VALGRIND_COMMAND) ./framework 2>valgrind-framework.txt
+	# test framework seems not to work properly when CK_FORK=no is used, so using it old school with forks then
+	-LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} $(VALGRIND_COMMAND) ./framework 2>valgrind-framework.txt
 	-CK_FORK=no LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} $(VALGRIND_COMMAND) ./websocket 2>valgrind-websocket.txt
