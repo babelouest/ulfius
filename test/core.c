@@ -118,12 +118,12 @@ START_TEST(test_ulfius_start_instance)
 {
   struct _u_instance u_instance;
 
-  ck_assert_int_eq(ulfius_start_framework(NULL), U_ERROR_PARAMS);
-  ck_assert_int_eq(ulfius_start_secure_framework(NULL, NULL, NULL), U_ERROR_PARAMS);
-  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8081, NULL, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", NULL, "test", 0, &callback_function_empty, NULL), U_OK);
   ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
   ck_assert_int_eq(ulfius_stop_framework(&u_instance), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(NULL), U_ERROR_PARAMS);
+  ck_assert_int_eq(ulfius_start_secure_framework(NULL, NULL, NULL), U_ERROR_PARAMS);
   ck_assert_int_eq(ulfius_start_secure_framework(&u_instance, "error", "error"), U_ERROR_LIBMHD);
   ck_assert_int_eq(ulfius_start_secure_framework(&u_instance, "-----BEGIN PRIVATE KEY-----\
 MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDr90HrswgEmln/\
