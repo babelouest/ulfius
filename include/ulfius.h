@@ -162,6 +162,7 @@ struct _u_cookie {
  * map_post_body:             map containing the post body variables (if available)
  * binary_body:               pointer to raw body
  * binary_body_length:        length of raw body
+ * callback_position          position of the current callback function in the callback list, starts at 0
  * client_cert:               x509 certificate of the client if the instance uses client certificate authentication and the client is authenticated
  *                            available only if websocket support is enabled
  * client_cert_file:          path to client certificate file for sending http requests with certificate authentication
@@ -187,6 +188,7 @@ struct _u_request {
   struct _u_map *      map_post_body;
   void *               binary_body;
   size_t               binary_body_length;
+  unsigned int         callback_position;
 #ifndef U_DISABLE_GNUTLS
   gnutls_x509_crt_t    client_cert;
   char *               client_cert_file;

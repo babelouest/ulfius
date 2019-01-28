@@ -243,7 +243,7 @@ void free_stream_data(void * cls) {
 
 int callback_function_stream (const struct _u_request * request, struct _u_response * response, void * user_data) {
   ulfius_set_stream_response(response, 200, stream_data, free_stream_data, U_STREAM_SIZE_UNKOWN, 32 * 1024, o_strdup("stream test"));
-  return U_OK;
+  return U_CALLBACK_CONTINUE;
 }
 
 size_t my_write_body(void * contents, size_t size, size_t nmemb, void * user_data) {
@@ -261,7 +261,7 @@ int callback_check_utf8_ignored(const struct _u_request * request, struct _u_res
   ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param_valid1"), 1);
   ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param_valid2"), 1);
   ck_assert_int_eq(u_map_has_key(request->map_post_body, "utf8_param_valid"), 1);
-  return U_OK;
+  return U_CALLBACK_CONTINUE;
 }
 
 int callback_check_utf8_not_ignored(const struct _u_request * request, struct _u_response * response, void * user_data) {
@@ -273,7 +273,22 @@ int callback_check_utf8_not_ignored(const struct _u_request * request, struct _u
   ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param_valid1"), 1);
   ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param_valid2"), 1);
   ck_assert_int_eq(u_map_has_key(request->map_post_body, "utf8_param_valid"), 1);
-  return U_OK;
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_function_position_0(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  ck_assert_int_eq(request->callback_position, 0);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_function_position_1(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  ck_assert_int_eq(request->callback_position, 1);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_function_position_2(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  ck_assert_int_eq(request->callback_position, 2);
+  return U_CALLBACK_CONTINUE;
 }
 
 #ifndef U_DISABLE_GNUTLS
@@ -730,6 +745,31 @@ START_TEST(test_ulfius_utf8_ignored)
 }
 END_TEST
 
+START_TEST(test_ulfius_endpoint_callback_position)
+{
+  struct _u_instance u_instance;
+  struct _u_request request;
+  struct _u_response response;
+  
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "callback_position", "*", 0, &callback_function_position_0, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "callback_position", "*", 0, &callback_function_position_1, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "callback_position", "*", 0, &callback_function_position_2, NULL), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
+  
+  ulfius_init_request(&request);
+  request.http_url = o_strdup("http://localhost:8080/callback_position");
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 200);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+  
+  ulfius_stop_framework(&u_instance);
+  ulfius_clean_instance(&u_instance);
+}
+END_TEST
+
 #ifndef U_DISABLE_GNUTLS
 START_TEST(test_ulfius_server_ca_trust)
 {
@@ -808,6 +848,7 @@ static Suite *ulfius_suite(void)
   tcase_add_test(tc_core, test_ulfius_endpoint_stream);
   tcase_add_test(tc_core, test_ulfius_utf8_not_ignored);
   tcase_add_test(tc_core, test_ulfius_utf8_ignored);
+  tcase_add_test(tc_core, test_ulfius_endpoint_callback_position);
 #ifndef U_DISABLE_GNUTLS
   tcase_add_test(tc_core, test_ulfius_server_ca_trust);
   tcase_add_test(tc_core, test_ulfius_client_certificate);

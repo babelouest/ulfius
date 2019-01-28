@@ -511,6 +511,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
           }
           // Run callback function with the input parameters filled for the current callback
           callback_ret = current_endpoint->callback_function(con_info->request, response, current_endpoint->user_data);
+          con_info->request->callback_position++;
           if (response->timeout > 0 && MHD_set_connection_option(connection, MHD_CONNECTION_OPTION_TIMEOUT, response->timeout) !=  MHD_YES) {
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting connection response timeout value");
           }

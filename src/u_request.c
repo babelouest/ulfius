@@ -274,6 +274,7 @@ int ulfius_init_request(struct _u_request * request) {
     request->client_address = NULL;
     request->binary_body = NULL;
     request->binary_body_length = 0;
+    request->callback_position = 0;
 #ifndef U_DISABLE_GNUTLS
     request->client_cert = NULL;
     request->client_cert_file = NULL;

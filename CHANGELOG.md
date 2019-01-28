@@ -1,5 +1,9 @@
 # Ulfius Changelog
 
+## 2.6.0
+
+- Add struct _u_request->callback_position to know the position of the current callback in the callback list
+
 ## 2.5.3
 
 - Add flag to build Ulfius with GnuTLS support but without Websockets
