@@ -319,7 +319,7 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
     
     if (filename != NULL) {
       filename_param = msprintf("%s_filename", key);
-      if (u_map_put((struct _u_map *)con_info->request->map_post_body, filename_param, filename) != U_OK) {
+      if (!u_map_has_key((struct _u_map *)con_info->request->map_post_body, filename_param) && u_map_put((struct _u_map *)con_info->request->map_post_body, filename_param, filename) != U_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error u_map_put filename value");
       }
       o_free(filename_param);
@@ -774,7 +774,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
  * 
  */
 static struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem, const char * root_ca_perm) {
-  unsigned int mhd_flags = MHD_USE_THREAD_PER_CONNECTION;
+  unsigned int mhd_flags = MHD_USE_AUTO;
   int index;
 
 #ifdef DEBUG
