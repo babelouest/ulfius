@@ -3,6 +3,7 @@
 ## 2.6.0
 
 - Add struct _u_request->callback_position to know the position of the current callback in the callback list
+- Use MHD_USE_AUTO instead of MHD_USE_THREAD_PER_CONNECTION
 
 ## 2.5.3
 
