@@ -355,10 +355,16 @@ int ulfius_copy_request(struct _u_request * dest, const struct _u_request * sour
     dest->http_verb = o_strdup(source->http_verb);
     dest->http_url = o_strdup(source->http_url);
     dest->proxy = o_strdup(source->proxy);
+    dest->network_type = source->network_type;
     dest->check_server_certificate = source->check_server_certificate;
+    dest->check_server_certificate_flag = source->check_server_certificate_flag;
+    dest->check_proxy_certificate = source->check_proxy_certificate;
+    dest->check_proxy_certificate_flag = source->check_proxy_certificate_flag;
+    dest->ca_path = o_strdup(source->ca_path);
     dest->timeout = source->timeout;
     dest->auth_basic_user = o_strdup(source->auth_basic_user);
     dest->auth_basic_password = o_strdup(source->auth_basic_password);
+    dest->callback_position = source->callback_position;
     
     if (source->client_address != NULL) {
       dest->client_address = o_malloc(sizeof(struct sockaddr));
