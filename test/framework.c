@@ -6,7 +6,10 @@
 #include <errno.h>
 #include <time.h>
 #ifndef _WIN32
+  #include <sys/socket.h>
   #include <netinet/in.h>
+  #include <arpa/inet.h>
+  #include <netdb.h>
 #else
   #include <unistd.h>
 #endif
@@ -460,6 +463,8 @@ START_TEST(test_ulfius_net_type_endpoint)
   struct _u_instance u_instance;
   struct _u_request request;
   struct _u_response response;
+  struct sockaddr_in ipv4addr;
+  struct sockaddr_in6 ipv6addr;
   
   // Test network accepting IPV4 and IPV6 connections
   ck_assert_int_eq(ulfius_init_instance_ipv6(&u_instance, 8080, NULL, U_USE_ALL, NULL), U_OK);
@@ -529,6 +534,60 @@ START_TEST(test_ulfius_net_type_endpoint)
   request.network_type = U_USE_IPV6;
   ck_assert_int_ne(ulfius_send_http_request(&request, NULL), U_OK);
   ulfius_clean_request(&request);
+  
+  ulfius_stop_framework(&u_instance);
+  ulfius_clean_instance(&u_instance);
+  
+  // Test network binding to an IPV4 address
+  memset(&ipv4addr, 0, sizeof(ipv4addr));
+  ipv4addr.sin_family = AF_INET;
+  ipv4addr.sin_port = htons(8080);
+  ipv4addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, &ipv4addr, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "empty", NULL, 0, &callback_function_empty, NULL), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
+  
+  ulfius_init_request(&request);
+  request.http_url = o_strdup("http://localhost:8080/empty");
+  request.network_type = U_USE_IPV4;
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 200);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+  
+  ulfius_init_request(&request);
+  request.http_url = o_strdup("http://[::1]:8080/empty");
+  request.network_type = U_USE_IPV6;
+  ck_assert_int_ne(ulfius_send_http_request(&request, NULL), U_OK);
+  ulfius_clean_request(&request);
+  
+  ulfius_stop_framework(&u_instance);
+  ulfius_clean_instance(&u_instance);
+  
+  // Test network binding to an IPV6 address
+  memset(&ipv6addr, 0, sizeof(ipv6addr));
+  ipv6addr.sin6_family = AF_INET6;
+  ipv6addr.sin6_port = htons(8080);
+  ipv6addr.sin6_addr = in6addr_loopback;
+  ck_assert_int_eq(ulfius_init_instance_ipv6(&u_instance, 8080, &ipv6addr, U_USE_IPV6, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "empty", NULL, 0, &callback_function_empty, NULL), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
+
+  ulfius_init_request(&request);
+  request.http_url = o_strdup("http://127.0.0.1:8080/empty");
+  request.network_type = U_USE_IPV4;
+  ck_assert_int_ne(ulfius_send_http_request(&request, NULL), U_OK);
+  ulfius_clean_request(&request);
+  
+  ulfius_init_request(&request);
+  request.http_url = o_strdup("http://[::1]:8080/empty");
+  request.network_type = U_USE_IPV6;
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 200);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
   
   ulfius_stop_framework(&u_instance);
   ulfius_clean_instance(&u_instance);
