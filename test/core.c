@@ -22,8 +22,13 @@ START_TEST(test_ulfius_init_instance)
 {
   struct _u_instance u_instance;
   struct sockaddr_in listen;
+  struct sockaddr_in6 listen6;
+
   listen.sin_family = AF_INET;
   listen.sin_addr.s_addr = htonl (INADDR_ANY);
+
+  listen6.sin6_family = AF_INET6;
+  listen6.sin6_addr = in6addr_any;
 
   ck_assert_int_eq(ulfius_init_instance(&u_instance, 80, NULL, NULL), U_OK);
   ulfius_clean_instance(&u_instance);
@@ -34,6 +39,19 @@ START_TEST(test_ulfius_init_instance)
   ulfius_clean_instance(&u_instance);
   ck_assert_int_eq(ulfius_init_instance(&u_instance, 80, NULL, "test_ulfius"), U_OK);
   ulfius_clean_instance(&u_instance);
+
+  ck_assert_int_eq(ulfius_init_instance_ipv6(&u_instance, 80, &listen6, U_USE_IPV6, NULL), U_OK);
+  ulfius_clean_instance(&u_instance);
+  ck_assert_int_eq(ulfius_init_instance_ipv6(&u_instance, 80, &listen6, U_USE_ALL, NULL), U_OK);
+  ulfius_clean_instance(&u_instance);
+
+  ck_assert_int_eq(ulfius_init_instance_ipv6(&u_instance, 80, NULL, U_USE_IPV6, NULL), U_OK);
+  ulfius_clean_instance(&u_instance);
+  ck_assert_int_eq(ulfius_init_instance_ipv6(&u_instance, 80, NULL, U_USE_ALL, NULL), U_OK);
+  ulfius_clean_instance(&u_instance);
+
+  ck_assert_int_ne(ulfius_init_instance_ipv6(&u_instance, 80, NULL, U_USE_IPV4, NULL), U_OK);
+  ck_assert_int_ne(ulfius_init_instance_ipv6(&u_instance, 80, NULL, 0, NULL), U_OK);
 }
 END_TEST
 #else
