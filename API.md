@@ -207,6 +207,10 @@ You can use the functions `ulfius_init_instance`, `ulfius_init_instance_ipv6` an
  * ulfius_init_instance
  * 
  * Initialize a struct _u_instance * with default values
+ * Binds to IPV4 addresses only
+ * port:               tcp port to bind to, must be between 1 and 65535
+ * bind_address:       IPv4 address to listen to, optional, the reference is borrowed, the structure isn't copied
+ * default_auth_realm: default realm to send to the client on authentication error
  * return U_OK on success
  */
 int ulfius_init_instance(struct _u_instance * u_instance, int port, struct sockaddr_in * bind_address, const char * default_auth_realm);
@@ -216,6 +220,10 @@ int ulfius_init_instance(struct _u_instance * u_instance, int port, struct socka
  * 
  * Initialize a struct _u_instance * with default values
  * Binds to IPV6 and IPV4 addresses or IPV6 addresses only
+ * port:               tcp port to bind to, must be between 1 and 65535
+ * bind_address:       IPv6 address to listen to, optional, the reference is borrowed, the structure isn't copied
+ * network_type:       Type of network to listen to, values available are U_USE_IPV6 or U_USE_ALL
+ * default_auth_realm: default realm to send to the client on authentication error
  * return U_OK on success
  */
 int ulfius_init_instance_ipv6(struct _u_instance * u_instance, unsigned int port, struct sockaddr_in6 * bind_address, unsigned short network_type, const char * default_auth_realm);
