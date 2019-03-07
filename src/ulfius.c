@@ -1401,7 +1401,9 @@ void ulfius_clean_instance(struct _u_instance * u_instance) {
  * Initialize a struct _u_instance * with default values
  * internal function used by both ulfius_init_instance and ulfius_init_instance_ipv6
  * port:               tcp port to bind to, must be between 1 and 65535
- * bind_address:       IP address to listen to, optional, the reference is borrowed, the structure isn't copied
+ * bind_address4:      IPv4 address to listen to, optional, the reference is borrowed, the structure isn't copied
+ * bind_address6:      IPv6 address to listen to, optional, the reference is borrowed, the structure isn't copied
+ * network_type:       Type of network to listen to, values available are U_USE_IPV4, U_USE_IPV6 or U_USE_ALL
  * default_auth_realm: default realm to send to the client on authentication error
  * return U_OK on success
  */
@@ -1413,7 +1415,6 @@ static int internal_ulfius_init_instance(struct _u_instance * u_instance, unsign
     u_instance->bind_address = bind_address4;
     u_instance->bind_address6 = bind_address6;
     u_instance->network_type = network_type;
-    u_instance->bind_address6 = NULL;
     u_instance->timeout = 0;
     u_instance->default_auth_realm = o_strdup(default_auth_realm);
     u_instance->nb_endpoints = 0;
@@ -1467,7 +1468,7 @@ static int internal_ulfius_init_instance(struct _u_instance * u_instance, unsign
  * Initialize a struct _u_instance * with default values
  * Binds to IPV4 addresses only
  * port:               tcp port to bind to, must be between 1 and 65535
- * bind_address:       IP address to listen to, optional, the reference is borrowed, the structure isn't copied
+ * bind_address:       IPv4 address to listen to, optional, the reference is borrowed, the structure isn't copied
  * default_auth_realm: default realm to send to the client on authentication error
  * return U_OK on success
  */
@@ -1481,7 +1482,8 @@ int ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, str
  * Initialize a struct _u_instance * with default values
  * Binds to IPV6 and IPV4 or IPV6 addresses only
  * port:               tcp port to bind to, must be between 1 and 65535
- * bind_address:       IP address to listen to, optional, the reference is borrowed, the structure isn't copied
+ * bind_address:       IPv6 address to listen to, optional, the reference is borrowed, the structure isn't copied
+ * network_type:       Type of network to listen to, values available are U_USE_IPV6 or U_USE_ALL
  * default_auth_realm: default realm to send to the client on authentication error
  * return U_OK on success
  */
