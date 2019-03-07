@@ -8,7 +8,7 @@ language: c
 dist: xenial
 addons:
   apt:
-    packages: [ libgnutls28-dev, libjansson-dev, check, libsubunit-dev, libsystemd-dev, cppcheck ]
+    packages: [ libgnutls28-dev, libjansson-dev, libcurl4-gnutls-dev, check, libsubunit-dev, libsystemd-dev, cppcheck ]
 
 matrix:
   include:
@@ -26,10 +26,6 @@ install:
 - mkdir libmicrohttpd && tar xf libmicrohttpd-latest.tar.gz -C libmicrohttpd --strip-components 1
 - pushd libmicrohttpd && ./configure && make && sudo make install && popd
 - rm -rf libmicrohttpd
-- wget https://curl.haxx.se/download/curl-7.64.0.tar.gz
-- mkdir curl && tar xf curl-7.64.0.tar.gz -C curl --strip-components 1
-- pushd curl && ./configure && make && sudo make install && popd
-- rm -rf curl
 
 script:
 # prepare build folders
