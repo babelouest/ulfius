@@ -795,9 +795,25 @@ static struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance
     mhd_ops[0].value = (intptr_t)mhd_request_completed;
     mhd_ops[0].ptr_value = NULL;
     
-    mhd_ops[1].option = MHD_OPTION_SOCK_ADDR;
-    mhd_ops[1].value = 0;
-    mhd_ops[1].ptr_value = (void *)u_instance->bind_address;
+    // If bind_address6 is specified, listen only to IPV6 addresses
+    if (u_instance->bind_address6 != NULL) {
+      mhd_ops[1].option = MHD_OPTION_SOCK_ADDR;
+      mhd_ops[1].value = 0;
+      mhd_ops[1].ptr_value = (void *)u_instance->bind_address6;
+      mhd_flags |= MHD_USE_IPv6;
+    } else {
+      mhd_ops[1].option = MHD_OPTION_SOCK_ADDR;
+      mhd_ops[1].value = 0;
+      mhd_ops[1].ptr_value = (void *)u_instance->bind_address;
+      // Default network stack is listening to IPV4 only
+      if ((u_instance->network_type & U_USE_IPV4) && (u_instance->network_type & U_USE_IPV6)) {
+        // If u_instance->network_type & U_USE_ALL, listen to IPV4 and IPV6 addresses
+        mhd_flags |= MHD_USE_DUAL_STACK;
+      } else if (u_instance->network_type & U_USE_IPV6) {
+        // If u_instance->network_type & U_USE_IPV6, listen to IPV6 addresses only
+        mhd_flags |= MHD_USE_IPv6;
+      }
+    }
     
     mhd_ops[2].option = MHD_OPTION_URI_LOG_CALLBACK;
     mhd_ops[2].value = (intptr_t)ulfius_uri_logger;
@@ -1380,20 +1396,24 @@ void ulfius_clean_instance(struct _u_instance * u_instance) {
 }
 
 /**
- * ulfius_init_instance
+ * internal_ulfius_init_instance
  * 
  * Initialize a struct _u_instance * with default values
+ * internal function used by both ulfius_init_instance and ulfius_init_instance_ipv6
  * port:               tcp port to bind to, must be between 1 and 65535
  * bind_address:       IP address to listen to, optional, the reference is borrowed, the structure isn't copied
  * default_auth_realm: default realm to send to the client on authentication error
  * return U_OK on success
  */
-int ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, struct sockaddr_in * bind_address, const char * default_auth_realm) {
-  if (u_instance != NULL && port > 0 && port < 65536) {
+static int internal_ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, struct sockaddr_in * bind_address4, struct sockaddr_in6 * bind_address6, unsigned short network_type, const char * default_auth_realm) {
+  if (u_instance != NULL && port > 0 && port < 65536 && (bind_address4 == NULL || bind_address6 == NULL) && (network_type & U_USE_ALL)) {
     u_instance->mhd_daemon = NULL;
     u_instance->status = U_STATUS_STOP;
     u_instance->port = port;
-    u_instance->bind_address = bind_address;
+    u_instance->bind_address = bind_address4;
+    u_instance->bind_address6 = bind_address6;
+    u_instance->network_type = network_type;
+    u_instance->bind_address6 = NULL;
     u_instance->timeout = 0;
     u_instance->default_auth_realm = o_strdup(default_auth_realm);
     u_instance->nb_endpoints = 0;
@@ -1436,6 +1456,38 @@ int ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, str
     u_instance->websocket_handler = NULL;
 #endif
     return U_OK;
+  } else {
+    return U_ERROR_PARAMS;
+  }
+}
+
+/**
+ * ulfius_init_instance
+ * 
+ * Initialize a struct _u_instance * with default values
+ * Binds to IPV4 addresses only
+ * port:               tcp port to bind to, must be between 1 and 65535
+ * bind_address:       IP address to listen to, optional, the reference is borrowed, the structure isn't copied
+ * default_auth_realm: default realm to send to the client on authentication error
+ * return U_OK on success
+ */
+int ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, struct sockaddr_in * bind_address, const char * default_auth_realm) {
+  return internal_ulfius_init_instance(u_instance, port, bind_address, NULL, U_USE_IPV4, default_auth_realm);
+}
+
+/**
+ * ulfius_init_instance_ipv6
+ * 
+ * Initialize a struct _u_instance * with default values
+ * Binds to IPV6 and IPV4 or IPV6 addresses only
+ * port:               tcp port to bind to, must be between 1 and 65535
+ * bind_address:       IP address to listen to, optional, the reference is borrowed, the structure isn't copied
+ * default_auth_realm: default realm to send to the client on authentication error
+ * return U_OK on success
+ */
+int ulfius_init_instance_ipv6(struct _u_instance * u_instance, unsigned int port, struct sockaddr_in6 * bind_address, unsigned short network_type, const char * default_auth_realm) {
+  if (network_type & U_USE_IPV6) {
+    return internal_ulfius_init_instance(u_instance, port, NULL, bind_address, bind_address!=NULL?U_USE_IPV6:network_type, default_auth_realm);
   } else {
     return U_ERROR_PARAMS;
   }

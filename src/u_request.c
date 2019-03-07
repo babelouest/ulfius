@@ -28,6 +28,10 @@
 #include "u_private.h"
 #include "ulfius.h"
 
+#ifdef _MSC_VER
+#define strtok_r strtok_s
+#endif
+
 /**
  * Splits the url to an array of char *
  */
@@ -269,8 +273,13 @@ int ulfius_init_request(struct _u_request * request) {
     request->http_verb = NULL;
     request->http_url = NULL;
     request->proxy = NULL;
+    request->network_type = U_USE_ALL;
     request->timeout = 0L;
     request->check_server_certificate = 1;
+    request->check_server_certificate_flag = U_SSL_VERIFY_PEER|U_SSL_VERIFY_HOSTNAME;
+    request->check_proxy_certificate = 1;
+    request->check_proxy_certificate_flag = U_SSL_VERIFY_PEER|U_SSL_VERIFY_HOSTNAME;
+    request->ca_path = NULL;
     request->client_address = NULL;
     request->binary_body = NULL;
     request->binary_body_length = 0;
@@ -303,6 +312,7 @@ int ulfius_clean_request(struct _u_request * request) {
     o_free(request->auth_basic_user);
     o_free(request->auth_basic_password);
     o_free(request->client_address);
+    o_free(request->ca_path);
     u_map_clean_full(request->map_url);
     u_map_clean_full(request->map_header);
     u_map_clean_full(request->map_cookie);
@@ -343,6 +353,7 @@ int ulfius_clean_request_full(struct _u_request * request) {
     return U_ERROR_PARAMS;
   }
 }
+
 /**
  * ulfius_copy_request
  * Copy the source request elements into the dest request
@@ -448,6 +459,74 @@ int ulfius_copy_request(struct _u_request * dest, const struct _u_request * sour
     }
 #endif
     return ret;
+  } else {
+    return U_ERROR_PARAMS;
+  }
+}
+
+/**
+ * ulfius_set_string_body_request
+ * Set a string string_body to a request
+ * string_body must end with a '\0' character
+ * return U_OK on success
+ */
+int ulfius_set_string_body_request(struct _u_request * request, const char * string_body) {
+  if (request != NULL && string_body != NULL) {
+    size_t string_body_length = o_strlen(string_body);
+    // Free the binary_body available
+    o_free(request->binary_body);
+    request->binary_body = o_malloc(string_body_length);
+    
+    if (request->binary_body == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for request->binary_body");
+      return U_ERROR_MEMORY;
+    } else {
+      request->binary_body_length = string_body_length;
+      memcpy(request->binary_body, string_body, string_body_length);
+      return U_OK;
+    }
+  } else {
+    return U_ERROR_PARAMS;
+  }
+}
+
+/**
+ * ulfius_set_binary_body_request
+ * Add a binary binary_body to a request
+ * return U_OK on success
+ */
+int ulfius_set_binary_body_request(struct _u_request * request, const char * binary_body, const size_t length) {
+  if (request != NULL && binary_body != NULL && length > 0) {
+    // Free all the bodies available
+    o_free(request->binary_body);
+    request->binary_body = NULL;
+    request->binary_body_length = 0;
+
+    request->binary_body = o_malloc(length);
+    if (request->binary_body == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for request->binary_body");
+      return U_ERROR_MEMORY;
+    }
+    memcpy(request->binary_body, binary_body, length);
+    request->binary_body_length = length;
+    return U_OK;
+  } else {
+    return U_ERROR_PARAMS;
+  }
+}
+
+/**
+ * ulfius_set_empty_body_request
+ * Set an empty request body
+ * return U_OK on success
+ */
+int ulfius_set_empty_body_request(struct _u_request * request) {
+  if (request != NULL) {
+    // Free all the bodies available
+    o_free(request->binary_body);
+    request->binary_body = NULL;
+    request->binary_body_length = 0;
+    return U_OK;
   } else {
     return U_ERROR_PARAMS;
   }

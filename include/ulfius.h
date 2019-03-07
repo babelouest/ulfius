@@ -112,6 +112,10 @@ int y_close_logs();
 #define U_COOKIE_SAME_SITE_STRICT 1
 #define U_COOKIE_SAME_SITE_LAX    2
 
+#define U_USE_IPV4 0x0001
+#define U_USE_IPV6 0x0010
+#define U_USE_ALL (U_USE_IPV4|U_USE_IPV6)
+
 /*************
  * Structures
  *************/
@@ -151,6 +155,7 @@ struct _u_cookie {
  * http_verb:                 http method (GET, POST, PUT, DELETE, etc.), use '*' to match all http methods
  * http_url:                  url used to call this callback function or full url to call when used in a ulfius_send_http_request
  * proxy:                     proxy address to use for outgoing connections, used by ulfius_send_http_request
+ * network_type:              Force connect to ipv4, ipv6 addresses or both, values available are U_USE_ALL, U_USE_IPV4 or U_USE_IPV6
  * check_server_certificate:  do not check server certificate and hostname if false (default true), used by ulfius_send_http_request
  * timeout                    connection timeout used by ulfius_send_http_request, default is 0
  * client_address:            IP address of the client
@@ -177,8 +182,9 @@ struct _u_request {
   char *               http_verb;
   char *               http_url;
   char *               proxy;
+  unsigned short       network_type;
   int                  check_server_certificate;
-  long                 timeout;
+  unsigned long        timeout;
   struct sockaddr *    client_address;
   char *               auth_basic_user;
   char *               auth_basic_password;
@@ -277,7 +283,8 @@ struct _u_endpoint {
  * mhd_daemon:             pointer to the libmicrohttpd daemon
  * status:                 status of the current instance, status are U_STATUS_STOP, U_STATUS_RUNNING or U_STATUS_ERROR
  * port:                   port number to listen to
- * bind_address:           ip address to listen to (optional)
+ * network_type:           Listen to ipv4 and or ipv6 connections, values available are U_USE_ALL, U_USE_IPV4 or U_USE_IPV6
+ * bind_address:           ipv4 address to listen to (optional)
  * timeout:                Timeout to close the connection because of inactivity between the client and the server
  * nb_endpoints:           Number of available endpoints
  * default_auth_realm:     Default realm on authentication error
@@ -301,9 +308,11 @@ struct _u_instance {
   struct MHD_Daemon          *  mhd_daemon;
   int                           status;
   unsigned int                  port;
+  unsigned short                network_type;
   struct sockaddr_in          * bind_address;
+  struct sockaddr_in6         * bind_address6;
   unsigned int                  timeout;
-  int                           nb_endpoints;
+  unsigned int                  nb_endpoints;
   char                        * default_auth_realm;
   struct _u_endpoint          * endpoint_list;
   struct _u_endpoint          * default_endpoint;
@@ -354,9 +363,19 @@ void u_free(void * data);
  * ulfius_init_instance
  * 
  * Initialize a struct _u_instance * with default values
+ * Binds to IPV4 addresses only
  * return U_OK on success
  */
 int ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, struct sockaddr_in * bind_address, const char * default_auth_realm);
+
+/**
+ * ulfius_init_instance_ipv6
+ * 
+ * Initialize a struct _u_instance * with default values
+ * Binds to IPV6 and IPV4 addresses or IPV6 addresses only
+ * return U_OK on success
+ */
+int ulfius_init_instance_ipv6(struct _u_instance * u_instance, unsigned int port, struct sockaddr_in6 * bind_address, unsigned short network_type, const char * default_auth_realm);
 
 /**
  * ulfius_clean_instance

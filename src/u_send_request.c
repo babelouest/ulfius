@@ -234,6 +234,30 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
           return U_ERROR_LIBCURL;
         }
       }
+
+      // Set network type
+      if (copy_request->network_type & U_USE_ALL) {
+        if (curl_easy_setopt(curl_handle, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_WHATEVER) != CURLE_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting IPRESOLVE WHATEVER option");
+          ulfius_clean_request_full(copy_request);
+          curl_easy_cleanup(curl_handle);
+          return U_ERROR_LIBCURL;
+        }
+      } else if (copy_request->network_type & U_USE_IPV6) {
+        if (curl_easy_setopt(curl_handle, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V6) != CURLE_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting IPRESOLVE V6 option");
+          ulfius_clean_request_full(copy_request);
+          curl_easy_cleanup(curl_handle);
+          return U_ERROR_LIBCURL;
+        }
+      } else {
+        if (curl_easy_setopt(curl_handle, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4) != CURLE_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting IPRESOLVE V4 option");
+          ulfius_clean_request_full(copy_request);
+          curl_easy_cleanup(curl_handle);
+          return U_ERROR_LIBCURL;
+        }
+      }
       
       has_params = (o_strchr(copy_request->http_url, '?') != NULL);
       if (copy_request->map_url != NULL && u_map_count(copy_request->map_url) > 0) {
