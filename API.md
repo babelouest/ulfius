@@ -34,6 +34,7 @@
   - [Send HTTP request API](#send-http-request-api)
   - [Send SMTP request API](#send-http-request-api)
 - [struct _u_map API](#struct-_u_map-api)
+- [What's new in Ulfius 2.6?](#whats-new-in-ulfius-26)
 - [What's new in Ulfius 2.5?](#whats-new-in-ulfius-25)
 - [What's new in Ulfius 2.4?](#whats-new-in-ulfius-24)
 - [What's new in Ulfius 2.3?](#whats-new-in-ulfius-23)
@@ -1511,13 +1512,10 @@ int u_map_copy_into(const struct _u_map * source, struct _u_map * target);
 int u_map_count(const struct _u_map * source);
 ```
 
-## What's new in Ulfius 2.4?
+## What's new in Ulfius 2.6?
 
-Improve websocket service features with lots of bugfixes and add the possibility to send a fragmented message.
-
-Add websocket client functionality. Allow to create a websocket client connection and exchange messages with the websocket service. In `http://`/`ws://` non-secure mode or `https://`/`wss://` secure mode.
-
-Add a command-line websocket client: `uwsc`.
+Add IPv6 support.
+Add struct _u_request->callback_position to know the position of the current callback in the callback list.
 
 ## What's new in Ulfius 2.5?
 
@@ -1526,7 +1524,11 @@ Allow client certificate authentication
 
 ## What's new in Ulfius 2.4?
 
-Improve websockets support, add a websocket client API, and a new tool called `uwsc`: a CLI to connect to websockets services.
+Improve websocket service features with lots of bugfixes and add the possibility to send a fragmented message.
+
+Add websocket client functionality. Allow to create a websocket client connection and exchange messages with the websocket service. In `http://`/`ws://` non-secure mode or `https://`/`wss://` secure mode.
+
+Add a command-line websocket client: `uwsc`.
 
 ## What's new in Ulfius 2.3?
 
