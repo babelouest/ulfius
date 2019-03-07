@@ -172,7 +172,7 @@ struct _u_instance {
   struct sockaddr_in          * bind_address;
   struct sockaddr_in6         * bind_address6;
   unsigned int                  timeout;
-  unsigned int                  nb_endpoints;
+  int                           nb_endpoints;
   char                        * default_auth_realm;
   struct _u_endpoint          * endpoint_list;
   struct _u_endpoint          * default_endpoint;
@@ -254,14 +254,14 @@ The `struct _u_endpoint` is defined as:
  * 
  */
 struct _u_endpoint {
-  char * http_method;
-  char * url_prefix;
-  char * url_format;
-  uint   priority;
-  int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
+  char       * http_method;
+  char       * url_prefix;
+  char       * url_format;
+  unsigned int priority;
+  int       (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
                             struct _u_response * response,     // Output parameters (set by the user)
                             void * user_data);
-  void * user_data;
+  void       * user_data;
 };
 ```
 
