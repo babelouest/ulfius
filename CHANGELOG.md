@@ -5,6 +5,7 @@
 - Add struct _u_request->callback_position to know the position of the current callback in the callback list
 - Use MHD_USE_AUTO instead of MHD_USE_THREAD_PER_CONNECTION
 - Add `network_type` in `struct _u_instance` and `struct _u_request` to specify IPV4, IPV6 or both networks
+- Add `check_server_certificate_flag`, `check_proxy_certificate` and `check_proxy_certificate_flag` in `struct _u_instance` to add more precision on SSL verification in `u_send_request`
 
 ## 2.5.3
 

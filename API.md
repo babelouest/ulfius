@@ -497,31 +497,36 @@ The request variable is defined as:
  * Structure of request parameters
  * 
  * Contains request data
- * http_protocol:             http protocol used (1.0 or 1.1)
- * http_verb:                 http method (GET, POST, PUT, DELETE, etc.), use '*' to match all http methods
- * http_url:                  url used to call this callback function or full url to call when used in a ulfius_send_http_request
- * proxy:                     proxy address to use for outgoing connections, used by ulfius_send_http_request
- * network_type:              Force connect to ipv4, ipv6 addresses or both, values available are U_USE_ALL, U_USE_IPV4 or U_USE_IPV6
- * check_server_certificate:  do not check server certificate and hostname if false (default true), used by ulfius_send_http_request
- * timeout                    connection timeout used by ulfius_send_http_request, default is 0
- * client_address:            IP address of the client
- * auth_basic_user:           basic authtication username
- * auth_basic_password:       basic authtication password
- * map_url:                   map containing the url variables, both from the route and the ?key=value variables
- * map_header:                map containing the header variables
- * map_cookie:                map containing the cookie variables
- * map_post_body:             map containing the post body variables (if available)
- * binary_body:               pointer to raw body
- * binary_body_length:        length of raw body
- * callback_position          position of the current callback function in the callback list, starts at 0
- * client_cert:               x509 certificate of the client if the instance uses client certificate authentication and the client is authenticated
- *                            available only if websocket support is enabled
- * client_cert_file:          path to client certificate file for sending http requests with certificate authentication
- *                            available only if websocket support is enabled
- * client_key_file:           path to client key file for sending http requests with certificate authentication
- *                            available only if websocket support is enabled
- * client_key_password:       password to unlock client key file
- *                            available only if websocket support is enabled
+ * http_protocol:                  http protocol used (1.0 or 1.1)
+ * http_verb:                      http method (GET, POST, PUT, DELETE, etc.), use '*' to match all http methods
+ * http_url:                       url used to call this callback function or full url to call when used in a ulfius_send_http_request
+ * proxy:                          proxy address to use for outgoing connections, used by ulfius_send_http_request
+ * network_type:                   Force connect to ipv4, ipv6 addresses or both, values available are U_USE_ALL, U_USE_IPV4 or U_USE_IPV6
+ * check_server_certificate:       check server certificate and hostname, default true, used by ulfius_send_http_request
+ * check_server_certificate_flag:  check certificate peer and or server hostname if check_server_certificate is enabled, values available are U_SSL_VERIFY_PEER, U_SSL_VERIFY_HOSTNAME or both
+                                   default value is both (U_SSL_VERIFY_PEER|U_SSL_VERIFY_HOSTNAME), used by ulfius_send_http_request
+ * check_proxy_certificate:        check proxy certificate and hostname, default true, used by ulfius_send_http_request
+ * check_proxy_certificate_flag:   check certificate peer and or proxy hostname if check_proxy_certificate is enabled, values available are U_SSL_VERIFY_PEER, U_SSL_VERIFY_HOSTNAME or both
+                                   default value is both (U_SSL_VERIFY_PEER|U_SSL_VERIFY_HOSTNAME), used by ulfius_send_http_request
+ * timeout                         connection timeout used by ulfius_send_http_request, default is 0
+ * client_address:                 IP address of the client
+ * auth_basic_user:                basic authtication username
+ * auth_basic_password:            basic authtication password
+ * map_url:                        map containing the url variables, both from the route and the ?key=value variables
+ * map_header:                     map containing the header variables
+ * map_cookie:                     map containing the cookie variables
+ * map_post_body:                  map containing the post body variables (if available)
+ * binary_body:                    pointer to raw body
+ * binary_body_length:             length of raw body
+ * callback_position:              position of the current callback function in the callback list, starts at 0
+ * client_cert:                    x509 certificate of the client if the instance uses client certificate authentication and the client is authenticated
+ *                                 available only if websocket support is enabled
+ * client_cert_file:               path to client certificate file for sending http requests with certificate authentication
+ *                                 available only if websocket support is enabled
+ * client_key_file:                path to client key file for sending http requests with certificate authentication
+ *                                 available only if websocket support is enabled
+ * client_key_password:            password to unlock client key file
+ *                                 available only if websocket support is enabled
  */
 struct _u_request {
   char *               http_protocol;
@@ -530,6 +535,9 @@ struct _u_request {
   char *               proxy;
   unsigned short       network_type;
   int                  check_server_certificate;
+  int                  check_server_certificate_flag;
+  int                  check_proxy_certificate;
+  int                  check_proxy_certificate_flag;
   unsigned long        timeout;
   struct sockaddr *    client_address;
   char *               auth_basic_user;

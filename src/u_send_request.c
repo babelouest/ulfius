@@ -502,7 +502,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
         return U_ERROR_LIBCURL;
       }
       
-      // Disable certificate validation if needed
+      // Disable server certificate validation if needed
       if (!copy_request->check_server_certificate) {
         if (curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 0) != CURLE_OK || curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYHOST, 0) != CURLE_OK) {
           ulfius_clean_request_full(copy_request);
@@ -510,6 +510,55 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
           curl_easy_cleanup(curl_handle);
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting libcurl options (4)");
           return U_ERROR_LIBCURL;
+        }
+      } else {
+        if (!(copy_request->check_server_certificate_flag & U_SSL_VERIFY_PEER)) {
+          if (curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 0) != CURLE_OK) {
+            ulfius_clean_request_full(copy_request);
+            curl_slist_free_all(header_list);
+            curl_easy_cleanup(curl_handle);
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting libcurl options (5)");
+            return U_ERROR_LIBCURL;
+          }
+        }
+        if (!(copy_request->check_server_certificate_flag & U_SSL_VERIFY_HOSTNAME)) {
+          if (curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYHOST, 0) != CURLE_OK) {
+            ulfius_clean_request_full(copy_request);
+            curl_slist_free_all(header_list);
+            curl_easy_cleanup(curl_handle);
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting libcurl options (6)");
+            return U_ERROR_LIBCURL;
+          }
+        }
+      }
+      
+      // Disable proxy certificate validation if needed
+      if (!copy_request->check_proxy_certificate) {
+        if (curl_easy_setopt(curl_handle, CURLOPT_PROXY_SSL_VERIFYPEER, 0) != CURLE_OK || curl_easy_setopt(curl_handle, CURLOPT_PROXY_SSL_VERIFYHOST, 0) != CURLE_OK) {
+          ulfius_clean_request_full(copy_request);
+          curl_slist_free_all(header_list);
+          curl_easy_cleanup(curl_handle);
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting libcurl options (7)");
+          return U_ERROR_LIBCURL;
+        }
+      } else {
+        if (!(copy_request->check_proxy_certificate_flag & U_SSL_VERIFY_PEER)) {
+          if (curl_easy_setopt(curl_handle, CURLOPT_PROXY_SSL_VERIFYPEER, 0) != CURLE_OK) {
+            ulfius_clean_request_full(copy_request);
+            curl_slist_free_all(header_list);
+            curl_easy_cleanup(curl_handle);
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting libcurl options (8)");
+            return U_ERROR_LIBCURL;
+          }
+        }
+        if (!(copy_request->check_proxy_certificate_flag & U_SSL_VERIFY_HOSTNAME)) {
+          if (curl_easy_setopt(curl_handle, CURLOPT_PROXY_SSL_VERIFYHOST, 0) != CURLE_OK) {
+            ulfius_clean_request_full(copy_request);
+            curl_slist_free_all(header_list);
+            curl_easy_cleanup(curl_handle);
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting libcurl options (9)");
+            return U_ERROR_LIBCURL;
+          }
         }
       }
       
@@ -519,7 +568,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
           ulfius_clean_request_full(copy_request);
           curl_slist_free_all(header_list);
           curl_easy_cleanup(curl_handle);
-          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting libcurl options (5)");
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting libcurl options (10)");
           return U_ERROR_LIBCURL;
         }
       }
