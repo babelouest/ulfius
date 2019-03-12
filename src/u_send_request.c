@@ -532,6 +532,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
         }
       }
       
+#if LIBCURL_VERSION_NUM >= 0x073400
       // Disable proxy certificate validation if needed
       if (!copy_request->check_proxy_certificate) {
         if (curl_easy_setopt(curl_handle, CURLOPT_PROXY_SSL_VERIFYPEER, 0) != CURLE_OK || curl_easy_setopt(curl_handle, CURLOPT_PROXY_SSL_VERIFYHOST, 0) != CURLE_OK) {
@@ -561,6 +562,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
           }
         }
       }
+#endif
       
       // Set request timeout value
       if (copy_request->timeout) {

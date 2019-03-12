@@ -162,9 +162,9 @@ struct _u_cookie {
  * check_server_certificate:       check server certificate and hostname, default true, used by ulfius_send_http_request
  * check_server_certificate_flag:  check certificate peer and or server hostname if check_server_certificate is enabled, values available are U_SSL_VERIFY_PEER, U_SSL_VERIFY_HOSTNAME or both
                                    default value is both (U_SSL_VERIFY_PEER|U_SSL_VERIFY_HOSTNAME), used by ulfius_send_http_request
- * check_proxy_certificate:        check proxy certificate and hostname, default true, used by ulfius_send_http_request
+ * check_proxy_certificate:        check proxy certificate and hostname, default true, used by ulfius_send_http_request, requires libcurl >= 7.52
  * check_proxy_certificate_flag:   check certificate peer and or proxy hostname if check_proxy_certificate is enabled, values available are U_SSL_VERIFY_PEER, U_SSL_VERIFY_HOSTNAME or both
-                                   default value is both (U_SSL_VERIFY_PEER|U_SSL_VERIFY_HOSTNAME), used by ulfius_send_http_request
+                                   default value is both (U_SSL_VERIFY_PEER|U_SSL_VERIFY_HOSTNAME), used by ulfius_send_http_request, requires libcurl >= 7.52
  * timeout                         connection timeout used by ulfius_send_http_request, default is 0
  * client_address:                 IP address of the client
  * auth_basic_user:                basic authtication username
