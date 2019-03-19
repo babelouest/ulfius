@@ -28,6 +28,10 @@
 #include "u_private.h"
 #include "ulfius.h"
 
+#ifdef _MSC_VER
+#define strtok_r strtok_s
+#endif
+
 /**
  * Splits the url to an array of char *
  */
