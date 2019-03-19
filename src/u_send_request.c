@@ -32,6 +32,21 @@
 #include <curl/curl.h>
 #include <string.h>
 
+#ifdef _MSC_VER
+#define strtok_r strtok_s
+
+struct tm* gmtime_r(const time_t* t, struct tm* r) {
+    // gmtime is threadsafe in windows
+    struct tm* that = gmtime(t);
+    if (that) {
+        *r = *that;
+        return r;
+    } else {
+        return 0;
+    }
+}
+#endif
+
 /**
  * Internal structure used to store temporarly the response body
  */
