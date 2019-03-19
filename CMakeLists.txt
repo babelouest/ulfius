@@ -19,7 +19,9 @@ cmake_minimum_required(VERSION 3.5)
 project(ulfius C)
 
 set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
+if (NOT MSVC)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
+endif()
 
 # library info
 
