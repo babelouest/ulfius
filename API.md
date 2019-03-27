@@ -508,6 +508,7 @@ The request variable is defined as:
  * check_proxy_certificate:        check proxy certificate and hostname, default true, used by ulfius_send_http_request, requires libcurl >= 7.52
  * check_proxy_certificate_flag:   check certificate peer and or proxy hostname if check_proxy_certificate is enabled, values available are U_SSL_VERIFY_PEER, U_SSL_VERIFY_HOSTNAME or both
                                    default value is both (U_SSL_VERIFY_PEER|U_SSL_VERIFY_HOSTNAME), used by ulfius_send_http_request, requires libcurl >= 7.52
+ * ca_path                         specify a path to CA certificates instead of system path, used by ulfius_send_http_request
  * timeout                         connection timeout used by ulfius_send_http_request, default is 0
  * client_address:                 IP address of the client
  * auth_basic_user:                basic authtication username
@@ -538,6 +539,7 @@ struct _u_request {
   int                  check_server_certificate_flag;
   int                  check_proxy_certificate;
   int                  check_proxy_certificate_flag;
+  char *               ca_path;
   unsigned long        timeout;
   struct sockaddr *    client_address;
   char *               auth_basic_user;
