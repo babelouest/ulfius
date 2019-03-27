@@ -195,6 +195,7 @@ struct _u_request {
   int                  check_server_certificate_flag;
   int                  check_proxy_certificate;
   int                  check_proxy_certificate_flag;
+  char *               ca_path;
   unsigned long        timeout;
   struct sockaddr *    client_address;
   char *               auth_basic_user;
