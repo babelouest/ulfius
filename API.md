@@ -560,6 +560,32 @@ struct _u_request {
 };
 ```
 
+Some functions are dedicated to handle the request:
+
+```C
+/**
+ * ulfius_set_string_body_request
+ * Set a string string_body to a request
+ * string_body must end with a '\0' character
+ * return U_OK on success
+ */
+int ulfius_set_string_body_request(struct _u_response * request, const char * string_body);
+
+/**
+ * ulfius_set_binary_body_request
+ * Add a binary binary_body to a request
+ * return U_OK on success
+ */
+int ulfius_set_binary_body_request(struct _u_response * request, const char * binary_body, const size_t length);
+
+/**
+ * ulfius_set_empty_body_request
+ * Set an empty request body
+ * return U_OK on success
+ */
+int ulfius_set_empty_body_request(struct _u_request * request);
+```
+
 #### Response structure
 
 The response variable is defined as:

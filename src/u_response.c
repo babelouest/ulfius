@@ -434,7 +434,7 @@ int ulfius_init_response(struct _u_response * response) {
     response->binary_body = NULL;
     response->binary_body_length = 0;
     response->stream_callback = NULL;
-    response->stream_size = -1;
+    response->stream_size = U_STREAM_SIZE_UNKOWN;
     response->stream_block_size = ULFIUS_STREAM_BLOCK_SIZE_DEFAULT;
     response->stream_callback_free = NULL;
     response->timeout = 0;
@@ -561,24 +561,24 @@ struct _u_response * ulfius_duplicate_response(const struct _u_response * respon
 
 /**
  * ulfius_set_string_body_response
- * Set a string binary_body to a response
- * binary_body must end with a '\0' character
+ * Set a string string_body to a response
+ * string_body must end with a '\0' character
  * return U_OK on success
  */
-int ulfius_set_string_body_response(struct _u_response * response, const unsigned int status, const char * binary_body) {
-  if (response != NULL && binary_body != NULL) {
-    size_t binary_body_length = o_strlen(binary_body);
-    // Free the binary_body available
+int ulfius_set_string_body_response(struct _u_response * response, const unsigned int status, const char * string_body) {
+  if (response != NULL && string_body != NULL) {
+    size_t string_body_length = o_strlen(string_body);
+    // Free the string_body available
     o_free(response->binary_body);
-    response->binary_body = o_malloc(binary_body_length);
+    response->binary_body = o_malloc(string_body_length);
     
     if (response->binary_body == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->binary_body");
       return U_ERROR_MEMORY;
     } else {
       response->status = status;
-      response->binary_body_length = binary_body_length;
-      memcpy(response->binary_body, binary_body, binary_body_length);
+      response->binary_body_length = string_body_length;
+      memcpy(response->binary_body, string_body, string_body_length);
       return U_OK;
     }
   } else {
@@ -620,6 +620,7 @@ int ulfius_set_binary_body_response(struct _u_response * response, const unsigne
 int ulfius_set_empty_body_response(struct _u_response * response, const unsigned int status) {
   if (response != NULL) {
     // Free all the bodies available
+    o_free(response->binary_body);
     response->binary_body = NULL;
     response->binary_body_length = 0;
     

@@ -689,6 +689,28 @@ int ulfius_add_same_site_cookie_to_response(struct _u_response * response, const
 int ulfius_add_header_to_response(struct _u_response * response, const char * key, const char * value);
 
 /**
+ * ulfius_set_string_body_request
+ * Set a string string_body to a request
+ * string_body must end with a '\0' character
+ * return U_OK on success
+ */
+int ulfius_set_string_body_request(struct _u_request * request, const char * string_body);
+
+/**
+ * ulfius_set_binary_body_request
+ * Add a binary binary_body to a request
+ * return U_OK on success
+ */
+int ulfius_set_binary_body_request(struct _u_request * request, const char * binary_body, const size_t length);
+
+/**
+ * ulfius_set_empty_body_request
+ * Set an empty request body
+ * return U_OK on success
+ */
+int ulfius_set_empty_body_request(struct _u_request * request);
+
+/**
  * ulfius_set_string_body_response
  * Add a string body to a response
  * body must end with a '\0' character

@@ -6,6 +6,8 @@
 - Use MHD_USE_AUTO instead of MHD_USE_THREAD_PER_CONNECTION
 - Add `network_type` in `struct _u_instance` and `struct _u_request` to specify IPV4, IPV6 or both networks
 - Add `check_server_certificate_flag`, `check_proxy_certificate`, `check_proxy_certificate_flag` and `ca_path` in `struct _u_request` to add more precision and control on SSL verification in `u_send_request`
+- Add functions `ulfius_set_string_body_request`, `ulfius_set_binary_body_request`, `ulfius_set_empty_body_request`
+- Clean code, add more tests
 
 ## 2.5.3
 
