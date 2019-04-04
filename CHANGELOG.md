@@ -1,5 +1,11 @@
 # Ulfius Changelog
 
+## 2.5.4
+
+- Align PKGCONF_REQ_PRIVATE required versions
+- Backport ulfius_copy_request, ulfius_duplicate_request, ulfius_copy_response and ulfius_duplicate_response from Ulfius 2.6
+- Started LTS branch from here
+
 ## 2.5.3
 
 - Add flag to build Ulfius with GnuTLS support but without Websockets
