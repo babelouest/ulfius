@@ -342,7 +342,6 @@ int ulfius_clean_request_full(struct _u_request * request) {
     return U_ERROR_PARAMS;
   }
 }
-
 /**
  * ulfius_copy_request
  * Copy the source request elements into the dest request
@@ -359,13 +358,15 @@ int ulfius_copy_request(struct _u_request * dest, const struct _u_request * sour
     dest->timeout = source->timeout;
     dest->auth_basic_user = o_strdup(source->auth_basic_user);
     dest->auth_basic_password = o_strdup(source->auth_basic_password);
-    dest->client_address = o_malloc(sizeof(struct sockaddr));
     
-    if (dest->client_address != NULL) {
-      memcpy(dest->client_address, source->client_address, sizeof(struct sockaddr));
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for dest->client_address");
-      ret = U_ERROR_MEMORY;
+    if (source->client_address != NULL) {
+      dest->client_address = o_malloc(sizeof(struct sockaddr));
+      if (dest->client_address != NULL) {
+        memcpy(dest->client_address, source->client_address, sizeof(struct sockaddr));
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for dest->client_address");
+        ret = U_ERROR_MEMORY;
+      }
     }
     
     if (ret == U_OK && u_map_clean(dest->map_url) == U_OK && u_map_init(dest->map_url) == U_OK) {
@@ -409,17 +410,22 @@ int ulfius_copy_request(struct _u_request * dest, const struct _u_request * sour
     }
     
     if (ret == U_OK) {
-      dest->binary_body_length = source->binary_body_length;
-      dest->binary_body = o_malloc(source->binary_body_length);
-      if (dest->binary_body != NULL) {
-        memcpy(dest->binary_body, source->binary_body, source->binary_body_length);
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for dest->binary_body");
-        ret = U_ERROR_MEMORY;
+      if (source->binary_body_length) {
+        dest->binary_body_length = source->binary_body_length;
+        dest->binary_body = o_malloc(source->binary_body_length);
+        if (dest->binary_body != NULL) {
+          memcpy(dest->binary_body, source->binary_body, source->binary_body_length);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for dest->binary_body");
+          ret = U_ERROR_MEMORY;
+        }
       }
     }
 
 #ifndef U_DISABLE_GNUTLS
+    dest->client_cert_file = o_strdup(source->client_cert_file);
+    dest->client_key_file = o_strdup(source->client_key_file);
+    dest->client_key_password = o_strdup(source->client_key_password);
     if (ret == U_OK && source->client_cert != NULL) {
       if (gnutls_x509_crt_init(&dest->client_cert) == 0) {
         char * str_cert = ulfius_export_client_certificate_pem(source);
@@ -434,7 +440,6 @@ int ulfius_copy_request(struct _u_request * dest, const struct _u_request * sour
       }
     }
 #endif
-    
     return ret;
   } else {
     return U_ERROR_PARAMS;
@@ -454,80 +459,18 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request) 
       return NULL;
     }
     if (ulfius_init_request(new_request) == U_OK) {
-      new_request->http_protocol = o_strdup(request->http_protocol);
-      new_request->http_verb = o_strdup(request->http_verb);
-      new_request->http_url = o_strdup(request->http_url);
-      new_request->proxy = o_strdup(request->proxy);
-      if ((new_request->http_verb == NULL && request->http_verb != NULL) ||
-          (new_request->http_url == NULL && request->http_url != NULL) ||
-          (new_request->proxy == NULL && request->proxy != NULL) ||
-          (new_request->http_protocol == NULL && request->http_protocol != NULL)) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for ulfius_duplicate_request");
+      if (ulfius_copy_request(new_request, request) != U_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_copy_request");
         ulfius_clean_request_full(new_request);
-        return NULL;
+        new_request = NULL;
       }
-      if (request->client_address != NULL) {
-        new_request->client_address = o_malloc(sizeof(struct sockaddr));
-        if (new_request->client_address == NULL) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for new_request->client_address");
-          ulfius_clean_request_full(new_request);
-          return NULL;
-        }
-        memcpy(new_request->client_address, request->client_address, sizeof(struct sockaddr));
-      }
-      new_request->check_server_certificate = request->check_server_certificate;
-      new_request->timeout = request->timeout;
-      new_request->auth_basic_user = o_strdup(request->auth_basic_user);
-      new_request->auth_basic_password = o_strdup(request->auth_basic_password);
-      u_map_clean_full(new_request->map_url);
-      u_map_clean_full(new_request->map_header);
-      u_map_clean_full(new_request->map_cookie);
-      u_map_clean_full(new_request->map_post_body);
-      new_request->map_url = u_map_copy(request->map_url);
-      new_request->map_header = u_map_copy(request->map_header);
-      new_request->map_cookie = u_map_copy(request->map_cookie);
-      new_request->map_post_body = u_map_copy(request->map_post_body);
-      if ((new_request->map_url == NULL && request->map_url != NULL) || 
-          (new_request->map_header == NULL && request->map_header != NULL) || 
-          (new_request->map_cookie == NULL && request->map_cookie != NULL) || 
-          (new_request->map_post_body == NULL && request->map_post_body != NULL)) {
-        ulfius_clean_request_full(new_request);
-        return NULL;
-      }
-      if (request->binary_body != NULL && request->binary_body_length > 0) {
-        new_request->binary_body = o_malloc(request->binary_body_length);
-        if (new_request->binary_body == NULL) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for new_request->binary_body");
-          ulfius_clean_request_full(new_request);
-          return NULL;
-        }
-        memcpy(new_request->binary_body, request->binary_body, request->binary_body_length);
-      } else {
-        new_request->binary_body_length = 0;
-        new_request->binary_body = NULL;
-      }
-      new_request->binary_body_length = request->binary_body_length;
-#ifndef U_DISABLE_GNUTLS
-      if (request->client_cert != NULL) {
-        if (gnutls_x509_crt_init(&new_request->client_cert) == 0) {
-          char * str_cert = ulfius_export_client_certificate_pem(request);
-          if (ulfius_import_client_certificate_pem(new_request, str_cert) != U_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_import_client_certificate_pem");
-            ulfius_clean_request_full(new_request);
-            return NULL;
-          }
-          o_free(str_cert);
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error gnutls_x509_crt_init");
-          ulfius_clean_request_full(new_request);
-          return NULL;
-        }
-      }
-#endif
     } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_init_request");
       o_free(new_request);
       new_request = NULL;
     }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error source request is NULL");
   }
   return new_request;
 }
