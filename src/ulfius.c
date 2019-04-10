@@ -377,6 +377,8 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
   // Response variables
   struct MHD_Response * mhd_response = NULL;
   
+  UNUSED(url);
+  
   // Prepare for POST or PUT input data
   // Initialize the input maps
   if (con_info == NULL) {
