@@ -498,8 +498,9 @@ The request variable is defined as:
  * 
  * Contains request data
  * http_protocol:                  http protocol used (1.0 or 1.1)
- * http_verb:                      http method (GET, POST, PUT, DELETE, etc.), use '*' to match all http methods
- * http_url:                       url used to call this callback function or full url to call when used in a ulfius_send_http_request
+ * http_verb:                      http method (GET, POST, PUT, DELETE, etc.)
+ * http_url:                       full url used to call this callback function or full url to call when used in a ulfius_send_http_request
+ * url_path:                       url path only used to call this callback function (ex, if http_url is /path/?param=1, url_path is /path/)
  * proxy:                          proxy address to use for outgoing connections, used by ulfius_send_http_request
  * network_type:                   Force connect to ipv4, ipv6 addresses or both, values available are U_USE_ALL, U_USE_IPV4 or U_USE_IPV6
  * check_server_certificate:       check server certificate and hostname, default true, used by ulfius_send_http_request
@@ -533,6 +534,7 @@ struct _u_request {
   char *               http_protocol;
   char *               http_verb;
   char *               http_url;
+  char *               url_path;
   char *               proxy;
   unsigned short       network_type;
   int                  check_server_certificate;

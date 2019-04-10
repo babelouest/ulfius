@@ -16,6 +16,7 @@
 #define HTTP_PROTOCOL "http_protocol"
 #define HTTP_VERB "http_verb"
 #define HTTP_URL "http_url"
+#define URL_PATH "url_path"
 #define PROXY "proxy"
 #define CA_PATH "ca_path"
 #define TIMEOUT 1
@@ -141,6 +142,7 @@ START_TEST(test_ulfius_request)
   ck_assert_ptr_eq(req1.http_protocol, NULL);
   ck_assert_ptr_eq(req1.http_verb, NULL);
   ck_assert_ptr_eq(req1.http_url, NULL);
+  ck_assert_ptr_eq(req1.url_path, NULL);
   ck_assert_ptr_eq(req1.proxy, NULL);
   ck_assert_int_eq(req1.network_type, U_USE_ALL);
   ck_assert_int_eq(req1.check_server_certificate, 1);
@@ -169,6 +171,7 @@ START_TEST(test_ulfius_request)
   req1.http_protocol = o_strdup(HTTP_PROTOCOL);
   req1.http_verb = o_strdup(HTTP_VERB);
   req1.http_url = o_strdup(HTTP_URL);
+  req1.url_path = o_strdup(URL_PATH);
   req1.proxy = o_strdup(PROXY);
   req1.ca_path = o_strdup(CA_PATH);
   req1.network_type = U_USE_IPV4;
@@ -199,6 +202,7 @@ START_TEST(test_ulfius_request)
   ck_assert_str_eq(req2.http_protocol, HTTP_PROTOCOL);
   ck_assert_str_eq(req2.http_verb, HTTP_VERB);
   ck_assert_str_eq(req2.http_url, HTTP_URL);
+  ck_assert_str_eq(req2.url_path, URL_PATH);
   ck_assert_str_eq(req2.proxy, PROXY);
   ck_assert_int_eq(req2.network_type, U_USE_IPV4);
   ck_assert_int_eq(req2.check_server_certificate, 0);
@@ -235,6 +239,7 @@ START_TEST(test_ulfius_request)
   ck_assert_str_eq(req3->http_protocol, HTTP_PROTOCOL);
   ck_assert_str_eq(req3->http_verb, HTTP_VERB);
   ck_assert_str_eq(req3->http_url, HTTP_URL);
+  ck_assert_str_eq(req3->url_path, URL_PATH);
   ck_assert_str_eq(req3->proxy, PROXY);
   ck_assert_int_eq(req3->network_type, U_USE_IPV4);
   ck_assert_int_eq(req3->check_server_certificate, 0);

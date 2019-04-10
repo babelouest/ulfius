@@ -206,8 +206,13 @@ static void * ulfius_uri_logger (void * cls, const char * uri) {
       return NULL;
     }
     con_info->request->http_url = o_strdup(uri);
-    if (con_info->request->http_url == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for con_info->request->http_url");
+    if (o_strchr(uri, '?') != NULL) {
+      con_info->request->url_path = o_strndup(uri, o_strchr(uri, '?') - uri);
+    } else {
+      con_info->request->url_path = o_strdup(uri);
+    }
+    if (con_info->request->http_url == NULL || con_info->request->url_path == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for con_info->request->http_url or con_info->request->url_path");
       ulfius_clean_request_full(con_info->request);
       o_free(con_info);
       return NULL;
@@ -469,7 +474,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
     }
   } else {
     // Check if the endpoint has one or more matches
-    current_endpoint_list = ulfius_endpoint_match(method, url, endpoint_list);
+    current_endpoint_list = ulfius_endpoint_match(method, con_info->request->url_path, endpoint_list);
     
     // Set to default_endpoint if no match
     if ((current_endpoint_list == NULL || current_endpoint_list[0] == NULL) && ((struct _u_instance *)cls)->default_endpoint != NULL && ((struct _u_instance *)cls)->default_endpoint->callback_function != NULL) {
@@ -504,9 +509,9 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
           current_endpoint = current_endpoint_list[i];
           u_map_empty(con_info->request->map_url);
           u_map_copy_into(con_info->request->map_url, &con_info->map_url_initial);
-          if (ulfius_parse_url(url, current_endpoint, con_info->request->map_url, con_info->u_instance->check_utf8) != U_OK) {
+          if (ulfius_parse_url(con_info->request->url_path, current_endpoint, con_info->request->map_url, con_info->u_instance->check_utf8) != U_OK) {
             o_free(response);
-            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error parsing url: ", url);
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error parsing url: ", con_info->request->url_path);
             mhd_ret = MHD_NO;
           }
           // Run callback function with the input parameters filled for the current callback
