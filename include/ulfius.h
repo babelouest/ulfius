@@ -832,6 +832,22 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
  */
 struct _u_response * ulfius_duplicate_response(const struct _u_response * response);
 
+/**
+ * Returns a url-decoded version of str
+ * returned value must be cleaned after use
+ * Thanks Geek Hideout!
+ * http://www.geekhideout.com/urlcode.shtml
+ */
+char * ulfius_url_decode(const char * str);
+
+/**
+ * Returns a url-encoded version of str
+ * returned value must be cleaned after use
+ * Thanks Geek Hideout!
+ * http://www.geekhideout.com/urlcode.shtml
+ */
+char * ulfius_url_encode(const char * str);
+
 #ifndef U_DISABLE_JANSSON
 /**
  * ulfius_get_json_body_request

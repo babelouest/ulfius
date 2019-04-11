@@ -8,6 +8,7 @@
 - Add `check_server_certificate_flag`, `check_proxy_certificate`, `check_proxy_certificate_flag` and `ca_path` in `struct _u_request` to add more precision and control on SSL verification in `u_send_request`
 - Add functions `ulfius_set_string_body_request`, `ulfius_set_binary_body_request`, `ulfius_set_empty_body_request`
 - Add `url_path` in `struct _u_request` to store the url path only, without query parameters
+- Add `ulfius_url_decode` and `ulfius_url_encode`
 - Clean code, add more tests
 
 ## 2.5.3

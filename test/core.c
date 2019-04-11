@@ -562,6 +562,30 @@ fYxFAheH3CjryHqqR9DD+d9396W8mqEaUp+plMwSjpcTDSR4rEQkUJg=\
 }
 END_TEST
 
+START_TEST(test_url_encode_decode)
+{
+  char * raw = "Hëllô Ulfius%3B$#!/?*[]", * raw_encoded = "H%C3%ABll%C3%B4+Ulfius%253B$%23!%2F%3F*%5B%5D", * easy_raw = "grut_1234", * result;
+  
+  // Test ulfius_url_encode
+  ck_assert_ptr_eq(ulfius_url_encode(NULL), NULL);
+  ck_assert_ptr_ne((result = ulfius_url_encode(raw)), NULL);
+  ck_assert_str_eq(result, raw_encoded);
+  o_free(result);
+  ck_assert_ptr_ne((result = ulfius_url_encode(easy_raw)), NULL);
+  ck_assert_str_eq(result, easy_raw);
+  o_free(result);
+  
+  // Test ulfius_url_decode
+  ck_assert_ptr_eq(ulfius_url_decode(NULL), NULL);
+  ck_assert_ptr_ne((result = ulfius_url_decode(raw_encoded)), NULL);
+  ck_assert_str_eq(result, raw);
+  o_free(result);
+  ck_assert_ptr_ne((result = ulfius_url_decode(easy_raw)), NULL);
+  ck_assert_str_eq(result, easy_raw);
+  o_free(result);
+}
+END_TEST
+
 static Suite *ulfius_suite(void)
 {
 	Suite *s;
@@ -574,6 +598,7 @@ static Suite *ulfius_suite(void)
 	tcase_add_test(tc_core, test_ulfius_response);
 	tcase_add_test(tc_core, test_endpoint);
 	tcase_add_test(tc_core, test_ulfius_start_instance);
+	tcase_add_test(tc_core, test_url_encode_decode);
 	tcase_set_timeout(tc_core, 30);
 	suite_add_tcase(s, tc_core);
 

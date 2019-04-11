@@ -24,6 +24,7 @@
  */
 
 #include <string.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include "u_private.h"
@@ -1570,4 +1571,88 @@ const unsigned char * utf8_check(const char * s_orig) {
   }
 
   return NULL;
+}
+
+/**
+ * Converts a hex character to its integer value
+ */
+static char from_hex(char ch) {
+  return isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10;
+}
+
+/**
+ * Converts an integer value to its hex character
+ */
+static char to_hex(char code) {
+  static char hex[] = "0123456789ABCDEF";
+  return hex[code & 15];
+}
+
+/**
+ * Returns a url-encoded version of str
+ * returned value must be cleaned after use
+ * Thanks Geek Hideout!
+ * http://www.geekhideout.com/urlcode.shtml
+ */
+char * ulfius_url_encode(const char * str) {
+  char * pstr = (char*)str, * buf = NULL, * pbuf = NULL;
+  if (str != NULL) {
+    buf = malloc(strlen(str) * 3 + 1);
+    if (buf != NULL) {
+      pbuf = buf;
+      while (* pstr) {
+        // "$-_.+!*'(),"
+        if (isalnum(* pstr) || * pstr == '$' || * pstr == '-' || * pstr == '_' ||
+            * pstr == '.' || * pstr == '+' || * pstr == '!' || * pstr == '*' ||
+            * pstr == '\'' || * pstr == '(' || * pstr == ')' || * pstr == ',') 
+          * pbuf++ = * pstr;
+        else if (* pstr == ' ') 
+          * pbuf++ = '+';
+        else 
+          * pbuf++ = '%', * pbuf++ = to_hex(* pstr >> 4), * pbuf++ = to_hex(* pstr & 15);
+        pstr++;
+      }
+      * pbuf = '\0';
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for buf (ulfius_url_encode)");
+    }
+    return buf;
+  } else {
+    return NULL;
+  }
+}
+
+/**
+ * Returns a url-decoded version of str
+ * returned value must be cleaned after use
+ * Thanks Geek Hideout!
+ * http://www.geekhideout.com/urlcode.shtml
+ */
+char * ulfius_url_decode(const char * str) {
+  char * pstr = (char*)str, * buf = NULL, * pbuf = NULL;
+  if (str != NULL) {
+    buf = malloc(strlen(str) + 1);
+    if (buf != NULL) {
+      pbuf = buf;
+      while (* pstr) {
+        if (* pstr == '%') {
+          if (pstr[1] && pstr[2]) {
+            * pbuf++ = from_hex(pstr[1]) << 4 | from_hex(pstr[2]);
+            pstr += 2;
+          }
+        } else if (* pstr == '+') { 
+          * pbuf++ = ' ';
+        } else {
+          * pbuf++ = * pstr;
+        }
+        pstr++;
+      }
+      * pbuf = '\0';
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for buf (ulfius_url_decode)");
+    }
+    return buf;
+  } else {
+    return NULL;
+  }
 }
