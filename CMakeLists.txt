@@ -20,7 +20,7 @@ project(ulfius C)
 
 set(CMAKE_C_STANDARD 99)
 if (NOT MSVC)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
+    set(CMAKE_C_FLAGS "-Wall -Werror ${CMAKE_C_FLAGS}")
 endif()
 
 # library info
@@ -218,6 +218,7 @@ if (SEARCH_ORCANIA_U)
         set(LIBS ${LIBS} ${ORCANIA_LIBRARIES})
         include_directories(${ORCANIA_INCLUDE_DIRS})
     endif ()
+    target_link_libraries(ulfius ${LIBS} ${ORCANIA_LIBRARIES})
 endif ()
 
 option(WITH_YDER "Use Yder library to log messages" ON)
