@@ -2,6 +2,7 @@
 *.so
 *.so.*
 *.a
+*.pc
 ulfius-cfg.h
 example_programs/auth_example/auth_client
 example_programs/auth_example/auth_server

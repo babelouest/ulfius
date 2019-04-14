@@ -10,6 +10,7 @@
 - Add `url_path` in `struct _u_request` to store the url path only, without query parameters
 - Add `ulfius_url_decode` and `ulfius_url_encode`
 - Clean code, add more tests
+- Install pkgconfig file when using Makefile
 
 ## 2.5.3
 
