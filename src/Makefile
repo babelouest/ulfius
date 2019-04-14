@@ -19,10 +19,10 @@
 # License along with this library.	If not, see <http://www.gnu.org/licenses/>.
 #
 PROJECT_NAME=ulfius
-PROJECT_DESCRIPTION="Web Framework to build REST APIs, Webservices or any HTTP endpoint in C language. Can stream large amount of data, integrate JSON data with Jansson, and create websocket services"
-PROJECT_BUGREPORT_PATH="https://github.com/babelouest/ulfius/issues"
-PKGCONF_REQ=""
-PKGCONF_REQ_PRIVATE=""
+PROJECT_DESCRIPTION=Web Framework to build REST APIs, Webservices or any HTTP endpoint in C language. Can stream large amount of data, integrate JSON data with Jansson, and create websocket services
+PROJECT_BUGREPORT_PATH=https://github.com/babelouest/ulfius/issues
+PKGCONF_REQ=
+PKGCONF_REQ_PRIVATE=
 ULFIUS_INCLUDE=../include
 CONFIG_TEMPLATE=$(ULFIUS_INCLUDE)/ulfius-cfg.h.in
 CONFIG_FILE=$(ULFIUS_INCLUDE)/ulfius-cfg.h
@@ -178,13 +178,14 @@ clean:
 
 install: all $(PKGCONFIG_FILE)
 	install $(OUTPUT).$(VERSION) $(DESTDIR)/lib
-	install $(PKGCONFIG_FILE) $(DESTDIR)/lib/pkgconfig
+	install -m644 $(PKGCONFIG_FILE) $(DESTDIR)/lib/pkgconfig
 	install -m644 $(ULFIUS_INCLUDE)/ulfius.h $(DESTDIR)/include
 	install -m644 $(CONFIG_FILE) $(DESTDIR)/include
 	-ldconfig
 
 static-install: static
 	install libulfius.a $(DESTDIR)/lib
+	install -m644 $(PKGCONFIG_FILE) $(DESTDIR)/lib/pkgconfig
 	install -m644 $(ULFIUS_INCLUDE)/ulfius.h $(DESTDIR)/include
 	install -m644 $(CONFIG_FILE) $(DESTDIR)/include
 
