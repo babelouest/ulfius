@@ -1603,7 +1603,7 @@ char * ulfius_url_encode(const char * str) {
       while (* pstr) {
         // "$-_.+!*'(),"
         if (isalnum(* pstr) || * pstr == '$' || * pstr == '-' || * pstr == '_' ||
-            * pstr == '.' || * pstr == '+' || * pstr == '!' || * pstr == '*' ||
+            * pstr == '.' || * pstr == '!' || * pstr == '*' ||
             * pstr == '\'' || * pstr == '(' || * pstr == ')' || * pstr == ',') 
           * pbuf++ = * pstr;
         else if (* pstr == ' ') 
