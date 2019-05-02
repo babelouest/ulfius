@@ -758,86 +758,101 @@ static size_t smtp_payload_source(void * ptr, size_t size, size_t nmemb, void * 
   struct upload_status *upload_ctx = (struct upload_status *)userp;
   char * data = NULL;
   size_t len = 0;
+  time_t now_sec;
+  struct tm now;
+  int has_data = 1, ret;
 
   if ((size == 0) || (nmemb == 0) || ((size*nmemb) < 1)) {
-    return 0;
-  }
-
-  if (upload_ctx->lines_read == MAIL_DATE) {
-    time_t now_sec;
-    struct tm now;
-    time(&now_sec);
+    ret = 0;
+  } else {
     data = o_malloc(128*sizeof(char));
-    if (data == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for MAIL_DATE\n");
-      return 0;
-    } else {
-      gmtime_r(&now_sec, &now);
-#ifdef _WIN32
-      strftime(data, 128, "Date: %a, %d %b %Y %H:%M:%S %z\r\n", &now);
-#else
-      strftime(data, 128, "Date: %a, %d %b %Y %T %z\r\n", &now);
-#endif
-      len = o_strlen(data);
+    switch (upload_ctx->lines_read) {
+      case MAIL_DATE:
+        time(&now_sec);
+        if (data == NULL) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for MAIL_DATE\n");
+          ret = 0;
+        } else {
+          gmtime_r(&now_sec, &now);
+    #ifdef _WIN32
+          strftime(data, 128, "Date: %a, %d %b %Y %H:%M:%S %z\r\n", &now);
+    #else
+          strftime(data, 128, "Date: %a, %d %b %Y %T %z\r\n", &now);
+    #endif
+          len = o_strlen(data);
+        }
+      case MAIL_TO:
+        data = msprintf("To: %s\r\n", upload_ctx->to);
+        if (data == NULL) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for MAIL_TO\n");
+          ret = 0;
+        }
+        len = o_strlen(data);
+        break;
+      case MAIL_FROM:
+        data = msprintf("From: %s\r\n", upload_ctx->from);
+        if (data == NULL) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for MAIL_FROM\n");
+          ret = 0;
+        }
+        len = o_strlen(data);
+        break;
+      case MAIL_CC:
+        if (upload_ctx->cc) {
+          data = msprintf("Cc: %s\r\n", upload_ctx->cc);
+          if (data == NULL) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for MAIL_CC\n");
+            ret = 0;
+          }
+          len = o_strlen(data);
+        } else {
+          has_data = 0;
+        }
+        break;
+      case MAIL_SUBJECT:
+        data = msprintf("Subject: %s\r\n", upload_ctx->subject);
+        if (data == NULL) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for MAIL_SUBJECT\n");
+          ret = 0;
+        }
+        len = o_strlen(data);
+        break;
+      case MAIL_DATA:
+        data = msprintf("Content-Type: text/plain; charset=utf-8\r\n\r\n%s\r\n", upload_ctx->data);
+        if (data == NULL) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for MAIL_DATA\n");
+          ret = 0;
+        }
+        len = o_strlen(data);
+        break;
+      default:
+        has_data = 0;
+        break;
     }
-  } else if (upload_ctx->lines_read == MAIL_TO) {
-    data = msprintf("To: %s\r\n", upload_ctx->to);
-    if (data == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for MAIL_TO\n");
-      return 0;
+    if (data == NULL && has_data) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error while processing upload_ctx->lines_read: %d\n", upload_ctx->lines_read);
+      ret = 0;
     }
-    len = o_strlen(data);
-  } else if (upload_ctx->lines_read == MAIL_FROM) {
-    data = msprintf("From: %s\r\n", upload_ctx->from);
-    if (data == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for MAIL_FROM\n");
-      return 0;
-    }
-    len = o_strlen(data);
-  } else if (upload_ctx->lines_read == MAIL_CC && upload_ctx->cc) {
-    data = msprintf("Cc: %s\r\n", upload_ctx->cc);
-    if (data == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for MAIL_CC\n");
-      return 0;
-    }
-    len = o_strlen(data);
-  } else if (upload_ctx->lines_read == MAIL_SUBJECT) {
-    data = msprintf("Subject: %s\r\n", upload_ctx->subject);
-    if (data == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for MAIL_SUBJECT\n");
-      return 0;
-    }
-    len = o_strlen(data);
-  } else if (upload_ctx->lines_read == MAIL_DATA) {
-    data = msprintf("Content-Type: text/plain; charset=utf-8\r\n\r\n%s\r\n", upload_ctx->data);
-    if (data == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for MAIL_DATA\n");
-      return 0;
-    }
-    len = o_strlen(data);
-  }
-  if (data == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error while processing upload_ctx->lines_read\n");
-      return 0;
-  }
 
-  if (upload_ctx->lines_read != MAIL_END) {
-    memcpy(ptr, data, (len+1));
-    upload_ctx->lines_read++;
-    
-    // Skip next if it's cc and there is no cc
-    if (upload_ctx->lines_read == MAIL_CC && !upload_ctx->cc) {
+    if (upload_ctx->lines_read != MAIL_END) {
+      memcpy(ptr, data, (len+1));
       upload_ctx->lines_read++;
+      
+      // Skip next if it's cc and there is no cc
+      if (upload_ctx->lines_read == MAIL_CC && !upload_ctx->cc) {
+        upload_ctx->lines_read++;
+      }
+   
+      ret = len;
+    } else if (upload_ctx->lines_read == MAIL_END) {
+      ret = 0;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting mail payload, len is %d, lines_read is %d", len, upload_ctx->lines_read);
+      ret = 0;
     }
     o_free(data);
- 
-    return len;
-  } else if (upload_ctx->lines_read == MAIL_END) {
-    return 0;
-  } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting mail payload, len is %d, lines_read is %d", len, upload_ctx->lines_read);
-    return 0;
   }
+  return ret;
 }
 
 /**
