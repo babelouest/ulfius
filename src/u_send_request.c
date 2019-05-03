@@ -737,122 +737,24 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
 /**
  * ulfius_send_smtp_email body fill function and structures
  */
-#define MAIL_DATE    0
-#define MAIL_TO      1
-#define MAIL_FROM    2
-#define MAIL_CC      3
-#define MAIL_SUBJECT 4
-#define MAIL_DATA    5
-#define MAIL_END     6
-
 struct upload_status {
-  int lines_read;
-  char * to;
-  char * from;
-  char * cc;
-  char * subject;
+  size_t offset;
+  size_t len;
   char * data;
 };
  
 static size_t smtp_payload_source(void * ptr, size_t size, size_t nmemb, void * userp) {
   struct upload_status *upload_ctx = (struct upload_status *)userp;
-  char * data = NULL;
-  size_t len = 0;
-  time_t now_sec;
-  struct tm now;
-  int has_data = 1, ret;
-
-  if ((size == 0) || (nmemb == 0) || ((size*nmemb) < 1)) {
-    ret = 0;
+  size_t len;
+  
+  if ((size * nmemb) < (upload_ctx->len - upload_ctx->offset)) {
+    len = size*nmemb;
   } else {
-    data = o_malloc(128*sizeof(char));
-    switch (upload_ctx->lines_read) {
-      case MAIL_DATE:
-        time(&now_sec);
-        if (data == NULL) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for MAIL_DATE\n");
-          ret = 0;
-        } else {
-          gmtime_r(&now_sec, &now);
-    #ifdef _WIN32
-          strftime(data, 128, "Date: %a, %d %b %Y %H:%M:%S %z\r\n", &now);
-    #else
-          strftime(data, 128, "Date: %a, %d %b %Y %T %z\r\n", &now);
-    #endif
-          len = o_strlen(data);
-        }
-      case MAIL_TO:
-        data = msprintf("To: %s\r\n", upload_ctx->to);
-        if (data == NULL) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for MAIL_TO\n");
-          ret = 0;
-        }
-        len = o_strlen(data);
-        break;
-      case MAIL_FROM:
-        data = msprintf("From: %s\r\n", upload_ctx->from);
-        if (data == NULL) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for MAIL_FROM\n");
-          ret = 0;
-        }
-        len = o_strlen(data);
-        break;
-      case MAIL_CC:
-        if (upload_ctx->cc) {
-          data = msprintf("Cc: %s\r\n", upload_ctx->cc);
-          if (data == NULL) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for MAIL_CC\n");
-            ret = 0;
-          }
-          len = o_strlen(data);
-        } else {
-          has_data = 0;
-        }
-        break;
-      case MAIL_SUBJECT:
-        data = msprintf("Subject: %s\r\n", upload_ctx->subject);
-        if (data == NULL) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for MAIL_SUBJECT\n");
-          ret = 0;
-        }
-        len = o_strlen(data);
-        break;
-      case MAIL_DATA:
-        data = msprintf("Content-Type: text/plain; charset=utf-8\r\n\r\n%s\r\n", upload_ctx->data);
-        if (data == NULL) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for MAIL_DATA\n");
-          ret = 0;
-        }
-        len = o_strlen(data);
-        break;
-      default:
-        has_data = 0;
-        break;
-    }
-    if (data == NULL && has_data) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error while processing upload_ctx->lines_read: %d\n", upload_ctx->lines_read);
-      ret = 0;
-    }
-
-    if (upload_ctx->lines_read != MAIL_END) {
-      memcpy(ptr, data, (len+1));
-      upload_ctx->lines_read++;
-      
-      // Skip next if it's cc and there is no cc
-      if (upload_ctx->lines_read == MAIL_CC && !upload_ctx->cc) {
-        upload_ctx->lines_read++;
-      }
-   
-      ret = len;
-    } else if (upload_ctx->lines_read == MAIL_END) {
-      ret = 0;
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting mail payload, len is %d, lines_read is %d", len, upload_ctx->lines_read);
-      ret = 0;
-    }
-    o_free(data);
+    len = upload_ctx->len - upload_ctx->offset;
   }
-  return ret;
+  memcpy(ptr, upload_ctx->data+upload_ctx->offset, len);
+  upload_ctx->offset += len;
+  return len;
 }
 
 /**
@@ -890,6 +792,9 @@ int ulfius_send_smtp_email(const char * host,
   int cur_port;
   struct curl_slist * recipients = NULL;
   struct upload_status upload_ctx;
+  time_t now_sec;
+  struct tm now;
+  char date_str[129], * cc_str;
   
   if (host != NULL && from != NULL && to != NULL && mail_body != NULL) {
     
@@ -934,26 +839,53 @@ int ulfius_send_smtp_email(const char * host,
       }
       curl_easy_setopt(curl_handle, CURLOPT_MAIL_RCPT, recipients);
       
-      upload_ctx.lines_read = 0;
-      upload_ctx.to = (char*)to;
-      upload_ctx.from = (char*)from;
-      upload_ctx.cc = (char*)cc;
-      upload_ctx.subject = (char*)subject;
-      upload_ctx.data = (char*)mail_body;
-      curl_easy_setopt(curl_handle, CURLOPT_READFUNCTION, smtp_payload_source);
-      curl_easy_setopt(curl_handle, CURLOPT_READDATA, &upload_ctx);
-      curl_easy_setopt(curl_handle, CURLOPT_UPLOAD, 1L);
-      
-      res = curl_easy_perform(curl_handle);
-      curl_slist_free_all(recipients);
-      curl_easy_cleanup(curl_handle);
-      o_free(smtp_url);
-      
-      if (res != CURLE_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error sending smtp message, libcurl error: %d, error message %s", res, curl_easy_strerror(res));
-        return U_ERROR_LIBCURL;
+      time(&now_sec);
+      upload_ctx.offset = 0;
+      gmtime_r(&now_sec, &now);
+#ifdef _WIN32
+      strftime(date_str, 128, "Date: %a, %d %b %Y %H:%M:%S %z", &now);
+#else
+      strftime(date_str, 128, "Date: %a, %d %b %Y %T %z", &now);
+#endif
+      if (cc != NULL) {
+        cc_str = msprintf("Cc: %s\r\n", cc);
       } else {
-        return U_OK;
+        cc_str = o_strdup("");
+      }
+      upload_ctx.data = msprintf("%s\r\n" // date_str
+                                 "To: %s\r\n"
+                                 "From: %s\r\n"
+                                 "%s"
+                                 "Subject: %s\r\n"
+                                 "Content-Type: text/plain; charset=utf-8\r\n\r\n%s\r\n",
+                                 date_str,
+                                 to,
+                                 from,
+                                 cc_str,
+                                 subject!=NULL?subject:"",
+                                 mail_body);
+      if (upload_ctx.data != NULL) {
+        upload_ctx.len = o_strlen(upload_ctx.data);
+        curl_easy_setopt(curl_handle, CURLOPT_READFUNCTION, smtp_payload_source);
+        curl_easy_setopt(curl_handle, CURLOPT_READDATA, &upload_ctx);
+        curl_easy_setopt(curl_handle, CURLOPT_UPLOAD, 1L);
+        
+        res = curl_easy_perform(curl_handle);
+        curl_slist_free_all(recipients);
+        curl_easy_cleanup(curl_handle);
+        o_free(smtp_url);
+        o_free(cc_str);
+        o_free(upload_ctx.data);
+        
+        if (res != CURLE_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error sending smtp message, libcurl error: %d, error message %s", res, curl_easy_strerror(res));
+          return U_ERROR_LIBCURL;
+        } else {
+          return U_OK;
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resource for upload_ctx.data");
+        return U_ERROR_MEMORY;
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error executing curl_easy_init");
