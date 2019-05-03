@@ -5,6 +5,12 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
+#include <ctype.h>
+#include <sys/socket.h>
+#include <sys/select.h>
+#include <sys/time.h>
+#include <sys/types.h>
+
 #ifndef _WIN32
   #include <sys/socket.h>
   #include <netinet/in.h>
@@ -101,6 +107,209 @@ wiMh3OqcyePyB+MKr3tvsmYZyYVwCW/pRmATM+F4ol23OWhXyYN+AFdXiMBjwdUX\
 jAwgDammq/ymxfgKE7IX8z9+f+8UVcBaiXVUTWzgSHnjjPW8+9WExUws8BFD7+81\
 G66c7c4qxP2fq5vQiYJUVEpNd4Z4+EbvMDrg4CsTVaoI1OWlHWcBfNHupw==\
 -----END CERTIFICATE-----"
+
+#define SMTP_FROM "sender@localhost"
+#define SMTP_TO "recipient@localhost"
+#define SMTP_HOST "localhost"
+#define SMTP_PORT 2525
+#define SMTP_SUBJECT "E-mail subject for the test"
+#define SMTP_BODY "E-mail body for the test as well"
+
+#define BACKLOG_MAX  (10)
+#define BUF_SIZE  4096
+#define STREQU(a,b)  (strcmp(a, b) == 0)
+
+struct smtp_manager {
+  char * mail_data;
+  unsigned int port;
+  int sockfd;
+};
+
+/**
+ * 
+ * Function that emulates a very simple SMTP server
+ * Taken from Kenneth Finnegan's ccsmtp program
+ * https://gist.github.com/PhirePhly/2914635
+ * This function is under the GPL2 license
+ * 
+ */
+static void handle_smtp (struct smtp_manager * manager) {
+  int rc, i;
+  char buffer[BUF_SIZE], bufferout[BUF_SIZE];
+  int buffer_offset = 0;
+  buffer[BUF_SIZE-1] = '\0';
+
+  // Flag for being inside of DATA verb
+  int inmessage = 0;
+
+  sprintf(bufferout, "220 ulfius.tld SMTP CCSMTP\r\n");
+  send(manager->sockfd, bufferout, strlen(bufferout), 0);
+  //manager->mail_data = mstrcatf(manager->mail_data, bufferout);
+
+  while (1) {
+    fd_set sockset;
+    struct timeval tv;
+
+    FD_ZERO(&sockset);
+    FD_SET(manager->sockfd, &sockset);
+    tv.tv_sec = 120; // Some SMTP servers pause for ~15s per message
+    tv.tv_usec = 0;
+
+    // Wait tv timeout for the server to send anything.
+    select(manager->sockfd+1, &sockset, NULL, NULL, &tv);
+
+    if (!FD_ISSET(manager->sockfd, &sockset)) {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "%d: Socket timed out", manager->sockfd);
+      break;
+    }
+
+    int buffer_left = BUF_SIZE - buffer_offset - 1;
+    if (buffer_left == 0) {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "%d: Command line too long", manager->sockfd);
+      sprintf(bufferout, "500 Too long\r\n");
+      send(manager->sockfd, bufferout, strlen(bufferout), 0);
+      //manager->mail_data = mstrcatf(manager->mail_data, bufferout);
+      buffer_offset = 0;
+      continue;
+    }
+
+    rc = recv(manager->sockfd, buffer + buffer_offset, buffer_left, 0);
+    if (rc == 0) {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "%d: Remote host closed socket", manager->sockfd);
+      break;
+    }
+    if (rc == -1) {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "%d: Error on socket", manager->sockfd);
+      break;
+    }
+
+    buffer_offset += rc;
+
+    char *eol;
+
+    // Only process one line of the received buffer at a time
+    // If multiple lines were received in a single recv(), goto
+    // back to here for each line
+    //
+processline:
+    eol = strstr(buffer, "\r\n");
+    if (eol == NULL) {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "%d: Haven't found EOL yet", manager->sockfd);
+      continue;
+    }
+
+    // Null terminate each line to be processed individually
+    eol[0] = '\0';
+
+    if (!inmessage) { // Handle system verbs
+      manager->mail_data = mstrcatf(manager->mail_data, "%s\n", buffer);
+      // Replace all lower case letters so verbs are all caps
+      for (i=0; i<4; i++) {
+        if (islower(buffer[i])) {
+          buffer[i] += 'A' - 'a';
+        }
+      }
+      // Null-terminate the verb for strcmp
+      buffer[4] = '\0';
+
+      // Respond to each verb accordingly.
+      // You should replace these with more meaningful
+      // actions than simply printing everything.
+      //
+      if (STREQU(buffer, "HELO")) { // Initial greeting
+        sprintf(bufferout, "250 Ok\r\n");
+        send(manager->sockfd, bufferout, strlen(bufferout), 0);
+        //manager->mail_data = mstrcatf(manager->mail_data, bufferout);
+      } else if (STREQU(buffer, "MAIL")) { // New mail from...
+        sprintf(bufferout, "250 Ok\r\n");
+        send(manager->sockfd, bufferout, strlen(bufferout), 0);
+        //manager->mail_data = mstrcatf(manager->mail_data, bufferout);
+      } else if (STREQU(buffer, "RCPT")) { // Mail addressed to...
+        sprintf(bufferout, "250 Ok recipient\r\n");
+        send(manager->sockfd, bufferout, strlen(bufferout), 0);
+        //manager->mail_data = mstrcatf(manager->mail_data, bufferout);
+      } else if (STREQU(buffer, "DATA")) { // Message contents...
+        sprintf(bufferout, "354 Continue\r\n");
+        send(manager->sockfd, bufferout, strlen(bufferout), 0);
+        //manager->mail_data = mstrcatf(manager->mail_data, bufferout);
+        inmessage = 1;
+      } else if (STREQU(buffer, "RSET")) { // Reset the connection
+        sprintf(bufferout, "250 Ok reset\r\n");
+        send(manager->sockfd, bufferout, strlen(bufferout), 0);
+        //manager->mail_data = mstrcatf(manager->mail_data, bufferout);
+      } else if (STREQU(buffer, "NOOP")) { // Do nothing.
+        sprintf(bufferout, "250 Ok noop\r\n");
+        send(manager->sockfd, bufferout, strlen(bufferout), 0);
+        //manager->mail_data = mstrcatf(manager->mail_data, bufferout);
+      } else if (STREQU(buffer, "QUIT")) { // Close the connection
+        sprintf(bufferout, "221 Ok\r\n");
+        send(manager->sockfd, bufferout, strlen(bufferout), 0);
+        //manager->mail_data = mstrcatf(manager->mail_data, bufferout);
+        break;
+      } else { // The verb used hasn't been implemented.
+        sprintf(bufferout, "502 Command Not Implemented\r\n");
+        send(manager->sockfd, bufferout, strlen(bufferout), 0);
+        //manager->mail_data = mstrcatf(manager->mail_data, bufferout);
+      }
+    } else { // We are inside the message after a DATA verb.
+      manager->mail_data = mstrcatf(manager->mail_data, "%s\n", buffer);
+      if (STREQU(buffer, ".")) { // A single "." signifies the end
+        sprintf(bufferout, "250 Ok\r\n");
+        send(manager->sockfd, bufferout, strlen(bufferout), 0);
+        //manager->mail_data = mstrcatf(manager->mail_data, bufferout);
+        inmessage = 0;
+      }
+    }
+
+    // Shift the rest of the buffer to the front
+    memmove(buffer, eol+2, BUF_SIZE - (eol + 2 - buffer));
+    buffer_offset -= (eol - buffer) + 2;
+
+    // Do we already have additional lines to process? If so,
+    // commit a horrid sin and goto the line processing section again.
+    if (strstr(buffer, "\r\n")) 
+      goto processline;
+  }
+
+  // All done. Clean up everything and exit.
+  close(manager->sockfd);
+}
+
+static void * simple_smtp(void * args) {
+  struct smtp_manager * manager = (struct smtp_manager *)args;
+  int server_fd; 
+  struct sockaddr_in address; 
+  int opt = 1; 
+  int addrlen = sizeof(address); 
+  
+  if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) != 0) {
+    if (!setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
+      address.sin_family = AF_INET;
+      address.sin_addr.s_addr = INADDR_ANY;
+      address.sin_port = htons( manager->port );
+         
+      if (!bind(server_fd, (struct sockaddr *)&address, sizeof(address))) {
+        if (listen(server_fd, 3) >= 0) {
+          if ((manager->sockfd = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) >= 0) {
+            handle_smtp(manager);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "simple_smtp - Error accept");
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "simple_smtp - Error listen");
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "simple_smtp - Error bind");
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "simple_smtp - Error setsockopt");
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "simple_smtp - Error socket");
+  }
+
+  pthread_exit(NULL);
+}
 
 /**
  * decode a u_map into a string
@@ -228,7 +437,6 @@ int callback_function_multiple_complete(const struct _u_request * request, struc
   }
   return U_CALLBACK_COMPLETE;
 }
-
 
 ssize_t stream_data (void * cls, uint64_t pos, char * buf, size_t max) {
   usleep(100);
@@ -909,6 +1117,43 @@ START_TEST(test_ulfius_endpoint_callback_position)
 }
 END_TEST
 
+#define PORT 2525
+#define FROM "from"
+#define TO "to"
+#define CC "cc"
+#define BCC "bcc"
+#define SUBJECT "subject"
+#define BODY "mail body"
+
+START_TEST(test_ulfius_send_smtp)
+{
+  pthread_t thread;
+  struct smtp_manager manager;
+
+  manager.mail_data = NULL;
+  manager.port = 2525;
+  manager.sockfd = 0;
+
+  ck_assert_int_eq(ulfius_send_smtp_email("localhost", PORT, 0, 0, NULL, NULL, FROM, TO, CC, BCC, SUBJECT, BODY), U_ERROR_LIBCURL);
+  ck_assert_int_eq(ulfius_send_smtp_email(NULL, PORT, 0, 0, NULL, NULL, FROM, TO, CC, BCC, SUBJECT, BODY), U_ERROR_PARAMS);
+  ck_assert_int_eq(ulfius_send_smtp_email("localhost", PORT, 0, 0, NULL, NULL, NULL, TO, CC, BCC, SUBJECT, BODY), U_ERROR_PARAMS);
+  ck_assert_int_eq(ulfius_send_smtp_email("localhost", PORT, 0, 0, NULL, NULL, FROM, NULL, CC, BCC, SUBJECT, BODY), U_ERROR_PARAMS);
+  ck_assert_int_eq(ulfius_send_smtp_email("localhost", PORT, 0, 0, NULL, NULL, FROM, TO, CC, BCC, SUBJECT, NULL), U_ERROR_PARAMS);
+  
+  pthread_create(&thread, NULL, simple_smtp, &manager);
+  ck_assert_int_eq(ulfius_send_smtp_email("localhost", PORT, 0, 0, NULL, NULL, FROM, TO, CC, BCC, SUBJECT, BODY), U_OK);
+  pthread_join(thread, NULL);
+  ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, "HELO"));
+  ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, "MAIL FROM:<" FROM ">"));
+  ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, "RCPT TO:<" TO ">"));
+  ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, "RCPT TO:<" CC ">"));
+  ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, "RCPT TO:<" BCC ">"));
+  ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, "Subject: " SUBJECT));
+  ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, BODY));
+  o_free(manager.mail_data);
+}
+END_TEST
+
 #ifndef U_DISABLE_GNUTLS
 START_TEST(test_ulfius_server_ca_trust)
 {
@@ -989,6 +1234,7 @@ static Suite *ulfius_suite(void)
   tcase_add_test(tc_core, test_ulfius_utf8_not_ignored);
   tcase_add_test(tc_core, test_ulfius_utf8_ignored);
   tcase_add_test(tc_core, test_ulfius_endpoint_callback_position);
+  tcase_add_test(tc_core, test_ulfius_send_smtp);
 #ifndef U_DISABLE_GNUTLS
   tcase_add_test(tc_core, test_ulfius_server_ca_trust);
   tcase_add_test(tc_core, test_ulfius_client_certificate);
@@ -1004,7 +1250,7 @@ int main(int argc, char *argv[])
   int number_failed;
   Suite *s;
   SRunner *sr;
-  //y_init_logs("Ulfius", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Ulfius core tests");
+  y_init_logs("Ulfius", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Ulfius core tests");
   s = ulfius_suite();
   sr = srunner_create(s);
 
@@ -1012,6 +1258,6 @@ int main(int argc, char *argv[])
   number_failed = srunner_ntests_failed(sr);
   srunner_free(sr);
   
-  //y_close_logs();
+  y_close_logs();
   return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
