@@ -1131,7 +1131,7 @@ START_TEST(test_ulfius_send_smtp)
   struct smtp_manager manager;
 
   manager.mail_data = NULL;
-  manager.port = 2525;
+  manager.port = PORT;
   manager.sockfd = 0;
 
   ck_assert_int_eq(ulfius_send_smtp_email("localhost", PORT, 0, 0, NULL, NULL, FROM, TO, CC, BCC, SUBJECT, BODY), U_ERROR_LIBCURL);
