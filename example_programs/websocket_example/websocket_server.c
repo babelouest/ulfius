@@ -88,6 +88,8 @@ int main(int argc, char ** argv) {
   u_map_put(file_config.mime_types, "*", "application/octet-stream");
   file_config.files_path = "static";
   file_config.url_prefix = PREFIX_STATIC;
+  file_config.map_header = o_malloc(sizeof(struct _u_map));
+  u_map_init(file_config.map_header);
   
   if (ulfius_init_instance(&instance, PORT, NULL, NULL) != U_OK) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_init_instance, abort");
@@ -131,6 +133,7 @@ int main(int argc, char ** argv) {
   ulfius_stop_framework(&instance);
   ulfius_clean_instance(&instance);
   u_map_clean_full(file_config.mime_types);
+  u_map_clean_full(file_config.map_header);
   y_close_logs();
   
   return 0;
