@@ -564,7 +564,7 @@ static int ulfius_websocket_connection_handshake(struct _u_request * request, st
   size_t buffer_len = 4096, line_len;
   
   // Send HTTP Request
-  http_line = msprintf("%s %s%s%s HTTP/%s\r\n", request->http_verb, o_strlen(y_url->path)?y_url->path:"/", y_url->query!=NULL?"?":"", y_url->query!=NULL?y_url->query:"", request->http_protocol);
+  http_line = msprintf("%s /%s%s%s HTTP/%s\r\n", request->http_verb, o_strlen(y_url->path)?y_url->path:"", y_url->query!=NULL?"?":"", y_url->query!=NULL?y_url->query:"", request->http_protocol);
   ulfius_websocket_send_frame(websocket->websocket_manager, (uint8_t *)http_line, o_strlen(http_line));
   o_free(http_line);
   
