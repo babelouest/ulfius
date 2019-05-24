@@ -176,7 +176,7 @@ int callback_sheep_counter_start (const struct _u_request * request, struct _u_r
 #endif
 
   if (json_nb_sheep != NULL) {
-    * nb_sheep = json_integer_value(json_nb_sheep);
+    * nb_sheep = json_integer_value(json_object_get(json_nb_sheep,"nbsheep")); // * nb_sheep = json_integer_value(json_nb_sheep);
   } else {
     * nb_sheep = 0;
   }
