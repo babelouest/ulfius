@@ -20,23 +20,30 @@
     $("#counter").val(counter);
     
     $("#start").click(function() {
-      $.post("/sheep", {nbsheep:counter}, function(data) {
-        counter = data;
-        timer = setInterval(function() {
-          $.ajax({
-            url:"/sheep",
-            method: "PUT",
-            success: function(data) {
-              counter = data.nbsheep;
-              $("#counter").val(counter);
-              var left = (Math.random() * ($(document).width())).toFixed()-300;
-              var top = (Math.random() * ($(document).height())).toFixed()-300;
-              $("#layout").append("<img id='sheep-"+counter+"' src='/sheep.png'>");
-              $("#sheep-"+counter).css({"position":"absolute","top": top + "px", "left": left + "px"});
-            }
-          });
-        }, 1000);
-      }, "json");
+      $.ajax({
+        url:"/sheep",
+        method: "POST",
+        contentType: "application/json",
+        data: JSON.stringify({nbsheep: counter}),
+        dataType: "json",
+        complete: function(data) {
+          counter = data;
+          timer = setInterval(function() {
+            $.ajax({
+              url:"/sheep",
+              method: "PUT",
+              success: function(data) {
+                counter = data.nbsheep;
+                $("#counter").val(counter);
+                var left = (Math.random() * ($(document).width())).toFixed()-300;
+                var top = (Math.random() * ($(document).height())).toFixed();
+                $("#layout").append("<img id='sheep-"+counter+"' src='/sheep.png'>");
+                $("#sheep-"+counter).css({"position":"absolute","top": top + "px", "left": left + "px"});
+              }
+            });
+          }, 1000);
+        }
+      })
     });
     
     $("#pause").click(function() {
