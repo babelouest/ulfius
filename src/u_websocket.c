@@ -39,6 +39,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <stdlib.h>
+#include <gnutls/crypto.h>
 
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
@@ -222,10 +223,7 @@ static struct _websocket_message * ulfius_build_message (const uint8_t opcode,
           new_message->has_mask = 0;
           memset(new_message->mask, 0, 4);
         } else {
-          new_message->mask[0] = rand();
-          new_message->mask[1] = rand();
-          new_message->mask[2] = rand();
-          new_message->mask[3] = rand();
+          gnutls_rnd(GNUTLS_RND_NONCE, &new_message->mask, 4*sizeof(uint8_t));
           new_message->has_mask = 1;
         }
         if (data_len > 0) {
@@ -1440,22 +1438,21 @@ int ulfius_websocket_wait_close(struct _websocket_manager * websocket_manager, u
 /********************************/
 
 static long random_at_most(long max) {
-  unsigned long
-  // max <= RAND_MAX < ULONG_MAX, so this is okay.
-  num_bins = (unsigned long) max + 1,
-  num_rand = (unsigned long) RAND_MAX + 1,
+  unsigned char
+  num_bins = (unsigned char) max + 1,
+  num_rand = (unsigned char) 0xff,
   bin_size = num_rand / num_bins,
   defect   = num_rand % num_bins;
 
-  long x;
+  unsigned char x[1];
   do {
-   x = random();
+    gnutls_rnd(GNUTLS_RND_KEY, x, sizeof(x));
   }
   // This is carefully written not to overflow
-  while (num_rand - defect <= (unsigned long)x);
+  while (num_rand - defect <= (unsigned char)x[0]);
 
   // Truncated division is intentional
-  return x/bin_size;
+  return x[0]/bin_size;
 }
 
 /**
@@ -1508,7 +1505,6 @@ int ulfius_set_websocket_request(struct _u_request * request,
     u_map_put(request->map_header, "Connection", "Upgrade");
     u_map_put(request->map_header, "Content-Length", "0");
     u_map_put(request->map_header, "User-Agent", U_WEBSOCKET_USER_AGENT "/" STR(ULFIUS_VERSION));
-    srand(time(NULL));
     rand_string(rand_str, 16);
     if (!o_base64_encode((unsigned char *)rand_str, 16, (unsigned char *)rand_str_base64, &out_len)) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error o_base64_encode with the input string %s", rand_str);
