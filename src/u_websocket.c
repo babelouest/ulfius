@@ -128,7 +128,7 @@ static int ulfius_build_frame (const struct _websocket_message * message,
     *frame_len = 2;
     if (message->data_len > 65536) {
       *frame_len += 8;
-    } else if (message->data_len > 128) {
+    } else if (message->data_len > 125) {
       *frame_len += 2;
     }
     if (message->has_mask) {
