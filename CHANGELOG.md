@@ -1,5 +1,9 @@
 # Ulfius Changelog
 
+## 2.5.5
+
+- Fix #121 where websockets messages of 126 or 127 bytes long made errors
+
 ## 2.5.4
 
 - Align PKGCONF_REQ_PRIVATE required versions
