@@ -11,6 +11,8 @@
 - Add `ulfius_url_decode` and `ulfius_url_encode`
 - Clean code, add more tests
 - Install pkgconfig file when using Makefile
+- Fix #121 where websockets messages of 126 or 127 bytes long made errors
+- Use gnutls_rnd() instead of rand()
 
 ## 2.5.3
 
