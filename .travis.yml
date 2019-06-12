@@ -22,8 +22,8 @@ matrix:
         - cppcheck --force --enable=warning,missingInclude --error-exitcode=1 . >build.log 2>&1 || (cat build.log && exit 1)
 
 install:
-- wget https://ftp.gnu.org/gnu/libmicrohttpd/libmicrohttpd-latest.tar.gz
-- mkdir libmicrohttpd && tar xf libmicrohttpd-latest.tar.gz -C libmicrohttpd --strip-components 1
+- wget https://ftp.gnu.org/gnu/libmicrohttpd/libmicrohttpd-0.9.63.tar.gz
+- mkdir libmicrohttpd && tar xf https://ftp.gnu.org/gnu/libmicrohttpd/libmicrohttpd-0.9.63.tar.gz -C libmicrohttpd --strip-components 1
 - pushd libmicrohttpd && ./configure && make && sudo make install && popd
 - rm -rf libmicrohttpd
 - sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
