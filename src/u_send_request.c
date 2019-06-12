@@ -490,7 +490,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
       
       // Request parameters
       if (curl_easy_setopt(curl_handle, CURLOPT_URL, copy_request->http_url) != CURLE_OK ||
-          curl_easy_setopt(curl_handle, CURLOPT_CUSTOMREQUEST, copy_request->http_verb) != CURLE_OK ||
+          curl_easy_setopt(curl_handle, CURLOPT_CUSTOMREQUEST, copy_request->http_verb!=NULL?copy_request->http_verb:"GET") != CURLE_OK ||
           curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, header_list) != CURLE_OK) {
         ulfius_clean_request_full(copy_request);
         curl_slist_free_all(header_list);
@@ -615,22 +615,30 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
         }
       }
 
-      if (copy_request->binary_body != NULL) {
+      if (copy_request->binary_body_length > 0 && copy_request->binary_body != NULL) {
+        if (copy_request->binary_body_length < 2147483648) {
+          if (curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDSIZE, copy_request->binary_body_length) != CURLE_OK) {
+            ulfius_clean_request_full(copy_request);
+            curl_slist_free_all(header_list);
+            curl_easy_cleanup(curl_handle);
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting POST fields size");
+            return U_ERROR_LIBCURL;
+          }
+        } else { // Use CURLOPT_POSTFIELDSIZE_LARGE if binary_body_length is larger than 2GB
+          if (curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDSIZE_LARGE, copy_request->binary_body_length) != CURLE_OK) {
+            ulfius_clean_request_full(copy_request);
+            curl_slist_free_all(header_list);
+            curl_easy_cleanup(curl_handle);
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting POST fields size");
+            return U_ERROR_LIBCURL;
+          }
+        }
         if (curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, copy_request->binary_body) != CURLE_OK) {
           ulfius_clean_request_full(copy_request);
           curl_slist_free_all(header_list);
           curl_easy_cleanup(curl_handle);
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting POST fields");
           return U_ERROR_LIBCURL;
-        }
-        if (copy_request->binary_body_length > 0) {
-          if (curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDSIZE, copy_request->binary_body_length) != CURLE_OK) {
-            ulfius_clean_request_full(copy_request);
-            curl_slist_free_all(header_list);
-            curl_easy_cleanup(curl_handle);
-            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting POST fields");
-            return U_ERROR_LIBCURL;
-          }
         }
       }
 
