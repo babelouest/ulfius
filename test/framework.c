@@ -251,7 +251,6 @@ processline:
         send(manager->sockfd, bufferout, strlen(bufferout), 0);
         //manager->mail_data = mstrcatf(manager->mail_data, bufferout);
       }
-      o_free(manager->mail_data);
     } else { // We are inside the message after a DATA verb.
       manager->mail_data = mstrcatf(manager->mail_data, "%s\n", buffer);
       if (STREQU(buffer, ".")) { // A single "." signifies the end
@@ -260,7 +259,6 @@ processline:
         //manager->mail_data = mstrcatf(manager->mail_data, bufferout);
         inmessage = 0;
       }
-      o_free(manager->mail_data);
     }
 
     // Shift the rest of the buffer to the front
@@ -1153,6 +1151,7 @@ START_TEST(test_ulfius_send_smtp)
   ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, "Subject: " SUBJECT));
   ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, BODY));
   o_free(manager.mail_data);
+  manager.mail_data = NULL;
 }
 END_TEST
 
