@@ -3,6 +3,7 @@
 ## 2.5.5
 
 - Fix #121 where websockets messages of 126 or 127 bytes long made errors
+- Fix sneaky bug where endpoint injection inside a endpoint callback can lead to wrong callback calls, or even worse, crashes
 
 ## 2.5.4
 
