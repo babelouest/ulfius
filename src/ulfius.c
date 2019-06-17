@@ -489,7 +489,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
     }
     
     mhd_response_flag = ((struct _u_instance *)cls)->mhd_response_copy_data?MHD_RESPMEM_MUST_COPY:MHD_RESPMEM_MUST_FREE;
-    if (current_endpoint_list != NULL && current_endpoint_list[0] != NULL) {
+    if (current_endpoint_list[0] != NULL) {
       response = o_malloc(sizeof(struct _u_response));
       if (response == NULL) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating response");
