@@ -483,8 +483,16 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
     if ((current_endpoint_list == NULL || current_endpoint_list[0] == NULL) && ((struct _u_instance *)cls)->default_endpoint != NULL && ((struct _u_instance *)cls)->default_endpoint->callback_function != NULL) {
       current_endpoint_list = o_realloc(current_endpoint_list, 2*sizeof(struct _u_endpoint *));
       if (current_endpoint_list != NULL) {
-        current_endpoint_list[0] = ((struct _u_instance *)cls)->default_endpoint;
+        if ((current_endpoint_list[0] = o_malloc(sizeof(struct _u_endpoint))) != NULL) {
+          if (ulfius_copy_endpoint(current_endpoint_list[0], ((struct _u_instance *)cls)->default_endpoint) != U_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_copy_endpoint for current_endpoint_list[0]");
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for current_endpoint_list[0] of default endpoint");
+        }
         current_endpoint_list[1] = NULL;
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for current_endpoint_list of default endpoint");
       }
     }
     
@@ -769,6 +777,10 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
     }
     if (mhd_response_flag == MHD_RESPMEM_MUST_COPY) {
       o_free(response_buffer);
+    }
+    for (i=0; current_endpoint_list[i] != NULL; i++) {
+      ulfius_clean_endpoint(current_endpoint_list[i]);
+      o_free(current_endpoint_list[i]);
     }
     o_free(current_endpoint_list);
     return mhd_ret;

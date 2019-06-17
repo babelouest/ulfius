@@ -188,7 +188,14 @@ struct _u_endpoint ** ulfius_endpoint_match(const char * method, const char * ur
           if (splitted_url_format != NULL && ulfius_url_format_match((const char **)splitted_url, (const char **)splitted_url_format)) {
             endpoint_returned = o_realloc(endpoint_returned, (count+2)*sizeof(struct _u_endpoint *));
             if (endpoint_returned != NULL) {
-              endpoint_returned[count] = (endpoint_list + i);
+              endpoint_returned[count] = o_malloc(sizeof(struct _u_endpoint));
+              if (endpoint_returned[count] != NULL) {
+                if (ulfius_copy_endpoint(endpoint_returned[count], (endpoint_list + i)) != U_OK) {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_copy_endpoint for endpoint_returned[%zu]", count);
+                }
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for endpoint_returned[%zu]", count);
+              }
               endpoint_returned[count + 1] = NULL;
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error reallocating memory for endpoint_returned");
