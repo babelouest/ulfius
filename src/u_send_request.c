@@ -129,7 +129,6 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
   int res;
   
   res = ulfius_send_http_streaming_request(request, response, ulfius_write_body, (void *)&body_data);
-  
   if (res == U_OK && response != NULL) {
     if (body_data.data != NULL && body_data.size > 0) {
       response->binary_body = o_malloc(body_data.size);
@@ -193,6 +192,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
           return U_ERROR_MEMORY;
         }
         if (u_map_init(copy_request->map_header) != U_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error u_map_init for copy_request->map_header");
           ulfius_clean_request_full(copy_request);
           curl_slist_free_all(header_list);
           curl_easy_cleanup(curl_handle);
@@ -285,6 +285,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
           key_esc = curl_easy_escape(curl_handle, keys[i], 0);
           value_esc = curl_easy_escape(curl_handle, value, 0);
           if (key_esc == NULL || value_esc == NULL) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error curl_easy_escape for copy_request->map_url %s", keys[i]);
             curl_free(key_esc);
             curl_free(value_esc);
             ulfius_clean_request_full(copy_request);
@@ -345,6 +346,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
           // Build parameter
           value = u_map_get(copy_request->map_post_body, keys[i]);
           if (value == NULL) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error u_map_get for copy_request->map_post_body['%s']", keys[i]);
             ulfius_clean_request_full(copy_request);
             curl_slist_free_all(header_list);
             curl_easy_cleanup(curl_handle);
@@ -353,6 +355,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
           key_esc = curl_easy_escape(curl_handle, keys[i], 0);
           value_esc = curl_easy_escape(curl_handle, value, 0);
           if (key_esc == NULL || value_esc == NULL) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error curl_easy_escape for copy_request->map_post_body %s", keys[i]);
             curl_free(key_esc);
             curl_free(value_esc);
             ulfius_clean_request_full(copy_request);
@@ -423,6 +426,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
           ulfius_clean_request_full(copy_request);
           curl_slist_free_all(header_list);
           curl_easy_cleanup(curl_handle);
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headr fields");
           return U_ERROR_MEMORY;
         }
       }
@@ -433,6 +437,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
         for (i=0; keys != NULL && keys[i] != NULL; i++) {
           value = u_map_get(copy_request->map_header, keys[i]);
           if (value == NULL) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error getting header '%s'", keys[i]);
             ulfius_clean_request_full(copy_request);
             curl_slist_free_all(header_list);
             curl_easy_cleanup(curl_handle);
@@ -448,6 +453,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
           }
           header_list = curl_slist_append(header_list, header);
           if (header_list == NULL) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error curl_slist_append for header_list");
             o_free(header);
             ulfius_clean_request_full(copy_request);
             curl_slist_free_all(header_list);
@@ -464,6 +470,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
         for (i=0; keys != NULL && keys[i] != NULL; i++) {
           value = u_map_get(copy_request->map_cookie, keys[i]);
           if (value == NULL) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error getting cookie %s", keys[i]);
             ulfius_clean_request_full(copy_request);
             curl_slist_free_all(header_list);
             curl_easy_cleanup(curl_handle);
@@ -478,6 +485,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
             return U_ERROR_MEMORY;
           }
           if (curl_easy_setopt(curl_handle, CURLOPT_COOKIE, cookie) != CURLE_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting cookies list");
             o_free(cookie);
             ulfius_clean_request_full(copy_request);
             curl_slist_free_all(header_list);
