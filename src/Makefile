@@ -30,7 +30,7 @@ PKGCONFIG_FILE=../libulfius.pc
 PKGCONFIG_TEMPLATE=../libulfius.pc.in
 DESTDIR=/usr/local
 CC=gcc
-CFLAGS+=-c -pedantic -std=gnu99 -fPIC -Wall -D_REENTRANT -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS) $(CPPFLAGS)
+CFLAGS+=-c -pedantic -std=gnu99 -fPIC -Wall -Werror -Wextra -D_REENTRANT -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS) $(CPPFLAGS)
 LIBS=-L$(DESTDIR)/lib -lc -lmicrohttpd -lorcania -lpthread $(LDFLAGS)
 OBJECTS=ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
 OUTPUT=libulfius.so
