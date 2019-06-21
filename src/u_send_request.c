@@ -642,13 +642,6 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
       ulfius_clean_request_full(copy_request);
       curl_easy_cleanup(curl_handle);
       curl_slist_free_all(header_list);
-
-      if (res == CURLE_OK) {
-        ret = U_OK;
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error executing curl command: %s", curl_easy_strerror(res));
-        ret = U_ERROR_LIBCURL;
-      }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_duplicate_request");
       ret = U_ERROR_MEMORY;
