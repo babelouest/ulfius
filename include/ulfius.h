@@ -112,6 +112,13 @@ int y_close_logs();
 #define U_COOKIE_SAME_SITE_STRICT 1
 #define U_COOKIE_SAME_SITE_LAX    2
 
+#define U_USE_IPV4 0x0001
+#define U_USE_IPV6 0x0010
+#define U_USE_ALL (U_USE_IPV4|U_USE_IPV6)
+
+#define U_SSL_VERIFY_PEER     0x0001
+#define U_SSL_VERIFY_HOSTNAME 0x0010
+
 /*************
  * Structures
  *************/
@@ -147,37 +154,52 @@ struct _u_cookie {
  * Structure of request parameters
  * 
  * Contains request data
- * http_protocol:             http protocol used (1.0 or 1.1)
- * http_verb:                 http method (GET, POST, PUT, DELETE, etc.), use '*' to match all http methods
- * http_url:                  url used to call this callback function or full url to call when used in a ulfius_send_http_request
- * proxy:                     proxy address to use for outgoing connections, used by ulfius_send_http_request
- * check_server_certificate:  do not check server certificate and hostname if false (default true), used by ulfius_send_http_request
- * timeout                    connection timeout used by ulfius_send_http_request, default is 0
- * client_address:            IP address of the client
- * auth_basic_user:           basic authtication username
- * auth_basic_password:       basic authtication password
- * map_url:                   map containing the url variables, both from the route and the ?key=value variables
- * map_header:                map containing the header variables
- * map_cookie:                map containing the cookie variables
- * map_post_body:             map containing the post body variables (if available)
- * binary_body:               pointer to raw body
- * binary_body_length:        length of raw body
- * client_cert:               x509 certificate of the client if the instance uses client certificate authentication and the client is authenticated
- *                            available only if websocket support is enabled
- * client_cert_file:          path to client certificate file for sending http requests with certificate authentication
- *                            available only if websocket support is enabled
- * client_key_file:           path to client key file for sending http requests with certificate authentication
- *                            available only if websocket support is enabled
- * client_key_password:       password to unlock client key file
- *                            available only if websocket support is enabled
+ * http_protocol:                  http protocol used (1.0 or 1.1)
+ * http_verb:                      http method (GET, POST, PUT, DELETE, etc.)
+ * http_url:                       full url used to call this callback function or full url to call when used in a ulfius_send_http_request
+ * url_path:                       url path only used to call this callback function (ex, if http_url is /path/?param=1, url_path is /path/)
+ * proxy:                          proxy address to use for outgoing connections, used by ulfius_send_http_request
+ * network_type:                   Force connect to ipv4, ipv6 addresses or both, values available are U_USE_ALL, U_USE_IPV4 or U_USE_IPV6
+ * check_server_certificate:       check server certificate and hostname, default true, used by ulfius_send_http_request
+ * check_server_certificate_flag:  check certificate peer and or server hostname if check_server_certificate is enabled, values available are U_SSL_VERIFY_PEER, U_SSL_VERIFY_HOSTNAME or both
+                                   default value is both (U_SSL_VERIFY_PEER|U_SSL_VERIFY_HOSTNAME), used by ulfius_send_http_request
+ * check_proxy_certificate:        check proxy certificate and hostname, default true, used by ulfius_send_http_request, requires libcurl >= 7.52
+ * check_proxy_certificate_flag:   check certificate peer and or proxy hostname if check_proxy_certificate is enabled, values available are U_SSL_VERIFY_PEER, U_SSL_VERIFY_HOSTNAME or both
+                                   default value is both (U_SSL_VERIFY_PEER|U_SSL_VERIFY_HOSTNAME), used by ulfius_send_http_request, requires libcurl >= 7.52
+ * ca_path                         specify a path to CA certificates instead of system path, used by ulfius_send_http_request
+ * timeout                         connection timeout used by ulfius_send_http_request, default is 0
+ * client_address:                 IP address of the client
+ * auth_basic_user:                basic authtication username
+ * auth_basic_password:            basic authtication password
+ * map_url:                        map containing the url variables, both from the route and the ?key=value variables
+ * map_header:                     map containing the header variables
+ * map_cookie:                     map containing the cookie variables
+ * map_post_body:                  map containing the post body variables (if available)
+ * binary_body:                    pointer to raw body
+ * binary_body_length:             length of raw body
+ * callback_position:              position of the current callback function in the callback list, starts at 0
+ * client_cert:                    x509 certificate of the client if the instance uses client certificate authentication and the client is authenticated
+ *                                 available only if websocket support is enabled
+ * client_cert_file:               path to client certificate file for sending http requests with certificate authentication
+ *                                 available only if websocket support is enabled
+ * client_key_file:                path to client key file for sending http requests with certificate authentication
+ *                                 available only if websocket support is enabled
+ * client_key_password:            password to unlock client key file
+ *                                 available only if websocket support is enabled
  */
 struct _u_request {
   char *               http_protocol;
   char *               http_verb;
   char *               http_url;
+  char *               url_path;
   char *               proxy;
+  unsigned short       network_type;
   int                  check_server_certificate;
-  long                 timeout;
+  int                  check_server_certificate_flag;
+  int                  check_proxy_certificate;
+  int                  check_proxy_certificate_flag;
+  char *               ca_path;
+  unsigned long        timeout;
   struct sockaddr *    client_address;
   char *               auth_basic_user;
   char *               auth_basic_password;
@@ -187,6 +209,7 @@ struct _u_request {
   struct _u_map *      map_post_body;
   void *               binary_body;
   size_t               binary_body_length;
+  unsigned int         callback_position;
 #ifndef U_DISABLE_GNUTLS
   gnutls_x509_crt_t    client_cert;
   char *               client_cert_file;
@@ -256,14 +279,14 @@ struct _u_response {
  * 
  */
 struct _u_endpoint {
-  char * http_method;
-  char * url_prefix;
-  char * url_format;
-  unsigned int   priority;
-  int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
+  char       * http_method;
+  char       * url_prefix;
+  char       * url_format;
+  unsigned int priority;
+  int       (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
                             struct _u_response * response,     // Output parameters (set by the user)
                             void * user_data);
-  void * user_data;
+  void       * user_data;
 };
 
 /**
@@ -275,7 +298,8 @@ struct _u_endpoint {
  * mhd_daemon:             pointer to the libmicrohttpd daemon
  * status:                 status of the current instance, status are U_STATUS_STOP, U_STATUS_RUNNING or U_STATUS_ERROR
  * port:                   port number to listen to
- * bind_address:           ip address to listen to (optional)
+ * network_type:           Listen to ipv4 and or ipv6 connections, values available are U_USE_ALL, U_USE_IPV4 or U_USE_IPV6
+ * bind_address:           ipv4 address to listen to (optional)
  * timeout:                Timeout to close the connection because of inactivity between the client and the server
  * nb_endpoints:           Number of available endpoints
  * default_auth_realm:     Default realm on authentication error
@@ -299,7 +323,9 @@ struct _u_instance {
   struct MHD_Daemon          *  mhd_daemon;
   int                           status;
   unsigned int                  port;
+  unsigned short                network_type;
   struct sockaddr_in          * bind_address;
+  struct sockaddr_in6         * bind_address6;
   unsigned int                  timeout;
   int                           nb_endpoints;
   char                        * default_auth_realm;
@@ -352,9 +378,26 @@ void u_free(void * data);
  * ulfius_init_instance
  * 
  * Initialize a struct _u_instance * with default values
+ * Binds to IPV4 addresses only
+ * port:               tcp port to bind to, must be between 1 and 65535
+ * bind_address:       IPv4 address to listen to, optional, the reference is borrowed, the structure isn't copied
+ * default_auth_realm: default realm to send to the client on authentication error
  * return U_OK on success
  */
 int ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, struct sockaddr_in * bind_address, const char * default_auth_realm);
+
+/**
+ * ulfius_init_instance_ipv6
+ * 
+ * Initialize a struct _u_instance * with default values
+ * Binds to IPV6 and IPV4 addresses or IPV6 addresses only
+ * port:               tcp port to bind to, must be between 1 and 65535
+ * bind_address:       IPv6 address to listen to, optional, the reference is borrowed, the structure isn't copied
+ * network_type:       Type of network to listen to, values available are U_USE_IPV6 or U_USE_ALL
+ * default_auth_realm: default realm to send to the client on authentication error
+ * return U_OK on success
+ */
+int ulfius_init_instance_ipv6(struct _u_instance * u_instance, unsigned int port, struct sockaddr_in6 * bind_address, unsigned short network_type, const char * default_auth_realm);
 
 /**
  * ulfius_clean_instance
@@ -648,6 +691,28 @@ int ulfius_add_same_site_cookie_to_response(struct _u_response * response, const
 int ulfius_add_header_to_response(struct _u_response * response, const char * key, const char * value);
 
 /**
+ * ulfius_set_string_body_request
+ * Set a string string_body to a request
+ * string_body must end with a '\0' character
+ * return U_OK on success
+ */
+int ulfius_set_string_body_request(struct _u_request * request, const char * string_body);
+
+/**
+ * ulfius_set_binary_body_request
+ * Add a binary binary_body to a request
+ * return U_OK on success
+ */
+int ulfius_set_binary_body_request(struct _u_request * request, const char * binary_body, const size_t length);
+
+/**
+ * ulfius_set_empty_body_request
+ * Set an empty request body
+ * return U_OK on success
+ */
+int ulfius_set_empty_body_request(struct _u_request * request);
+
+/**
  * ulfius_set_string_body_response
  * Add a string body to a response
  * body must end with a '\0' character
@@ -766,6 +831,22 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
  * return value must be cleaned after use
  */
 struct _u_response * ulfius_duplicate_response(const struct _u_response * response);
+
+/**
+ * Returns a url-decoded version of str
+ * returned value must be cleaned after use
+ * Thanks Geek Hideout!
+ * http://www.geekhideout.com/urlcode.shtml
+ */
+char * ulfius_url_decode(const char * str);
+
+/**
+ * Returns a url-encoded version of str
+ * returned value must be cleaned after use
+ * Thanks Geek Hideout!
+ * http://www.geekhideout.com/urlcode.shtml
+ */
+char * ulfius_url_encode(const char * str);
 
 #ifndef U_DISABLE_JANSSON
 /**

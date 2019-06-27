@@ -24,6 +24,7 @@
  */
 
 #include <string.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include "u_private.h"
@@ -206,8 +207,13 @@ static void * ulfius_uri_logger (void * cls, const char * uri) {
       return NULL;
     }
     con_info->request->http_url = o_strdup(uri);
-    if (con_info->request->http_url == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for con_info->request->http_url");
+    if (o_strchr(uri, '?') != NULL) {
+      con_info->request->url_path = o_strndup(uri, o_strchr(uri, '?') - uri);
+    } else {
+      con_info->request->url_path = o_strdup(uri);
+    }
+    if (con_info->request->http_url == NULL || con_info->request->url_path == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for con_info->request->http_url or con_info->request->url_path");
       ulfius_clean_request_full(con_info->request);
       o_free(con_info);
       return NULL;
@@ -319,7 +325,7 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
     
     if (filename != NULL) {
       filename_param = msprintf("%s_filename", key);
-      if (u_map_put((struct _u_map *)con_info->request->map_post_body, filename_param, filename) != U_OK) {
+      if (!u_map_has_key((struct _u_map *)con_info->request->map_post_body, filename_param) && u_map_put((struct _u_map *)con_info->request->map_post_body, filename_param, filename) != U_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error u_map_put filename value");
       }
       o_free(filename_param);
@@ -371,6 +377,8 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
   
   // Response variables
   struct MHD_Response * mhd_response = NULL;
+  
+  UNUSED(url);
   
   // Prepare for POST or PUT input data
   // Initialize the input maps
@@ -469,19 +477,27 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
     }
   } else {
     // Check if the endpoint has one or more matches
-    current_endpoint_list = ulfius_endpoint_match(method, url, endpoint_list);
+    current_endpoint_list = ulfius_endpoint_match(method, con_info->request->url_path, endpoint_list);
     
     // Set to default_endpoint if no match
     if ((current_endpoint_list == NULL || current_endpoint_list[0] == NULL) && ((struct _u_instance *)cls)->default_endpoint != NULL && ((struct _u_instance *)cls)->default_endpoint->callback_function != NULL) {
       current_endpoint_list = o_realloc(current_endpoint_list, 2*sizeof(struct _u_endpoint *));
       if (current_endpoint_list != NULL) {
-        current_endpoint_list[0] = ((struct _u_instance *)cls)->default_endpoint;
+        if ((current_endpoint_list[0] = o_malloc(sizeof(struct _u_endpoint))) != NULL) {
+          if (ulfius_copy_endpoint(current_endpoint_list[0], ((struct _u_instance *)cls)->default_endpoint) != U_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_copy_endpoint for current_endpoint_list[0]");
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for current_endpoint_list[0] of default endpoint");
+        }
         current_endpoint_list[1] = NULL;
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for current_endpoint_list of default endpoint");
       }
     }
     
     mhd_response_flag = ((struct _u_instance *)cls)->mhd_response_copy_data?MHD_RESPMEM_MUST_COPY:MHD_RESPMEM_MUST_FREE;
-    if (current_endpoint_list != NULL && current_endpoint_list[0] != NULL) {
+    if (current_endpoint_list[0] != NULL) {
       response = o_malloc(sizeof(struct _u_response));
       if (response == NULL) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating response");
@@ -504,13 +520,14 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
           current_endpoint = current_endpoint_list[i];
           u_map_empty(con_info->request->map_url);
           u_map_copy_into(con_info->request->map_url, &con_info->map_url_initial);
-          if (ulfius_parse_url(url, current_endpoint, con_info->request->map_url, con_info->u_instance->check_utf8) != U_OK) {
+          if (ulfius_parse_url(con_info->request->url_path, current_endpoint, con_info->request->map_url, con_info->u_instance->check_utf8) != U_OK) {
             o_free(response);
-            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error parsing url: ", url);
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error parsing url: ", con_info->request->url_path);
             mhd_ret = MHD_NO;
           }
           // Run callback function with the input parameters filled for the current callback
           callback_ret = current_endpoint->callback_function(con_info->request, response, current_endpoint->user_data);
+          con_info->request->callback_position++;
           if (response->timeout > 0 && MHD_set_connection_option(connection, MHD_CONNECTION_OPTION_TIMEOUT, response->timeout) !=  MHD_YES) {
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting connection response timeout value");
           }
@@ -761,6 +778,10 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
     if (mhd_response_flag == MHD_RESPMEM_MUST_COPY) {
       o_free(response_buffer);
     }
+    for (i=0; current_endpoint_list[i] != NULL; i++) {
+      ulfius_clean_endpoint(current_endpoint_list[i]);
+      o_free(current_endpoint_list[i]);
+    }
     o_free(current_endpoint_list);
     return mhd_ret;
   }
@@ -773,7 +794,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
  * 
  */
 static struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem, const char * root_ca_perm) {
-  unsigned int mhd_flags = MHD_USE_THREAD_PER_CONNECTION;
+  unsigned int mhd_flags = MHD_USE_AUTO;
   int index;
 
 #ifdef DEBUG
@@ -794,9 +815,25 @@ static struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance
     mhd_ops[0].value = (intptr_t)mhd_request_completed;
     mhd_ops[0].ptr_value = NULL;
     
-    mhd_ops[1].option = MHD_OPTION_SOCK_ADDR;
-    mhd_ops[1].value = 0;
-    mhd_ops[1].ptr_value = (void *)u_instance->bind_address;
+    // If bind_address6 is specified, listen only to IPV6 addresses
+    if (u_instance->bind_address6 != NULL) {
+      mhd_ops[1].option = MHD_OPTION_SOCK_ADDR;
+      mhd_ops[1].value = 0;
+      mhd_ops[1].ptr_value = (void *)u_instance->bind_address6;
+      mhd_flags |= MHD_USE_IPv6;
+    } else {
+      mhd_ops[1].option = MHD_OPTION_SOCK_ADDR;
+      mhd_ops[1].value = 0;
+      mhd_ops[1].ptr_value = (void *)u_instance->bind_address;
+      // Default network stack is listening to IPV4 only
+      if ((u_instance->network_type & U_USE_IPV4) && (u_instance->network_type & U_USE_IPV6)) {
+        // If u_instance->network_type & U_USE_ALL, listen to IPV4 and IPV6 addresses
+        mhd_flags |= MHD_USE_DUAL_STACK;
+      } else if (u_instance->network_type & U_USE_IPV6) {
+        // If u_instance->network_type & U_USE_IPV6, listen to IPV6 addresses only
+        mhd_flags |= MHD_USE_IPv6;
+      }
+    }
     
     mhd_ops[2].option = MHD_OPTION_URI_LOG_CALLBACK;
     mhd_ops[2].value = (intptr_t)ulfius_uri_logger;
@@ -1379,20 +1416,25 @@ void ulfius_clean_instance(struct _u_instance * u_instance) {
 }
 
 /**
- * ulfius_init_instance
+ * internal_ulfius_init_instance
  * 
  * Initialize a struct _u_instance * with default values
+ * internal function used by both ulfius_init_instance and ulfius_init_instance_ipv6
  * port:               tcp port to bind to, must be between 1 and 65535
- * bind_address:       IP address to listen to, optional, the reference is borrowed, the structure isn't copied
+ * bind_address4:      IPv4 address to listen to, optional, the reference is borrowed, the structure isn't copied
+ * bind_address6:      IPv6 address to listen to, optional, the reference is borrowed, the structure isn't copied
+ * network_type:       Type of network to listen to, values available are U_USE_IPV4, U_USE_IPV6 or U_USE_ALL
  * default_auth_realm: default realm to send to the client on authentication error
  * return U_OK on success
  */
-int ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, struct sockaddr_in * bind_address, const char * default_auth_realm) {
-  if (u_instance != NULL && port > 0 && port < 65536) {
+static int internal_ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, struct sockaddr_in * bind_address4, struct sockaddr_in6 * bind_address6, unsigned short network_type, const char * default_auth_realm) {
+  if (u_instance != NULL && port > 0 && port < 65536 && (bind_address4 == NULL || bind_address6 == NULL) && (network_type & U_USE_ALL)) {
     u_instance->mhd_daemon = NULL;
     u_instance->status = U_STATUS_STOP;
     u_instance->port = port;
-    u_instance->bind_address = bind_address;
+    u_instance->bind_address = bind_address4;
+    u_instance->bind_address6 = bind_address6;
+    u_instance->network_type = network_type;
     u_instance->timeout = 0;
     u_instance->default_auth_realm = o_strdup(default_auth_realm);
     u_instance->nb_endpoints = 0;
@@ -1435,6 +1477,39 @@ int ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, str
     u_instance->websocket_handler = NULL;
 #endif
     return U_OK;
+  } else {
+    return U_ERROR_PARAMS;
+  }
+}
+
+/**
+ * ulfius_init_instance
+ * 
+ * Initialize a struct _u_instance * with default values
+ * Binds to IPV4 addresses only
+ * port:               tcp port to bind to, must be between 1 and 65535
+ * bind_address:       IPv4 address to listen to, optional, the reference is borrowed, the structure isn't copied
+ * default_auth_realm: default realm to send to the client on authentication error
+ * return U_OK on success
+ */
+int ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, struct sockaddr_in * bind_address, const char * default_auth_realm) {
+  return internal_ulfius_init_instance(u_instance, port, bind_address, NULL, U_USE_IPV4, default_auth_realm);
+}
+
+/**
+ * ulfius_init_instance_ipv6
+ * 
+ * Initialize a struct _u_instance * with default values
+ * Binds to IPV6 and IPV4 or IPV6 addresses only
+ * port:               tcp port to bind to, must be between 1 and 65535
+ * bind_address:       IPv6 address to listen to, optional, the reference is borrowed, the structure isn't copied
+ * network_type:       Type of network to listen to, values available are U_USE_IPV6 or U_USE_ALL
+ * default_auth_realm: default realm to send to the client on authentication error
+ * return U_OK on success
+ */
+int ulfius_init_instance_ipv6(struct _u_instance * u_instance, unsigned int port, struct sockaddr_in6 * bind_address, unsigned short network_type, const char * default_auth_realm) {
+  if (network_type & U_USE_IPV6) {
+    return internal_ulfius_init_instance(u_instance, port, NULL, bind_address, bind_address!=NULL?U_USE_IPV6:network_type, default_auth_realm);
   } else {
     return U_ERROR_PARAMS;
   }
@@ -1508,4 +1583,88 @@ const unsigned char * utf8_check(const char * s_orig) {
   }
 
   return NULL;
+}
+
+/**
+ * Converts a hex character to its integer value
+ */
+static char from_hex(char ch) {
+  return isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10;
+}
+
+/**
+ * Converts an integer value to its hex character
+ */
+static char to_hex(char code) {
+  static char hex[] = "0123456789ABCDEF";
+  return hex[code & 15];
+}
+
+/**
+ * Returns a url-encoded version of str
+ * returned value must be cleaned after use
+ * Thanks Geek Hideout!
+ * http://www.geekhideout.com/urlcode.shtml
+ */
+char * ulfius_url_encode(const char * str) {
+  char * pstr = (char*)str, * buf = NULL, * pbuf = NULL;
+  if (str != NULL) {
+    buf = malloc(strlen(str) * 3 + 1);
+    if (buf != NULL) {
+      pbuf = buf;
+      while (* pstr) {
+        // "$-_.+!*'(),"
+        if (isalnum(* pstr) || * pstr == '$' || * pstr == '-' || * pstr == '_' ||
+            * pstr == '.' || * pstr == '!' || * pstr == '*' ||
+            * pstr == '\'' || * pstr == '(' || * pstr == ')' || * pstr == ',') 
+          * pbuf++ = * pstr;
+        else if (* pstr == ' ') 
+          * pbuf++ = '+';
+        else 
+          * pbuf++ = '%', * pbuf++ = to_hex(* pstr >> 4), * pbuf++ = to_hex(* pstr & 15);
+        pstr++;
+      }
+      * pbuf = '\0';
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for buf (ulfius_url_encode)");
+    }
+    return buf;
+  } else {
+    return NULL;
+  }
+}
+
+/**
+ * Returns a url-decoded version of str
+ * returned value must be cleaned after use
+ * Thanks Geek Hideout!
+ * http://www.geekhideout.com/urlcode.shtml
+ */
+char * ulfius_url_decode(const char * str) {
+  char * pstr = (char*)str, * buf = NULL, * pbuf = NULL;
+  if (str != NULL) {
+    buf = malloc(strlen(str) + 1);
+    if (buf != NULL) {
+      pbuf = buf;
+      while (* pstr) {
+        if (* pstr == '%') {
+          if (pstr[1] && pstr[2]) {
+            * pbuf++ = from_hex(pstr[1]) << 4 | from_hex(pstr[2]);
+            pstr += 2;
+          }
+        } else if (* pstr == '+') { 
+          * pbuf++ = ' ';
+        } else {
+          * pbuf++ = * pstr;
+        }
+        pstr++;
+      }
+      * pbuf = '\0';
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for buf (ulfius_url_decode)");
+    }
+    return buf;
+  } else {
+    return NULL;
+  }
 }

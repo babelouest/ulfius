@@ -19,7 +19,9 @@ cmake_minimum_required(VERSION 3.5)
 project(ulfius C)
 
 set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
+if (NOT MSVC)
+    set(CMAKE_C_FLAGS "-Wall -Werror ${CMAKE_C_FLAGS}")
+endif()
 
 # library info
 
@@ -27,14 +29,14 @@ set(PROJECT_DESCRIPTION "Web Framework to build REST APIs, Webservices or any HT
 set(PROJECT_HOMEPAGE_URL "https://github.com/babelouest/ulfius/")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/ulfius/issues")
 set(LIBRARY_VERSION_MAJOR "2")
-set(LIBRARY_VERSION_MINOR "5")
-set(LIBRARY_VERSION_PATCH "3")
+set(LIBRARY_VERSION_MINOR "6")
+set(LIBRARY_VERSION_PATCH "0")
 
 set(PROJECT_VERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}.${LIBRARY_VERSION_PATCH}")
 set(LIBRARY_VERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}.${LIBRARY_VERSION_PATCH}")
 set(LIBRARY_SOVERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}")
-set(ORCANIA_VERSION_DOWNLOAD "1.2.9")
-set(YDER_VERSION_DOWNLOAD "1.4.4")
+set(ORCANIA_VERSION_REQUIRED "2.0.0")
+set(YDER_VERSION_REQUIRED "1.4.5")
 
 # cmake modules
 
@@ -182,11 +184,13 @@ endif ()
 # shared library
 
 add_library(ulfius SHARED ${LIB_SRC})
-set_target_properties(ulfius PROPERTIES
-    COMPILE_OPTIONS -Wextra
-    PUBLIC_HEADER "${INC_DIR}/ulfius.h;${PROJECT_BINARY_DIR}/ulfius-cfg.h"
-    VERSION "${LIBRARY_VERSION}"
-    SOVERSION "${LIBRARY_SOVERSION}")
+if (NOT MSVC)
+    set_target_properties(ulfius PROPERTIES
+        COMPILE_OPTIONS -Wextra
+        PUBLIC_HEADER "${INC_DIR}/ulfius.h;${PROJECT_BINARY_DIR}/ulfius-cfg.h"
+        VERSION "${LIBRARY_VERSION}"
+        SOVERSION "${LIBRARY_SOVERSION}")
+endif()
 if (WIN32)
     set_target_properties(ulfius PROPERTIES SUFFIX "-${LIBRARY_VERSION_MAJOR}.dll")
 endif ()
@@ -198,11 +202,11 @@ option(SEARCH_ORCANIA_U "Search for ORCANIA library" ON)
 if (SEARCH_ORCANIA_U)
     set(Orcania_FIND_QUIETLY ON) # force to find Orcania quietly
     include(FindOrcania)
-    find_package(Orcania 1.1 QUIET) # try to find orcania
+    find_package(Orcania ${ORCANIA_VERSION_REQUIRED} QUIET) # try to find orcania
     if (NOT ORCANIA_FOUND)
         include(DownloadProject)
         download_project(PROJ orcania # ... otherwise, download archive
-            URL "https://github.com/babelouest/orcania/archive/v${ORCANIA_VERSION_DOWNLOAD}.tar.gz"
+            URL "https://github.com/babelouest/orcania/archive/v${ORCANIA_VERSION_REQUIRED}.tar.gz"
             QUIET)
         add_subdirectory(${orcania_SOURCE_DIR} ${orcania_BINARY_DIR})
         include_directories(${orcania_SOURCE_DIR}/include)
@@ -214,6 +218,7 @@ if (SEARCH_ORCANIA_U)
         set(LIBS ${LIBS} ${ORCANIA_LIBRARIES})
         include_directories(${ORCANIA_INCLUDE_DIRS})
     endif ()
+    target_link_libraries(ulfius ${LIBS} ${ORCANIA_LIBRARIES})
 endif ()
 
 option(WITH_YDER "Use Yder library to log messages" ON)
@@ -226,11 +231,11 @@ if (WITH_YDER)
     if (SEARCH_YDER)
         set(Yder_FIND_QUIETLY ON) # force to find Yder quietly
         include(FindYder)
-        find_package(Yder 1.1 QUIET) # try to find Yder
+        find_package(Yder ${YDER_VERSION_REQUIRED} QUIET) # try to find Yder
         if (NOT YDER_FOUND)
             include(DownloadProject)
             download_project(PROJ yder # ... otherwise, download archive
-                              URL "https://github.com/babelouest/yder/archive/v${YDER_VERSION_DOWNLOAD}.tar.gz"
+                              URL "https://github.com/babelouest/yder/archive/v${YDER_VERSION_REQUIRED}.tar.gz"
                               QUIET)
             add_subdirectory(${yder_SOURCE_DIR} ${yder_BINARY_DIR})
             include_directories(${yder_SOURCE_DIR}/include)
@@ -411,7 +416,7 @@ endif ()
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "mail@babelouest.org")
 set(CPACK_DEBIAN_PACKAGE_DESCRIPTION ${PROJECT_DESCRIPTION})
 set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "http://babelouest.github.io/ulfius/")
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.4), liborcania (>= 1.2), libyder (>= 1.3)")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.4), liborcania (>= ${ORCANIA_VERSION_REQUIRED}), libyder (>= ${YDER_VERSION_REQUIRED})")
 if (WITH_CURL)
   set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libcurl3-gnutls (>= 7.16.2)")
 endif ()
