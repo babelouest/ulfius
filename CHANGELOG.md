@@ -12,7 +12,7 @@
 - Clean code, add more tests
 - Install pkgconfig file when using Makefile
 - Fix #121 where websockets messages of 126 or 127 bytes long made errors
-- Use gnutls_rnd() instead of rand()
+- Use `gnutls_rnd()` instead of `rand()`
 - Fix sneaky bug where endpoint injection inside a endpoint callback can lead to wrong callback calls, or even worse, crashes
 
 ## 2.5.5
