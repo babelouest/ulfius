@@ -1,7 +1,7 @@
 ---
 name: Ulfius bug report
 about: Create a report to help improve Ulfius
-title: "[Debian Stretch - Ulfius 2.5.4] Bug"
+title: "[Issue]"
 labels: ''
 assignees: ''
 
