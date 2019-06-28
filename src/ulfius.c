@@ -794,7 +794,11 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
  * 
  */
 static struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem, const char * root_ca_perm) {
+#if MHD_VERSION < 0x00095208
+  unsigned int mhd_flags = MHD_USE_THREAD_PER_CONNECTION;
+#else
   unsigned int mhd_flags = MHD_USE_AUTO;
+#endif
   int index;
 
 #ifdef DEBUG
