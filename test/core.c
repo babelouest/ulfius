@@ -69,6 +69,7 @@ ssize_t stream_callback_empty (void * stream_user_data, uint64_t offset, char * 
   return 0;
 }
 
+#ifndef U_DISABLE_WEBSOCKET
 void websocket_manager_callback_empty (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_manager_user_data) {
 }
 
@@ -77,6 +78,7 @@ void websocket_incoming_message_callback_empty (const struct _u_request * reques
 
 void websocket_onclose_callback_empty (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_onclose_user_data) {
 }
+#endif
 
 void stream_callback_empty_free (void * stream_user_data) {
 }
@@ -431,12 +433,14 @@ START_TEST(test_ulfius_response)
   ck_assert_int_eq(resp1.stream_size, U_STREAM_SIZE_UNKOWN);
   ck_assert_int_eq(resp1.stream_block_size, ULFIUS_STREAM_BLOCK_SIZE_DEFAULT);
   ck_assert_ptr_eq(resp1.stream_user_data, NULL);
+#ifndef U_DISABLE_WEBSOCKET
   ck_assert_ptr_eq(((struct _websocket_handle *)resp1.websocket_handle)->websocket_manager_callback, NULL);
   ck_assert_ptr_eq(((struct _websocket_handle *)resp1.websocket_handle)->websocket_manager_user_data, NULL);
   ck_assert_ptr_eq(((struct _websocket_handle *)resp1.websocket_handle)->websocket_incoming_message_callback, NULL);
   ck_assert_ptr_eq(((struct _websocket_handle *)resp1.websocket_handle)->websocket_incoming_user_data, NULL);
   ck_assert_ptr_eq(((struct _websocket_handle *)resp1.websocket_handle)->websocket_onclose_callback, NULL);
   ck_assert_ptr_eq(((struct _websocket_handle *)resp1.websocket_handle)->websocket_onclose_user_data, NULL);
+#endif
   ck_assert_ptr_eq(resp1.shared_data, NULL);
   ck_assert_int_eq(resp1.timeout, 0);
   
@@ -453,6 +457,7 @@ START_TEST(test_ulfius_response)
   ck_assert_int_eq(resp1.stream_block_size, STREAM_BLOCK_SIZE);
   ck_assert_ptr_eq(resp1.stream_user_data, (void *)STREAM_USER_DATA);
   
+#ifndef U_DISABLE_WEBSOCKET
   ck_assert_int_eq(ulfius_set_websocket_response(&resp1, NULL, NULL, &websocket_manager_callback_empty, (void *)WEBSOCKET_MANAGER_USER_DATA, &websocket_incoming_message_callback_empty, (void *)WEBSOCKET_INCOMING_USER_DATA, &websocket_onclose_callback_empty, (void *)WEBSOCKET_ONCLOSE_USER_DATA), U_OK);
   ck_assert_ptr_eq(((struct _websocket_handle *)resp1.websocket_handle)->websocket_manager_callback, &websocket_manager_callback_empty);
   ck_assert_ptr_ne(((struct _websocket_handle *)resp1.websocket_handle)->websocket_manager_user_data, NULL);
@@ -460,6 +465,7 @@ START_TEST(test_ulfius_response)
   ck_assert_ptr_ne(((struct _websocket_handle *)resp1.websocket_handle)->websocket_incoming_user_data, NULL);
   ck_assert_ptr_eq(((struct _websocket_handle *)resp1.websocket_handle)->websocket_onclose_callback, &websocket_onclose_callback_empty);
   ck_assert_ptr_ne(((struct _websocket_handle *)resp1.websocket_handle)->websocket_onclose_user_data, NULL);
+#endif
   
   resp1.binary_body = o_strdup(BINARY_BODY);
   resp1.binary_body_length = BINARY_BODY_LEN;
@@ -482,12 +488,14 @@ START_TEST(test_ulfius_response)
   ck_assert_int_eq(resp2.stream_size, STREAM_SIZE);
   ck_assert_int_eq(resp2.stream_block_size, STREAM_BLOCK_SIZE);
   ck_assert_ptr_ne(resp2.stream_user_data, NULL);
+#ifndef U_DISABLE_WEBSOCKET
   ck_assert_ptr_eq(((struct _websocket_handle *)resp2.websocket_handle)->websocket_manager_callback, &websocket_manager_callback_empty);
   ck_assert_ptr_ne(((struct _websocket_handle *)resp2.websocket_handle)->websocket_manager_user_data, NULL);
   ck_assert_ptr_eq(((struct _websocket_handle *)resp2.websocket_handle)->websocket_incoming_message_callback, &websocket_incoming_message_callback_empty);
   ck_assert_ptr_ne(((struct _websocket_handle *)resp2.websocket_handle)->websocket_incoming_user_data, NULL);
   ck_assert_ptr_eq(((struct _websocket_handle *)resp2.websocket_handle)->websocket_onclose_callback, &websocket_onclose_callback_empty);
   ck_assert_ptr_ne(((struct _websocket_handle *)resp2.websocket_handle)->websocket_onclose_user_data, NULL);
+#endif
   ck_assert_ptr_ne(resp2.shared_data, NULL);
   ck_assert_int_eq(resp2.timeout, TIMEOUT);
   
@@ -506,12 +514,14 @@ START_TEST(test_ulfius_response)
   ck_assert_int_eq(resp3->stream_size, STREAM_SIZE);
   ck_assert_int_eq(resp3->stream_block_size, STREAM_BLOCK_SIZE);
   ck_assert_ptr_ne(resp3->stream_user_data, NULL);
+#ifndef U_DISABLE_WEBSOCKET
   ck_assert_ptr_eq(((struct _websocket_handle *)resp3->websocket_handle)->websocket_manager_callback, &websocket_manager_callback_empty);
   ck_assert_ptr_ne(((struct _websocket_handle *)resp3->websocket_handle)->websocket_manager_user_data, NULL);
   ck_assert_ptr_eq(((struct _websocket_handle *)resp3->websocket_handle)->websocket_incoming_message_callback, &websocket_incoming_message_callback_empty);
   ck_assert_ptr_ne(((struct _websocket_handle *)resp3->websocket_handle)->websocket_incoming_user_data, NULL);
   ck_assert_ptr_eq(((struct _websocket_handle *)resp3->websocket_handle)->websocket_onclose_callback, &websocket_onclose_callback_empty);
   ck_assert_ptr_ne(((struct _websocket_handle *)resp3->websocket_handle)->websocket_onclose_user_data, NULL);
+#endif
   ck_assert_ptr_ne(resp3->shared_data, NULL);
   ck_assert_int_eq(resp3->timeout, TIMEOUT);
   
