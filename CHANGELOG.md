@@ -1,5 +1,10 @@
 # Ulfius Changelog
 
+## 2.6.1
+
+- Fix package dependencies in cmake script
+- Fix core test to skip websocket tests if webscket is disabled
+
 ## 2.6.0
 
 - Add `struct _u_request->callback_position` to know the position of the current callback in the callback list
