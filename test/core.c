@@ -88,13 +88,17 @@ START_TEST(test_ulfius_init_instance)
 {
   struct _u_instance u_instance;
   struct sockaddr_in listen;
+#if MHD_VERSION >= 0x00095208
   struct sockaddr_in6 listen6;
+#endif
 
   listen.sin_family = AF_INET;
   listen.sin_addr.s_addr = htonl (INADDR_ANY);
 
+#if MHD_VERSION >= 0x00095208
   listen6.sin6_family = AF_INET6;
   listen6.sin6_addr = in6addr_any;
+#endif
 
   ck_assert_int_eq(ulfius_init_instance(&u_instance, 80, NULL, NULL), U_OK);
   ulfius_clean_instance(&u_instance);
@@ -106,6 +110,7 @@ START_TEST(test_ulfius_init_instance)
   ck_assert_int_eq(ulfius_init_instance(&u_instance, 80, NULL, "test_ulfius"), U_OK);
   ulfius_clean_instance(&u_instance);
 
+#if MHD_VERSION >= 0x00095208
   ck_assert_int_eq(ulfius_init_instance_ipv6(&u_instance, 80, &listen6, U_USE_IPV6, NULL), U_OK);
   ulfius_clean_instance(&u_instance);
   ck_assert_int_eq(ulfius_init_instance_ipv6(&u_instance, 80, &listen6, U_USE_ALL, NULL), U_OK);
@@ -118,6 +123,7 @@ START_TEST(test_ulfius_init_instance)
 
   ck_assert_int_ne(ulfius_init_instance_ipv6(&u_instance, 80, NULL, U_USE_IPV4, NULL), U_OK);
   ck_assert_int_ne(ulfius_init_instance_ipv6(&u_instance, 80, NULL, 0, NULL), U_OK);
+#endif
 }
 END_TEST
 #else
@@ -150,7 +156,9 @@ START_TEST(test_ulfius_request)
   ck_assert_ptr_eq(req1.http_url, NULL);
   ck_assert_ptr_eq(req1.url_path, NULL);
   ck_assert_ptr_eq(req1.proxy, NULL);
+#if MHD_VERSION >= 0x00095208
   ck_assert_int_eq(req1.network_type, U_USE_ALL);
+#endif
   ck_assert_int_eq(req1.check_server_certificate, 1);
   ck_assert_int_eq(req1.check_server_certificate_flag, (U_SSL_VERIFY_PEER|U_SSL_VERIFY_HOSTNAME));
   ck_assert_int_eq(req1.check_proxy_certificate, 1);
@@ -180,7 +188,9 @@ START_TEST(test_ulfius_request)
   req1.url_path = o_strdup(URL_PATH);
   req1.proxy = o_strdup(PROXY);
   req1.ca_path = o_strdup(CA_PATH);
+#if MHD_VERSION >= 0x00095208
   req1.network_type = U_USE_IPV4;
+#endif
   req1.check_server_certificate = 0;
   req1.check_server_certificate_flag = U_SSL_VERIFY_PEER;
   req1.check_proxy_certificate = 0;
@@ -210,7 +220,9 @@ START_TEST(test_ulfius_request)
   ck_assert_str_eq(req2.http_url, HTTP_URL);
   ck_assert_str_eq(req2.url_path, URL_PATH);
   ck_assert_str_eq(req2.proxy, PROXY);
+#if MHD_VERSION >= 0x00095208
   ck_assert_int_eq(req2.network_type, U_USE_IPV4);
+#endif
   ck_assert_int_eq(req2.check_server_certificate, 0);
   ck_assert_int_eq(req2.check_server_certificate_flag, U_SSL_VERIFY_PEER);
   ck_assert_int_eq(req2.check_proxy_certificate, 0);
@@ -247,7 +259,9 @@ START_TEST(test_ulfius_request)
   ck_assert_str_eq(req3->http_url, HTTP_URL);
   ck_assert_str_eq(req3->url_path, URL_PATH);
   ck_assert_str_eq(req3->proxy, PROXY);
+#if MHD_VERSION >= 0x00095208
   ck_assert_int_eq(req3->network_type, U_USE_IPV4);
+#endif
   ck_assert_int_eq(req3->check_server_certificate, 0);
   ck_assert_int_eq(req3->check_server_certificate_flag, U_SSL_VERIFY_PEER);
   ck_assert_int_eq(req3->check_proxy_certificate, 0);
@@ -731,7 +745,7 @@ int main(int argc, char *argv[])
   int number_failed;
   Suite *s;
   SRunner *sr;
-  //y_init_logs("Ulfius", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Ulfius core tests");
+  y_init_logs("Ulfius", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Ulfius core tests");
   s = ulfius_suite();
   sr = srunner_create(s);
 
@@ -739,6 +753,6 @@ int main(int argc, char *argv[])
   number_failed = srunner_ntests_failed(sr);
   srunner_free(sr);
   
-  //y_close_logs();
+  y_close_logs();
 	return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

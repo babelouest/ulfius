@@ -671,6 +671,7 @@ START_TEST(test_ulfius_net_type_endpoint)
   struct _u_instance u_instance;
   struct _u_request request;
   struct _u_response response;
+#if MHD_VERSION >= 0x00095208
   struct sockaddr_in ipv4addr;
   struct sockaddr_in6 ipv6addr;
   
@@ -678,10 +679,13 @@ START_TEST(test_ulfius_net_type_endpoint)
   ck_assert_int_eq(ulfius_init_instance_ipv6(&u_instance, 8080, NULL, U_USE_ALL, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "empty", NULL, 0, &callback_function_empty, NULL), U_OK);
   ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
+#endif
   
   ulfius_init_request(&request);
   request.http_url = o_strdup("http://localhost:8080/empty");
+#if MHD_VERSION >= 0x00095208
   request.network_type = U_USE_IPV4;
+#endif
   ulfius_init_response(&response);
   ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
   ck_assert_int_eq(response.status, 200);
@@ -690,7 +694,9 @@ START_TEST(test_ulfius_net_type_endpoint)
   
   ulfius_init_request(&request);
   request.http_url = o_strdup("http://[::1]:8080/empty");
+#if MHD_VERSION >= 0x00095208
   request.network_type = U_USE_IPV6;
+#endif
   ulfius_init_response(&response);
   ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
   ck_assert_int_eq(response.status, 200);
@@ -700,6 +706,7 @@ START_TEST(test_ulfius_net_type_endpoint)
   ulfius_stop_framework(&u_instance);
   ulfius_clean_instance(&u_instance);
   
+#if MHD_VERSION >= 0x00095208
   // Test network accepting IPV6 only connections
   ck_assert_int_eq(ulfius_init_instance_ipv6(&u_instance, 8080, NULL, U_USE_IPV6, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "empty", NULL, 0, &callback_function_empty, NULL), U_OK);
@@ -799,6 +806,7 @@ START_TEST(test_ulfius_net_type_endpoint)
   
   ulfius_stop_framework(&u_instance);
   ulfius_clean_instance(&u_instance);
+#endif
 }
 END_TEST
 
