@@ -4,6 +4,7 @@
 
 - Fix package dependencies in cmake script
 - Fix core test to skip websocket tests if webscket is disabled
+- Disable ipv6 capabilities if libmicrohttpd is older than 0.9.52
 
 ## 2.6.0
 
