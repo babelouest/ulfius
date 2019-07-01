@@ -246,6 +246,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
               }
             }
 
+#if MHD_VERSION >= 0x00095208
             // Set network type
             if (copy_request->network_type & U_USE_ALL) {
               if (curl_easy_setopt(curl_handle, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_WHATEVER) != CURLE_OK) {
@@ -266,6 +267,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
                 break;
               }
             }
+#endif
 
             has_params = (o_strchr(copy_request->http_url, '?') != NULL);
             if (u_map_count(copy_request->map_url) > 0) {

@@ -193,7 +193,9 @@ struct _u_request {
   char *               http_url;
   char *               url_path;
   char *               proxy;
+#if MHD_VERSION >= 0x00095208
   unsigned short       network_type;
+#endif
   int                  check_server_certificate;
   int                  check_server_certificate_flag;
   int                  check_proxy_certificate;
@@ -323,7 +325,9 @@ struct _u_instance {
   struct MHD_Daemon          *  mhd_daemon;
   int                           status;
   unsigned int                  port;
+#if MHD_VERSION >= 0x00095208
   unsigned short                network_type;
+#endif
   struct sockaddr_in          * bind_address;
   struct sockaddr_in6         * bind_address6;
   unsigned int                  timeout;
@@ -386,6 +390,7 @@ void u_free(void * data);
  */
 int ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, struct sockaddr_in * bind_address, const char * default_auth_realm);
 
+#if MHD_VERSION >= 0x00095208
 /**
  * ulfius_init_instance_ipv6
  * 
@@ -398,6 +403,7 @@ int ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, str
  * return U_OK on success
  */
 int ulfius_init_instance_ipv6(struct _u_instance * u_instance, unsigned int port, struct sockaddr_in6 * bind_address, unsigned short network_type, const char * default_auth_realm);
+#endif
 
 /**
  * ulfius_clean_instance
