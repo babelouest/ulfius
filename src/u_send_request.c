@@ -566,11 +566,12 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
             res = curl_easy_perform(curl_handle);
             if (res != CURLE_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error curl_easy_perform");
+              y_log_message(Y_LOG_LEVEL_DEBUG, "Ulfius - libcurl error: %d, error message '%s'", res, curl_easy_strerror(res));
               ret = U_ERROR_LIBCURL;
               break;
             } else if (res == CURLE_OK && response != NULL) {
               if (curl_easy_getinfo (curl_handle, CURLINFO_RESPONSE_CODE, &response->status) != CURLE_OK) {
-                y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error executing http request, libcurl error: %d, error message %s", res, curl_easy_strerror(res));
+                y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error executing http request, libcurl error: %d, error message '%s'", res, curl_easy_strerror(res));
                 ret = U_ERROR_LIBCURL;
                 break;
               }
