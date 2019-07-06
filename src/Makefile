@@ -34,7 +34,7 @@ CFLAGS+=-c -pedantic -std=gnu99 -fPIC -Wall -Werror -Wextra -D_REENTRANT -I$(ULF
 LIBS=-L$(DESTDIR)/lib -lc -lmicrohttpd -lorcania -lpthread $(LDFLAGS)
 OBJECTS=ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
 OUTPUT=libulfius.so
-VERSION=2.6.1
+VERSION=2.6.2
 
 ifndef JANSSONFLAG
 DISABLE_JANSSON=0

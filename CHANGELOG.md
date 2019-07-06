@@ -1,5 +1,11 @@
 # Ulfius Changelog
 
+## 2.6.2
+
+- Fix possible memory leak in ulfius_set_string_body_response
+- On websocket service, call `websocket_onclose_callback` in all cases, even if the handshake is incorrect or if an error occured, to avoid memory leaks, fixes #126
+- Add tests to validate that the fix below is correct and verify it doesn't add new problems
+
 ## 2.6.1
 
 - Fix package dependencies in cmake script
