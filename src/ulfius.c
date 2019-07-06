@@ -546,24 +546,25 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
 #ifndef U_DISABLE_WEBSOCKET
           } else if (((struct _websocket_handle *)response->websocket_handle)->websocket_manager_callback != NULL ||
                      ((struct _websocket_handle *)response->websocket_handle)->websocket_incoming_message_callback != NULL) {
-            // if the session is a valid websocket request,
-            // Initiate an UPGRADE session,
-            // then run the websocket callback functions with initialized data
-            if (NULL != o_strcasestr(u_map_get_case(con_info->request->map_header, "upgrade"), U_WEBSOCKET_UPGRADE_VALUE) &&
-                NULL != u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Key") &&
-                NULL != u_map_get_case(con_info->request->map_header, "Origin") &&
-                NULL != o_strcasestr(u_map_get_case(con_info->request->map_header, "Connection"), "Upgrade") &&
-                0 == o_strcmp(con_info->request->http_protocol, "HTTP/1.1") &&
-                0 == o_strcmp(u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Version"), "13") &&
-                0 == o_strcmp(con_info->request->http_verb, "GET")) {
-              int ret_protocol = 0, ret_extensions = 0;
-              // Check websocket_protocol and websocket_extensions to match ours
-              if ((ret_extensions = ulfius_check_list_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Extensions"), ((struct _websocket_handle *)response->websocket_handle)->websocket_extensions, ";", &extension)) == U_OK && 
-                  (ret_protocol = ulfius_check_first_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Protocol"), ((struct _websocket_handle *)response->websocket_handle)->websocket_protocol, ",", &protocol)) == U_OK) {
-                char websocket_accept[32] = {0};
-                if (ulfius_generate_handshake_answer(u_map_get(con_info->request->map_header, "Sec-WebSocket-Key"), websocket_accept)) {
-                  struct _websocket * websocket = o_malloc(sizeof(struct _websocket));
-                  if (websocket != NULL && ulfius_init_websocket(websocket) == U_OK) {
+            struct _websocket * websocket = o_malloc(sizeof(struct _websocket));
+            int websocket_has_error = 0;
+            if (websocket != NULL && ulfius_init_websocket(websocket) == U_OK) {
+              // if the session is a valid websocket request,
+              // Initiate an UPGRADE session,
+              // then run the websocket callback functions with initialized data
+              if (NULL != o_strcasestr(u_map_get_case(con_info->request->map_header, "upgrade"), U_WEBSOCKET_UPGRADE_VALUE) &&
+                  NULL != u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Key") &&
+                  NULL != u_map_get_case(con_info->request->map_header, "Origin") &&
+                  NULL != o_strcasestr(u_map_get_case(con_info->request->map_header, "Connection"), "Upgrade") &&
+                  0 == o_strcmp(con_info->request->http_protocol, "HTTP/1.1") &&
+                  0 == o_strcmp(u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Version"), "13") &&
+                  0 == o_strcmp(con_info->request->http_verb, "GET")) {
+                int ret_protocol = 0, ret_extensions = 0;
+                // Check websocket_protocol and websocket_extensions to match ours
+                if ((ret_extensions = ulfius_check_list_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Extensions"), ((struct _websocket_handle *)response->websocket_handle)->websocket_extensions, ";", &extension)) == U_OK && 
+                    (ret_protocol = ulfius_check_first_match(u_map_get(con_info->request->map_header, "Sec-WebSocket-Protocol"), ((struct _websocket_handle *)response->websocket_handle)->websocket_protocol, ",", &protocol)) == U_OK) {
+                  char websocket_accept[32] = {0};
+                  if (ulfius_generate_handshake_answer(u_map_get(con_info->request->map_header, "Sec-WebSocket-Key"), websocket_accept)) {
                     websocket->request = ulfius_duplicate_request(con_info->request);
                     if (websocket->request != NULL) {
                       websocket->instance = (struct _u_instance *)cls;
@@ -590,13 +591,13 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                         if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
                           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
                           mhd_ret = MHD_NO;
+                          websocket_has_error = 1;
                         } else {
                           ulfius_instance_add_websocket_active((struct _u_instance *)cls, websocket);
                           upgrade_protocol = 1;
                         }
                       }
                     } else {
-                      o_free(websocket);
                       // Error building struct _websocket, sending error 500
                       response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
                       response_buffer = o_strdup(ULFIUS_HTTP_ERROR_BODY);
@@ -607,9 +608,10 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                         response_buffer_len = o_strlen(ULFIUS_HTTP_ERROR_BODY);
                         mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, mhd_response_flag );
                       }
+                      websocket_has_error = 1;
                     }
                   } else {
-                    // Error building struct _websocket, sending error 500
+                    // Error building ulfius_generate_handshake_answer, sending error 500
                     response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
                     response_buffer = o_strdup(ULFIUS_HTTP_ERROR_BODY);
                     if (response_buffer == NULL) {
@@ -619,41 +621,51 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                       response_buffer_len = o_strlen(ULFIUS_HTTP_ERROR_BODY);
                       mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, mhd_response_flag );
                     }
+                    websocket_has_error = 1;
                   }
                 } else {
-                  // Error building ulfius_generate_handshake_answer, sending error 500
-                  response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
-                  response_buffer = o_strdup(ULFIUS_HTTP_ERROR_BODY);
-                  if (response_buffer == NULL) {
-                    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
-                    mhd_ret = MHD_NO;
-                  } else {
-                    response_buffer_len = o_strlen(ULFIUS_HTTP_ERROR_BODY);
-                    mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, mhd_response_flag );
-                  }
+                  response->status = MHD_HTTP_BAD_REQUEST;
+                  response_buffer = msprintf("%s%s", (ret_protocol!=U_OK?"Error validating protocol\n":""), (ret_extensions!=U_OK?"Error validating extensions":""));
+                  y_log_message(Y_LOG_LEVEL_DEBUG, "Ulfius - Error websocket connection: %s", response_buffer);
+                  mhd_response = MHD_create_response_from_buffer (o_strlen(response_buffer), response_buffer, mhd_response_flag );
+                  websocket_has_error = 1;
                 }
+                o_free(protocol);
+                o_free(extension);
               } else {
+                response_buffer = msprintf("%s%s%s%s%s%s%s",
+                                           o_strcasestr(u_map_get_case(con_info->request->map_header, "upgrade"), U_WEBSOCKET_UPGRADE_VALUE)==NULL?"No Upgrade websocket header\n":"",
+                                           o_strcasestr(u_map_get_case(con_info->request->map_header, "Connection"), "Upgrade")==NULL?"No Connection Upgrade header\n":"",
+                                           u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Key")==NULL?"No Sec-WebSocket-Key header\n":"",
+                                           u_map_get_case(con_info->request->map_header, "Origin")?"No Origin header\n":"",
+                                           o_strcmp(con_info->request->http_protocol, "HTTP/1.1")!=0?"Wrong HTTP Protocolv":"",
+                                           o_strcmp(u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Version"), "13")!=0?"Wrong websocket version\n":"",
+                                           o_strcmp(con_info->request->http_verb, "GET")!=0?"Method is not GET":"");
                 response->status = MHD_HTTP_BAD_REQUEST;
-                response_buffer = msprintf("%s%s", (ret_protocol!=U_OK?"Error validating protocol\n":""), (ret_extensions!=U_OK?"Error validating extensions":""));
                 y_log_message(Y_LOG_LEVEL_DEBUG, "Ulfius - Error websocket connection: %s", response_buffer);
                 mhd_response = MHD_create_response_from_buffer (o_strlen(response_buffer), response_buffer, mhd_response_flag );
+                websocket_has_error = 1;
               }
-              o_free(protocol);
-              o_free(extension);
             } else {
-              response_buffer = msprintf("%s%s%s%s%s%s%s",
-                                         o_strcasestr(u_map_get_case(con_info->request->map_header, "upgrade"), U_WEBSOCKET_UPGRADE_VALUE)==NULL?"No Upgrade websocket header\n":"",
-                                         o_strcasestr(u_map_get_case(con_info->request->map_header, "Connection"), "Upgrade")==NULL?"No Connection Upgrade header\n":"",
-                                         u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Key")==NULL?"No Sec-WebSocket-Key header\n":"",
-                                         u_map_get_case(con_info->request->map_header, "Origin")?"No Origin header\n":"",
-                                         o_strcmp(con_info->request->http_protocol, "HTTP/1.1")!=0?"Wrong HTTP Protocolv":"",
-                                         o_strcmp(u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Version"), "13")!=0?"Wrong websocket version\n":"",
-                                         o_strcmp(con_info->request->http_verb, "GET")!=0?"Method is not GET":"");
-              response->status = MHD_HTTP_BAD_REQUEST;
-              y_log_message(Y_LOG_LEVEL_DEBUG, "Ulfius - Error websocket connection: %s", response_buffer);
-              mhd_response = MHD_create_response_from_buffer (o_strlen(response_buffer), response_buffer, mhd_response_flag );
+              // Error building struct _websocket, sending error 500
+              response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
+              response_buffer = o_strdup(ULFIUS_HTTP_ERROR_BODY);
+              if (response_buffer == NULL) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
+                mhd_ret = MHD_NO;
+              } else {
+                response_buffer_len = o_strlen(ULFIUS_HTTP_ERROR_BODY);
+                mhd_response = MHD_create_response_from_buffer (response_buffer_len, response_buffer, mhd_response_flag );
+              }
+              websocket_has_error = 1;
             }
             close_loop = 1;
+            if (websocket_has_error) {
+              if (((struct _websocket_handle *)response->websocket_handle)->websocket_onclose_callback != NULL) {
+                ((struct _websocket_handle *)response->websocket_handle)->websocket_onclose_callback(con_info->request, websocket->websocket_manager!=NULL?websocket->websocket_manager:NULL, ((struct _websocket_handle *)response->websocket_handle)->websocket_onclose_user_data);
+              }
+              ulfius_clear_websocket(websocket);
+            }
 #endif
           } else {
             if (callback_ret == U_CALLBACK_CONTINUE && current_endpoint_list[i+1] == NULL) {
