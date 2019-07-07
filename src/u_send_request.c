@@ -566,6 +566,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
             res = curl_easy_perform(curl_handle);
             if (res != CURLE_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error curl_easy_perform");
+              y_log_message(Y_LOG_LEVEL_DEBUG, "Ulfius - curl error: '%s'", curl_easy_strerror(res));
               ret = U_ERROR_LIBCURL;
               break;
             } else if (res == CURLE_OK && response != NULL) {
