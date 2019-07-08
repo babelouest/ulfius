@@ -32,9 +32,13 @@ DESTDIR=/usr/local
 CC=gcc
 CFLAGS+=-c -pedantic -std=gnu99 -fPIC -Wall -Werror -Wextra -D_REENTRANT -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS) $(CPPFLAGS)
 LIBS=-L$(DESTDIR)/lib -lc -lmicrohttpd -lorcania -lpthread $(LDFLAGS)
+SONAME = -soname
+ifeq ($(shell uname -s),Darwin)
+	SONAME = -install_name
+endif
 OBJECTS=ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o yuarel.o
 OUTPUT=libulfius.so
-VERSION=2.6.1
+VERSION=2.6.2
 
 ifndef JANSSONFLAG
 DISABLE_JANSSON=0
@@ -167,7 +171,7 @@ target: $(OBJECTS)
 	$(CC) $(CFLAGS) $<
 
 libulfius.so: $(OBJECTS)
-	$(CC) -shared -fPIC -Wl,-soname,$(OUTPUT) -o $(OUTPUT).$(VERSION) $(OBJECTS) $(LIBS) $(LYDER) $(LJANSSON) $(LCURL) $(LGNUTLS)
+	$(CC) -shared -fPIC -Wl,$(SONAME),$(OUTPUT) -o $(OUTPUT).$(VERSION) $(OBJECTS) $(LIBS) $(LYDER) $(LJANSSON) $(LCURL) $(LGNUTLS)
 	ln -sf $(OUTPUT).$(VERSION) $(OUTPUT)
 
 libulfius.a: $(OBJECTS)
