@@ -526,6 +526,8 @@ int ulfius_copy_request(struct _u_request * dest, const struct _u_request * sour
  */
 int ulfius_set_string_body_request(struct _u_request * request, const char * string_body) {
   if (request != NULL && string_body != NULL) {
+    // Free all the bodies available
+    o_free(request->binary_body);
     request->binary_body = o_strdup(string_body);
     if (request->binary_body == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for request->binary_body");

@@ -568,6 +568,8 @@ struct _u_response * ulfius_duplicate_response(const struct _u_response * respon
  */
 int ulfius_set_string_body_response(struct _u_response * response, const unsigned int status, const char * string_body) {
   if (response != NULL && string_body != NULL) {
+    // Free all the bodies available
+    o_free(response->binary_body);
     response->binary_body = o_strdup(string_body);
     if (response->binary_body == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->binary_body");

@@ -833,6 +833,9 @@ void ulfius_start_websocket_cb (void * cls,
     if (thread_ret_websocket || thread_detach_websocket) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error creating or detaching websocket manager thread, return code: %d, detach code: %d",
                     thread_ret_websocket, thread_detach_websocket);
+      if (websocket->websocket_onclose_callback != NULL) {
+        websocket->websocket_onclose_callback(websocket->request, websocket->websocket_manager, websocket->websocket_onclose_user_data);
+      }
       ulfius_clear_websocket(websocket);
     }
   } else {
@@ -1179,10 +1182,15 @@ void ulfius_clear_websocket_message(struct _websocket_message * message) {
  */
 int ulfius_clear_websocket(struct _websocket * websocket) {
   if (websocket != NULL) {
-    if (websocket->websocket_manager->type == U_WEBSOCKET_SERVER && MHD_upgrade_action (websocket->urh, MHD_UPGRADE_ACTION_CLOSE) != MHD_YES) {
+    if (websocket->websocket_manager != NULL &&
+        websocket->urh != NULL &&
+        websocket->websocket_manager->type == U_WEBSOCKET_SERVER &&
+        MHD_upgrade_action (websocket->urh, MHD_UPGRADE_ACTION_CLOSE) != MHD_YES) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error sending MHD_UPGRADE_ACTION_CLOSE frame to urh");
     }
-    ulfius_instance_remove_websocket_active(websocket->instance, websocket);
+    if (websocket->instance != NULL) {
+      ulfius_instance_remove_websocket_active(websocket->instance, websocket);
+    }
     ulfius_clean_request_full(websocket->request);
     websocket->request = NULL;
     ulfius_clear_websocket_manager(websocket->websocket_manager);

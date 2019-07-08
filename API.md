@@ -24,7 +24,8 @@
     - [Websocket management](#websocket-management)
     - [Messages manipulation](#messages-manipulation)
     - [Server-side websocket](#server-side-websocket)
-      - [Starting a websocket communication](#starting-a-websocket-communication)
+      - [Open a websocket communication](#open-a-websocket-communication)
+      - [Close a websocket communication](#close-a-websocket-communication)
       - [Websocket status](#websocket-status)
     - [Client-side websocket](#client-side-websocket)
       - [Prepare the request](#prepare-the-request)
@@ -1081,7 +1082,7 @@ It seems that some browsers like Firefox or Chromium don't like to receive fragm
 
 #### Server-side websocket
 
-##### Opening a websocket communication
+##### Open a websocket communication
 
 To start a websocket communication between the client and your application, you must use the dedicated function `ulfius_start_websocket_cb` with proper values:
 
@@ -1139,7 +1140,7 @@ When the function `ulfius_stop_framework` is called, it will wait for all runnin
 
 For each of these callback function, you can specify a `*_user_data` pointer containing any data you need.
 
-##### Closing a websocket communication
+##### Close a websocket communication
 
 To close a websocket communication from the server, you can do one of the following:
 
@@ -1147,7 +1148,12 @@ To close a websocket communication from the server, you can do one of the follow
 - Send a message with the opcode `U_WEBSOCKET_OPCODE_CLOSE`
 - Call the function `ulfius_websocket_wait_close` or `ulfius_websocket_send_close_signal` described below
 
-If no `websocket_manager_callback` is specified, you can send a `U_WEBSOCKET_OPCODE_CLOSE` in the `websocket_incoming_message_callback` function when you need, or call the function `ulfius_websocket_send_close_signal`:
+If no `websocket_manager_callback` is specified, you can send a `U_WEBSOCKET_OPCODE_CLOSE` in the `websocket_incoming_message_callback` function when you need, or call the function `ulfius_websocket_send_close_signal`.
+
+If a callback function `websocket_onclose_callback` has been specified, this function will be executed on every case at the end of the websocket connection.
+
+If the websocket handshake hasn't been correctly completed or if an error appears during the handshake connection, the callback `websocket_onclose_callback` will be called anyway, even if the callback functions `websocket_manager_callback` or `websocket_incoming_message_callback` are skipped due to no websocket connection.
+This is to allow the calling program to close opened resources or clean allocated memory. Beware that in this specific case, the parameter `struct _websocket_manager * websocket_manager` may be `NULL`.
 
 ##### Websocket status
 
