@@ -1,5 +1,11 @@
 # Ulfius Changelog
 
+## 2.6.2
+
+- Clean build process
+- Fix memory leak in `ulfius_set_string_body_request` and `ulfius_set_string_body_response`
+- Call callback function websocket_onclose_callback on all times, even if the websocket hasn't properly worked, so the calling program can avoid memory leak and broken resources, fix #126
+
 ## 2.6.1
 
 - Fix package dependencies in cmake script
