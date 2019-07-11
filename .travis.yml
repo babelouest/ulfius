@@ -404,5 +404,6 @@ script:
   - make clean debug GNUTLSFLAG=1 CURLFLAG=1
 
 # run tests with Makefile
+  - sudo ldconfig
   - make clean debug check
 
