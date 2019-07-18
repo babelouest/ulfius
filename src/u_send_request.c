@@ -370,13 +370,13 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
             // Set body content
             if (copy_request->binary_body_length && copy_request->binary_body != NULL) {
               if (copy_request->binary_body_length < 2147483648) {
-                if (curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDSIZE, copy_request->binary_body_length) != CURLE_OK) {
+                if (curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDSIZE, (curl_off_t)copy_request->binary_body_length) != CURLE_OK) {
                   y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting POST fields size");
                   ret = U_ERROR_LIBCURL;
                   break;
                 }
               } else {
-                if (curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDSIZE_LARGE, copy_request->binary_body_length) != CURLE_OK) {
+                if (curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDSIZE_LARGE, (curl_off_t)copy_request->binary_body_length) != CURLE_OK) {
                   y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting POST fields size large");
                   ret = U_ERROR_LIBCURL;
                   break;
