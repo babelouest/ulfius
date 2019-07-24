@@ -502,6 +502,13 @@ int callback_function_position_2(const struct _u_request * request, struct _u_re
   return U_CALLBACK_CONTINUE;
 }
 
+int via_free_with_test = 0;
+
+void free_with_test(void * ptr) {
+  via_free_with_test++;
+  free(ptr);
+}
+
 #ifndef U_DISABLE_GNUTLS
 int callback_auth_client_cert (const struct _u_request * request, struct _u_response * response, void * user_data) {
   char * dn;
@@ -1119,6 +1126,33 @@ START_TEST(test_ulfius_endpoint_callback_position)
 }
 END_TEST
 
+START_TEST(test_ulfius_MHD_set_response_with_other_free)
+{
+  struct _u_instance u_instance;
+  struct _u_request request;
+  struct _u_response response;
+  
+  o_set_alloc_funcs(&malloc, &realloc, &free_with_test);
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "/", NULL, 0, &callback_function_return_url, NULL), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
+  
+  ulfius_init_request(&request);
+  request.http_url = o_strdup("http://localhost:8080/");
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 200);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+  
+  ulfius_stop_framework(&u_instance);
+  ulfius_clean_instance(&u_instance);
+  // We can only test that via_free_with_test has been incremented.
+  // The only way to know for sure now is to verify with valgrind and the memory consumption
+  ck_assert_int_gt(via_free_with_test, 1);
+}
+END_TEST
+
 #define PORT 2525
 #define FROM "from"
 #define TO "to"
@@ -1239,6 +1273,7 @@ static Suite *ulfius_suite(void)
   tcase_add_test(tc_core, test_ulfius_utf8_not_ignored);
   tcase_add_test(tc_core, test_ulfius_utf8_ignored);
   tcase_add_test(tc_core, test_ulfius_endpoint_callback_position);
+  tcase_add_test(tc_core, test_ulfius_MHD_set_response_with_other_free);
   tcase_add_test(tc_core, test_ulfius_send_smtp);
 #ifndef U_DISABLE_GNUTLS
   tcase_add_test(tc_core, test_ulfius_server_ca_trust);

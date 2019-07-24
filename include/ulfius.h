@@ -313,7 +313,8 @@ struct _u_endpoint {
  * websocket_handler:      handler for the websocket structure
  * file_upload_callback:   callback function to manage file upload by blocks
  * file_upload_cls:        any pointer to pass to the file_upload_callback function
- * mhd_response_copy_data: to choose between MHD_RESPMEM_MUST_COPY and MHD_RESPMEM_MUST_FREE
+ * mhd_response_copy_data: to choose between MHD_RESPMEM_MUST_COPY and MHD_RESPMEM_MUST_FREE, only if you use MHD < 0.9.61, 
+ *                         otherwise this option is skipped because it's useless
  * check_utf8:             check that all parameters values in the request (url, header and post_body)
  *                         are valid utf8 strings, if a parameter value has non utf8 character, the value
  *                         will be ignored, default 1
