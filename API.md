@@ -84,7 +84,7 @@ void o_get_alloc_funcs(o_malloc_t * malloc_fn, o_realloc_t * realloc_fn, o_free_
 
 Accessing those functions requires you to directly link your application also against the Orcania library. To do so, add `-lorcania` to your linking command.
 
-Furthermore, you need to set the `mhd_response_copy_data = 1` in your `_u_instance`, as otherwise libmicrohttpd will attempt to call normal system `free()` on memory allocated by your user-provided allocator.
+If you use a version of `libmicrohttpd` older than `0.9.61`, you need to set the `mhd_response_copy_data = 1` in your `_u_instance` if you use a memory allocator whose allocated return values may not directly be passed to free() or if you want to make sure all free() will always go via your user-provided free callback.
 
 Data structures allocated have their specific cleanup functions. To free pointer allocated, you should use the function `u_free` that is intended to use your memory management functions.
 
