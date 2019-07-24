@@ -797,9 +797,13 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
         MHD_destroy_response (mhd_response);
       }
     }
+#if MHD_VERSION < 0x00096100
     if (mhd_response_flag == MHD_RESPMEM_MUST_COPY) {
       o_free(response_buffer);
     }
+#else
+    (void)mhd_response_flag;
+#endif
     for (i=0; current_endpoint_list[i] != NULL; i++) {
       ulfius_clean_endpoint(current_endpoint_list[i]);
       o_free(current_endpoint_list[i]);
