@@ -1,5 +1,11 @@
 # Ulfius Changelog
 
+## 2.6.3
+
+- Fix warning appeared with gcc 9.1, fixes #128
+- Make `instance->mhd_response_copy_data` useless if MHD>=0.9.61
+- Fix `MHD_start_daemon` flag to reuse `MHD_USE_THREAD_PER_CONNECTION` by default, fix #131, thanks laf0rge!
+
 ## 2.6.2
 
 - Clean build process
