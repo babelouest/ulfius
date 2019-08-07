@@ -971,7 +971,7 @@ See `examples/sheep_counter` for a file upload example.
 
 ### Streaming data
 
-If you need to stream data, i.e. send a variable and potentially large amount of data, you can define and use `stream_callback_function` in the `struct _u_response`.
+If you need to stream data, i.e. send a variable and potentially large amount of data, or if you need to send a chunked response, you can define and use `stream_callback_function` in the `struct _u_response`.
 
 Not that if you stream data to the client, any data that was in the `response->binary_body` will be ignored. You must at least set the function pointer `struct _u_response.stream_callback` to stream data. Set `stream_size` to U_STREAM_SIZE_UNKOWN if you don't know the size of the data you need to send, like in audio stream for example. Set `stream_block_size` according to you system resources to avoid out of memory errors, also, set `stream_callback_free` with a pointer to a function that will free values allocated by your stream callback function, as a `close()` file for example, and finally, you can set `stream_user_data` to a pointer.
 
@@ -1322,7 +1322,9 @@ They allow to send an HTTP request with the parameters specified by the `_u_requ
 
 You can fill the maps in the `_u_request` structure with parameters, they will be used to build the request. Note that if you fill `_u_request.map_post_body` with parameters, the content-type `application/x-www-form-urlencoded` will be use to encode the data.
 
-The response parameters is stored into the `_u_response` structure. If you specify NULL for the response structure, the http call will still be made but no response details will be returned. If you use `ulfius_send_http_request`, the response body will be stored in the parameter `response->*body*`, if you use `ulfius_send_http_streaming_request`, the response body will be available in the `write_body_function` specified in the call. The `ulfius_send_http_streaming_request` can be used for streaming data or large response.
+The response parameters is stored into the `_u_response` structure. If you specify NULL for the response structure, the http call will still be made but no response details will be returned. If you use `ulfius_send_http_request`, the response body will be stored in the parameter `response->*body*`.
+
+If you use `ulfius_send_http_streaming_request`, the response body will be available in the `write_body_function` specified in the call. The `ulfius_send_http_streaming_request` can be used for streaming data or large response, or if you need to receive a chenked response from the server.
 
 Return value is `U_OK` on success.
 
