@@ -1,10 +1,10 @@
 /**
  *
- * Glewlwyd OAuth2 Authorization token check
+ * Glewlwyd SSO Access Token token check
  *
- * Copyright 2016-2018 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2019 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20180607
+ * Version 20190803
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -22,12 +22,12 @@
  */
 #include <jwt.h>
 
-#define G_OK                       0
-#define G_ERROR                    1
-#define G_ERROR_INTERNAL           2
-#define G_ERROR_INVALID_REQUEST    3
-#define G_ERROR_INVALID_TOKEN      4
-#define G_ERROR_INSUFFICIENT_SCOPE 5
+#define G_TOKEN_OK                       0
+#define G_TOKEN_ERROR                    1
+#define G_TOKEN_ERROR_INTERNAL           2
+#define G_TOKEN_ERROR_INVALID_REQUEST    3
+#define G_TOKEN_ERROR_INVALID_TOKEN      4
+#define G_TOKEN_ERROR_INSUFFICIENT_SCOPE 5
 
 #define G_METHOD_HEADER 0
 #define G_METHOD_BODY   1

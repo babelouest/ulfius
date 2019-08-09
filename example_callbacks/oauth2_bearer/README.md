@@ -2,6 +2,8 @@
 
 These files contain an authentication callback for Ulfius framework to validate a Glewlwyd access token with the correct scope.
 
+[libjwt](https://github.com/benmcollins/libjwt) is required.
+
 To use this file, you must create a `struct _glewlwyd_resource_config` with your specific parameters:
 
 ```C
@@ -11,7 +13,7 @@ struct _glewlwyd_resource_config {
   char *         jwt_decode_key;      // The key used to decode an access token
   jwt_alg_t      jwt_alg;             // The algorithm used to encode a token, see http://benmcollins.github.io/libjwt/
   char *         realm;               // Optional, a realm value that will be sent back to the client
-  unsigned short accept_access_token; // required, accept type acces_token
+  unsigned short accept_access_token; // required, accept type access_token
   unsigned short accept_client_token; // required, accept type client_token
 };
 ```
@@ -29,5 +31,5 @@ g_config.accept_access_token = 1;
 g_config.accept_client_token = 0;
 
 // Example, add an authentication callback callback_check_glewlwyd_access_token for the endpoint GET "/api/resource/*"
-ulfius_add_endpoint_by_val(instance, "GET", "/api", "/resource/*", 0, &callback_check_glewlwyd_access_token, (void*)g_config);
+ulfius_add_endpoint_by_val(instance, "GET", "/api", "/resource/*", &callback_check_glewlwyd_access_token, (void*)g_config);
 ```

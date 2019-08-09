@@ -1,10 +1,10 @@
 /**
  *
- * Glewlwyd OAuth2 Authorization token check
+ * Glewlwyd SSO Access Token token check
  *
- * Copyright 2016-2018 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2019 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20180607
+ * Version 20190803
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -30,6 +30,17 @@
 #include "glewlwyd_resource.h"
 
 /**
+ * Check if the result json object has a "result" element that is equal to value
+ */
+static int check_result_value(json_t * result, const int value) {
+  return (result != NULL && 
+          json_is_object(result) && 
+          json_object_get(result, "result") != NULL && 
+          json_is_integer(json_object_get(result, "result")) && 
+          json_integer_value(json_object_get(result, "result")) == value);
+}
+
+/**
  * check if bearer token has some of the specified scope
  */
 int callback_check_glewlwyd_access_token (const struct _u_request * request, struct _u_response * response, void * user_data) {
@@ -42,9 +53,9 @@ int callback_check_glewlwyd_access_token (const struct _u_request * request, str
   if (config != NULL) {
     switch (config->method) {
       case G_METHOD_HEADER:
-        if (u_map_get(request->map_header, HEADER_AUTHORIZATION) != NULL) {
-          if (o_strstr(u_map_get(request->map_header, HEADER_AUTHORIZATION), HEADER_PREFIX_BEARER) == u_map_get(request->map_header, HEADER_AUTHORIZATION)) {
-            token_value = u_map_get(request->map_header, HEADER_AUTHORIZATION) + o_strlen(HEADER_PREFIX_BEARER);
+        if (u_map_get_case(request->map_header, HEADER_AUTHORIZATION) != NULL) {
+          if (o_strstr(u_map_get_case(request->map_header, HEADER_AUTHORIZATION), HEADER_PREFIX_BEARER) == u_map_get_case(request->map_header, HEADER_AUTHORIZATION)) {
+            token_value = u_map_get_case(request->map_header, HEADER_AUTHORIZATION) + o_strlen(HEADER_PREFIX_BEARER);
           }
         }
         break;
@@ -59,15 +70,15 @@ int callback_check_glewlwyd_access_token (const struct _u_request * request, str
     }
     if (token_value != NULL) {
       j_access_token = access_token_check_signature(config, token_value);
-      if (check_result_value(j_access_token, G_OK)) {
+      if (check_result_value(j_access_token, G_TOKEN_OK)) {
         res_validity = access_token_check_validity(config, json_object_get(j_access_token, "grants"));
-        if (res_validity == G_OK) {
+        if (res_validity == G_TOKEN_OK) {
           j_res_scope = access_token_check_scope(config, json_object_get(j_access_token, "grants"));
-          if (check_result_value(j_res_scope, G_ERROR_INSUFFICIENT_SCOPE)) {
+          if (check_result_value(j_res_scope, G_TOKEN_ERROR_INSUFFICIENT_SCOPE)) {
             response_value = msprintf(HEADER_PREFIX_BEARER "%s%s%serror=\"insufficient_scope\",error_description=\"The scope is invalid\"", (config->realm!=NULL?"realm=":""), (config->realm!=NULL?config->realm:""), (config->realm!=NULL?",":""));
             u_map_put(response->map_header, HEADER_RESPONSE, response_value);
             o_free(response_value);
-          } else if (!check_result_value(j_res_scope, G_OK)) {
+          } else if (!check_result_value(j_res_scope, G_TOKEN_OK)) {
             response_value = msprintf(HEADER_PREFIX_BEARER "%s%s%serror=\"invalid_request\",error_description=\"Internal server error\"", (config->realm!=NULL?"realm=":""), (config->realm!=NULL?config->realm:""), (config->realm!=NULL?",":""));
             u_map_put(response->map_header, HEADER_RESPONSE, response_value);
             o_free(response_value);
@@ -79,7 +90,7 @@ int callback_check_glewlwyd_access_token (const struct _u_request * request, str
             }
           }
           json_decref(j_res_scope);
-        } else if (res_validity == G_ERROR_INVALID_TOKEN) {
+        } else if (res_validity == G_TOKEN_ERROR_INVALID_TOKEN) {
           response_value = msprintf(HEADER_PREFIX_BEARER "%s%s%serror=\"invalid_request\",error_description=\"The access token is invalid\"", (config->realm!=NULL?"realm=":""), (config->realm!=NULL?config->realm:""), (config->realm!=NULL?",":""));
           u_map_put(response->map_header, HEADER_RESPONSE, response_value);
           o_free(response_value);
@@ -115,28 +126,32 @@ json_t * access_token_check_scope(struct _glewlwyd_resource_config * config, jso
   if (j_scope_final_list != NULL) {
     if (j_access_token != NULL) {
       scope_count_token = split_string(json_string_value(json_object_get(j_access_token, "scope")), " ", &scope_list_token);
-      scope_count_expected = split_string(config->oauth_scope, " ", &scope_list_expected);
-      if (scope_count_token > 0 && scope_count_expected > 0) {
-        for (i=0; scope_count_expected > 0 && scope_list_expected[i] != NULL; i++) {
-          if (string_array_has_value((const char **)scope_list_token, scope_list_expected[i])) {
-            json_array_append_new(j_scope_final_list, json_string(scope_list_expected[i]));
+      if (o_strlen(config->oauth_scope)) {
+        scope_count_expected = split_string(config->oauth_scope, " ", &scope_list_expected);
+        if (scope_count_token > 0 && scope_count_expected > 0) {
+          for (i=0; scope_count_expected > 0 && scope_list_expected[i] != NULL; i++) {
+            if (string_array_has_value((const char **)scope_list_token, scope_list_expected[i])) {
+              json_array_append_new(j_scope_final_list, json_string(scope_list_expected[i]));
+            }
           }
-        }
-        if (json_array_size(j_scope_final_list) > 0) {
-          j_res = json_pack("{sisO}", "result", G_OK, "scope", j_scope_final_list);
+          if (json_array_size(j_scope_final_list) > 0) {
+            j_res = json_pack("{sisO}", "result", G_TOKEN_OK, "scope", j_scope_final_list);
+          } else {
+            j_res = json_pack("{si}", "result", G_TOKEN_ERROR_INSUFFICIENT_SCOPE);
+          }
         } else {
-          j_res = json_pack("{si}", "result", G_ERROR_INSUFFICIENT_SCOPE);
+          j_res = json_pack("{si}", "result", G_TOKEN_ERROR_INTERNAL);
         }
+        free_string_array(scope_list_expected);
       } else {
-        j_res = json_pack("{si}", "result", G_ERROR_INTERNAL);
+        j_res = json_pack("{sis[]}", "result", G_TOKEN_OK, "scope");
       }
       free_string_array(scope_list_token);
-      free_string_array(scope_list_expected);
     } else {
-      j_res = json_pack("{si}", "result", G_ERROR_INVALID_TOKEN);
+      j_res = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
     }
   } else {
-    j_res = json_pack("{si}", "result", G_ERROR_INTERNAL);
+    j_res = json_pack("{si}", "result", G_TOKEN_ERROR_INTERNAL);
   }
   json_decref(j_scope_final_list);
   return j_res;
@@ -152,6 +167,7 @@ int access_token_check_validity(struct _glewlwyd_resource_config * config, json_
   time_t now;
   json_int_t expiration;
   int res;
+  (void)(config); // Avoid coompiler warning
   
   if (j_access_token != NULL) {
     // Token is valid, check type and expiration date
@@ -164,12 +180,12 @@ int access_token_check_validity(struct _glewlwyd_resource_config * config, json_
         json_object_get(j_access_token, "username") != NULL &&
         json_is_string(json_object_get(j_access_token, "username")) &&
         json_string_length(json_object_get(j_access_token, "username")) > 0) {
-      res = G_OK;
+      res = G_TOKEN_OK;
     } else {
-      res = G_ERROR_INVALID_REQUEST;
+      res = G_TOKEN_ERROR_INVALID_REQUEST;
     }
   } else {
-    res = G_ERROR_INVALID_TOKEN;
+    res = G_TOKEN_ERROR_INVALID_TOKEN;
   }
   return res;
 }
@@ -187,17 +203,17 @@ json_t * access_token_check_signature(struct _glewlwyd_resource_config * config,
       grants = jwt_get_grants_json(jwt, NULL);
       j_grants = json_loads(grants, JSON_DECODE_ANY, NULL);
       if (j_grants != NULL) {
-        j_return = json_pack("{siso}", "result", G_OK, "grants", j_grants);
+        j_return = json_pack("{siso}", "result", G_TOKEN_OK, "grants", j_grants);
       } else {
-        j_return = json_pack("{si}", "result", G_ERROR);
+        j_return = json_pack("{si}", "result", G_TOKEN_ERROR);
       }
       o_free(grants);
     } else {
-      j_return = json_pack("{si}", "result", G_ERROR_INVALID_TOKEN);
+      j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
     }
     jwt_free(jwt);
   } else {
-    j_return = json_pack("{si}", "result", G_ERROR_INVALID_TOKEN);
+    j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
   }
   return j_return;
 }
@@ -215,17 +231,17 @@ json_t * access_token_get_payload(const char * token_value) {
       grants = jwt_get_grants_json(jwt, NULL);
       j_grants = json_loads(grants, JSON_DECODE_ANY, NULL);
       if (j_grants != NULL) {
-        j_return = json_pack("{siso}", "result", G_OK, "grants", j_grants);
+        j_return = json_pack("{siso}", "result", G_TOKEN_OK, "grants", j_grants);
       } else {
-        j_return = json_pack("{si}", "result", G_ERROR);
+        j_return = json_pack("{si}", "result", G_TOKEN_ERROR);
       }
       o_free(grants);
     } else {
-      j_return = json_pack("{si}", "result", G_ERROR_INVALID_TOKEN);
+      j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
     }
     jwt_free(jwt);
   } else {
-    j_return = json_pack("{si}", "result", G_ERROR_INVALID_TOKEN);
+    j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
   }
   return j_return;
 }
