@@ -4,20 +4,27 @@
  *
  * Copyright 2016-2019 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20190803
+ * Version 20190810
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * License as published by the Free Software Foundation;
- * version 3 of the License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU GENERAL PUBLIC LICENSE for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * The MIT License (MIT)
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  *
  */
 #include <jwt.h>
@@ -44,10 +51,50 @@ struct _glewlwyd_resource_config {
   char *    jwt_decode_key;
   jwt_alg_t jwt_alg;
   char *    realm;
+  unsigned short accept_access_token;
+  unsigned short accept_client_token;
 };
 
+/**
+ * 
+ * check if bearer token has some of the specified scope
+ * Return G_TOKEN_OK on success
+ * or G_TOKEN_ERROR* on any other case
+ * 
+ */
 int callback_check_glewlwyd_access_token (const struct _u_request * request, struct _u_response * response, void * user_data);
-json_t * access_token_check_signature(struct _glewlwyd_resource_config * config, const char * token_value);
-json_t * access_token_get_payload(const char * token_value);
-int access_token_check_validity(struct _glewlwyd_resource_config * config, json_t * j_access_token);
+
+/**
+ * 
+ * Validates if an access_token grants has a valid scope
+ * return the final scope list on success
+ * 
+ */
 json_t * access_token_check_scope(struct _glewlwyd_resource_config * config, json_t * j_access_token);
+
+/**
+ * 
+ * Validates if an access_token grants has valid parameters:
+ * - username: non empty string
+ * - type: match "access_token"
+ * - iat + expires_in < now
+ * 
+ * Return G_TOKEN_OK on success
+ * or G_TOKEN_ERROR* on any other case
+ * 
+ */
+int access_token_check_validity(struct _glewlwyd_resource_config * config, json_t * j_access_token);
+
+/**
+ * 
+ * validates if the token value is a valid jwt and has a valid signature
+ * 
+ */
+json_t * access_token_check_signature(struct _glewlwyd_resource_config * config, const char * token_value);
+
+/**
+ * 
+ * Return the payload of an access token
+ * 
+ */
+json_t * access_token_get_payload(const char * token_value);

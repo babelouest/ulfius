@@ -4,20 +4,27 @@
  *
  * Copyright 2016-2019 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20190803
+ * Version 20190810
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * License as published by the Free Software Foundation;
- * version 3 of the License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU GENERAL PUBLIC LICENSE for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * The MIT License (MIT)
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  *
  */
 
@@ -173,14 +180,24 @@ int access_token_check_validity(struct _glewlwyd_resource_config * config, json_
     // Token is valid, check type and expiration date
     time(&now);
     expiration = json_integer_value(json_object_get(j_access_token, "iat")) + json_integer_value(json_object_get(j_access_token, "expires_in"));
-    if (now < expiration && 
+    if (now < expiration &&
         json_object_get(j_access_token, "type") != NULL &&
-        json_is_string(json_object_get(j_access_token, "type")) &&
+        json_is_string(json_object_get(j_access_token, "type"))) {
+      if (config->accept_access_token &&
         0 == o_strcmp("access_token", json_string_value(json_object_get(j_access_token, "type"))) &&
         json_object_get(j_access_token, "username") != NULL &&
         json_is_string(json_object_get(j_access_token, "username")) &&
         json_string_length(json_object_get(j_access_token, "username")) > 0) {
-      res = G_TOKEN_OK;
+        res = G_TOKEN_OK;
+      } else if (config->accept_client_token &&
+        0 == o_strcmp("client_token", json_string_value(json_object_get(j_access_token, "type"))) &&
+        json_object_get(j_access_token, "client_id") != NULL &&
+        json_is_string(json_object_get(j_access_token, "client_id")) &&
+        json_string_length(json_object_get(j_access_token, "client_id")) > 0) {
+        res = G_TOKEN_OK;
+      } else {
+        res = G_TOKEN_ERROR_INVALID_REQUEST;
+      }
     } else {
       res = G_TOKEN_ERROR_INVALID_REQUEST;
     }
@@ -219,7 +236,7 @@ json_t * access_token_check_signature(struct _glewlwyd_resource_config * config,
 }
 
 /**
- * Return the ayload of an access token
+ * Return the payload of an access token
  */
 json_t * access_token_get_payload(const char * token_value) {
   json_t * j_return, * j_grants;
