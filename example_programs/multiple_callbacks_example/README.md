@@ -24,5 +24,8 @@ $ make test
 
 ### Hello World with authentication
 
+username: `test`
+password: `testpassword`
+
 - `GET http://localhost:6875/multiple/auth/data`: Send "Hello World!" response if authentication is correct (status 200), otherwise status 401 with realm "default_realm"
 - `PUT http://localhost:6875/multiple/auth/data`: Send "Hello World!" response if authentication is correct (status 200), otherwise status 401 with realm "specific_realm"
