@@ -516,8 +516,8 @@ The request variable is defined as:
  * ca_path                         specify a path to CA certificates instead of system path, used by ulfius_send_http_request
  * timeout                         connection timeout used by ulfius_send_http_request, default is 0
  * client_address:                 IP address of the client
- * auth_basic_user:                basic authtication username
- * auth_basic_password:            basic authtication password
+ * auth_basic_user:                basic authentication username
+ * auth_basic_password:            basic authentication password
  * map_url:                        map containing the url variables, both from the route and the ?key=value variables
  * map_header:                     map containing the header variables
  * map_cookie:                     map containing the cookie variables
