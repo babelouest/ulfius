@@ -676,13 +676,14 @@ json_t * ulfius_get_json_body_request(const struct _u_request * request, json_er
 char * ulfius_export_client_certificate_pem(const struct _u_request * request) {
   char * str_cert = NULL;
   gnutls_datum_t g_cert;
+  int ret = 0;
 
   if (request != NULL && request->client_cert != NULL) {
-    if (gnutls_x509_crt_export2(request->client_cert, GNUTLS_X509_FMT_PEM, &g_cert) == 0) {
+    if ((ret = gnutls_x509_crt_export2(request->client_cert, GNUTLS_X509_FMT_PEM, &g_cert)) >= 0) {
       str_cert = o_strndup((const char *)g_cert.data, g_cert.size);
       gnutls_free(g_cert.data);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error gnutls_x509_crt_export2");
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error gnutls_x509_crt_export2: %s", gnutls_strerror(ret));
     }
   }
 
@@ -697,19 +698,19 @@ char * ulfius_export_client_certificate_pem(const struct _u_request * request) {
  * return U_OK on success;
  */
 int ulfius_import_client_certificate_pem(struct _u_request * request, const char * str_cert) {
-  int ret;
+  int ret, res;
   gnutls_datum_t g_cert;
 
   if (request != NULL && str_cert != NULL) {
     g_cert.data = (unsigned char *)str_cert;
     g_cert.size = o_strlen(str_cert);
-    if (gnutls_x509_crt_init(&request->client_cert)) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error gnutls_x509_crt_init");
+    if ((res = gnutls_x509_crt_init(&request->client_cert))) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error gnutls_x509_crt_init: %s", gnutls_strerror(res));
       ret = U_ERROR;
-    } else if (gnutls_x509_crt_import(request->client_cert, &g_cert, GNUTLS_X509_FMT_PEM) == 0) {
+    } else if ((res = gnutls_x509_crt_import(request->client_cert, &g_cert, GNUTLS_X509_FMT_PEM)) >= 0) {
       ret = U_OK;
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error gnutls_x509_crt_import");
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error gnutls_x509_crt_import: %s", gnutls_strerror(res));
       ret = U_ERROR;
     }
   } else {
