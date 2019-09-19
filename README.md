@@ -1,4 +1,4 @@
-# Ulfius
+# Ulfius HTTP Framework
 
 [![Build Status](https://travis-ci.com/babelouest/ulfius.svg?branch=master)](https://travis-ci.com/babelouest/ulfius)
 
