@@ -1,5 +1,12 @@
 # Ulfius Changelog
 
+## 2.6.4
+
+- Add precision for chunked response, got the inspiration from #132
+- Update access token for oauth2 bearer validation callback function, add precision concerning libjwt, fix #133
+- Update callback_check_glewlwyd_access_token to the up-to-date version
+- Various small fixes
+
 ## 2.6.3
 
 - Fix warning appeared with gcc 9.1, fixes #128
