@@ -20,8 +20,17 @@
  *
  * You should have received a copy of the GNU General Public
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
+
+/**
+ *  Enables POSIX functions on non-MSVC targets.
+ * This is required for gmtime_r() which is not part of the ISO C standard.
+ */
+#if !defined(_MSC_VER) && (defined (__MINGW32__) || defined (__MINGW64__))
+  #define _POSIX_C_SOURCE 200112L
+#endif
+
 #include "u_private.h"
 #include "ulfius.h"
 
