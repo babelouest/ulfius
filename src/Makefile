@@ -185,7 +185,7 @@ install: all $(PKGCONFIG_FILE)
 	install -m644 $(PKGCONFIG_FILE) $(DESTDIR)/lib/pkgconfig
 	install -m644 $(ULFIUS_INCLUDE)/ulfius.h $(DESTDIR)/include
 	install -m644 $(CONFIG_FILE) $(DESTDIR)/include
-	-ldconfig
+	-ldconfig $(DESTDIR)/lib
 
 static-install: static
 	install libulfius.a $(DESTDIR)/lib
