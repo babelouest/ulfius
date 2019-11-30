@@ -834,7 +834,7 @@ static struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance
 #endif
   
   if (u_instance->mhd_daemon == NULL) {
-    struct MHD_OptionItem mhd_ops[8];
+    struct MHD_OptionItem mhd_ops[9];
     
     // Default options
     mhd_ops[0].option = MHD_OPTION_NOTIFY_COMPLETED;
@@ -898,6 +898,13 @@ static struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance
       mhd_ops[index].option = MHD_OPTION_CONNECTION_TIMEOUT;
       mhd_ops[index].value = u_instance->timeout;
       mhd_ops[index].ptr_value = NULL;
+      
+      index++;
+    }
+    if (u_instance->cipher_list != NULL) {
+      mhd_ops[index].option = MHD_OPTION_HTTPS_PRIORITIES;
+      mhd_ops[index].value = 0;
+      mhd_ops[index].ptr_value = (void *)u_instance->cipher_list;
       
       index++;
     }
@@ -1444,6 +1451,9 @@ void ulfius_clean_instance(struct _u_instance * u_instance) {
         u_instance->websocket_handler = NULL;
     }
 #endif
+#ifndef U_DISABLE_GNUTLS
+    o_free(u_instance->cipher_list);
+#endif
   }
 }
 
@@ -1494,6 +1504,7 @@ UNUSED(network_type);
     u_instance->file_upload_cls = NULL;
 #ifndef U_DISABLE_GNUTLS
     u_instance->use_client_cert_auth = 0;
+    u_instance->cipher_list = NULL;
 #endif
 #ifndef U_DISABLE_WEBSOCKET
     u_instance->websocket_handler = o_malloc(sizeof(struct _websocket_handler));
