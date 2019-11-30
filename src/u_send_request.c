@@ -539,10 +539,20 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
               }
             }
 
+            // Set request cipher_list value
+            if (copy_request->cipher_list != NULL) {
+              y_log_message(Y_LOG_LEVEL_DEBUG, "Set cipher list to %s", copy_request->cipher_list);
+              if (curl_easy_setopt(curl_handle, CURLOPT_SSL_CIPHER_LIST, copy_request->cipher_list) != CURLE_OK) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting libcurl options (11)");
+                ret = U_ERROR_LIBCURL;
+                break;
+              }
+            }
+
             // Set request timeout value
             if (copy_request->timeout) {
               if (curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, copy_request->timeout) != CURLE_OK) {
-                y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting libcurl options (10)");
+                y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting libcurl options (12)");
                 ret = U_ERROR_LIBCURL;
                 break;
               }
