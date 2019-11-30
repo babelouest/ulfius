@@ -1,5 +1,9 @@
 # Ulfius Changelog
 
+## 2.6.5
+
+- Add options `struct _u_request.cipher_list` and `struct _u_instance.cipher_list` to specify ciphers available on server or client side, fixes #144
+
 ## 2.6.4
 
 - Add precision for chunked response, got the inspiration from #132
