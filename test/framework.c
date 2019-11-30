@@ -1191,6 +1191,40 @@ START_TEST(test_ulfius_send_smtp)
 }
 END_TEST
 
+START_TEST(test_ulfius_cipher)
+{
+  struct _u_instance u_instance;
+  struct _u_request request;
+  struct _u_response response;
+  
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8088, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "cipher", NULL, 0, &callback_function_empty, NULL), U_OK);
+  u_instance.cipher_list = o_strdup("NONE:+VERS-TLS-ALL:+MAC-ALL:+RSA:+AES-128-CBC:+SIGN-ALL:+COMP-NULL");
+  ck_assert_int_eq(ulfius_start_secure_framework(&u_instance, CERT_KEY, CERT_PEM), U_OK);
+  
+  ulfius_init_request(&request);
+  request.http_url = o_strdup("https://localhost:8088/cipher");
+  request.check_server_certificate = 0;
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 200);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+  
+  ulfius_init_request(&request);
+  request.http_url = o_strdup("https://localhost:8088/cipher");
+  request.check_server_certificate = 0;
+  request.cipher_list = o_strdup("AES256-SHA");
+  ulfius_init_response(&response);
+  ck_assert_int_ne(ulfius_send_http_request(&request, &response), U_OK);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+  
+  ulfius_stop_framework(&u_instance);
+  ulfius_clean_instance(&u_instance);
+}
+END_TEST
+
 #ifndef U_DISABLE_GNUTLS
 START_TEST(test_ulfius_server_ca_trust)
 {
@@ -1202,7 +1236,6 @@ START_TEST(test_ulfius_server_ca_trust)
   ck_assert_int_ne(ulfius_start_secure_ca_trust_framework(&u_instance, CERT_KEY, NULL, CERT_CA), U_OK);
   ck_assert_int_eq(ulfius_start_secure_ca_trust_framework(&u_instance, CERT_KEY, CERT_PEM, CERT_CA), U_OK);
   
-  ulfius_stop_framework(&u_instance);
   ulfius_clean_instance(&u_instance);
 }
 END_TEST
@@ -1275,6 +1308,7 @@ static Suite *ulfius_suite(void)
   tcase_add_test(tc_core, test_ulfius_endpoint_callback_position);
   tcase_add_test(tc_core, test_ulfius_MHD_set_response_with_other_free);
   tcase_add_test(tc_core, test_ulfius_send_smtp);
+  tcase_add_test(tc_core, test_ulfius_cipher);
 #ifndef U_DISABLE_GNUTLS
   tcase_add_test(tc_core, test_ulfius_server_ca_trust);
   tcase_add_test(tc_core, test_ulfius_client_certificate);
