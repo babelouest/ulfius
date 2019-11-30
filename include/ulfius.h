@@ -138,15 +138,15 @@ struct _u_map {
  * the structure containing the response cookie parameters
  */
 struct _u_cookie {
-  char * key;
-  char * value;
-  char * expires;
-  unsigned int   max_age;
-  char * domain;
-  char * path;
-  int    secure;
-  int    http_only;
-  int    same_site;
+  char       * key;
+  char       * value;
+  char       * expires;
+  unsigned int max_age;
+  char       * domain;
+  char       * path;
+  int          secure;
+  int          http_only;
+  int          same_site;
 };
 
 /**
@@ -167,6 +167,7 @@ struct _u_cookie {
  * check_proxy_certificate_flag:   check certificate peer and or proxy hostname if check_proxy_certificate is enabled, values available are U_SSL_VERIFY_PEER, U_SSL_VERIFY_HOSTNAME or both
                                    default value is both (U_SSL_VERIFY_PEER|U_SSL_VERIFY_HOSTNAME), used by ulfius_send_http_request, requires libcurl >= 7.52
  * ca_path                         specify a path to CA certificates instead of system path, used by ulfius_send_http_request
+ * cipher_list;                    specify ciphers to use for TLS, binder to the libcurl option CURLOPT_SSL_CIPHER_LIST
  * timeout                         connection timeout used by ulfius_send_http_request, default is 0
  * client_address:                 IP address of the client
  * auth_basic_user:                basic authentication username
@@ -188,11 +189,11 @@ struct _u_cookie {
  *                                 available only if websocket support is enabled
  */
 struct _u_request {
-  char *               http_protocol;
-  char *               http_verb;
-  char *               http_url;
-  char *               url_path;
-  char *               proxy;
+  char               * http_protocol;
+  char               * http_verb;
+  char               * http_url;
+  char               * url_path;
+  char               * proxy;
 #if MHD_VERSION >= 0x00095208
   unsigned short       network_type;
 #endif
@@ -200,23 +201,24 @@ struct _u_request {
   int                  check_server_certificate_flag;
   int                  check_proxy_certificate;
   int                  check_proxy_certificate_flag;
-  char *               ca_path;
+  char               * ca_path;
+  char               * cipher_list;
   unsigned long        timeout;
-  struct sockaddr *    client_address;
-  char *               auth_basic_user;
-  char *               auth_basic_password;
-  struct _u_map *      map_url;
-  struct _u_map *      map_header;
-  struct _u_map *      map_cookie;
-  struct _u_map *      map_post_body;
-  void *               binary_body;
+  struct sockaddr    * client_address;
+  char               * auth_basic_user;
+  char               * auth_basic_password;
+  struct _u_map      * map_url;
+  struct _u_map      * map_header;
+  struct _u_map      * map_cookie;
+  struct _u_map      * map_post_body;
+  void               * binary_body;
   size_t               binary_body_length;
   unsigned int         callback_position;
 #ifndef U_DISABLE_GNUTLS
   gnutls_x509_crt_t    client_cert;
-  char *               client_cert_file;
-  char *               client_key_file;
-  char *               client_key_password;
+  char               * client_cert_file;
+  char               * client_key_file;
+  char               * client_key_password;
 #endif
 };
 
@@ -320,6 +322,7 @@ struct _u_endpoint {
  *                         will be ignored, default 1
  * use_client_cert_auth:   Internal variable use to indicate if the instance uses client certificate authentication
  *                         Do not change this value, available only if websocket support is enabled
+ * cipher_list:            SSL/TLS protocol version and ciphers, binder to the function gnutls_priority_init
  * 
  */
 struct _u_instance {
@@ -354,6 +357,7 @@ struct _u_instance {
   int                           check_utf8;
 #ifndef U_DISABLE_GNUTLS
   int                           use_client_cert_auth;
+  char                        * cipher_list;
 #endif
 };
 
