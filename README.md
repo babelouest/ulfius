@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.com/babelouest/ulfius.svg?branch=master)](https://travis-ci.com/babelouest/ulfius)
 
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3195/badge)](https://bestpractices.coreinfrastructure.org/projects/3195)
+
 HTTP Framework for REST Applications in C.
 
 Based on [GNU Libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/) for the backend web server, [Jansson](http://www.digip.org/jansson/) for the json manipulation library, and [Libcurl](http://curl.haxx.se/libcurl/) for the http/smtp client API.
