@@ -195,21 +195,19 @@ int u_map_put(struct _u_map * u_map, const char * key, const char * value) {
 int u_map_put_binary(struct _u_map * u_map, const char * key, const char * value, uint64_t offset, size_t length) {
   int i;
   char * dup_key, * dup_value;
-  if (u_map != NULL && o_strlen(key) > 0) {
+  if (u_map != NULL && key != NULL && o_strlen(key) > 0) {
     for (i=0; i < u_map->nb_values; i++) {
       if (0 == o_strcmp(u_map->keys[i], key)) {
         // Key already exist, extend and/or replace value
-        if (length && value != NULL) {
-          if (u_map->lengths[i] < (offset + length)) {
-            u_map->values[i] = o_realloc(u_map->values[i], (offset + length)*sizeof(char));
-            if (u_map->values[i] == NULL) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for u_map->values");
-              return U_ERROR_MEMORY;
-            }
+        if (u_map->lengths[i] < (offset + length)) {
+          u_map->values[i] = o_realloc(u_map->values[i], (offset + length)*sizeof(char));
+          if (u_map->values[i] == NULL) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for u_map->values");
+            return U_ERROR_MEMORY;
           }
-          if (value != NULL) {
-            memcpy(u_map->values[i]+offset, value, length);
-          }
+        }
+        if (value != NULL) {
+          memcpy(u_map->values[i]+offset, value, length);
           if (u_map->lengths[i] < (offset + length)) {
             u_map->lengths[i] = (offset + length);
           }
