@@ -55,6 +55,16 @@ START_TEST(test_u_map_get)
   ck_assert_ptr_eq((void *)u_map_get_case(NULL, "keY"), NULL);
   ck_assert_int_eq(u_map_get_case_length(&map, "noPe"), -1);
   ck_assert_int_eq(u_map_get_case_length(NULL, "KEy"), -1);
+  ck_assert_int_eq(u_map_put(&map, "key", NULL), U_OK);
+  ck_assert_ptr_eq(u_map_get(&map, "key"), NULL);
+  ck_assert_int_eq(u_map_put(&map, "key", "value"), U_OK);
+  ck_assert_str_eq(u_map_get(&map, "key"), "value");
+  ck_assert_int_eq(u_map_put(&map, "key", NULL), U_OK);
+  ck_assert_ptr_eq(u_map_get(&map, "key"), NULL);
+  ck_assert_int_eq(u_map_put(&map, "key", "value"), U_OK);
+  ck_assert_str_eq(u_map_get(&map, "key"), "value");
+  ck_assert_int_eq(u_map_put(&map, "key", NULL), U_OK);
+  ck_assert_ptr_eq(u_map_get(&map, "key"), NULL);
   u_map_clean(&map);
 }
 END_TEST
