@@ -199,7 +199,7 @@ int u_map_put_binary(struct _u_map * u_map, const char * key, const char * value
     for (i=0; i < u_map->nb_values; i++) {
       if (0 == o_strcmp(u_map->keys[i], key)) {
         // Key already exist, extend and/or replace value
-        if (offset && length && value != NULL) {
+        if (length && value != NULL) {
           if (u_map->lengths[i] < (offset + length)) {
             u_map->values[i] = o_realloc(u_map->values[i], (offset + length)*sizeof(char));
             if (u_map->values[i] == NULL) {
