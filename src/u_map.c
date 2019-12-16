@@ -35,32 +35,32 @@
  * this function MUST be called after a declaration or allocation
  * return U_OK on success
  */
-int u_map_init(struct _u_map * map) {
-  if (map != NULL) {
-    map->nb_values = 0;
-    map->keys = o_malloc(sizeof(char *));
-    if (map->keys == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for map->keys");
+int u_map_init(struct _u_map * u_map) {
+  if (u_map != NULL) {
+    u_map->nb_values = 0;
+    u_map->keys = o_malloc(sizeof(char *));
+    if (u_map->keys == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for u_map->keys");
       return U_ERROR_MEMORY;
     }
-    map->keys[0] = NULL;
+    u_map->keys[0] = NULL;
 
-    map->values = o_malloc(sizeof(char *));
-    if (map->values == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for map->values");
-      o_free(map->keys);
+    u_map->values = o_malloc(sizeof(char *));
+    if (u_map->values == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for u_map->values");
+      o_free(u_map->keys);
       return U_ERROR_MEMORY;
     }
-    map->values[0] = NULL;
+    u_map->values[0] = NULL;
     
-    map->lengths = o_malloc(sizeof(size_t));
-    if (map->lengths == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for map->lengths");
-      o_free(map->keys);
-      o_free(map->values);
+    u_map->lengths = o_malloc(sizeof(size_t));
+    if (u_map->lengths == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for u_map->lengths");
+      o_free(u_map->keys);
+      o_free(u_map->values);
       return U_ERROR_MEMORY;
     }
-    map->lengths[0] = 0;
+    u_map->lengths[0] = 0;
 
     return U_OK;
   } else {
@@ -73,9 +73,14 @@ int u_map_init(struct _u_map * map) {
  * return U_OK on success
  */
 int u_map_clean(struct _u_map * u_map) {
+  int i;
   if (u_map != NULL) {
-    u_map_clean_enum(u_map->keys);
-    u_map_clean_enum(u_map->values);
+    for (i=0; i<u_map->nb_values; i++) {
+      o_free(u_map->keys[i]);
+      o_free(u_map->values[i]);
+    }
+    o_free(u_map->keys);
+    o_free(u_map->values);
     o_free(u_map->lengths);
     return U_OK;
   } else {
