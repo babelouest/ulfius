@@ -1,5 +1,10 @@
 # Ulfius Changelog
 
+## 2.6.5
+
+- Fix build on MinGW-w64
+- Allow `NULL` values on `struct _u_map`
+
 ## 2.6.4
 
 - Add precision for chunked response, got the inspiration from #132
