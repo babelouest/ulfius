@@ -23,6 +23,7 @@ START_TEST(test_u_map_put)
   struct _u_map map;
   u_map_init(&map);
   ck_assert_int_eq(u_map_put(&map, "key", "value"), U_OK);
+  ck_assert_int_eq(u_map_put(&map, "key", "value2"), U_OK);
   ck_assert_int_eq(u_map_put(&map, "key", NULL), U_OK);
   ck_assert_int_eq(u_map_put(&map, NULL, "value"), U_ERROR_PARAMS);
   ck_assert_int_eq(u_map_put(&map, NULL, NULL), U_ERROR_PARAMS);
@@ -34,6 +35,7 @@ START_TEST(test_u_map_put)
   ck_assert_int_eq(u_map_put_binary(&map, NULL, NULL, 0, o_strlen("value")), U_ERROR_PARAMS);
   ck_assert_int_eq(u_map_put_binary(NULL, "bkey", "value", 0, o_strlen("value")), U_ERROR_PARAMS);
   ck_assert_int_eq(u_map_put_binary(&map, "bkey", "new_value", 0, o_strlen("new_value")), U_OK);
+  ck_assert_int_eq(u_map_put(&map, "key", "value"), U_OK);
   u_map_clean(&map);
 }
 END_TEST
