@@ -218,7 +218,7 @@ int u_map_put_binary(struct _u_map * u_map, const char * key, const char * value
           }
         } else {
           o_free(u_map->values[i]);
-          u_map->values[i] = NULL;
+          u_map->values[i] = o_strdup("");
           u_map->lengths[i] = 0;
         }
         return U_OK;
@@ -240,7 +240,7 @@ int u_map_put_binary(struct _u_map * u_map, const char * key, const char * value
         }
         memcpy((dup_value + offset), value, length);
       } else {
-        dup_value = NULL;
+        dup_value = o_strdup("");
       }
       
       // Append key
