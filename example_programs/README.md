@@ -8,16 +8,16 @@ Each program implement some functionalities provided by Ulfius, such as url pars
 
 The example programs were developped to help implementing the functionnalities of the framework and test them. The tested functionnalities are:
 
-- `simple_example`: endpoint tests, url parameters, body parameters, json body parameters and cookies
-- `sheep_counter`: file server, upload file
-- `injection_example`: endpoints injection and remove during the program execution
+- `simple_example`: endpoint tests, url parameters, body parameters and cookies
+- `sheep_counter`: file server, upload file, JSON parameters
+- `injection_example`: endpoints injection and removal during the program execution
 - `proxy_example`: proxyfies calls to another url
-- `auth_example`: HTTP Basic Auth
+- `auth_example`: HTTP Basic Auth and TLS certificates authentication
 - `stream_example`: data streaming (server and client side)
 - `request_example`: send http and smtp requests
-- `test_u_map`: struct _u_map tests
-- `multiple_callbacks_example`: Test new feature in Ulfius 2.0 where you can access multiple callback functions on a single endpoint, one after the other
-- `websocket_example`: Test websocket functionality, new feature in Ulfius 2.0
+- `test_u_map`: `struct _u_map` tests
+- `multiple_callbacks_example`: Run multiple callback functions on a single endpoint
+- `websocket_example`: Websocket client and server
 
 ## Build
 
