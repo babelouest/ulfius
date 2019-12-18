@@ -666,7 +666,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
 
 /**
  * Send an email using libcurl
- * email is plain/text and UTF8 charset
+ * email has the content-type specified in parameter
  * host: smtp server host name
  * port: tcp port number (optional, 0 for default)
  * use_tls: true if the connection is tls secured
@@ -677,22 +677,24 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
  * to: to recipient address (mandatory)
  * cc: cc recipient address (optional, NULL: no cc)
  * bcc: bcc recipient address (optional, NULL: no bcc)
+ * content_type: content-type to add to the e-mail body
  * subject: email subject (mandatory)
  * mail_body: email body (mandatory)
  * return U_OK on success
  */
-int ulfius_send_smtp_email(const char * host, 
-                           const int port, 
-                           const int use_tls, 
-                           const int verify_certificate, 
-                           const char * user, 
-                           const char * password, 
-                           const char * from, 
-                           const char * to, 
-                           const char * cc, 
-                           const char * bcc, 
-                           const char * subject, 
-                           const char * mail_body) {
+int ulfius_send_smtp_rich_email(const char * host, 
+                                const int port, 
+                                const int use_tls, 
+                                const int verify_certificate, 
+                                const char * user, 
+                                const char * password, 
+                                const char * from, 
+                                const char * to, 
+                                const char * cc, 
+                                const char * bcc, 
+                                const char * content_type,
+                                const char * subject, 
+                                const char * mail_body) {
   CURL * curl_handle;
   CURLcode res = CURLE_OK;
   char * smtp_url = NULL;
@@ -814,12 +816,13 @@ int ulfius_send_smtp_email(const char * host,
                                    "From: %s\r\n"
                                    "%s"
                                    "Subject: %s\r\n"
-                                   "Content-Type: text/plain; charset=utf-8\r\n\r\n%s\r\n",
+                                   "Content-Type: %s; charset=utf-8\r\n\r\n%s\r\n",
                                    date_str,
                                    to,
                                    from,
                                    cc_str,
                                    subject!=NULL?subject:"",
+                                   content_type,
                                    mail_body);
         if (upload_ctx.data == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resource for upload_ctx.data");
@@ -863,5 +866,37 @@ int ulfius_send_smtp_email(const char * host,
     ret = U_ERROR_PARAMS;
   }
   return ret;
+}
+
+/**
+ * Send an email using libcurl
+ * email is plain/text and UTF8 charset
+ * host: smtp server host name
+ * port: tcp port number (optional, 0 for default)
+ * use_tls: true if the connection is tls secured
+ * verify_certificate: true if you want to disable the certificate verification on a tls server
+ * user: connection user name (optional, NULL: no user name)
+ * password: connection password (optional, NULL: no password)
+ * from: from address (mandatory)
+ * to: to recipient address (mandatory)
+ * cc: cc recipient address (optional, NULL: no cc)
+ * bcc: bcc recipient address (optional, NULL: no bcc)
+ * subject: email subject (mandatory)
+ * mail_body: email body (mandatory)
+ * return U_OK on success
+ */
+int ulfius_send_smtp_email(const char * host, 
+                           const int port, 
+                           const int use_tls, 
+                           const int verify_certificate, 
+                           const char * user, 
+                           const char * password, 
+                           const char * from, 
+                           const char * to, 
+                           const char * cc, 
+                           const char * bcc, 
+                           const char * subject, 
+                           const char * mail_body) {
+  return ulfius_send_smtp_rich_email(host, port, use_tls, verify_certificate, user, password, from, to, cc, bcc, "Content-Type: text/plain; charset=utf-8", subject, mail_body);
 }
 #endif
