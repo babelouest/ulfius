@@ -1158,6 +1158,7 @@ END_TEST
 #define TO "to"
 #define CC "cc"
 #define BCC "bcc"
+#define CONTENT_TYPE "text/ulfius; charset=utf-42"
 #define SUBJECT "subject"
 #define BODY "mail body"
 
@@ -1184,6 +1185,31 @@ START_TEST(test_ulfius_send_smtp)
   ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, "RCPT TO:<" TO ">"));
   ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, "RCPT TO:<" CC ">"));
   ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, "RCPT TO:<" BCC ">"));
+  ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, "Subject: " SUBJECT));
+  ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, BODY));
+  o_free(manager.mail_data);
+  manager.mail_data = NULL;
+}
+END_TEST
+
+START_TEST(test_ulfius_send_rich_smtp)
+{
+  pthread_t thread;
+  struct smtp_manager manager;
+
+  manager.mail_data = NULL;
+  manager.port = PORT;
+  manager.sockfd = 0;
+
+  pthread_create(&thread, NULL, simple_smtp, &manager);
+  ck_assert_int_eq(ulfius_send_smtp_rich_email("localhost", PORT, 0, 0, NULL, NULL, FROM, TO, CC, BCC, CONTENT_TYPE, SUBJECT, BODY), U_OK);
+  pthread_join(thread, NULL);
+  ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, "HELO"));
+  ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, "MAIL FROM:<" FROM ">"));
+  ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, "RCPT TO:<" TO ">"));
+  ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, "RCPT TO:<" CC ">"));
+  ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, "RCPT TO:<" BCC ">"));
+  ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, "Content-Type: " CONTENT_TYPE));
   ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, "Subject: " SUBJECT));
   ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, BODY));
   o_free(manager.mail_data);
@@ -1275,6 +1301,7 @@ static Suite *ulfius_suite(void)
   tcase_add_test(tc_core, test_ulfius_endpoint_callback_position);
   tcase_add_test(tc_core, test_ulfius_MHD_set_response_with_other_free);
   tcase_add_test(tc_core, test_ulfius_send_smtp);
+  tcase_add_test(tc_core, test_ulfius_send_rich_smtp);
 #ifndef U_DISABLE_GNUTLS
   tcase_add_test(tc_core, test_ulfius_server_ca_trust);
   tcase_add_test(tc_core, test_ulfius_client_certificate);
