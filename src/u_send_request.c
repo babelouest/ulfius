@@ -816,7 +816,7 @@ int ulfius_send_smtp_rich_email(const char * host,
                                    "From: %s\r\n"
                                    "%s"
                                    "Subject: %s\r\n"
-                                   "Content-Type: %s; charset=utf-8\r\n\r\n%s\r\n",
+                                   "Content-Type: %s\r\n\r\n%s\r\n",
                                    date_str,
                                    to,
                                    from,
