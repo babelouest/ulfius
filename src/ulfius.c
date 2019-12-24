@@ -1206,13 +1206,24 @@ int ulfius_add_endpoint_list(struct _u_instance * u_instance, const struct _u_en
  * return U_OK on success
  */
 int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endpoint * u_endpoint) {
-  int i, j, found = 0;
+  int i, j, found = 0, ret = U_OK;
+  char * trim_prefix = NULL, * trim_prefix_save = NULL, * trim_format = NULL, * trim_format_save = NULL,
+       * trim_cur_prefix = NULL, * trim_cur_prefix_save = NULL, * trim_cur_format = NULL, * trim_cur_format_save = NULL;
   if (u_instance != NULL && u_endpoint != NULL && !ulfius_equals_endpoints(u_endpoint, ulfius_empty_endpoint()) && ulfius_is_valid_endpoint(u_endpoint, 1)) {
-    for (i=0; i<u_instance->nb_endpoints; i++) {
+    trim_prefix_save = o_strdup(u_endpoint->url_prefix);
+    trim_prefix = trimcharacter(trim_prefix_save, '/');
+    trim_format_save = o_strdup(u_endpoint->url_format);
+    trim_format = trimcharacter(trim_format_save, '/');
+    for (i=u_instance->nb_endpoints-1; i>=0 && ret == U_OK; i--) {
+      trim_cur_prefix_save = o_strdup(u_instance->endpoint_list[i].url_prefix);
+      trim_cur_prefix = trimcharacter(trim_cur_prefix_save, '/');
+      trim_cur_format_save = o_strdup(u_instance->endpoint_list[i].url_format);
+      trim_cur_format = trimcharacter(trim_cur_format_save, '/');
+      
       // Compare u_endpoint with u_instance->endpoint_list[i]
-      if ((u_endpoint->http_method != NULL && 0 == o_strcmp(u_instance->endpoint_list[i].http_method, u_endpoint->http_method)) &&
-          ((u_instance->endpoint_list[i].url_prefix == NULL && u_endpoint->url_prefix == NULL) || (u_instance->endpoint_list[i].url_prefix != NULL && u_endpoint->url_prefix != NULL && 0 == o_strcmp(u_instance->endpoint_list[i].url_prefix, u_endpoint->url_prefix))) &&
-          ((u_instance->endpoint_list[i].url_format == NULL && u_endpoint->url_format == NULL) || (u_instance->endpoint_list[i].url_format != NULL && u_endpoint->url_format != NULL && 0 == o_strcmp(u_instance->endpoint_list[i].url_format, u_endpoint->url_format)))) {
+      if (0 == o_strcmp(u_instance->endpoint_list[i].http_method, u_endpoint->http_method) &&
+          0 == o_strcmp(trim_cur_prefix, trim_prefix) &&
+          0 == o_strcmp(trim_cur_format, trim_format)) {
         // It's a match!
         // Remove current endpoint and move the next ones to their previous index, then reduce the endpoint_list by 1
         found = 1;
@@ -1226,20 +1237,26 @@ int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endp
         u_instance->endpoint_list = o_realloc(u_instance->endpoint_list, (u_instance->nb_endpoints + 1)*sizeof(struct _u_endpoint));
         if (u_instance->endpoint_list == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_add_endpoint, Error reallocating memory for u_instance->endpoint_list");
-          return U_ERROR_MEMORY;
+          ret = U_ERROR_MEMORY;
         }
       }
+      o_free(trim_cur_prefix_save);
+      o_free(trim_cur_format_save);
+      trim_cur_prefix_save = NULL;
+      trim_cur_format_save = NULL;
     }
-    if (found) {
-      return U_OK;
-    } else {
-      return U_ERROR_NOT_FOUND;
+    if (!found) {
+      ret = U_ERROR_NOT_FOUND;
     }
+    o_free(trim_prefix_save);
+    o_free(trim_format_save);
+    trim_prefix_save = NULL;
+    trim_format_save = NULL;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_remove_endpoint, invalid parameters");
-    return U_ERROR_PARAMS;
+    ret = U_ERROR_PARAMS;
   }
-  return U_ERROR;
+  return ret;
 }
 
 /**
