@@ -632,6 +632,61 @@ START_TEST(test_endpoint)
 }
 END_TEST
 
+START_TEST(test_endpoint_weirder)
+{
+  struct _u_instance u_instance;
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 80, NULL, NULL), U_OK);
+  
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "test1", "test1/test1/", "test1/test1/", 0, &callback_function_empty, NULL), U_OK);
+  ck_assert_int_eq(u_instance.nb_endpoints, 1);
+  ck_assert_int_eq(ulfius_remove_endpoint_by_val(&u_instance, "test1", "test1/test1", "test1/test1"), U_OK);
+  ck_assert_int_eq(u_instance.nb_endpoints, 0);
+
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "test1", "/test1/test1", "/test1/test1", 0, &callback_function_empty, NULL), U_OK);
+  ck_assert_int_eq(u_instance.nb_endpoints, 1);
+  ck_assert_int_eq(ulfius_remove_endpoint_by_val(&u_instance, "test1", "test1/test1", "test1/test1"), U_OK);
+  ck_assert_int_eq(u_instance.nb_endpoints, 0);
+
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "test1", "/test1/test1/", "/test1/test1/", 0, &callback_function_empty, NULL), U_OK);
+  ck_assert_int_eq(u_instance.nb_endpoints, 1);
+  ck_assert_int_eq(ulfius_remove_endpoint_by_val(&u_instance, "test1", "test1/test1", "test1/test1"), U_OK);
+  ck_assert_int_eq(u_instance.nb_endpoints, 0);
+
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "test1", "test1/test1", "test1/test1", 0, &callback_function_empty, NULL), U_OK);
+  ck_assert_int_eq(u_instance.nb_endpoints, 1);
+  ck_assert_int_eq(ulfius_remove_endpoint_by_val(&u_instance, "test1", "/test1/test1", "/test1/test1"), U_OK);
+  ck_assert_int_eq(u_instance.nb_endpoints, 0);
+
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "test1", "test1/test1", "test1/test1", 0, &callback_function_empty, NULL), U_OK);
+  ck_assert_int_eq(u_instance.nb_endpoints, 1);
+  ck_assert_int_eq(ulfius_remove_endpoint_by_val(&u_instance, "test1", "test1/test1/", "test1/test1/"), U_OK);
+  ck_assert_int_eq(u_instance.nb_endpoints, 0);
+
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "test1", "test1/test1", "test1/test1", 0, &callback_function_empty, NULL), U_OK);
+  ck_assert_int_eq(u_instance.nb_endpoints, 1);
+  ck_assert_int_eq(ulfius_remove_endpoint_by_val(&u_instance, "test1", "/test1/test1/", "/test1/test1/"), U_OK);
+  ck_assert_int_eq(u_instance.nb_endpoints, 0);
+
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "test1", "test1/test1/", "test1/test1/", 0, &callback_function_empty, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "test1", "/test1/test1", "/test1/test1", 0, &callback_function_empty, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "test1", "/test1/test1/", "/test1/test1/", 0, &callback_function_empty, NULL), U_OK);
+  ck_assert_int_eq(u_instance.nb_endpoints, 3);
+  ck_assert_int_eq(ulfius_remove_endpoint_by_val(&u_instance, "test1", "test1/test1", "test1/test1"), U_OK);
+  ck_assert_int_eq(u_instance.nb_endpoints, 0);
+  ck_assert_int_eq(ulfius_remove_endpoint_by_val(&u_instance, "test1", "test1/test1", "test1/test1"), U_ERROR_NOT_FOUND);
+  
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "test1", "test1/test1", "test1/test1", 0, &callback_function_empty, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "test1", "test1/test1/", "test1/test1", 0, &callback_function_empty, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "test1", "/test1/test1", "test1/test1", 0, &callback_function_empty, NULL), U_OK);
+  ck_assert_int_eq(u_instance.nb_endpoints, 3);
+  ck_assert_int_eq(ulfius_remove_endpoint_by_val(&u_instance, "test1", "/test1/test1/", "/test1/test1/"), U_OK);
+  ck_assert_int_eq(u_instance.nb_endpoints, 0);
+  ck_assert_int_eq(ulfius_remove_endpoint_by_val(&u_instance, "test1", "/test1/test1/", "/test1/test1/"), U_ERROR_NOT_FOUND);
+  
+  ulfius_clean_instance(&u_instance);
+}
+END_TEST
+
 START_TEST(test_ulfius_start_instance)
 {
   struct _u_instance u_instance;
@@ -732,6 +787,7 @@ static Suite *ulfius_suite(void)
 	tcase_add_test(tc_core, test_ulfius_request_limits);
 	tcase_add_test(tc_core, test_ulfius_response);
 	tcase_add_test(tc_core, test_endpoint);
+	tcase_add_test(tc_core, test_endpoint_weirder);
 	tcase_add_test(tc_core, test_ulfius_start_instance);
 	tcase_add_test(tc_core, test_url_encode_decode);
 	tcase_set_timeout(tc_core, 30);
