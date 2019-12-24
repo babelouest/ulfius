@@ -897,6 +897,6 @@ int ulfius_send_smtp_email(const char * host,
                            const char * bcc, 
                            const char * subject, 
                            const char * mail_body) {
-  return ulfius_send_smtp_rich_email(host, port, use_tls, verify_certificate, user, password, from, to, cc, bcc, "Content-Type: text/plain; charset=utf-8", subject, mail_body);
+  return ulfius_send_smtp_rich_email(host, port, use_tls, verify_certificate, user, password, from, to, cc, bcc, "text/plain; charset=utf-8", subject, mail_body);
 }
 #endif
