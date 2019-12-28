@@ -922,6 +922,19 @@ int ulfius_add_same_site_cookie_to_response(struct _u_response * response, const
                                             const char * domain, const char * path, const int secure, const int http_only, const int same_site);
 ```
 
+If you need to remove a cookie on the client, you can send a cookie with the same key but an empty value and a expiration in the past.
+
+```C
+/*
+ * Example of a cookie removal, you must change the values domain, path, secure, http_only
+ * according to your settings
+ */
+char * expires = "Sat, 10 Jan 1970 12:00:00 GMT"
+ulfius_add_cookie_to_response(response, "cookie_key", "", expires, 0, "your_domain.tld", "/", 0, 0);
+```
+
+Please note that the client (browser, app, etc.) doesn't have to remove the cookies if it doesn't want to.
+
 ### File upload
 
 Ulifius allows file upload to the server. Beware that an uploaded file will be stored in the request object in memory, so uploading large files may dramatically slow the application or even crash it, depending on your system. An uploaded file is stored in the `request->map_body` structure. You can use `u_map_get_length` to get the exact length of the file as it may not be a string format.
