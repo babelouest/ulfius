@@ -529,8 +529,8 @@ int ulfius_set_upload_file_callback_function(struct _u_instance * u_instance,
  */
 
 /**
- * @defgroup endpoints struct _u_instance
- * struct _u_instance management functions
+ * @defgroup endpoints struct _u_endpoint
+ * struct _u_endpoint management functions
  * @{
  */
 
