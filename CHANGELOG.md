@@ -6,6 +6,7 @@
 - Allow `NULL` values on `struct _u_map`
 - Add function `ulfius_send_smtp_rich_email` to send e-mails with a specified content-type
 - Fix and improve `ulfius_add_endpoint_list`
+- Add doxygen documentation
 
 ## 2.6.4
 
