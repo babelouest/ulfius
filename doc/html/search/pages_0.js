@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['ulfius_20http_20framework',['Ulfius HTTP Framework',['../index.html',1,'']]]
+  ['install_20ulfius',['Install Ulfius',['../md_INSTALL.html',1,'']]]
 ];
