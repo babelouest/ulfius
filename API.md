@@ -17,6 +17,9 @@
   - [Additional functions](#additional-functions)
   - [Memory management](#memory-management)
   - [Character encoding](#character-encoding)
+  - [Accessing POST parameters](#accessing-post-parameters)
+  - [Accessing query string and URL parameters](#accessing-query-string-and-url-parameters)
+  - [Accessing header parameters](#accessing-header-parameters)
   - [Cookie management](#cookie-management)
   - [File upload](#file-upload)
   - [Streaming data](#streaming-data)
@@ -875,6 +878,56 @@ The Ulfius framework will automatically free the variables referenced by the req
 #### Character encoding
 
 You may be careful with characters encoding if you use non UTF8 characters in your application or webservice source code, and especially if you use different encodings in the same application. Ulfius may not work properly.
+
+#### Accessing POST parameters
+
+In the callback function, you can access the POST parameters in the `struct _u_request.map_post_body`. The parameters keys are case-sensntive.
+
+This variable is a `struct _u_map`, therefore you can access it using the [struct _u_map documentation](#struct-_u_map-api).
+
+```C
+// Example of accessing a POST parameter
+int callback_test (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  printf("POST parameter id: %s\n", u_map_get(request->map_post_body, "id"));
+  return U_CALLBACK_CONTINUE;
+}
+```
+
+#### Accessing query string and URL parameters
+
+In the callback function, you can access the URL and query parameters in the `struct _u_request.map_url`. This variable contains both URL parameters and query string parameters, the parameters keys are case-sensntive. If a parameter appears multiple times in the URL and the query string, the values will be chained in the `struct _u_request.map_url`, separated by a comma `,`.
+
+This variable is a `struct _u_map`, therefore you can access it using the [struct _u_map documentation](#struct-_u_map-api).
+
+```C
+// Example of accessing URL parameters
+int callback_test (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  /**
+   * The url could be either
+   * http://localhost:8080/?id=xxx
+   * http://localhost:8080/id/xxx/ (with a url format like '/id/:id')
+   * http://localhost:8080/id/xxx/?id=xxx (with a url format like '/id/:id')
+   */
+  printf("URL parameter id: %s\n", u_map_get(request->map_url, "id"));
+  return U_CALLBACK_CONTINUE;
+}
+```
+
+#### Accessing header parameters
+
+In the callback function, you can access the header parameters in the `struct _u_request.map_header`.
+
+In the callback function, you can access the header parameters in the `struct _u_request.map_header`. The parameters keys are case-sensntive. If a parameter appears multiple times in the header, the values will be chained in the `struct _u_request.map_header`, separated by a comma `,`.
+
+This variable is a `struct _u_map`, therefore you can access it using the [struct _u_map documentation](#struct-_u_map-api).
+
+```C
+// Example of accessing a POST parameter
+int callback_test (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  printf("Heder parameter id: %s\n", u_map_get(request->map_header, "id"));
+  return U_CALLBACK_CONTINUE;
+}
+```
 
 #### Cookie management
 
