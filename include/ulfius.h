@@ -1,12 +1,13 @@
 /**
  * 
- * Ulfius Framework
+ * @file ulfius.h
+ * @brief Ulfius framework
  * 
  * REST framework library
  * 
  * ulfius.h: public structures and functions declarations
  * 
- * Copyright 2015-2018 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2015-2019 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -89,6 +90,11 @@ int y_close_logs();
 #include <jansson.h>
 #endif
 
+/**
+ * @defgroup const Constants
+ * @{
+ */
+
 #define ULFIUS_STREAM_BLOCK_SIZE_DEFAULT 1024
 #define U_STREAM_END MHD_CONTENT_READER_END_OF_STREAM
 #define U_STREAM_ERROR MHD_CONTENT_READER_END_WITH_ERROR
@@ -119,9 +125,19 @@ int y_close_logs();
 #define U_SSL_VERIFY_PEER     0x0001
 #define U_SSL_VERIFY_HOSTNAME 0x0010
 
+/**
+ * @}
+ */
+
 /*************
  * Structures
  *************/
+
+/**
+ * @defgroup struct Structures
+ * structures definitions
+ * @{
+ */
 
 /**
  * struct _u_map
@@ -358,6 +374,10 @@ struct _u_instance {
 };
 
 /**
+ * @}
+ */
+
+/**
  * Structures used to facilitate data manipulations (internal)
  */
 struct connection_info_struct {
@@ -375,9 +395,25 @@ struct connection_info_struct {
  **********************************/
 
 /**
+ * @defgroup memory
+ * memory management function
+ * @{
+ */
+
+/**
  * free data allocated by ulfius functions
  */
 void u_free(void * data);
+
+/**
+ * @}
+ */
+
+/**
+ * @defgroup instance struct _u_instance
+ * struct _u_instance management functions
+ * @{
+ */
 
 /**
  * ulfius_init_instance
@@ -487,6 +523,16 @@ int ulfius_set_upload_file_callback_function(struct _u_instance * u_instance,
                                                                            size_t size, 
                                                                            void * cls),
                                              void * cls);
+
+/**
+ * @}
+ */
+
+/**
+ * @defgroup endpoints struct _u_instance
+ * struct _u_instance management functions
+ * @{
+ */
 
 /***********************************
  * Endpoints functions declarations
@@ -618,6 +664,16 @@ void ulfius_clean_endpoint_list(struct _u_endpoint * endpoint_list);
  */
 int ulfius_equals_endpoints(const struct _u_endpoint * endpoint1, const struct _u_endpoint * endpoint2);
 
+/**
+ * @}
+ */
+
+/**
+ * @defgroup http_smtp_client Client HTTP and SMTP
+ * client HTTP and SMTP requests management functions
+ * @{
+ */
+
 #ifndef U_DISABLE_CURL
 /********************************************
  * Requests/Responses functions declarations
@@ -704,6 +760,16 @@ int ulfius_send_smtp_rich_email(const char * host,
 #endif
 
 /**
+ * @}
+ */
+
+/**
+ * @defgroup cookie Cookies
+ * Cookies management functions
+ * @{
+ */
+
+/**
  * ulfius_add_cookie_to_response
  * add a cookie to the cookie map
  * return U_OK on success
@@ -722,6 +788,16 @@ int ulfius_add_cookie_to_response(struct _u_response * response, const char * ke
  */
 int ulfius_add_same_site_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age, 
                                             const char * domain, const char * path, const int secure, const int http_only, const int same_site);
+
+/**
+ * @}
+ */
+
+/**
+ * @defgroup parameters URL, POST and Header parameters
+ * URL, POST and Header management functions
+ * @{
+ */
 
 /**
  * ulfius_add_header_to_response
@@ -775,6 +851,16 @@ int ulfius_set_binary_body_response(struct _u_response * response, const unsigne
 int ulfius_set_empty_body_response(struct _u_response * response, const unsigned int status);
 
 /**
+ * @}
+ */
+
+/**
+ * @defgroup stream Response streaming
+ * Response streaming function
+ * @{
+ */
+
+/**
  * ulfius_set_stream_response
  * Set an stream response with a status
  * return U_OK on success
@@ -786,6 +872,16 @@ int ulfius_set_stream_response(struct _u_response * response,
                                 uint64_t stream_size,
                                 size_t stream_block_size,
                                 void * stream_user_data);
+
+/**
+ * @}
+ */
+
+/**
+ * @defgroup request_response_cookie struct _u_request, struct _u_response and struct _u_cookie
+ * struct _u_request, struct _u_response and struct _u_cookie management functions
+ * @{
+ */
 
 /**
  * ulfius_init_request
@@ -873,6 +969,16 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
 struct _u_response * ulfius_duplicate_response(const struct _u_response * response);
 
 /**
+ * @}
+ */
+
+/**
+ * @defgroup url_encode URL Encode
+ * URL Encode functions
+ * @{
+ */
+
+/**
  * Returns a url-decoded version of str
  * returned value must be cleaned after use
  * Thanks Geek Hideout!
@@ -887,6 +993,16 @@ char * ulfius_url_decode(const char * str);
  * http://www.geekhideout.com/urlcode.shtml
  */
 char * ulfius_url_encode(const char * str);
+
+/**
+ * @}
+ */
+
+/**
+ * @defgroup request_response_cookie struct _u_request, struct _u_response and struct _u_cookie
+ * struct _u_request, struct _u_response and struct _u_cookie management functions
+ * @{
+ */
 
 #ifndef U_DISABLE_JANSSON
 /**
@@ -921,6 +1037,16 @@ json_t * ulfius_get_json_body_response(struct _u_response * response, json_error
  */
 int ulfius_set_json_body_response(struct _u_response * response, const unsigned int status, const json_t * j_body);
 #endif
+
+/**
+ * @}
+ */
+
+/**
+ * @defgroup u_map struct _u_map
+ * struct _u_map management functions
+ * @{
+ */
 
 /************************************************************************
  * _u_map declarations                                                  *  
@@ -1103,6 +1229,16 @@ int u_map_count(const struct _u_map * source);
  * return U_OK on success, error otherwise
  */
 int u_map_empty(struct _u_map * u_map);
+
+/**
+ * @}
+ */
+
+/**
+ * @defgroup websocket
+ * Websocket management functions
+ * @{
+ */
 
 #ifndef U_DISABLE_WEBSOCKET
 
@@ -1448,6 +1584,16 @@ struct _websocket_handler {
 
 #endif // U_DISABLE_WEBSOCKET
 
+/**
+ * @}
+ */
+
+/**
+ * @defgroup cert TLS client certificate
+ * TLS client certificate management functions
+ * @{
+ */
+
 #ifndef U_DISABLE_GNUTLS
 /*
  * ulfius_export_client_certificate_pem
@@ -1467,5 +1613,9 @@ char * ulfius_export_client_certificate_pem(const struct _u_request * request);
 int ulfius_import_client_certificate_pem(struct _u_request * request, const char * str_cert);
 
 #endif // U_DISABLE_GNUTLS
+
+/**
+ * @}
+ */
 
 #endif // __ULFIUS_H__

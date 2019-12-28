@@ -44,3 +44,6 @@ uninstall:
 
 check:
 	cd $(TESTS_LOCATION) && $(MAKE)
+
+doxygen:
+	doxygen doc/doxygen.cfg
