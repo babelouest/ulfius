@@ -329,6 +329,7 @@ int ulfius_init_request(struct _u_request * request) {
     request->check_server_certificate_flag = U_SSL_VERIFY_PEER|U_SSL_VERIFY_HOSTNAME;
     request->check_proxy_certificate = 1;
     request->check_proxy_certificate_flag = U_SSL_VERIFY_PEER|U_SSL_VERIFY_HOSTNAME;
+    request->follow_redirect = 0;
     request->ca_path = NULL;
     request->client_address = NULL;
     request->binary_body = NULL;
@@ -425,6 +426,7 @@ int ulfius_copy_request(struct _u_request * dest, const struct _u_request * sour
     dest->check_server_certificate_flag = source->check_server_certificate_flag;
     dest->check_proxy_certificate = source->check_proxy_certificate;
     dest->check_proxy_certificate_flag = source->check_proxy_certificate_flag;
+    dest->follow_redirect = source->follow_redirect;
     dest->ca_path = o_strdup(source->ca_path);
     dest->timeout = source->timeout;
     dest->auth_basic_user = o_strdup(source->auth_basic_user);

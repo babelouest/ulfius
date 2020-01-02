@@ -255,6 +255,15 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
               }
             }
 
+            // follow redirection if set
+            if (copy_request->follow_redirect) {
+              if (curl_easy_setopt(curl_handle, CURLOPT_FOLLOWLOCATION, 1) != CURLE_OK) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting follow redirection option");
+                ret = U_ERROR_LIBCURL;
+                break;
+              }
+            }
+
 #if MHD_VERSION >= 0x00095208
             // Set network type
             if (copy_request->network_type & U_USE_ALL) {
