@@ -216,6 +216,7 @@ struct _u_request {
   int                  check_server_certificate_flag;
   int                  check_proxy_certificate;
   int                  check_proxy_certificate_flag;
+  int                  follow_redirect;
   char *               ca_path;
   unsigned long        timeout;
   struct sockaddr *    client_address;
