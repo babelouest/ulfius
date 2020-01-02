@@ -119,6 +119,9 @@ G66c7c4qxP2fq5vQiYJUVEpNd4Z4+EbvMDrg4CsTVaoI1OWlHWcBfNHupw==\
 #define BUF_SIZE  4096
 #define STREQU(a,b)  (strcmp(a, b) == 0)
 
+#define BODY_NOT_REDIRECTED "This is the blue pill"
+#define BODY_REDIRECTED "Welcome to the Matrix, Neo!"
+
 struct smtp_manager {
   char * mail_data;
   unsigned int port;
@@ -499,6 +502,17 @@ int callback_function_position_1(const struct _u_request * request, struct _u_re
 
 int callback_function_position_2(const struct _u_request * request, struct _u_response * response, void * user_data) {
   ck_assert_int_eq(request->callback_position, 2);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_function_redirect_first(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  u_map_put(response->map_header, "Location", "/last");
+  ulfius_set_string_body_response(response, 302, BODY_NOT_REDIRECTED);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_function_redirect_last(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  ulfius_set_string_body_response(response, 200, BODY_REDIRECTED);
   return U_CALLBACK_CONTINUE;
 }
 
@@ -1217,6 +1231,39 @@ START_TEST(test_ulfius_send_rich_smtp)
 }
 END_TEST
 
+START_TEST(test_ulfius_follow_redirect)
+{
+  struct _u_instance u_instance;
+  struct _u_request request;
+  struct _u_response response;
+  
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "first", "*", 0, &callback_function_redirect_first, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "last", "*", 0, &callback_function_redirect_last, NULL), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
+  
+  ulfius_init_request(&request);
+  request.http_url = o_strdup("http://localhost:8080/first");
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 302);
+  ck_assert_str_eq(u_map_get(response.map_header, "Location"), "/last");
+  ck_assert_int_eq(o_strncmp(response.binary_body, BODY_NOT_REDIRECTED, o_strlen(BODY_NOT_REDIRECTED)), 0);
+  ulfius_clean_response(&response);
+  
+  ulfius_init_response(&response);
+  request.follow_redirect = 1;
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(o_strncmp(response.binary_body, BODY_REDIRECTED, o_strlen(BODY_REDIRECTED)), 0);
+  ck_assert_int_eq(response.status, 200);
+  ulfius_clean_response(&response);
+  
+  ulfius_clean_request(&request);
+  ulfius_stop_framework(&u_instance);
+  ulfius_clean_instance(&u_instance);
+}
+END_TEST
+
 #ifndef U_DISABLE_GNUTLS
 START_TEST(test_ulfius_server_ca_trust)
 {
@@ -1302,6 +1349,7 @@ static Suite *ulfius_suite(void)
   tcase_add_test(tc_core, test_ulfius_MHD_set_response_with_other_free);
   tcase_add_test(tc_core, test_ulfius_send_smtp);
   tcase_add_test(tc_core, test_ulfius_send_rich_smtp);
+  tcase_add_test(tc_core, test_ulfius_follow_redirect);
 #ifndef U_DISABLE_GNUTLS
   tcase_add_test(tc_core, test_ulfius_server_ca_trust);
   tcase_add_test(tc_core, test_ulfius_client_certificate);
