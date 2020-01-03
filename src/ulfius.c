@@ -564,7 +564,6 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
               // then run the websocket callback functions with initialized data
               if (NULL != o_strcasestr(u_map_get_case(con_info->request->map_header, "upgrade"), U_WEBSOCKET_UPGRADE_VALUE) &&
                   NULL != u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Key") &&
-                  NULL != u_map_get_case(con_info->request->map_header, "Origin") &&
                   NULL != o_strcasestr(u_map_get_case(con_info->request->map_header, "Connection"), "Upgrade") &&
                   0 == o_strcmp(con_info->request->http_protocol, "HTTP/1.1") &&
                   0 == o_strcmp(u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Version"), "13") &&
@@ -643,12 +642,11 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
                 o_free(protocol);
                 o_free(extension);
               } else {
-                response_buffer = msprintf("%s%s%s%s%s%s%s",
+                response_buffer = msprintf("%s%s%s%s%s%s",
                                            o_strcasestr(u_map_get_case(con_info->request->map_header, "upgrade"), U_WEBSOCKET_UPGRADE_VALUE)==NULL?"No Upgrade websocket header\n":"",
                                            o_strcasestr(u_map_get_case(con_info->request->map_header, "Connection"), "Upgrade")==NULL?"No Connection Upgrade header\n":"",
                                            u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Key")==NULL?"No Sec-WebSocket-Key header\n":"",
-                                           u_map_get_case(con_info->request->map_header, "Origin")?"No Origin header\n":"",
-                                           o_strcmp(con_info->request->http_protocol, "HTTP/1.1")!=0?"Wrong HTTP Protocolv":"",
+                                           o_strcmp(con_info->request->http_protocol, "HTTP/1.1")!=0?"Wrong HTTP Protocol":"",
                                            o_strcmp(u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Version"), "13")!=0?"Wrong websocket version\n":"",
                                            o_strcmp(con_info->request->http_verb, "GET")!=0?"Method is not GET":"");
                 response->status = MHD_HTTP_BAD_REQUEST;
