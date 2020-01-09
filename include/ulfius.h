@@ -27,6 +27,11 @@
 #ifndef __ULFIUS_H__
 #define __ULFIUS_H__
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include "ulfius-cfg.h"
 
 /** External dependencies **/
@@ -1619,5 +1624,9 @@ int ulfius_import_client_certificate_pem(struct _u_request * request, const char
 /**
  * @}
  */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // __ULFIUS_H__
