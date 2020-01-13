@@ -38,7 +38,9 @@ script:
   - cd build
   - cmake -DBUILD_ULFIUS_TESTING=on ..
   - ln -s ../test/ .
-  - ./test/cert/create-cert.sh || (cat ../test/cert/certtool.log && false)
+  - cd test
+  - ./cert/create-cert.sh || (cat ../test/cert/certtool.log && false)
+  - cd ..
   - make test || (cat Testing/Temporary/LastTest.log && false)
   - make package
   - sudo make install
