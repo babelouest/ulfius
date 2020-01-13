@@ -29,3 +29,5 @@ test/websocket
 tools/uwsc/uwsc
 tools/uwsc/valgrind.txt
 *.log
+*.crt
+*.key

@@ -25,6 +25,8 @@ jobs:
         cd build
         cmake -DBUILD_ULFIUS_TESTING=on ..
         make test || (cat Testing/Temporary/LastTest.log && false)
+        ../test/cert/create-cert.sh || (cat ../test/cert/certtool.log && false)
+        ln -s ../test/ .
         make package
         sudo make install
 
