@@ -371,7 +371,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
   const union MHD_ConnectionInfo * ci;
   unsigned int listsize;
   const gnutls_datum_t * pcert;
-  gnutls_certificate_status_t client_cert_status;
+  gnutls_certificate_status_t client_cert_status = 0;
   int ret_cert;
 #endif
   char * content_type, * auth_realm = NULL;
@@ -412,7 +412,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Failed to initialize client certificate");
         } else if (gnutls_x509_crt_import(con_info->request->client_cert, &pcert[0], GNUTLS_X509_FMT_DER)) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Failed to import client certificate");
-          gnutls_x509_crt_deinit(con_info->request->client_cert);
+          gnutls_x509_crt_deinit(con_info->request->client_cert);git@github.com:yomgui1/ulfius.git
         }
       }
     }
