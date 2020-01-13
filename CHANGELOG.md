@@ -8,6 +8,7 @@
 - Fix and improve `ulfius_add_endpoint_list`
 - Add doxygen documentation
 - Add `follow_redirect` in `struct _u_request`
+- Fix certificate check #154
 
 ## 2.6.4
 
