@@ -402,7 +402,7 @@ static int ulfius_webservice_dispatcher (void * cls, struct MHD_Connection * con
 #ifndef U_DISABLE_GNUTLS
     ci = MHD_get_connection_info (connection, MHD_CONNECTION_INFO_GNUTLS_SESSION);
     if (((struct _u_instance *)cls)->use_client_cert_auth && ci != NULL && ci->tls_session != NULL) {
-      if ((ret_cert = gnutls_certificate_verify_peers2(ci->tls_session, &client_cert_status)) != 0 && ret_cert != GNUTLS_E_NO_CERTIFICATE_FOUND) {
+      if (((ret_cert = gnutls_certificate_verify_peers2(ci->tls_session, &client_cert_status)) != 0 && ret_cert != GNUTLS_E_NO_CERTIFICATE_FOUND) || client_cert_status != 0) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error gnutls_certificate_verify_peers2");
       } else if (!ret_cert) {
         pcert = gnutls_certificate_get_peers(ci->tls_session, &listsize);
