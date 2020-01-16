@@ -66,6 +66,9 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
+<p>Contains the needed data for an ulfius instance to work.  
+ <a href="struct__u__instance.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="ulfius_8h_source.html">ulfius.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
@@ -110,9 +113,8 @@ Data Fields</h2></td></tr>
 <tr class="separator:af141bc558137d4df99bceab94c627447"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Structure of an instance</p>
-<p>Contains the needed data for an ulfius instance to work</p>
-<p>mhd_daemon: pointer to the libmicrohttpd daemon status: status of the current instance, status are U_STATUS_STOP, U_STATUS_RUNNING or U_STATUS_ERROR port: port number to listen to network_type: Listen to ipv4 and or ipv6 connections, values available are U_USE_ALL, U_USE_IPV4 or U_USE_IPV6 bind_address: ipv4 address to listen to (optional) timeout: Timeout to close the connection because of inactivity between the client and the server nb_endpoints: Number of available endpoints default_auth_realm: Default realm on authentication error endpoint_list: List of available endpoints default_endpoint: Default endpoint if no other endpoint match the current url default_headers: Default headers that will be added to all response-&gt;map_header max_post_param_size: maximum size for a post parameter, 0 means no limit, default 0 max_post_body_size: maximum size for the entire post body, 0 means no limit, default 0 websocket_handler: handler for the websocket structure file_upload_callback: callback function to manage file upload by blocks file_upload_cls: any pointer to pass to the file_upload_callback function mhd_response_copy_data: to choose between MHD_RESPMEM_MUST_COPY and MHD_RESPMEM_MUST_FREE, only if you use MHD &lt; 0.9.61, otherwise this option is skipped because it's useless check_utf8: check that all parameters values in the request (url, header and post_body) are valid utf8 strings, if a parameter value has non utf8 character, the value will be ignored, default 1 use_client_cert_auth: Internal variable use to indicate if the instance uses client certificate authentication Do not change this value, available only if websocket support is enabled </p>
+<div class="textblock"><p>Contains the needed data for an ulfius instance to work. </p>
+<p>definition </p>
 </div><h2 class="groupheader">Field Documentation</h2>
 <a id="a254dcc6e96ffa013de44382b3f5bc7f4"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a254dcc6e96ffa013de44382b3f5bc7f4">&#9670;&nbsp;</a></span>mhd_daemon</h2>

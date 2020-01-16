@@ -117,6 +117,15 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>ulfius_add_header_to_response add a header to the response </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">response</td><td>the response to be updated </td></tr>
+    <tr><td class="paramname">key</td><td>the key of the header </td></tr>
+    <tr><td class="paramname">value</td><td>the value of the header </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success</dd></dl>
 <p>ulfius_add_header_to_response add a header to the response return U_OK on success </p>
 
 </div>
@@ -146,6 +155,14 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>ulfius_set_string_body_request Set a string string_body to a request, replace any existing body in the request </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">request</td><td>the request to be updated </td></tr>
+    <tr><td class="paramname">string_body</td><td>string to set to the body response must end with a '\0' character </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success</dd></dl>
 <p>ulfius_set_string_body_request Set a string string_body to a request string_body must end with a '\0' character return U_OK on success </p>
 
 </div>
@@ -181,6 +198,14 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>ulfius_set_binary_body_request Set a binary binary_body to a request, replace any existing body in the request </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">request</td><td>the request to be updated </td></tr>
+    <tr><td class="paramname">binary_body</td><td>an array of char to set to the body response </td></tr>
+    <tr><td class="paramname">length</td><td>the length of binary_body to set to the request body return U_OK on success</td></tr>
+  </table>
+  </dd>
+</dl>
 <p>ulfius_set_binary_body_request Add a binary binary_body to a request return U_OK on success </p>
 
 </div>
@@ -200,6 +225,13 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>ulfius_set_empty_body_request Set an empty request body </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">request</td><td>the request to be updated </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success</dd></dl>
 <p>ulfius_set_empty_body_request Set an empty request body return U_OK on success </p>
 
 </div>
@@ -235,7 +267,15 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>ulfius_set_string_body_response Add a string body to a response body must end with a '\0' character return U_OK on success</p>
+<p>ulfius_set_string_body_response Add a string body to a response, replace any existing body in the response </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">response</td><td>the response to be updated </td></tr>
+    <tr><td class="paramname">status</td><td>the http status code to set to the response </td></tr>
+    <tr><td class="paramname">body</td><td>the string body to set, must end with a '\0' character </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success</dd></dl>
 <p>ulfius_set_string_body_response Set a string string_body to a response string_body must end with a '\0' character return U_OK on success </p>
 
 </div>
@@ -277,7 +317,16 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>ulfius_set_binary_body_response Add a binary body to a response return U_OK on success</p>
+<p>ulfius_set_binary_body_response Add a binary body to a response, replace any existing body in the response </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">response</td><td>the response to be updated </td></tr>
+    <tr><td class="paramname">status</td><td>the http status code to set to the response </td></tr>
+    <tr><td class="paramname">body</td><td>the array of char to set </td></tr>
+    <tr><td class="paramname">length</td><td>the length of body to set to the request body </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success</dd></dl>
 <p>ulfius_set_binary_body_response Add a binary binary_body to a response return U_OK on success </p>
 
 </div>
@@ -307,6 +356,14 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>ulfius_set_empty_body_response Set an empty response with only a status </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">response</td><td>the response to be updated </td></tr>
+    <tr><td class="paramname">status</td><td>the http status code to set to the response </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success</dd></dl>
 <p>ulfius_set_empty_body_response Set an empty response with only a status return U_OK on success </p>
 
 </div>

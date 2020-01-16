@@ -68,8 +68,8 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:gaa6e5655a4320ce1d01236e395a2b75e3"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__u__map.html#gaa6e5655a4320ce1d01236e395a2b75e3">u_map_init</a> (struct <a class="el" href="struct__u__map.html">_u_map</a> *map)</td></tr>
-<tr class="separator:gaa6e5655a4320ce1d01236e395a2b75e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga02376e930041dbe8853d3534822ea2dd"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__u__map.html#ga02376e930041dbe8853d3534822ea2dd">u_map_init</a> (struct <a class="el" href="struct__u__map.html">_u_map</a> *u_map)</td></tr>
+<tr class="separator:ga02376e930041dbe8853d3534822ea2dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga10cc4ab7d9ac763c5ad796fdb5b16fbd"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__u__map.html#ga10cc4ab7d9ac763c5ad796fdb5b16fbd">u_map_clean</a> (struct <a class="el" href="struct__u__map.html">_u_map</a> *u_map)</td></tr>
 <tr class="separator:ga10cc4ab7d9ac763c5ad796fdb5b16fbd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga9ec83ad81a06506bb9507ebb61823da2"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__u__map.html#ga9ec83ad81a06506bb9507ebb61823da2">u_map_clean_full</a> (struct <a class="el" href="struct__u__map.html">_u_map</a> *u_map)</td></tr>
@@ -126,8 +126,8 @@ Functions</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>struct <a class="el" href="struct__u__map.html">_u_map</a> management functions </p>
 <h2 class="groupheader">Function Documentation</h2>
-<a id="gaa6e5655a4320ce1d01236e395a2b75e3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#gaa6e5655a4320ce1d01236e395a2b75e3">&#9670;&nbsp;</a></span>u_map_init()</h2>
+<a id="ga02376e930041dbe8853d3534822ea2dd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga02376e930041dbe8853d3534822ea2dd">&#9670;&nbsp;</a></span>u_map_init()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -141,7 +141,13 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>initialize a struct <a class="el" href="struct__u__map.html">_u_map</a> this function MUST be called after a declaration or allocation return U_OK on success</p>
+<p>initialize a struct <a class="el" href="struct__u__map.html">_u_map</a> this function MUST be called after a declaration or allocation </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">u_map</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to initialize </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success</dd></dl>
 <p>Ulfius Framework</p>
 <p>REST framework library</p>
 <p>u_umap.c: Simple map structure functions definitions not memory friendly, all pointer returned must be freed after use</p>
@@ -167,6 +173,13 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>free the struct <a class="el" href="struct__u__map.html">_u_map</a>'s inner components </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">u_map</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to cleanup </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success</dd></dl>
 <p>free the struct <a class="el" href="struct__u__map.html">_u_map</a>'s inner components return U_OK on success </p>
 
 </div>
@@ -186,6 +199,13 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>free the struct <a class="el" href="struct__u__map.html">_u_map</a> and its components </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">u_map</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to cleanup </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success</dd></dl>
 <p>free the struct <a class="el" href="struct__u__map.html">_u_map</a> and its components return U_OK on success </p>
 
 </div>
@@ -205,6 +225,13 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>free an enum return by functions u_map_enum_keys or u_map_enum_values </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">array</td><td>the string array to cleanup </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success</dd></dl>
 <p>free an enum return by functions u_map_enum_keys or u_map_enum_values return U_OK on success </p>
 
 </div>
@@ -224,6 +251,13 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>returns an array containing all the keys in the struct <a class="el" href="struct__u__map.html">_u_map</a> </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">u_map</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to retreive the keys from </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>an array of char * ending with a NULL element</dd></dl>
 <p>returns an array containing all the keys in the struct <a class="el" href="struct__u__map.html">_u_map</a> return an array of char * ending with a NULL element </p>
 
 </div>
@@ -243,6 +277,13 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>returns an array containing all the values in the struct <a class="el" href="struct__u__map.html">_u_map</a> </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">u_map</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to retreive the values from </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>an array of char * ending with a NULL element</dd></dl>
 <p>returns an array containing all the values in the struct <a class="el" href="struct__u__map.html">_u_map</a> return an array of char * ending with a NULL element </p>
 
 </div>
@@ -272,6 +313,14 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Detects if the key exists in the <a class="el" href="struct__u__map.html">_u_map</a> search is case sensitive </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">u_map</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to analyze </td></tr>
+    <tr><td class="paramname">key</td><td>the key to look for </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the sprcified u_map contains the specified key false otherwise</dd></dl>
 <p>return true if the sprcified u_map contains the specified key false otherwise search is case sensitive </p>
 
 </div>
@@ -301,6 +350,14 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Detects if the value exists in the <a class="el" href="struct__u__map.html">_u_map</a>, value must be a char * string search is case sensitive </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">u_map</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to analyze </td></tr>
+    <tr><td class="paramname">value</td><td>the value to look for </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the sprcified u_map contains the specified value false otherwise</dd></dl>
 <p>return true if the sprcified u_map contains the specified value false otherwise search is case sensitive </p>
 
 </div>
@@ -336,7 +393,15 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>return true if the sprcified u_map contains the specified value up until the specified length false otherwise search is case sensitive</p>
+<p>Detects if the value exists in the <a class="el" href="struct__u__map.html">_u_map</a>, value may be any byte array search is case sensitive </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">u_map</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to analyze </td></tr>
+    <tr><td class="paramname">value</td><td>the value to look for </td></tr>
+    <tr><td class="paramname">length</td><td>the length of the value to look for </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the sprcified u_map contains the specified value up until the specified length false otherwise</dd></dl>
 <p>return true if the sprcified u_map contains the specified value false otherwise search is case sensitive </p>
 
 </div>
@@ -366,6 +431,14 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Detects if the key exists in the <a class="el" href="struct__u__map.html">_u_map</a> search is case insensitive </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">u_map</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to analyze </td></tr>
+    <tr><td class="paramname">key</td><td>the key to look for </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the sprcified u_map contains the specified key false otherwise</dd></dl>
 <p>return true if the sprcified u_map contains the specified key false otherwise search is case insensitive </p>
 
 </div>
@@ -395,6 +468,14 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Detects if the key exists in the <a class="el" href="struct__u__map.html">_u_map</a> search is case insensitive </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">u_map</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to analyze </td></tr>
+    <tr><td class="paramname">value</td><td>the value to look for </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the sprcified u_map contains the specified value false otherwise</dd></dl>
 <p>return true if the sprcified u_map contains the specified value false otherwise search is case insensitive </p>
 
 </div>
@@ -430,6 +511,15 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>add the specified key/value pair into the specified u_map if the u_map already contains a pair with the same key, replace the value </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">u_map</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to update </td></tr>
+    <tr><td class="paramname">key</td><td>the key string </td></tr>
+    <tr><td class="paramname">value</td><td>the value string </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success</dd></dl>
 <p>add the specified key/value pair into the specified u_map if the u_map already contains a pair with the same key, replace the value return U_OK on success </p>
 
 </div>
@@ -477,6 +567,17 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>add the specified key/binary value pair into the specified u_map if the u_map already contains a pair with the same key, replace the value at the specified offset with the specified length </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">u_map</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to update </td></tr>
+    <tr><td class="paramname">key</td><td>the key string </td></tr>
+    <tr><td class="paramname">value</td><td>the value binary </td></tr>
+    <tr><td class="paramname">offset</td><td>the start offset to set value in u_map value </td></tr>
+    <tr><td class="paramname">length</td><td>the length of value to set </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success</dd></dl>
 <p>add the specified key/binary value pair into the specified u_map if the u_map already contains a pair with the same key, replace the value at the specified offset with the specified length return U_OK on success </p>
 
 </div>
@@ -506,6 +607,14 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>get the value length corresponding to the specified key in the u_map search is case sensitive </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">u_map</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to analyze </td></tr>
+    <tr><td class="paramname">key</td><td>the key look for </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>the value length if found, -1 if no match found</dd></dl>
 <p>get the value length corresponding to the specified key in the u_map return -1 if no match found search is case sensitive </p>
 
 </div>
@@ -535,6 +644,14 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>get the value length corresponding to the specified key in the u_map search is case insensitive </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">u_map</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to analyze </td></tr>
+    <tr><td class="paramname">key</td><td>the key look for </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>the value length if found, -1 if no match found</dd></dl>
 <p>get the value length corresponding to the specified key in the u_map return -1 if no match found search is case insensitive </p>
 
 </div>
@@ -564,6 +681,14 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>get the value corresponding to the specified key in the u_map search is case sensitive </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">u_map</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to analyze </td></tr>
+    <tr><td class="paramname">key</td><td>the key to look for </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>the value if key exists NULL if no match found</dd></dl>
 <p>get the value corresponding to the specified key in the u_map return NULL if no match found search is case sensitive </p>
 
 </div>
@@ -593,6 +718,14 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>get the value corresponding to the specified key in the u_map search is case insensitive </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">u_map</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to analyze </td></tr>
+    <tr><td class="paramname">key</td><td>the key to look for </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>the value if key exists NULL if no match found</dd></dl>
 <p>get the value corresponding to the specified key in the u_map return NULL if no match found search is case insensitive </p>
 
 </div>
@@ -622,6 +755,14 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>remove an pair key/value that has the specified key search is case sensitive </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">u_map</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to analyze </td></tr>
+    <tr><td class="paramname">key</td><td>the key to look for </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success, U_NOT_FOUND if key was not found, error otherwise</dd></dl>
 <p>remove an pair key/value that has the specified key return U_OK on success, U_NOT_FOUND if key was not found, error otherwise </p>
 
 </div>
@@ -651,6 +792,14 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>remove all pairs key/value that has the specified key (case insensitive search) search is case insensitive </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">u_map</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to analyze </td></tr>
+    <tr><td class="paramname">key</td><td>the key to look for </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success, U_NOT_FOUND if key was not found, error otherwise</dd></dl>
 <p>remove all pairs key/value that has the specified key (case insensitive search) return U_OK on success, U_NOT_FOUND if key was not found, error otherwise </p>
 
 </div>
@@ -680,6 +829,14 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>remove all pairs key/value that has the specified value search is case sensitive </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">u_map</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to analyze </td></tr>
+    <tr><td class="paramname">value</td><td>the value to look for </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success, U_NOT_FOUND if key was not found, error otherwise</dd></dl>
 <p>remove all pairs key/value that has the specified value return U_OK on success, U_NOT_FOUND if key was not found, error otherwise </p>
 
 </div>
@@ -709,6 +866,14 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>remove all pairs key/value that has the specified value search is case insensitive </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">u_map</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to analyze </td></tr>
+    <tr><td class="paramname">value</td><td>the value to look for </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success, U_NOT_FOUND if key was not found, error otherwise</dd></dl>
 <p>remove all pairs key/value that has the specified value (case insensitive search) return U_OK on success, U_NOT_FOUND if key was not found, error otherwise </p>
 
 </div>
@@ -744,6 +909,15 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>remove all pairs key/value that has the specified value up until the specified length </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">u_map</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to analyze </td></tr>
+    <tr><td class="paramname">key</td><td>the key to look for </td></tr>
+    <tr><td class="paramname">length</td><td>the length of key </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success, U_NOT_FOUND if key was not found, error otherwise</dd></dl>
 <p>remove all pairs key/value that has the specified value up until the specified length return U_OK on success, U_NOT_FOUND if key was not found, error otherwise </p>
 
 </div>
@@ -773,6 +947,14 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>remove the pair key/value at the specified index </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">u_map</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to analyze </td></tr>
+    <tr><td class="paramname">index</td><td>the position of the tuple to remove </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success, U_NOT_FOUND if index is out of bound, error otherwise</dd></dl>
 <p>remove the pair key/value at the specified index return U_OK on success, U_NOT_FOUND if index is out of bound, error otherwise </p>
 
 </div>
@@ -792,7 +974,13 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Create an exact copy of the specified struct <a class="el" href="struct__u__map.html">_u_map</a> return a reference to the copy, NULL otherwise returned value must be free'd after use</p>
+<p>Create an exact copy of the specified struct <a class="el" href="struct__u__map.html">_u_map</a> </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">source</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to copy </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>a reference to the copy, NULL otherwise returned value must be free'd after use</dd></dl>
 <p>Create an exact copy of the specified struct <a class="el" href="struct__u__map.html">_u_map</a> return a reference to the copy, NULL otherwise returned value must be cleaned after use </p>
 
 </div>
@@ -822,6 +1010,14 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Copy all key/values pairs of source into dest If a key is already present in dest, value is overwritten </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">dest</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to update </td></tr>
+    <tr><td class="paramname">source</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to copy </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success, error otherwise</dd></dl>
 <p>Copy all key/values pairs of source into dest If key is already present in dest, it's overwritten return U_OK on success, error otherwise </p>
 
 </div>
@@ -841,6 +1037,13 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Count the number of elements in the <a class="el" href="struct__u__map.html">_u_map</a> </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">source</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to analyze </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>the number of key/values pair in the specified struct <a class="el" href="struct__u__map.html">_u_map</a> Return -1 on error</dd></dl>
 <p>Return the number of key/values pair in the specified struct <a class="el" href="struct__u__map.html">_u_map</a> Return -1 on error </p>
 
 </div>
@@ -860,6 +1063,13 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Empty a struct u_map of all its elements </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">u_map</td><td>the <a class="el" href="struct__u__map.html">_u_map</a> to empty </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success, error otherwise</dd></dl>
 <p>Empty a struct u_map of all its elements return U_OK on success, error otherwise </p>
 
 </div>

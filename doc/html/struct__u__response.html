@@ -66,6 +66,9 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
+<p>definition of the parameters available in a struct <a class="el" href="struct__u__response.html" title="definition of the parameters available in a struct _u_response ">_u_response</a>  
+ <a href="struct__u__response.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="ulfius_8h_source.html">ulfius.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
@@ -104,8 +107,7 @@ Data Fields</h2></td></tr>
 <tr class="separator:a82a9c5cb89cf1ea8e7226111a5f26dd3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Structure of response parameters</p>
-<p>Contains response data that must be set by the user status: HTTP status code (200, 404, 500, etc) protocol: HTTP Protocol sent map_header: map containing the header variables nb_cookies: number of cookies sent map_cookie: array of cookies sent auth_realm: realm to send to the client on authenticationb failed binary_body: a void * containing a raw binary content binary_body_length: the length of the binary_body stream_callback: callback function to stream data in response body stream_callback_free: callback function to free data allocated for streaming stream_size: size of the streamed data (U_STREAM_SIZE_UNKOWN if unknown) stream_block_size: size of each block to be streamed, set according to your system stream_user_data: user defined data that will be available in your callback stream functions websocket_handle: handle for websocket extension shared_data: any data shared between callback functions, must be allocated and freed by the callback functions timeout: Timeout in seconds to close the connection because of inactivity between the client and the server </p>
+<div class="textblock"><p>definition of the parameters available in a struct <a class="el" href="struct__u__response.html" title="definition of the parameters available in a struct _u_response ">_u_response</a> </p>
 </div><h2 class="groupheader">Field Documentation</h2>
 <a id="a70d5fda4a8043f3ac6d2c30ffa106a38"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a70d5fda4a8043f3ac6d2c30ffa106a38">&#9670;&nbsp;</a></span>status</h2>

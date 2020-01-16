@@ -66,6 +66,9 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
+<p>Contains all informations needed for an endpoint.  
+ <a href="struct__u__endpoint.html#details">More...</a></p>
+
 <p><code>#include &lt;<a class="el" href="ulfius_8h_source.html">ulfius.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
@@ -84,8 +87,7 @@ Data Fields</h2></td></tr>
 <tr class="separator:a192cb45d88869513d03619fa5117f4b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Structure of an endpoint</p>
-<p>Contains all informations needed for an endpoint http_method: http verb (GET, POST, PUT, etc.) in upper case url_prefix: prefix for the url (optional) url_format: string used to define the endpoint format separate words with / to define a variable in the url, prefix it with @ or : example: /test/resource/:name/elements on an url_format that ends with '*', the rest of the url will not be tested priority: endpoint priority in descending order (0 is the higher priority) callback_function: a pointer to a function that will be executed each time the endpoint is called you must declare the function as described. user_data: a pointer to a data or a structure that will be available in callback_function </p>
+<div class="textblock"><p>Contains all informations needed for an endpoint. </p>
 </div><h2 class="groupheader">Field Documentation</h2>
 <a id="a7ba40273a0f89467ed1414d0a702e667"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a7ba40273a0f89467ed1414d0a702e667">&#9670;&nbsp;</a></span>http_method</h2>

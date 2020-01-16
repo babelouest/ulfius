@@ -143,6 +143,21 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>ulfius_add_cookie_to_response add a cookie to the cookie map </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">response</td><td>the response to add the cookie to </td></tr>
+    <tr><td class="paramname">key</td><td>the cookie key </td></tr>
+    <tr><td class="paramname">value</td><td>the cookie value </td></tr>
+    <tr><td class="paramname">expires</td><td>the expiration date of the ccokie in ISO format (optional) </td></tr>
+    <tr><td class="paramname">max_age</td><td>the maximum age of the cookie in seconds (optional) </td></tr>
+    <tr><td class="paramname">domain</td><td>the domain of the cookie (optional) </td></tr>
+    <tr><td class="paramname">pat</td><td>the path of the cookie (optional) </td></tr>
+    <tr><td class="paramname">secure</td><td>wether the cookie must be secure or not (optional) </td></tr>
+    <tr><td class="paramname">http_only</td><td>wether the cookie must be used only for http requests or not (optional) </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success</dd></dl>
 <p>ulfius_add_cookie_to_response add a cookie to the cookie map return U_OK on success </p>
 
 </div>
@@ -220,6 +235,27 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+<p>ulfius_add_same_site_cookie_to_response add a cookie to the cookie map with a SameSite attribute </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">response</td><td>the response to add the cookie to </td></tr>
+    <tr><td class="paramname">key</td><td>the cookie key </td></tr>
+    <tr><td class="paramname">value</td><td>the cookie value </td></tr>
+    <tr><td class="paramname">expires</td><td>the expiration date of the ccokie in ISO format (optional) </td></tr>
+    <tr><td class="paramname">max_age</td><td>the maximum age of the cookie in seconds (optional) </td></tr>
+    <tr><td class="paramname">domain</td><td>the domain of the cookie (optional) </td></tr>
+    <tr><td class="paramname">pat</td><td>the path of the cookie (optional) </td></tr>
+    <tr><td class="paramname">secure</td><td>wether the cookie must be secure or not (optional) </td></tr>
+    <tr><td class="paramname">http_only</td><td>wether the cookie must be used only for http requests or not (optional) </td></tr>
+    <tr><td class="paramname">same_site</td><td>parameter must have one of the following values:<ul>
+<li>U_COOKIE_SAME_SITE_NONE - No SameSite attribute</li>
+<li>U_COOKIE_SAME_SITE_STRICT - SameSite attribute set to 'Strict'</li>
+<li>U_COOKIE_SAME_SITE_LAX - SameSite attribute set to 'Lax' </li>
+</ul>
+</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success</dd></dl>
 <p>ulfius_add_same_site_cookie_to_response add a cookie to the cookie map with a SameSite attribute the same_site parameter must have one of the following values:</p><ul>
 <li>U_COOKIE_SAME_SITE_NONE - No SameSite attribute</li>
 <li>U_COOKIE_SAME_SITE_STRICT - SameSite attribute set to 'Strict'</li>
