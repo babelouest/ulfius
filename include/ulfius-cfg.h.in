@@ -6,7 +6,7 @@
  * 
  * ulfius-cfg.h.in: configuration file
  * 
- * Copyright 2018 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2018-2020 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -25,7 +25,14 @@
 #ifndef _ULFIUS_CFG_H_
 #define _ULFIUS_CFG_H_
 
-#define ULFIUS_VERSION ${PROJECT_VERSION}
+#define ULFIUS_VERSION "${PROJECT_VERSION}"
+
+#define ULFIUS_VERSION_MAJOR ${PROJECT_VERSION_MAJOR}
+#define ULFIUS_VERSION_MINOR ${PROJECT_VERSION_MINOR}
+#define ULFIUS_VERSION_PATCH ${PROJECT_VERSION_PATCH}
+
+#define ULFIUS_VERSION_NUMBER 0x${PROJECT_VERSION_NUMBER}
+
 #cmakedefine U_DISABLE_JANSSON
 #cmakedefine U_DISABLE_CURL
 #cmakedefine U_DISABLE_GNUTLS
