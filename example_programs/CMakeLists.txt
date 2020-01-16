@@ -49,7 +49,7 @@ if (_GNU_SOURCE)
 endif ()
 
 include(FindUlfius)
-set(ULFIUS_MIN_VERSION "2.5")
+set(ULFIUS_MIN_VERSION "2.6")
 find_package(Ulfius ${ULFIUS_MIN_VERSION} REQUIRED)
 set(LIBS ${LIBS} ${ULFIUS_LIBRARIES} "-lorcania -ljansson")
 include_directories(${ULFIUS_INCLUDE_DIRS})
