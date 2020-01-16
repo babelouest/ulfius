@@ -7,7 +7,7 @@
  * 
  * ulfius.h: public structures and functions declarations
  * 
- * Copyright 2015-2019 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2015-2020 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -105,29 +105,89 @@ int y_close_logs();
 #define U_STREAM_ERROR MHD_CONTENT_READER_END_WITH_ERROR
 #define U_STREAM_SIZE_UNKOWN MHD_SIZE_UNKNOWN
 
-#define U_OK                 0 // No error
-#define U_ERROR              1 // Error
-#define U_ERROR_MEMORY       2 // Error in memory allocation
-#define U_ERROR_PARAMS       3 // Error in input parameters
-#define U_ERROR_LIBMHD       4 // Error in libmicrohttpd execution
-#define U_ERROR_LIBCURL      5 // Error in libcurl execution
-#define U_ERROR_NOT_FOUND    6 // Something was not found
-#define U_ERROR_DISCONNECTED 7 // Connection closed
+/**
+ * @def No error
+*/
+#define U_OK                 0
+/**
+ * @def Error
+*/
+#define U_ERROR              1
+/**
+ * @def Error in memory allocation
+*/
+#define U_ERROR_MEMORY       2
+/**
+ * @def Error in input parameters
+*/
+#define U_ERROR_PARAMS       3
+/**
+ * @def Error in libmicrohttpd execution
+*/
+#define U_ERROR_LIBMHD       4
+/**
+ * @def Error in libcurl execution
+*/
+#define U_ERROR_LIBCURL      5
+/**
+ * @def Something was not found
+*/
+#define U_ERROR_NOT_FOUND    6
+/**
+ * @def Connection closed
+*/
+#define U_ERROR_DISCONNECTED 7
 
+/**
+ * @def Callback exited with success, continue to next callback
+*/
 #define U_CALLBACK_CONTINUE     0
+/**
+ * @def Callback exited with success, exit callback list
+*/
 #define U_CALLBACK_COMPLETE     1
-#define U_CALLBACK_UNAUTHORIZED 2
+/**
+ * @def Request is unauthorized, exit callback list and return status 401
+*/
+#define U_CALLBACK_UNAUTHORIZED 2 
+/**
+ * @def Error during request process, exit callback list and return status 500
+*/
 #define U_CALLBACK_ERROR        3
 
+/**
+ * @def Set same_site cookie property to 0
+*/
 #define U_COOKIE_SAME_SITE_NONE   0
+/**
+ * @def Set same_site cookie property to strict
+*/
 #define U_COOKIE_SAME_SITE_STRICT 1
+/**
+ * @def Set same_site cookie property to lax
+*/
 #define U_COOKIE_SAME_SITE_LAX    2
 
+/**
+ * @def Use instance in IPV4 mode only
+*/
 #define U_USE_IPV4 0x0001
+/**
+ * @def Use instance in IPV6 mode only
+*/
 #define U_USE_IPV6 0x0010
+/**
+ * @def Use instance in both IPV4 and IPV6 mode
+*/
 #define U_USE_ALL (U_USE_IPV4|U_USE_IPV6)
 
+/**
+ * @def Verify TLS session with peers
+*/
 #define U_SSL_VERIFY_PEER     0x0001
+/**
+ * @def Verify TLS session with hostname
+*/
 #define U_SSL_VERIFY_HOSTNAME 0x0010
 
 /**
@@ -148,10 +208,10 @@ int y_close_logs();
  * struct _u_map
  */
 struct _u_map {
-  int      nb_values;
-  char  ** keys;
-  char  ** values;
-  size_t * lengths;
+  int      nb_values; /* !< Values count */
+  char  ** keys; /* !< Array of keys */
+  char  ** values; /* !< Array of values */
+  size_t * lengths; /* !< Lengths of each values */
 };
 
 /**
@@ -159,211 +219,124 @@ struct _u_map {
  * the structure containing the response cookie parameters
  */
 struct _u_cookie {
-  char * key;
-  char * value;
-  char * expires;
-  unsigned int   max_age;
-  char * domain;
-  char * path;
-  int    secure;
-  int    http_only;
-  int    same_site;
+  char * key; /* !< key if the cookie */
+  char * value; /* !< value of the cookie */
+  char * expires; /* !< expiration date of the cookie */
+  unsigned int   max_age; /* !< duration of the cookie in seconds */
+  char * domain; /* !< domain for the cookie */
+  char * path; /* !< url path for the cookie */
+  int    secure; /* !< flag to set cookie secure or not */
+  int    http_only; /* !< flag to set cookie for HTTP connections only or not */
+  int    same_site; /* !< flag to set same_site option to the cookie */
 };
 
 /**
  * 
- * Structure of request parameters
- * 
- * Contains request data
- * http_protocol:                  http protocol used (1.0 or 1.1)
- * http_verb:                      http method (GET, POST, PUT, DELETE, etc.)
- * http_url:                       full url used to call this callback function or full url to call when used in a ulfius_send_http_request
- * url_path:                       url path only used to call this callback function (ex, if http_url is /path/?param=1, url_path is /path/)
- * proxy:                          proxy address to use for outgoing connections, used by ulfius_send_http_request
- * network_type:                   Force connect to ipv4, ipv6 addresses or both, values available are U_USE_ALL, U_USE_IPV4 or U_USE_IPV6
- * check_server_certificate:       check server certificate and hostname, default true, used by ulfius_send_http_request
- * check_server_certificate_flag:  check certificate peer and or server hostname if check_server_certificate is enabled, values available are U_SSL_VERIFY_PEER, U_SSL_VERIFY_HOSTNAME or both
-                                   default value is both (U_SSL_VERIFY_PEER|U_SSL_VERIFY_HOSTNAME), used by ulfius_send_http_request
- * check_proxy_certificate:        check proxy certificate and hostname, default true, used by ulfius_send_http_request, requires libcurl >= 7.52
- * check_proxy_certificate_flag:   check certificate peer and or proxy hostname if check_proxy_certificate is enabled, values available are U_SSL_VERIFY_PEER, U_SSL_VERIFY_HOSTNAME or both
-                                   default value is both (U_SSL_VERIFY_PEER|U_SSL_VERIFY_HOSTNAME), used by ulfius_send_http_request, requires libcurl >= 7.52
- * follow_redirect:                follow url redirections, used by ulfius_send_http_request
- * ca_path                         specify a path to CA certificates instead of system path, used by ulfius_send_http_request
- * timeout                         connection timeout used by ulfius_send_http_request, default is 0
- * client_address:                 IP address of the client
- * auth_basic_user:                basic authentication username
- * auth_basic_password:            basic authentication password
- * map_url:                        map containing the url variables, both from the route and the ?key=value variables
- * map_header:                     map containing the header variables
- * map_cookie:                     map containing the cookie variables
- * map_post_body:                  map containing the post body variables (if available)
- * binary_body:                    pointer to raw body
- * binary_body_length:             length of raw body
- * callback_position:              position of the current callback function in the callback list, starts at 0
- * client_cert:                    x509 certificate of the client if the instance uses client certificate authentication and the client is authenticated
- *                                 available only if websocket support is enabled
- * client_cert_file:               path to client certificate file for sending http requests with certificate authentication
- *                                 available only if websocket support is enabled
- * client_key_file:                path to client key file for sending http requests with certificate authentication
- *                                 available only if websocket support is enabled
- * client_key_password:            password to unlock client key file
- *                                 available only if websocket support is enabled
+ * @struct _u_request request parameters
+ * @brief definition of the parameters available in a struct _u_request
+ *                                 
  */
 struct _u_request {
-  char *               http_protocol;
-  char *               http_verb;
-  char *               http_url;
-  char *               url_path;
-  char *               proxy;
+  char *               http_protocol; /* !< http protocol used (1.0 or 1.1) */
+  char *               http_verb; /* !< http method (GET, POST, PUT, DELETE, etc.) */
+  char *               http_url; /* !< full url used to call this callback function or full url to call when used in a ulfius_send_http_request */
+  char *               url_path; /* !< url path only used to call this callback function (ex, if http_url is /path/?param=1, url_path is /path/) */
+  char *               proxy; /* !<proxy address to use for outgoing connections, used by ulfius_send_http_request  */
 #if MHD_VERSION >= 0x00095208
-  unsigned short       network_type;
+  unsigned short       network_type; /* !< Force connect to ipv4, ipv6 addresses or both, values available are U_USE_ALL, U_USE_IPV4 or U_USE_IPV6 */
 #endif
-  int                  check_server_certificate;
-  int                  check_server_certificate_flag;
-  int                  check_proxy_certificate;
-  int                  check_proxy_certificate_flag;
-  int                  follow_redirect;
-  char *               ca_path;
-  unsigned long        timeout;
-  struct sockaddr *    client_address;
-  char *               auth_basic_user;
-  char *               auth_basic_password;
-  struct _u_map *      map_url;
-  struct _u_map *      map_header;
-  struct _u_map *      map_cookie;
-  struct _u_map *      map_post_body;
-  void *               binary_body;
-  size_t               binary_body_length;
-  unsigned int         callback_position;
+  int                  check_server_certificate; /* !< check server certificate and hostname, default true, used by ulfius_send_http_request */
+  int                  check_server_certificate_flag; /* !< check certificate peer and or server hostname if check_server_certificate is enabled, values available are U_SSL_VERIFY_PEER, U_SSL_VERIFY_HOSTNAME or both, default value is both (U_SSL_VERIFY_PEER|U_SSL_VERIFY_HOSTNAME), used by ulfius_send_http_request */
+  int                  check_proxy_certificate; /* !< check proxy certificate and hostname, default true, used by ulfius_send_http_request, requires libcurl >= 7.52 */
+  int                  check_proxy_certificate_flag; /* !< check certificate peer and or proxy hostname if check_proxy_certificate is enabled, values available are U_SSL_VERIFY_PEER, U_SSL_VERIFY_HOSTNAME or both, default value is both (U_SSL_VERIFY_PEER|U_SSL_VERIFY_HOSTNAME), used by ulfius_send_http_request, requires libcurl >= 7.52 */
+  int                  follow_redirect; /* !< follow url redirections, used by ulfius_send_http_request */
+  char *               ca_path; /* !< specify a path to CA certificates instead of system path, used by ulfius_send_http_request */
+  unsigned long        timeout; /* !< connection timeout used by ulfius_send_http_request, default is 0 */
+  struct sockaddr *    client_address; /* !< IP address of the client */
+  char *               auth_basic_user; /* !< basic authentication username */
+  char *               auth_basic_password; /* !< basic authentication password */
+  struct _u_map *      map_url; /* !< map containing the url variables, both from the route and the ?key=value variables */
+  struct _u_map *      map_header; /* !< map containing the header variables */
+  struct _u_map *      map_cookie; /* !< map containing the cookie variables */
+  struct _u_map *      map_post_body; /* !< map containing the post body variables (if available) */
+  void *               binary_body; /* !< raw body */
+  size_t               binary_body_length; /* !< length of raw body */
+  unsigned int         callback_position; /* !< position of the current callback function in the callback list, starts at 0 */
 #ifndef U_DISABLE_GNUTLS
-  gnutls_x509_crt_t    client_cert;
-  char *               client_cert_file;
-  char *               client_key_file;
-  char *               client_key_password;
+  gnutls_x509_crt_t    client_cert; /* !< x509 certificate of the client if the instance uses client certificate authentication and the client is authenticated, available only if websocket support is enabled */
+  char *               client_cert_file; /* !< path to client certificate file for sending http requests with certificate authentication, available only if websocket support is enabled */
+  char *               client_key_file; /* !< path to client key file for sending http requests with certificate authentication, available only if websocket support is enabled */
+  char *               client_key_password; /* !< password to unlock client key file, available only if websocket support is enabled */
 #endif
 };
 
 /**
  * 
- * Structure of response parameters
- * 
- * Contains response data that must be set by the user
- * status:               HTTP status code (200, 404, 500, etc)
- * protocol:             HTTP Protocol sent
- * map_header:           map containing the header variables
- * nb_cookies:           number of cookies sent
- * map_cookie:           array of cookies sent
- * auth_realm:           realm to send to the client on authenticationb failed
- * binary_body:          a void * containing a raw binary content
- * binary_body_length:   the length of the binary_body
- * stream_callback:      callback function to stream data in response body
- * stream_callback_free: callback function to free data allocated for streaming
- * stream_size:          size of the streamed data (U_STREAM_SIZE_UNKOWN if unknown)
- * stream_block_size:    size of each block to be streamed, set according to your system
- * stream_user_data:     user defined data that will be available in your callback stream functions
- * websocket_handle:     handle for websocket extension
- * shared_data:          any data shared between callback functions, must be allocated and freed by the callback functions
- * timeout:              Timeout in seconds to close the connection because of inactivity between the client and the server
+ * @struct _u_response response parameters
+ * @brief definition of the parameters available in a struct _u_response
  * 
  */
 struct _u_response {
-  long               status;
-  char             * protocol;
-  struct _u_map    * map_header;
-  unsigned int       nb_cookies;
-  struct _u_cookie * map_cookie;
-  char             * auth_realm;
-  void             * binary_body;
-  size_t             binary_body_length;
-  ssize_t         (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max);
-  void            (* stream_callback_free) (void * stream_user_data);
-  uint64_t           stream_size;
-  size_t             stream_block_size;
-  void             * stream_user_data;
-  void             * websocket_handle;
-  void *             shared_data;
-  unsigned int       timeout;
+  long               status; /* !< HTTP status code (200, 404, 500, etc) */
+  char             * protocol; /* !< HTTP Protocol sent */
+  struct _u_map    * map_header; /* !< map containing the header variables */
+  unsigned int       nb_cookies; /* !< number of cookies sent */
+  struct _u_cookie * map_cookie; /* !< array of cookies sent */
+  char             * auth_realm; /* !< realm to send to the client on authenticationb failed */
+  void             * binary_body; /* !< raw binary content */
+  size_t             binary_body_length; /* !< length of the binary_body */
+  ssize_t         (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max); /* !< callback function to stream data in response body */
+  void            (* stream_callback_free) (void * stream_user_data); /* !< callback function to free data allocated for streaming */
+  uint64_t           stream_size; /* !< size of the streamed data (U_STREAM_SIZE_UNKOWN if unknown) */
+  size_t             stream_block_size; /* !< size of each block to be streamed, set according to your system */
+  void             * stream_user_data; /* !< user defined data that will be available in your callback stream functions */
+  void             * websocket_handle; /* !< handle for websocket extension */
+  void *             shared_data; /* !< any data shared between callback functions, must be allocated and freed by the callback functions */
+  unsigned int       timeout; /* !< Timeout in seconds to close the connection because of inactivity between the client and the server */
 };
 
 /**
  * 
- * Structure of an endpoint
- * 
- * Contains all informations needed for an endpoint
- * http_method:       http verb (GET, POST, PUT, etc.) in upper case
- * url_prefix:        prefix for the url (optional)
- * url_format:        string used to define the endpoint format
- *                    separate words with /
- *                    to define a variable in the url, prefix it with @ or :
- *                    example: /test/resource/:name/elements
- *                    on an url_format that ends with '*', the rest of the url will not be tested
- * priority:          endpoint priority in descending order (0 is the higher priority)
- * callback_function: a pointer to a function that will be executed each time the endpoint is called
- *                    you must declare the function as described.
- * user_data:         a pointer to a data or a structure that will be available in callback_function
+ * @struct _u_endpoint endpoint definition
+ * @brief Contains all informations needed for an endpoint
  * 
  */
 struct _u_endpoint {
-  char       * http_method;
-  char       * url_prefix;
-  char       * url_format;
-  unsigned int priority;
-  int       (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
-                            struct _u_response * response,     // Output parameters (set by the user)
-                            void * user_data);
-  void       * user_data;
+  char       * http_method; /* !< http verb (GET, POST, PUT, etc.) in upper case */
+  char       * url_prefix; /* !< prefix for the url (optional) */
+  char       * url_format; /* !< string used to define the endpoint format, separate words with / to define a variable in the url, prefix it with @ or :, example: /test/resource/:name/elements, on an url_format that ends with '*', the rest of the url will not be tested */
+  unsigned int priority; /* !< endpoint priority in descending order (0 is the higher priority) */
+  int       (* callback_function)(const struct _u_request * request, /* !< pointer to a function that will be executed each time the endpoint is called, you must declare the function as described. */
+                                  struct _u_response * response,
+                                  void * user_data);
+  void       * user_data; /* !< pointer to a data or a structure that will be available in callback_function */
 };
 
 /**
  * 
- * Structure of an instance
- * 
- * Contains the needed data for an ulfius instance to work
- * 
- * mhd_daemon:             pointer to the libmicrohttpd daemon
- * status:                 status of the current instance, status are U_STATUS_STOP, U_STATUS_RUNNING or U_STATUS_ERROR
- * port:                   port number to listen to
- * network_type:           Listen to ipv4 and or ipv6 connections, values available are U_USE_ALL, U_USE_IPV4 or U_USE_IPV6
- * bind_address:           ipv4 address to listen to (optional)
- * timeout:                Timeout to close the connection because of inactivity between the client and the server
- * nb_endpoints:           Number of available endpoints
- * default_auth_realm:     Default realm on authentication error
- * endpoint_list:          List of available endpoints
- * default_endpoint:       Default endpoint if no other endpoint match the current url
- * default_headers:        Default headers that will be added to all response->map_header
- * max_post_param_size:    maximum size for a post parameter, 0 means no limit, default 0
- * max_post_body_size:     maximum size for the entire post body, 0 means no limit, default 0
- * websocket_handler:      handler for the websocket structure
- * file_upload_callback:   callback function to manage file upload by blocks
- * file_upload_cls:        any pointer to pass to the file_upload_callback function
- * mhd_response_copy_data: to choose between MHD_RESPMEM_MUST_COPY and MHD_RESPMEM_MUST_FREE, only if you use MHD < 0.9.61, 
- *                         otherwise this option is skipped because it's useless
- * check_utf8:             check that all parameters values in the request (url, header and post_body)
- *                         are valid utf8 strings, if a parameter value has non utf8 character, the value
- *                         will be ignored, default 1
- * use_client_cert_auth:   Internal variable use to indicate if the instance uses client certificate authentication
- *                         Do not change this value, available only if websocket support is enabled
+ * @struct _u_instance Ulfius instance definition
+ * @brief Contains the needed data for an ulfius instance to work
  * 
  */
 struct _u_instance {
-  struct MHD_Daemon          *  mhd_daemon;
-  int                           status;
-  unsigned int                  port;
+  struct MHD_Daemon          *  mhd_daemon; /* !< pointer to the libmicrohttpd daemon */
+  int                           status; /* !< status of the current instance, status are U_STATUS_STOP, U_STATUS_RUNNING or U_STATUS_ERROR */
+  unsigned int                  port; /* !< port number to listen to */
 #if MHD_VERSION >= 0x00095208
-  unsigned short                network_type;
+  unsigned short                network_type; /* !< Listen to ipv4 and or ipv6 connections, values available are U_USE_ALL, U_USE_IPV4 or U_USE_IPV6 */
 #endif
-  struct sockaddr_in          * bind_address;
-  struct sockaddr_in6         * bind_address6;
-  unsigned int                  timeout;
-  int                           nb_endpoints;
-  char                        * default_auth_realm;
-  struct _u_endpoint          * endpoint_list;
-  struct _u_endpoint          * default_endpoint;
-  struct _u_map               * default_headers;
-  size_t                        max_post_param_size;
-  size_t                        max_post_body_size;
-  void                        * websocket_handler;
-  int                        (* file_upload_callback) (const struct _u_request * request, 
+  struct sockaddr_in          * bind_address; /* !< ipv4 address to listen to (optional) */
+  struct sockaddr_in6         * bind_address6; /* !< ipv6 address to listen to (optional) */
+  unsigned int                  timeout; /* !< Timeout to close the connection because of inactivity between the client and the server */
+  int                           nb_endpoints; /* !< Number of available endpoints */
+  char                        * default_auth_realm; /* !< Default realm on authentication error */
+  struct _u_endpoint          * endpoint_list; /* !< List of available endpoints */
+  struct _u_endpoint          * default_endpoint; /* !< Default endpoint if no other endpoint match the current url */
+  struct _u_map               * default_headers; /* !< Default headers that will be added to all response->map_header */
+  size_t                        max_post_param_size; /* !< maximum size for a post parameter, 0 means no limit, default 0 */
+  size_t                        max_post_body_size; /* !< maximum size for the entire post body, 0 means no limit, default 0 */
+  void                        * websocket_handler; /* !< handler for the websocket structure */
+  int                        (* file_upload_callback) (const struct _u_request * request,  /* !< callback function to manage file upload by blocks */
                                                        const char * key, 
                                                        const char * filename, 
                                                        const char * content_type, 
@@ -372,11 +345,11 @@ struct _u_instance {
                                                        uint64_t off, 
                                                        size_t size, 
                                                        void * cls);
-  void                        * file_upload_cls;
-  int                           mhd_response_copy_data;
-  int                           check_utf8;
+  void                        * file_upload_cls; /* !< any pointer to pass to the file_upload_callback function */
+  int                           mhd_response_copy_data; /* !< to choose between MHD_RESPMEM_MUST_COPY and MHD_RESPMEM_MUST_FREE, only if you use MHD < 0.9.61, otherwise this option is skipped because it's useless */
+  int                           check_utf8; /* !< check that all parameters values in the request (url, header and post_body), are valid utf8 strings, if a parameter value has non utf8 character, the value, will be ignored, default 1 */
 #ifndef U_DISABLE_GNUTLS
-  int                           use_client_cert_auth;
+  int                           use_client_cert_auth; /* !< Internal variable use to indicate if the instance uses client certificate authentication, Do not change this value, available only if websocket support is enabled */
 #endif
 };
 
@@ -409,6 +382,7 @@ struct connection_info_struct {
 
 /**
  * free data allocated by ulfius functions
+ * @param data data to free
  */
 void u_free(void * data);
 
@@ -427,10 +401,10 @@ void u_free(void * data);
  * 
  * Initialize a struct _u_instance * with default values
  * Binds to IPV4 addresses only
- * port:               tcp port to bind to, must be between 1 and 65535
- * bind_address:       IPv4 address to listen to, optional, the reference is borrowed, the structure isn't copied
- * default_auth_realm: default realm to send to the client on authentication error
- * return U_OK on success
+ * @param port tcp port to bind to, must be between 1 and 65535
+ * @param bind_address IPv4 address to listen to, optional, the reference is borrowed, the structure isn't copied
+ * @param default_auth_realm default realm to send to the client on authentication error
+ * @return U_OK on success
  */
 int ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, struct sockaddr_in * bind_address, const char * default_auth_realm);
 
@@ -440,11 +414,11 @@ int ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, str
  * 
  * Initialize a struct _u_instance * with default values
  * Binds to IPV6 and IPV4 addresses or IPV6 addresses only
- * port:               tcp port to bind to, must be between 1 and 65535
- * bind_address:       IPv6 address to listen to, optional, the reference is borrowed, the structure isn't copied
- * network_type:       Type of network to listen to, values available are U_USE_IPV6 or U_USE_ALL
- * default_auth_realm: default realm to send to the client on authentication error
- * return U_OK on success
+ * @param port tcp port to bind to, must be between 1 and 65535
+ * @param bind_address IPv6 address to listen to, optional, the reference is borrowed, the structure isn't copied
+ * @param network_type Type of network to listen to, values available are U_USE_IPV6 or U_USE_ALL
+ * @param default_auth_realm default realm to send to the client on authentication error
+ * @return U_OK on success
  */
 int ulfius_init_instance_ipv6(struct _u_instance * u_instance, unsigned int port, struct sockaddr_in6 * bind_address, unsigned short network_type, const char * default_auth_realm);
 #endif
@@ -453,6 +427,7 @@ int ulfius_init_instance_ipv6(struct _u_instance * u_instance, unsigned int port
  * ulfius_clean_instance
  * 
  * Clean memory allocated by a struct _u_instance *
+ * @param u_instance an Ulfius instance
  */
 void ulfius_clean_instance(struct _u_instance * u_instance);
 
@@ -460,8 +435,8 @@ void ulfius_clean_instance(struct _u_instance * u_instance);
  * ulfius_start_framework
  * Initializes the framework and run the webservice based on the parameters given
  * 
- * u_instance:    pointer to a struct _u_instance that describe its port and bind address
- * return U_OK on success
+ * @param u_instance pointer to a struct _u_instance that describe its port and bind address
+ * @return U_OK on success
  */
 int ulfius_start_framework(struct _u_instance * u_instance);
 
@@ -469,10 +444,10 @@ int ulfius_start_framework(struct _u_instance * u_instance);
  * ulfius_start_secure_framework
  * Initializes the framework and run the webservice based on the parameters given using an HTTPS connection
  * 
- * u_instance:    pointer to a struct _u_instance that describe its port and bind address
- * key_pem:       private key for the server
- * cert_pem:      server certificate
- * return U_OK on success
+ * @param u_instance pointer to a struct _u_instance that describe its port and bind address
+ * @param key_pem private key for the server
+ * @param cert_pem server certificate
+ * @return U_OK on success
  */
 int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem);
 
@@ -482,11 +457,11 @@ int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * 
  * Initializes the framework and run the webservice based on the parameters given using an HTTPS connection
  * And using a root server to authenticate client connections
  * 
- * u_instance:    pointer to a struct _u_instance that describe its port and bind address
- * key_pem:       private key for the server
- * cert_pem:      server certificate
- * root_ca_pem:   client root CA you're willing to trust for this instance
- * return U_OK on success
+ * @param u_instance pointer to a struct _u_instance that describe its port and bind address
+ * @param key_pem private key for the server
+ * @param cert_pem server certificate
+ * @param root_ca_pem client root CA you're willing to trust for this instance
+ * @return U_OK on success
  */
 int ulfius_start_secure_ca_trust_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem, const char * root_ca_pem);
 #endif
@@ -495,8 +470,8 @@ int ulfius_start_secure_ca_trust_framework(struct _u_instance * u_instance, cons
  * ulfius_stop_framework
  * 
  * Stop the webservice
- * u_instance:    pointer to a struct _u_instance that describe its port and bind address
- * return U_OK on success
+ * @param u_instance pointer to a struct _u_instance that describe its port and bind address
+ * @return U_OK on success
  */
 int ulfius_stop_framework(struct _u_instance * u_instance);
 
@@ -515,9 +490,10 @@ int ulfius_stop_framework(struct _u_instance * u_instance);
  * 
  * Thanks to Thad Phetteplace for the help on this feature
  * 
- * u_instance:    pointer to a struct _u_instance that describe its port and bind address
- * file_upload_callback: Pointer to a callback function that will handle all file uploads
- * cls: a pointer that will be passed to file_upload_callback each tim it's called
+ * @param u_instance pointer to a struct _u_instance that describe its port and bind address
+ * @param file_upload_callback Pointer to a callback function that will handle all file uploads
+ * @param cls a pointer that will be passed to file_upload_callback each tim it's called
+ * @return U_OK on success
  */
 int ulfius_set_upload_file_callback_function(struct _u_instance * u_instance,
                                              int (* file_upload_callback) (const struct _u_request * request, 
@@ -548,28 +524,28 @@ int ulfius_set_upload_file_callback_function(struct _u_instance * u_instance,
 /**
  * Add a struct _u_endpoint * to the specified u_instance
  * Can be done during the execution of the webservice for injection
- * u_instance: pointer to a struct _u_instance that describe its port and bind address
- * u_endpoint: pointer to a struct _u_endpoint that will be copied in the u_instance endpoint_list
- * return U_OK on success
+ * @param u_instance pointer to a struct _u_instance that describe its port and bind address
+ * @param u_endpoint pointer to a struct _u_endpoint that will be copied in the u_instance endpoint_list
+ * @param return U_OK on success
  */
 int ulfius_add_endpoint(struct _u_instance * u_instance, const struct _u_endpoint * u_endpoint);
 
 /**
  * Add a struct _u_endpoint * to the specified u_instance with its values specified
  * Can be done during the execution of the webservice for injection
- * u_instance: pointer to a struct _u_instance that describe its port and bind address
- * http_method:       http verb (GET, POST, PUT, etc.) in upper case
- * url_prefix:        prefix for the url (optional)
- * url_format:        string used to define the endpoint format
+ * @param u_instance pointer to a struct _u_instance that describe its port and bind address
+ * @param http_method http verb (GET, POST, PUT, etc.) in upper case
+ * @param url_prefix prefix for the url (optional)
+ * @param url_format string used to define the endpoint format
  *                    separate words with /
  *                    to define a variable in the url, prefix it with @ or :
  *                    example: /test/resource/:name/elements
  *                    on an url_format that ends with '*', the rest of the url will not be tested
- * priority:          endpoint priority in descending order (0 is the higher priority)
- * callback_function: a pointer to a function that will be executed each time the endpoint is called
- *                    you must declare the function as described.
- * user_data:         a pointer to a data or a structure that will be available in callback_function
- * return U_OK on success
+ * @param priority endpoint priority in descending order (0 is the higher priority)
+ * @param callback_function a pointer to a function that will be executed each time the endpoint is called
+ * you must declare the function as described.
+ * @param user_data a pointer to a data or a structure that will be available in callback_function
+ * @return U_OK on success
  */
 int ulfius_add_endpoint_by_val(struct _u_instance * u_instance,
                                const char * http_method,
@@ -584,20 +560,20 @@ int ulfius_add_endpoint_by_val(struct _u_instance * u_instance,
 /**
  * Add a struct _u_endpoint * list to the specified u_instance
  * Can be done during the execution of the webservice for injection
- * u_instance: pointer to a struct _u_instance that describe its port and bind address
- * u_endpoint_list: pointer to an array of struct _u_endpoint ending with a ulfius_empty_endpoint() that will be copied in the u_instance endpoint_list
- * return U_OK on success
+ * @param u_instance pointer to a struct _u_instance that describe its port and bind address
+ * @param u_endpoint_list pointer to an array of struct _u_endpoint ending with a ulfius_empty_endpoint() that will be copied in the u_instance endpoint_list
+ * @return U_OK on success
  */
 int ulfius_add_endpoint_list(struct _u_instance * u_instance, const struct _u_endpoint ** u_endpoint_list);
 
 /**
  * Remove a struct _u_endpoint * from the specified u_instance
  * Can be done during the execution of the webservice for injection
- * u_instance: pointer to a struct _u_instance that describe its port and bind address
- * u_endpoint: pointer to a struct _u_endpoint that will be removed in the u_instance endpoint_list
+ * @param u_instance pointer to a struct _u_instance that describe its port and bind address
+ * @param u_endpoint pointer to a struct _u_endpoint that will be removed in the u_instance endpoint_list
  * The parameters _u_endpoint.http_method, _u_endpoint.url_prefix and _u_endpoint.url_format are strictly compared for the match
  * If no endpoint is found, return U_ERROR_NOT_FOUND
- * return U_OK on success
+ * @return U_OK on success
  */
 int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endpoint * u_endpoint);
 
@@ -605,16 +581,16 @@ int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endp
  * ulfius_set_default_endpoint
  * Set the default endpoint
  * This endpoint will be called if no endpoint match the url called
- * u_instance: pointer to a struct _u_instance that describe its port and bind address
- * auth_function:     a pointer to a function that will be executed prior to the callback for authentication
+ * @param u_instance pointer to a struct _u_instance that describe its port and bind address
+ * @param auth_function     a pointer to a function that will be executed prior to the callback for authentication
  *                    you must declare the function as described.
- * auth_data:         a pointer to a data or a structure that will be available in auth_function
- * auth_realm:        realm value for authentication
- * callback_function: a pointer to a function that will be executed each time the endpoint is called
+ * @param auth_data a pointer to a data or a structure that will be available in auth_function
+ * @param auth_realm realm value for authentication
+ * callback_function a pointer to a function that will be executed each time the endpoint is called
  *                    you must declare the function as described.
- * user_data:         a pointer to a data or a structure that will be available in callback_function
+ * @param user_data a pointer to a data or a structure that will be available in callback_function
  * to remove a default endpoint, call ulfius_set_default_endpoint with NULL parameter for callback_function
- * return U_OK on success
+ * @return U_OK on success
  */
 int ulfius_set_default_endpoint(struct _u_instance * u_instance,
                                          int (* callback_function)(const struct _u_request * request, struct _u_response * response, void * user_data),
@@ -624,31 +600,36 @@ int ulfius_set_default_endpoint(struct _u_instance * u_instance,
  * Remove a struct _u_endpoint * from the specified u_instance
  * using the specified values used to identify an endpoint
  * Can be done during the execution of the webservice for injection
- * u_instance: pointer to a struct _u_instance that describe its port and bind address
- * http_method: http_method used by the endpoint
- * url_prefix: url_prefix used by the endpoint
- * url_format: url_format used by the endpoint
  * The parameters _u_endpoint.http_method, _u_endpoint.url_prefix and _u_endpoint.url_format are strictly compared for the match
  * If no endpoint is found, return U_ERROR_NOT_FOUND
- * return U_OK on success
+ * @param u_instance pointer to a struct _u_instance that describe its port and bind address
+ * @param http_method http_method used by the endpoint
+ * @param url_prefix url_prefix used by the endpoint
+ * @param url_format url_format used by the endpoint
+ * @return U_OK on success
  */
 int ulfius_remove_endpoint_by_val(struct _u_instance * u_instance, const char * http_method, const char * url_prefix, const char * url_format);
 
 /**
  * ulfius_empty_endpoint
- * return an empty endpoint that goes at the end of an endpoint list
+ * @return empty endpoint that goes at the end of an endpoint list
  */
 const struct _u_endpoint * ulfius_empty_endpoint();
 
 /**
  * ulfius_copy_endpoint
- * return a copy of an endpoint with duplicate values
+ * makes a copy of an endpoint with duplicate values
+ * @param dest the endpoint destination
+ * @param source the endpoint source
+ * @return U_OK on success
  */
 int ulfius_copy_endpoint(struct _u_endpoint * dest, const struct _u_endpoint * source);
 
 /**
  * u_copy_endpoint_list
- * return a copy of an endpoint list with duplicate values
+ * makes a copy of an endpoint list with duplicate values
+ * @param endpoint_list an array of struct _u_endpoint * finishing with a ulfius_empty_endpoint()
+ * @return a list with duplicate values
  * returned value must be free'd after use
  */
 struct _u_endpoint * ulfius_duplicate_endpoint_list(const struct _u_endpoint * endpoint_list);
@@ -656,18 +637,23 @@ struct _u_endpoint * ulfius_duplicate_endpoint_list(const struct _u_endpoint * e
 /**
  * ulfius_clean_endpoint
  * free allocated memory by an endpoint
+ * @param endpoint the endpoint to cleanup
  */
 void ulfius_clean_endpoint(struct _u_endpoint * endpoint);
 
 /**
  * ulfius_clean_endpoint_list
  * free allocated memory by an endpoint list
+ * @param endpoint_list the list of endpoints to cleanup, finishing with a ulfius_empty_endpoint()
  */
 void ulfius_clean_endpoint_list(struct _u_endpoint * endpoint_list);
 
 /**
  * ulfius_equals_endpoints
- * Compare 2 endpoints and return true if their method, prefix and format are the same or if both are NULL
+ * Compare 2 endpoints
+ * @param endpoint1 the first endpoint to compare
+ * @param endpoint2 the second endpoint to compare
+ * @return true if their method, prefix and format are the same or if both are NULL, false otherwise
  */
 int ulfius_equals_endpoints(const struct _u_endpoint * endpoint1, const struct _u_endpoint * endpoint2);
 
@@ -689,7 +675,9 @@ int ulfius_equals_endpoints(const struct _u_endpoint * endpoint1, const struct _
 /**
  * ulfius_send_http_request
  * Send a HTTP request and store the result into a _u_response
- * return U_OK on success
+ * @param request the struct _u_request that contains all the input parameters to perform the HTTP request
+ * @param response the struct _u_response that will be filled with all response parameter values, optional, may be NULL
+ * @return U_OK on success
  */
 int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response);
 
@@ -697,7 +685,11 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
  * ulfius_send_http_streaming_request
  * Send a HTTP request and store the result into a _u_response
  * Except for the body which will be available using write_body_function in the write_body_data
- * return U_OK on success
+ * @param request the struct _u_request that contains all the input parameters to perform the HTTP request
+ * @param response the struct _u_response that will be filled with all response parameter values, optional, may be NULL
+ * @param write_body_function a pointer to a function that will be used to receive response body in chunks
+ * @param write_body_data a user-defined poitner that will be passed in parameter to write_body_function
+ * @return U_OK on success
  */
 int ulfius_send_http_streaming_request(const struct _u_request * request, struct _u_response * response, size_t (* write_body_function)(void * contents, size_t size, size_t nmemb, void * user_data), void * write_body_data);
 
@@ -705,19 +697,19 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
  * ulfius_send_smtp_email
  * Send an email using libcurl
  * email is plain/text and UTF8 charset
- * host: smtp server host name
- * port: tcp port number (optional, 0 for default)
- * use_tls: true if the connection is tls secured
- * verify_certificate: true if you want to disable the certificate verification on a tls server
- * user: connection user name (optional, NULL: no user name)
- * password: connection password (optional, NULL: no password)
- * from: from address (mandatory)
- * to: to recipient address (mandatory)
- * cc: cc recipient address (optional, NULL: no cc)
- * bcc: bcc recipient address (optional, NULL: no bcc)
- * subject: email subject (mandatory)
- * mail_body: email body (mandatory)
- * return U_OK on success
+ * @param host smtp server host name
+ * @param port tcp port number (optional, 0 for default)
+ * @param use_tls true if the connection is tls secured
+ * @param verify_certificate true if you want to disable the certificate verification on a tls server
+ * @param user connection user name (optional, NULL: no user name)
+ * @param password connection password (optional, NULL: no password)
+ * @param from from address (mandatory)
+ * @param to to recipient address (mandatory)
+ * @param cc cc recipient address (optional, NULL: no cc)
+ * @param bcc bcc recipient address (optional, NULL: no bcc)
+ * @param subject email subject (mandatory)
+ * @param mail_body email body (mandatory)
+ * @return U_OK on success
  */
 int ulfius_send_smtp_email(const char * host, 
                             const int port, 
@@ -735,20 +727,20 @@ int ulfius_send_smtp_email(const char * host,
 /**
  * Send an email using libcurl
  * email has the content-type specified in parameter
- * host: smtp server host name
- * port: tcp port number (optional, 0 for default)
- * use_tls: true if the connection is tls secured
- * verify_certificate: true if you want to disable the certificate verification on a tls server
- * user: connection user name (optional, NULL: no user name)
- * password: connection password (optional, NULL: no password)
- * from: from address (mandatory)
- * to: to recipient address (mandatory)
- * cc: cc recipient address (optional, NULL: no cc)
- * bcc: bcc recipient address (optional, NULL: no bcc)
- * content_type: content-type to add to the e-mail body
- * subject: email subject (mandatory)
- * mail_body: email body (mandatory)
- * return U_OK on success
+ * @param host smtp server host name
+ * @param port tcp port number (optional, 0 for default)
+ * @param use_tls true if the connection is tls secured
+ * @param verify_certificate true if you want to disable the certificate verification on a tls server
+ * @param user connection user name (optional, NULL: no user name)
+ * @param password connection password (optional, NULL: no password)
+ * @param from from address (mandatory)
+ * @param to to recipient address (mandatory)
+ * @param cc cc recipient address (optional, NULL: no cc)
+ * @param bcc bcc recipient address (optional, NULL: no bcc)
+ * @param content_type: content-type to add to the e-mail body
+ * @param subject email subject (mandatory)
+ * @param mail_body email body (mandatory)
+ * @return U_OK on success
  */
 
 int ulfius_send_smtp_rich_email(const char * host, 
@@ -779,7 +771,16 @@ int ulfius_send_smtp_rich_email(const char * host,
 /**
  * ulfius_add_cookie_to_response
  * add a cookie to the cookie map
- * return U_OK on success
+ * @param response the response to add the cookie to
+ * @param key the cookie key
+ * @param value the cookie value
+ * @param expires the expiration date of the ccokie in ISO format (optional)
+ * @param max_age the maximum age of the cookie in seconds (optional)
+ * @param domain the domain of the cookie (optional)
+ * @param pat the path of the cookie (optional)
+ * @param secure wether the cookie must be secure or not (optional)
+ * @param http_only wether the cookie must be used only for http requests or not (optional)
+ * @return U_OK on success
  */
 int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age, 
                                   const char * domain, const char * path, const int secure, const int http_only);
@@ -787,11 +788,20 @@ int ulfius_add_cookie_to_response(struct _u_response * response, const char * ke
 /**
  * ulfius_add_same_site_cookie_to_response
  * add a cookie to the cookie map with a SameSite attribute
- * the same_site parameter must have one of the following values:
+ * @param response the response to add the cookie to
+ * @param key the cookie key
+ * @param value the cookie value
+ * @param expires the expiration date of the ccokie in ISO format (optional)
+ * @param max_age the maximum age of the cookie in seconds (optional)
+ * @param domain the domain of the cookie (optional)
+ * @param pat the path of the cookie (optional)
+ * @param secure wether the cookie must be secure or not (optional)
+ * @param http_only wether the cookie must be used only for http requests or not (optional)
+ * @param same_site parameter must have one of the following values:
  * - U_COOKIE_SAME_SITE_NONE   - No SameSite attribute
  * - U_COOKIE_SAME_SITE_STRICT - SameSite attribute set to 'Strict'
  * - U_COOKIE_SAME_SITE_LAX    - SameSite attribute set to 'Lax'
- * return U_OK on success
+ * @return U_OK on success
  */
 int ulfius_add_same_site_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age, 
                                             const char * domain, const char * path, const int secure, const int http_only, const int same_site);
@@ -809,21 +819,28 @@ int ulfius_add_same_site_cookie_to_response(struct _u_response * response, const
 /**
  * ulfius_add_header_to_response
  * add a header to the response
- * return U_OK on success
+ * @param response the response to be updated
+ * @param key the key of the header
+ * @param value the value of the header
+ * @return U_OK on success
  */
 int ulfius_add_header_to_response(struct _u_response * response, const char * key, const char * value);
 
 /**
  * ulfius_set_string_body_request
- * Set a string string_body to a request
- * string_body must end with a '\0' character
- * return U_OK on success
+ * Set a string string_body to a request, replace any existing body in the request
+ * @param request the request to be updated
+ * @param string_body string to set to the body response must end with a '\0' character
+ * @return U_OK on success
  */
 int ulfius_set_string_body_request(struct _u_request * request, const char * string_body);
 
 /**
  * ulfius_set_binary_body_request
- * Add a binary binary_body to a request
+ * Set a binary binary_body to a request, replace any existing body in the request
+ * @param request the request to be updated
+ * @param binary_body an array of char to set to the body response
+ * @param length the length of binary_body to set to the request body
  * return U_OK on success
  */
 int ulfius_set_binary_body_request(struct _u_request * request, const char * binary_body, const size_t length);
@@ -831,29 +848,38 @@ int ulfius_set_binary_body_request(struct _u_request * request, const char * bin
 /**
  * ulfius_set_empty_body_request
  * Set an empty request body
- * return U_OK on success
+ * @param request the request to be updated
+ * @return U_OK on success
  */
 int ulfius_set_empty_body_request(struct _u_request * request);
 
 /**
  * ulfius_set_string_body_response
- * Add a string body to a response
- * body must end with a '\0' character
- * return U_OK on success
+ * Add a string body to a response, replace any existing body in the response
+ * @param response the response to be updated
+ * @param status the http status code to set to the response
+ * @param body the string body to set, must end with a '\0' character
+ * @return U_OK on success
  */
 int ulfius_set_string_body_response(struct _u_response * response, const unsigned int status, const char * body);
 
 /**
  * ulfius_set_binary_body_response
- * Add a binary body to a response
- * return U_OK on success
+ * Add a binary body to a response, replace any existing body in the response
+ * @param response the response to be updated
+ * @param status the http status code to set to the response
+ * @param body the array of char to set
+ * @param length the length of body to set to the request body
+ * @return U_OK on success
  */
 int ulfius_set_binary_body_response(struct _u_response * response, const unsigned int status, const char * body, const size_t length);
 
 /**
  * ulfius_set_empty_body_response
  * Set an empty response with only a status
- * return U_OK on success
+ * @param response the response to be updated
+ * @param status the http status code to set to the response
+ * @return U_OK on success
  */
 int ulfius_set_empty_body_response(struct _u_response * response, const unsigned int status);
 
@@ -870,7 +896,14 @@ int ulfius_set_empty_body_response(struct _u_response * response, const unsigned
 /**
  * ulfius_set_stream_response
  * Set an stream response with a status
- * return U_OK on success
+ * @param response the response to be updated
+ * @param status the http status code to set to the response
+ * @param stream_callback a pointer to a function that will handle the response stream
+ * @param stream_callback_free a pointer to a function that will free its allocated resoures during stream_callback
+ * @param stream_size size of the streamed data (U_STREAM_SIZE_UNKOWN if unknown)
+ * @param stream_block_size preferred size of each stream chunk, may be overwritten by the system if necessary
+ * @param stream_user_data a user-defined pointer that will be available in stream_callback and stream_callback_free
+ * @return U_OK on success
  */
 int ulfius_set_stream_response(struct _u_response * response, 
                                 const unsigned int status,
@@ -893,7 +926,8 @@ int ulfius_set_stream_response(struct _u_response * response,
 /**
  * ulfius_init_request
  * Initialize a request structure by allocating inner elements
- * return U_OK on success
+ * @param request the request to initialize
+ * @return U_OK on success
  */
 int ulfius_init_request(struct _u_request * request);
 
@@ -902,28 +936,33 @@ int ulfius_init_request(struct _u_request * request);
  * clean the specified request's inner elements
  * user must free the parent pointer if needed after clean
  * or use ulfius_clean_request_full
- * return U_OK on success
+ * @param request the request to cleanup
+ * @return U_OK on success
  */
 int ulfius_clean_request(struct _u_request * request);
 
 /**
  * ulfius_clean_request_full
  * clean the specified request and all its elements
- * return U_OK on success
+ * @param request the request to cleanup
+ * @return U_OK on success
  */
 int ulfius_clean_request_full(struct _u_request * request);
 
 /**
  * ulfius_copy_request
  * Copy the source request elements into the dest request
- * return U_OK on success
+ * @param dest the request to receive the copied data
+ * @param source the source request to copy
+ * @return U_OK on success
  */
 int ulfius_copy_request(struct _u_request * dest, const struct _u_request * source);
 
 /**
  * ulfius_init_response
  * Initialize a response structure by allocating inner elements
- * return U_OK on success
+ * @param response the response to initialize
+ * @return U_OK on success
  */
 int ulfius_init_response(struct _u_response * response);
 
@@ -932,46 +971,57 @@ int ulfius_init_response(struct _u_response * response);
  * clean the specified response's inner elements
  * user must free the parent pointer if needed after clean
  * or use ulfius_clean_response_full
- * return U_OK on success
+ * @param response the response to cleanup
+ * @return U_OK on success
  */
 int ulfius_clean_response(struct _u_response * response);
 
 /**
  * ulfius_clean_response_full
  * clean the specified response and all its elements
- * return U_OK on success
+ * @param response the response to cleanup
+ * @return U_OK on success
  */
 int ulfius_clean_response_full(struct _u_response * response);
 
 /**
  * ulfius_copy_response
  * Copy the source response elements into the dest response
- * return U_OK on success
+ * @param dest the response to receive the copied data
+ * @param source the source response to copy
+ * @return U_OK on success
  */
 int ulfius_copy_response(struct _u_response * dest, const struct _u_response * source);
 
 /**
  * ulfius_clean_cookie
  * clean the cookie's elements
- * return U_OK on success
+ * @param cookie the cookie structure to cleanup
+ * @return U_OK on success
  */
 int ulfius_clean_cookie(struct _u_cookie * cookie);
 
 /**
  * Copy the cookie source elements into dest elements
- * return U_OK on success
+ * @param dest the cookie to receive the copied data
+ * @param source the cookie response to copy
+ * @return U_OK on success
  */
 int ulfius_copy_cookie(struct _u_cookie * dest, const struct _u_cookie * source);
 
 /**
  * create a new request based on the source elements
  * returned value must be cleaned after use
+ * @param request the request to duplicate
+ * @return a heap-allocated request
  */
 struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
 
 /**
  * create a new response based on the source elements
  * return value must be cleaned after use
+ * @param response the response to duplicate
+ * @return a heap-allocated response
  */
 struct _u_response * ulfius_duplicate_response(const struct _u_response * response);
 
@@ -990,6 +1040,8 @@ struct _u_response * ulfius_duplicate_response(const struct _u_response * respon
  * returned value must be cleaned after use
  * Thanks Geek Hideout!
  * http://www.geekhideout.com/urlcode.shtml
+ * @param str the string to decode
+ * @return a heap-allocated string
  */
 char * ulfius_url_decode(const char * str);
 
@@ -998,6 +1050,8 @@ char * ulfius_url_decode(const char * str);
  * returned value must be cleaned after use
  * Thanks Geek Hideout!
  * http://www.geekhideout.com/urlcode.shtml
+ * @param str the string to encode
+ * @return a heap-allocated string
  */
 char * ulfius_url_encode(const char * str);
 
@@ -1018,29 +1072,39 @@ char * ulfius_url_encode(const char * str);
  * In case of an error in getting or parsing JSON data in the request,
  * the structure json_error_t * json_error will be filled with an error
  * message if json_error is not NULL
+ * @param request the request to retrieve the JSON data
+ * @param json_error a json_error_t reference that will contain decoding errors if any, may be NULL
+ * @return a json_t * containing the JSON decoded, NULL on error
  */
 json_t * ulfius_get_json_body_request(const struct _u_request * request, json_error_t * json_error);
 
 /**
  * ulfius_set_json_body_request
  * Add a json_t j_body to a request
- * return U_OK on success
+ * @param request the request to retrieve the JSON data
+ * @param j_body a json_t to stringify in the body
+ * @return U_OK on success
  */
 int ulfius_set_json_body_request(struct _u_request * request, json_t * j_body);
 
 /**
  * ulfius_get_json_body_response
- * Get JSON structure from the response body if the request is valid
- * In case of an error in getting or parsing JSON data in the request,
+ * Get JSON structure from the response body if the response is valid
+ * In case of an error in getting or parsing JSON data in the response,
  * the structure json_error_t * json_error will be filled with an error
  * message if json_error is not NULL
+ * @param response the response to retrieve the JSON data
+ * @param json_error a json_error_t reference that will contain decoding errors if any, may be NULL
+ * @return a json_t * containing the JSON decoded, NULL on error
  */
 json_t * ulfius_get_json_body_response(struct _u_response * response, json_error_t * json_error);
 
 /**
  * ulfius_set_json_body_response
  * Add a json_t j_body to a response
- * return U_OK on success
+ * @param response the response to retrieve the JSON data
+ * @param j_body a json_t to stringify in the body
+ * @return U_OK on success
  */
 int ulfius_set_json_body_response(struct _u_response * response, const unsigned int status, const json_t * j_body);
 #endif
@@ -1063,79 +1127,104 @@ int ulfius_set_json_body_response(struct _u_response * response, const unsigned 
 /**
  * initialize a struct _u_map
  * this function MUST be called after a declaration or allocation
- * return U_OK on success
+ * @param u_map the _u_map to initialize
+ * @return U_OK on success
  */
-int u_map_init(struct _u_map * map);
+int u_map_init(struct _u_map * u_map);
 
 /**
  * free the struct _u_map's inner components
- * return U_OK on success
+ * @param u_map the _u_map to cleanup
+ * @return U_OK on success
  */
 int u_map_clean(struct _u_map * u_map);
 
 /**
  * free the struct _u_map and its components
- * return U_OK on success
+ * @param u_map the _u_map to cleanup
+ * @return U_OK on success
  */
 int u_map_clean_full(struct _u_map * u_map);
 
 /**
  * free an enum return by functions u_map_enum_keys or u_map_enum_values
- * return U_OK on success
+ * @param array the string array to cleanup
+ * @return U_OK on success
  */
 int u_map_clean_enum(char ** array);
 
 /**
  * returns an array containing all the keys in the struct _u_map
- * return an array of char * ending with a NULL element
+ * @param u_map the _u_map to retreive the keys from
+ * @return an array of char * ending with a NULL element
  */
 const char ** u_map_enum_keys(const struct _u_map * u_map);
 
 /**
  * returns an array containing all the values in the struct _u_map
- * return an array of char * ending with a NULL element
+ * @param u_map the _u_map to retreive the values from
+ * @return an array of char * ending with a NULL element
  */
 const char ** u_map_enum_values(const struct _u_map * u_map);
 
 /**
- * return true if the sprcified u_map contains the specified key
- * false otherwise
+ * Detects if the key exists in the _u_map
  * search is case sensitive
+ * @param u_map the _u_map to analyze
+ * @param key the key to look for
+ * @return true if the sprcified u_map contains the specified key
+ * false otherwise
  */
 int u_map_has_key(const struct _u_map * u_map, const char * key);
 
 /**
- * return true if the sprcified u_map contains the specified value
- * false otherwise
+ * Detects if the value exists in the _u_map, value must be a char * string
  * search is case sensitive
+ * @param u_map the _u_map to analyze
+ * @param value the value to look for
+ * @return true if the sprcified u_map contains the specified value
+ * false otherwise
  */
 int u_map_has_value(const struct _u_map * u_map, const char * value);
 
 /**
- * return true if the sprcified u_map contains the specified value up until the specified length
- * false otherwise
+ * Detects if the value exists in the _u_map, value may be any byte array
  * search is case sensitive
+ * @param u_map the _u_map to analyze
+ * @param value the value to look for
+ * @param length the length of the value to look for
+ * @return true if the sprcified u_map contains the specified value up until the specified length
+ * false otherwise
  */
 int u_map_has_value_binary(const struct _u_map * u_map, const char * value, size_t length);
 
 /**
- * return true if the sprcified u_map contains the specified key
- * false otherwise
+ * Detects if the key exists in the _u_map
  * search is case insensitive
+ * @param u_map the _u_map to analyze
+ * @param key the key to look for
+ * @return true if the sprcified u_map contains the specified key
+ * false otherwise
  */
 int u_map_has_key_case(const struct _u_map * u_map, const char * key);
 
 /**
- * return true if the sprcified u_map contains the specified value
- * false otherwise
+ * Detects if the key exists in the _u_map
  * search is case insensitive
+ * @param u_map the _u_map to analyze
+ * @param value the value to look for
+ * @return true if the sprcified u_map contains the specified value
+ * false otherwise
  */
 int u_map_has_value_case(const struct _u_map * u_map, const char * value);
 
 /**
  * add the specified key/value pair into the specified u_map
  * if the u_map already contains a pair with the same key, replace the value
- * return U_OK on success
+ * @param u_map the _u_map to update
+ * @param key the key string
+ * @param value the value string
+ * @return U_OK on success
  */
 int u_map_put(struct _u_map * u_map, const char * key, const char * value);
 
@@ -1143,97 +1232,133 @@ int u_map_put(struct _u_map * u_map, const char * key, const char * value);
  * add the specified key/binary value pair into the specified u_map
  * if the u_map already contains a pair with the same key,
  * replace the value at the specified offset with the specified length
- * return U_OK on success
+ * @param u_map the _u_map to update
+ * @param key the key string
+ * @param value the value binary
+ * @param offset the start offset to set value in u_map value
+ * @param length the length of value to set
+ * @return U_OK on success
  */
 int u_map_put_binary(struct _u_map * u_map, const char * key, const char * value, uint64_t offset, size_t length);
 
 /**
  * get the value length corresponding to the specified key in the u_map
- * return -1 if no match found
  * search is case sensitive
+ * @param u_map the _u_map to analyze
+ * @param key the key look for
+ * @return the value length if found, -1 if no match found
  */
 ssize_t u_map_get_length(const struct _u_map * u_map, const char * key);
 
 /**
  * get the value length corresponding to the specified key in the u_map
- * return -1 if no match found
  * search is case insensitive
+ * @param u_map the _u_map to analyze
+ * @param key the key look for
+ * @return the value length if found, -1 if no match found
  */
 ssize_t u_map_get_case_length(const struct _u_map * u_map, const char * key);
 
 /**
  * get the value corresponding to the specified key in the u_map
- * return NULL if no match found
  * search is case sensitive
+ * @param u_map the _u_map to analyze
+ * @param key the key to look for
+ * @return the value if key exists NULL if no match found
  */
 const char * u_map_get(const struct _u_map * u_map, const char * key);
 
 /**
  * get the value corresponding to the specified key in the u_map
- * return NULL if no match found
  * search is case insensitive
+ * @param u_map the _u_map to analyze
+ * @param key the key to look for
+ * @return the value if key exists NULL if no match found
  */
 const char * u_map_get_case(const struct _u_map * u_map, const char * key);
 
 /**
  * remove an pair key/value that has the specified key
- * return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
+ * search is case sensitive
+ * @param u_map the _u_map to analyze
+ * @param key the key to look for
+ * @return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
  */
 int u_map_remove_from_key(struct _u_map * u_map, const char * key);
 
 /**
  * remove all pairs key/value that has the specified key (case insensitive search)
- * return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
+ * search is case insensitive
+ * @param u_map the _u_map to analyze
+ * @param key the key to look for
+ * @return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
  */
 int u_map_remove_from_key_case(struct _u_map * u_map, const char * key);
 
 /**
  * remove all pairs key/value that has the specified value
- * return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
+ * search is case sensitive
+ * @param u_map the _u_map to analyze
+ * @param value the value to look for
+ * @return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
  */
 int u_map_remove_from_value(struct _u_map * u_map, const char * value);
 
 /**
- * remove all pairs key/value that has the specified value (case insensitive search)
- * return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
+ * remove all pairs key/value that has the specified value
+ * search is case insensitive
+ * @param u_map the _u_map to analyze
+ * @param value the value to look for
+ * @return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
  */
 int u_map_remove_from_value_case(struct _u_map * u_map, const char * value);
 
 /**
  * remove all pairs key/value that has the specified value up until the specified length
- * return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
+ * @param u_map the _u_map to analyze
+ * @param key the key to look for
+ * @param length the length of key
+ * @return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
  */
 int u_map_remove_from_value_binary(struct _u_map * u_map, const char * key, size_t length);
 
 /**
  * remove the pair key/value at the specified index
- * return U_OK on success, U_NOT_FOUND if index is out of bound, error otherwise
+ * @param u_map the _u_map to analyze
+ * @param index the position of the tuple to remove
+ * @return U_OK on success, U_NOT_FOUND if index is out of bound, error otherwise
  */
 int u_map_remove_at(struct _u_map * u_map, const int index);
 
 /**
  * Create an exact copy of the specified struct _u_map
- * return a reference to the copy, NULL otherwise
+ * @param source the _u_map to copy
+ * @return a reference to the copy, NULL otherwise
  * returned value must be free'd after use
  */
 struct _u_map * u_map_copy(const struct _u_map * source);
 
 /**
  * Copy all key/values pairs of source into dest
- * If key is already present in dest, it's overwritten
- * return U_OK on success, error otherwise
+ * If a key is already present in dest, value is overwritten
+ * @param dest the _u_map to update
+ * @param source the _u_map to copy
+ * @return U_OK on success, error otherwise
  */
 int u_map_copy_into(struct _u_map * dest, const struct _u_map * source);
 
 /**
- * Return the number of key/values pair in the specified struct _u_map
+ * Count the number of elements in the _u_map
+ * @param source the _u_map to analyze
+ * @return the number of key/values pair in the specified struct _u_map
  * Return -1 on error
  */
 int u_map_count(const struct _u_map * source);
 
 /**
  * Empty a struct u_map of all its elements
- * return U_OK on success, error otherwise
+ * @param u_map the _u_map to empty
+ * @return U_OK on success, error otherwise
  */
 int u_map_empty(struct _u_map * u_map);
 
@@ -1290,83 +1415,83 @@ int u_map_empty(struct _u_map * u_map);
 #define WEBSOCKET_RESPONSE_EXTENSION  0x0020
 
 /**
- * Websocket manager structure
+ * @struct _websocket_manager Websocket manager structure
  * contains among other things the socket
  * the status (open, closed), and the list of incoming and outcoming messages
  * Used on public callback functions
  */
 struct _websocket_manager {
-  struct _websocket_message_list * message_list_incoming;
-  struct _websocket_message_list * message_list_outcoming;
-  int                              connected;
-  int                              close_flag;
-  MHD_socket                       mhd_sock;
-  int                              tcp_sock;
-  int                              tls;
-  gnutls_session_t                 gnutls_session;
-  gnutls_certificate_credentials_t xcred;
-  char                           * protocol;
-  char                           * extensions;
-  pthread_mutex_t                  read_lock;
-  pthread_mutex_t                  write_lock;
-  pthread_mutex_t                  status_lock;
-  pthread_cond_t                   status_cond;
+  struct _websocket_message_list * message_list_incoming; /* !< list of incoming messages */
+  struct _websocket_message_list * message_list_outcoming; /* !< list of outcoming messages */
+  int                              connected; /* !< flag to know if the websocket is connected or not */
+  int                              close_flag; /* !< flag to set before closing a websocket */
+  MHD_socket                       mhd_sock; /* !< reference to libmicrohttpd's socket for websocket server */
+  int                              tcp_sock; /* !< tcp socket for websocket client */
+  int                              tls; /* !< set to 1 if the websocket is in a TLS socket */
+  gnutls_session_t                 gnutls_session; /* !< GnuTLS session for websocket client */
+  gnutls_certificate_credentials_t xcred; /* !< certificate credential used by GnuTLS */
+  char                           * protocol; /* !< websocket protocol */
+  char                           * extensions; /* !< websocket extension */
+  pthread_mutex_t                  read_lock; /* !< mutex to read data in the socket */
+  pthread_mutex_t                  write_lock; /* !< mutex to write data in the socket */
+  pthread_mutex_t                  status_lock; /* !< mutex to broadcast new status */
+  pthread_cond_t                   status_cond; /* !< condition to broadcast new status */
   struct pollfd                    fds;
   int                              type;
 };
 
 /**
- * websocket message structure
+ * @struct _websocket_message websocket message structure
  * contains all the data of a websocket message
  * and the timestamp of when it was sent of received
  */
 struct _websocket_message {
-  time_t  datestamp;
-  uint8_t opcode;
-  uint8_t has_mask;
-  uint8_t mask[4];
-  size_t  data_len;
-  char *  data;
+  time_t  datestamp; /* !< date stamp of the message */
+  uint8_t opcode; /* !< opcode for the message (string or binary) */
+  uint8_t has_mask; /* !< does the message contain a mask? */
+  uint8_t mask[4]; /* !< mask used if any */
+  size_t  data_len; /* !< length of the data */
+  char *  data; /* !< message data */
 };
 
 /**
- * List of websocket messages
+ * @struct _websocket_message_list List of websocket messages
  */
 struct _websocket_message_list {
-  struct _websocket_message ** list;
-  size_t len;
+  struct _websocket_message ** list; /* !< messages list */
+  size_t len; /* !< message list length */
 };
 
 /**
- * websocket structure
+ * @struct _websocket websocket structure
  * contains all the data of the websocket
  */
 struct _websocket {
-  struct _u_instance               * instance;
-  struct _u_request                * request;
-  void                             (* websocket_manager_callback) (const struct _u_request * request,
-                                                                  struct _websocket_manager * websocket_manager,
-                                                                  void * websocket_manager_user_data);
-  void                             * websocket_manager_user_data;
-  void                             (* websocket_incoming_message_callback) (const struct _u_request * request,
-                                                                           struct _websocket_manager * websocket_manager,
-                                                                           const struct _websocket_message * message,
-                                                                           void * websocket_incoming_user_data);
-  void                             * websocket_incoming_user_data;
-  void                             (* websocket_onclose_callback) (const struct _u_request * request,
-                                                                  struct _websocket_manager * websocket_manager,
-                                                                  void * websocket_onclose_user_data);
-  void                             * websocket_onclose_user_data;
-  struct _websocket_manager        * websocket_manager;
-  struct MHD_UpgradeResponseHandle * urh;
+  struct _u_instance               * instance; /* !< reference to the ulfius instance if any */
+  struct _u_request                * request; /* !< refrence to the ulfius request of any */
+  void                             (* websocket_manager_callback) (const struct _u_request * request, /* !< reference to a function called after the websocket handshake */
+                                                                   struct _websocket_manager * websocket_manager,
+                                                                   void * websocket_manager_user_data);
+  void                             * websocket_manager_user_data; /* !< a user-defined reference that will be available in websocket_manager_callback */
+  void                             (* websocket_incoming_message_callback) (const struct _u_request * request, /* !< reference to a function called each time a message arrives */
+                                                                            struct _websocket_manager * websocket_manager,
+                                                                            const struct _websocket_message * message,
+                                                                            void * websocket_incoming_user_data);
+  void                             * websocket_incoming_user_data; /* !< a user-defined reference that will be available in websocket_incoming_message_callback */
+  void                             (* websocket_onclose_callback) (const struct _u_request * request, /* !< reference to a function called after the websocket connection ends */
+                                                                   struct _websocket_manager * websocket_manager,
+                                                                   void * websocket_onclose_user_data);
+  void                             * websocket_onclose_user_data; /* !< a user-defined reference that will be available in websocket_onclose_callback */
+  struct _websocket_manager        * websocket_manager; /* !< refrence to the websocket manager if any */
+  struct MHD_UpgradeResponseHandle * urh; /* !< reference used by libmicrohttpd to upgrade the connection */
 };
 
 /**
- * Handler for the websocket client, to allow the program to know the status of a websocket client
+ * @struct _websocket_client_handler Handler for the websocket client, to allow the program to know the status of a websocket client
  */
 struct _websocket_client_handler {
-  struct _websocket * websocket;
-  struct _u_response * response;
+  struct _websocket * websocket; /* !< the websocket to use */
+  struct _u_response * response; /* !< the response attached to the websocket */
 };
 
 /********************************/
@@ -1374,8 +1499,13 @@ struct _websocket_client_handler {
 /********************************/
 
 /**
- * Send a message in the websocket
- * Return U_OK on success
+ * Sends a message in the websocket
+ * @param websocket_manager the websocket manager to use for sending the message
+ * @param opcode the opcode to use
+ * values available are U_WEBSOCKET_OPCODE_TEXT, U_WEBSOCKET_OPCODE_BINARY, U_WEBSOCKET_OPCODE_PING, U_WEBSOCKET_OPCODE_PONG, U_WEBSOCKET_OPCODE_CLOSE
+ * @param data_len the length of the data to send
+ * @param data the data to send
+ * @return U_OK on success
  */
 int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
                                   const uint8_t opcode,
@@ -1385,7 +1515,13 @@ int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
 /**
  * Send a fragmented message in the websocket
  * each fragment size will be at most fragment_len
- * Return U_OK on success
+ * @param websocket_manager the websocket manager to use for sending the message
+ * @param opcode the opcode to use
+ * values available are U_WEBSOCKET_OPCODE_TEXT, U_WEBSOCKET_OPCODE_BINARY, U_WEBSOCKET_OPCODE_PING, U_WEBSOCKET_OPCODE_PONG, U_WEBSOCKET_OPCODE_CLOSE
+ * @param data_len the length of the data to send
+ * @param data the data to send
+ * @param fragment_len the maximum length of each fragment
+ * @return U_OK on success
  */
 int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websocket_manager,
                                              const uint8_t opcode,
@@ -1396,14 +1532,17 @@ int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websock
 /**
  * Return the first message of the message list
  * Return NULL if message_list has no message
- * Returned value must be cleared after use
  * Use it with struct _websocket_manager->message_list_incoming
  * or struct _websocket_manager->message_list_outcoming
+ * @param message_list the list to pop the first message
+ * @return a _websocket_message reference
+ * Returned value must be cleared after use
  */
 struct _websocket_message * ulfius_websocket_pop_first_message(struct _websocket_message_list * message_list);
 
 /**
  * Clear data of a websocket message
+ * @param message the message to cleanup
  */
 void ulfius_clear_websocket_message(struct _websocket_message * message);
 
@@ -1414,17 +1553,16 @@ void ulfius_clear_websocket_message(struct _websocket_message * message);
 /**
  * Set a websocket in the response
  * You must set at least websocket_manager_callback or websocket_incoming_message_callback
- * @Parameters
- * response: struct _u_response to send back the websocket initialization, mandatory
- * websocket_protocol: list of protocols, separated by a comma, or NULL if all protocols are accepted
- * websocket_extensions: list of extensions, separated by a comma, or NULL if all extensions are accepted
- * websocket_manager_callback: callback function called right after the handshake acceptance, optional
- * websocket_manager_user_data: any data that will be given to the websocket_manager_callback, optional
- * websocket_incoming_message_callback: callback function called on each incoming complete message, optional
- * websocket_incoming_user_data: any data that will be given to the websocket_incoming_message_callback, optional
- * websocket_onclose_callback: callback function called right before closing the websocket, must be complete for the websocket to close
- * websocket_onclose_user_data: any data that will be given to the websocket_onclose_callback, optional
- * @Return value: U_OK on success
+ * @param response struct _u_response to send back the websocket initialization, mandatory
+ * @param websocket_protocol list of protocols, separated by a comma, or NULL if all protocols are accepted
+ * @param websocket_extensions list of extensions, separated by a comma, or NULL if all extensions are accepted
+ * @param websocket_manager_callback callback function called right after the handshake acceptance, optional
+ * @param websocket_manager_user_data any data that will be given to the websocket_manager_callback, optional
+ * @param websocket_incoming_message_callback callback function called on each incoming complete message, optional
+ * @param websocket_incoming_user_data any data that will be given to the websocket_incoming_message_callback, optional
+ * @param websocket_onclose_callback callback function called right before closing the websocket, must be complete for the websocket to close
+ * @param websocket_onclose_user_data any data that will be given to the websocket_onclose_callback, optional
+ * @return U_OK on success
  */
 int ulfius_set_websocket_response(struct _u_response * response,
                                    const char * websocket_protocol,
@@ -1448,13 +1586,16 @@ int ulfius_set_websocket_response(struct _u_response * response,
  * The websocket will not necessarily be closed at the return of this function,
  * it will process through the end of the `websocket_manager_callback`
  * and the `websocket_onclose_callback` calls first.
- * return U_OK on success
- * or U_ERROR on error
+ * This function has no effect if the websocket isn't connected
+ * @param websocket_manager the _websocket_manager to send close signal to
+ * @return U_OK on success, U_ERROR on error
  */
 int ulfius_websocket_send_close_signal(struct _websocket_manager * websocket_manager);
 
 /**
- * Returns the status of the websocket connection
+ * Get the websocket status
+ * @param websocket_manager the _websocket_manager to analyze
+ * @return the status of the websocket connection
  * Returned values can be U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
  * wether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
  */
@@ -1463,7 +1604,9 @@ int ulfius_websocket_status(struct _websocket_manager * websocket_manager);
 /**
  * Wait until the websocket connection is closed or the timeout in milliseconds is reached
  * if timeout is 0, no timeout is set
- * Returned values can be U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
+ * @param websocket_manager the _websocket_manager to analyze
+ * @param timeout timeout in milliseconds
+ * @return U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
  * wether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
  */
 int ulfius_websocket_wait_close(struct _websocket_manager * websocket_manager, unsigned int timeout);
@@ -1474,7 +1617,16 @@ int ulfius_websocket_wait_close(struct _websocket_manager * websocket_manager, u
 
 /**
  * Open a websocket client connection
- * Return U_OK on success
+ * @param request the request to use to open the websocket connection
+ * @param websocket_manager_callback a reference to a function called after the handshake, may be NULL
+ * @param websocket_manager_user_data a user-defined pointer passed to websocket_manager_callback
+ * @param websocket_incoming_message_callback a reference to a function called each time a message arrives in the websocket, may be NULL
+ * @param websocket_incoming_user_data a user-defined pointer passed to websocket_incoming_message_callback
+ * @param websocket_onclose_callback a reference to a function called after the websocket connection is closed, may be NULL
+ * @param websocket_onclose_user_data a user-defined pointer passed to websocket_onclose_callback
+ * @param websocket_client_handler the handler of the websocket
+ * @param response the response attached with the websocket
+ * @return U_OK on success
  */
 int ulfius_open_websocket_client_connection(struct _u_request * request,
                                             void (* websocket_manager_callback) (const struct _u_request * request,
@@ -1494,21 +1646,22 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
                                             struct _u_response * response);
 /**
  * Send a close signal to the websocket
- * return U_OK when the signal is sent
- * or U_ERROR on error
+ * @param websocket_client_handler the handler to the websocket connection
+ * @return U_OK when the signal is sent, U_ERROR on error
  */
 int ulfius_websocket_client_connection_send_close_signal(struct _websocket_client_handler * websocket_client_handler);
 
 /**
  * Closes a websocket client connection
- * return U_OK when the websocket is closed
- * or U_ERROR on error
+ * @param websocket_client_handler the handler to the websocket connection
+ * @return U_OK when the websocket is closed, U_ERROR on error
  */
 int ulfius_websocket_client_connection_close(struct _websocket_client_handler * websocket_client_handler);
 
 /**
  * Returns the status of the websocket client connection
- * Returned values can be U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
+ * @param websocket_client_handler the handler to the websocket connection
+ * @return U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
  * wether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
  */
 int ulfius_websocket_client_connection_status(struct _websocket_client_handler * websocket_client_handler);
@@ -1516,7 +1669,9 @@ int ulfius_websocket_client_connection_status(struct _websocket_client_handler *
 /**
  * Wait until the websocket client connection is closed or the timeout in milliseconds is reached
  * if timeout is 0, no timeout is set
- * Returned values can be U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
+ * @param websocket_client_handler the handler to the websocket connection
+ * @param timeout timeout in milliseconds
+ * @return U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
  * wether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
  */
 int ulfius_websocket_client_connection_wait_close(struct _websocket_client_handler * websocket_client_handler, unsigned int timeout);
@@ -1524,7 +1679,11 @@ int ulfius_websocket_client_connection_wait_close(struct _websocket_client_handl
 /**
  * Set values for a struct _u_request to open a websocket
  * request must be previously initialized
- * Return U_OK on success
+ * @param request the request to use to open the websocket
+ * @param url the url of the websocket service
+ * @param websocket_protocol the protocol for the websocket, may be NULL
+ * @param websocket_extensions the extension for the websocket, may be NULL
+ * @return U_OK on success
  */
 int ulfius_set_websocket_request(struct _u_request * request,
                                  const char * url,
@@ -1556,36 +1715,34 @@ int ulfius_set_websocket_request(struct _u_request * request,
 #ifndef U_DISABLE_WEBSOCKET
 
 /**
- * websocket_manager_callback:          callback function for working with the websocket
- * websocket_manager_user_data:         user-defined data that will be handled to websocket_manager_callback
- * websocket_incoming_message_callback: callback function that will be called every time a message arrives from the client in the websocket
- * websocket_incoming_user_data:        user-defined data that will be handled to websocket_incoming_message_callback
- * websocket_onclose_callback:          callback function that will be called if the websocket is open while the program calls ulfius_stop_framework
- * websocket_onclose_user_data:         user-defined data that will be handled to websocket_onclose_callback
+ * @struct _websocket_handle handle for a websocket
  */
 struct _websocket_handle {
-  char             * websocket_protocol;
-  char             * websocket_extensions;
-  void            (* websocket_manager_callback) (const struct _u_request * request,
+  char             * websocket_protocol; /* !< protocol for the websocket */
+  char             * websocket_extensions; /* !< extensions for the websocket */
+  void            (* websocket_manager_callback) (const struct _u_request * request, /* !< callback function for working with the websocket */
                                                   struct _websocket_manager * websocket_manager,
                                                   void * websocket_manager_user_data);
-  void             * websocket_manager_user_data;
-  void            (* websocket_incoming_message_callback) (const struct _u_request * request,
+  void             * websocket_manager_user_data; /* !< user-defined data that will be handled to websocket_manager_callback */
+  void            (* websocket_incoming_message_callback) (const struct _u_request * request, /* !< callback function that will be called every time a message arrives from the client in the websocket */
                                                            struct _websocket_manager * websocket_manager,
                                                            const struct _websocket_message * message,
                                                            void * websocket_incoming_user_data);
-  void             * websocket_incoming_user_data;
-  void            (* websocket_onclose_callback) (const struct _u_request * request,
+  void             * websocket_incoming_user_data; /* !< user-defined data that will be handled to websocket_incoming_message_callback */
+  void            (* websocket_onclose_callback) (const struct _u_request * request, /* !< callback function that will be called if the websocket is open while the program calls ulfius_stop_framework */
                                                   struct _websocket_manager * websocket_manager,
                                                   void * websocket_onclose_user_data);
-  void             * websocket_onclose_user_data;
+  void             * websocket_onclose_user_data; /* !< user-defined data that will be handled to websocket_onclose_callback */
 };
 
+/**
+ * @struct _websocket_handler handler for the websockets list
+ */
 struct _websocket_handler {
-  size_t                        nb_websocket_active;
-  struct _websocket          ** websocket_active;
-  pthread_mutex_t               websocket_close_lock;
-  pthread_cond_t                websocket_close_cond;
+  size_t                        nb_websocket_active; /* !< number of active websocket */
+  struct _websocket          ** websocket_active; /* !< array of active websocket */
+  pthread_mutex_t               websocket_close_lock; /* !< mutex to broadcast close signal */
+  pthread_cond_t                websocket_close_cond; /* !< condition to broadcast close signal */
   int                           pthread_init;
 };
 
@@ -1605,7 +1762,8 @@ struct _websocket_handler {
 /*
  * ulfius_export_client_certificate_pem
  * Exports the client certificate using PEM format
- * request: struct _u_request used
+ * @param request struct _u_request used
+ * @return the certificate in PEM format
  * returned value must be u_free'd after use
  */
 char * ulfius_export_client_certificate_pem(const struct _u_request * request);
@@ -1613,9 +1771,9 @@ char * ulfius_export_client_certificate_pem(const struct _u_request * request);
 /*
  * ulfius_import_client_certificate_pem
  * Imports the client certificate using PEM format
- * request: struct _u_request used
- * str_cert: client certificate in PEM format
- * return U_OK on success;
+ * @param request struct _u_request used
+ * @param str_cert client certificate in PEM format
+ * @return U_OK on success
  */
 int ulfius_import_client_certificate_pem(struct _u_request * request, const char * str_cert);
 
