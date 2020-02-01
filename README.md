@@ -1,6 +1,7 @@
 # Ulfius HTTP Framework
 
 [![Build Status](https://travis-ci.com/babelouest/ulfius.svg?branch=master)](https://travis-ci.com/babelouest/ulfius)
+![C/C++ CI](https://github.com/babelouest/ulfius/workflows/C/C++%20CI/badge.svg)
 
 HTTP Framework for REST Applications in C.
 
