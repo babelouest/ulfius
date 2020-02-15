@@ -205,6 +205,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
     // Duplicate the request and work on it
     if ((copy_request = ulfius_duplicate_request(request)) != NULL) {
       o_get_alloc_funcs(&malloc_fn, &realloc_fn, &free_fn);
+      json_set_alloc_funcs((json_malloc_t)malloc_fn, (json_free_t)free_fn);
       if (curl_global_init_mem(CURL_GLOBAL_DEFAULT, malloc_fn, free_fn, realloc_fn, *o_strdup, *calloc) == CURLE_OK) {
         if ((curl_handle = curl_easy_init()) != NULL) {
           ret = U_OK;

@@ -944,6 +944,11 @@ int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * 
 #ifndef U_DISABLE_GNUTLS
   return ulfius_start_secure_ca_trust_framework(u_instance, key_pem, cert_pem, NULL);
 #else
+  o_malloc_t malloc_fn;
+  o_free_t free_fn;
+  
+  o_get_alloc_funcs(&malloc_fn, NULL, &free_fn);
+  json_set_alloc_funcs((json_malloc_t)malloc_fn, (json_free_t)free_fn);
   // Check parameters and validate u_instance and endpoint_list that there is no mistake
   if (u_instance == NULL) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_start_secure_framework - Error, u_instance is NULL");
@@ -983,6 +988,12 @@ int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * 
  * return U_OK on success
  */
 int ulfius_start_secure_ca_trust_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem, const char * root_ca_pem) {
+  o_malloc_t malloc_fn;
+  o_free_t free_fn;
+  
+  o_get_alloc_funcs(&malloc_fn, NULL, &free_fn);
+  json_set_alloc_funcs((json_malloc_t)malloc_fn, (json_free_t)free_fn);
+
   // Check parameters and validate u_instance and endpoint_list that there is no mistake
   if (u_instance == NULL) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_start_secure_ca_trust_framework - Error, u_instance is NULL");
