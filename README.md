@@ -100,7 +100,7 @@ See [INSTALL.md](INSTALL.md) file for installation details
 
 See [API.md](API.md) file for API documentation details
 
-See the [online documentation](https://babelouest.github.io/ulfius/doc/html/) for a doxygen format of the API documentation.
+See the [online documentation](https://babelouest.github.io/ulfius/) for a doxygen format of the API documentation.
 
 ## Example programs source code
 
