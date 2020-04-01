@@ -30,7 +30,7 @@ set(PROJECT_HOMEPAGE_URL "https://github.com/babelouest/ulfius/")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/ulfius/issues")
 set(LIBRARY_VERSION_MAJOR "2")
 set(LIBRARY_VERSION_MINOR "6")
-set(LIBRARY_VERSION_PATCH "5")
+set(LIBRARY_VERSION_PATCH "6")
 
 set(PROJECT_VERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}.${LIBRARY_VERSION_PATCH}")
 set(PROJECT_VERSION_MAJOR ${LIBRARY_VERSION_MAJOR})
@@ -241,22 +241,28 @@ endif ()
 
 # dependencies
 
+option(DOWNLOAD_DEPENDENCIES "Download required dependencies" ON)
+
 option(SEARCH_ORCANIA_U "Search for ORCANIA library" ON)
 if (SEARCH_ORCANIA_U)
     set(Orcania_FIND_QUIETLY ON) # force to find Orcania quietly
     include(FindOrcania)
     find_package(Orcania ${ORCANIA_VERSION_REQUIRED} QUIET) # try to find orcania
     if (NOT ORCANIA_FOUND)
-        include(DownloadProject)
-        download_project(PROJ orcania # ... otherwise, download archive
-            URL "https://github.com/babelouest/orcania/archive/v${ORCANIA_VERSION_REQUIRED}.tar.gz"
-            QUIET)
-        add_subdirectory(${orcania_SOURCE_DIR} ${orcania_BINARY_DIR})
-        include_directories(${orcania_SOURCE_DIR}/include)
-        add_dependencies(ulfius orcania)
-        set(ORCANIA_LIBRARIES orcania)
-        set(LIBS ${LIBS} ${ORCANIA_LIBRARIES})
-        include_directories(${orcania_BINARY_DIR})
+        if (DOWNLOAD_DEPENDENCIES)
+            include(DownloadProject)
+            download_project(PROJ orcania # ... otherwise, download archive
+                URL "https://github.com/babelouest/orcania/archive/v${ORCANIA_VERSION_REQUIRED}.tar.gz"
+                QUIET)
+            add_subdirectory(${orcania_SOURCE_DIR} ${orcania_BINARY_DIR})
+            include_directories(${orcania_SOURCE_DIR}/include)
+            add_dependencies(ulfius orcania)
+            set(ORCANIA_LIBRARIES orcania)
+            set(LIBS ${LIBS} ${ORCANIA_LIBRARIES})
+            include_directories(${orcania_BINARY_DIR})
+        else ()
+            message( FATAL_ERROR "Orcania not found")
+        endif ()
     else()
         set(LIBS ${LIBS} ${ORCANIA_LIBRARIES})
         include_directories(${ORCANIA_INCLUDE_DIRS})
@@ -276,15 +282,19 @@ if (WITH_YDER)
         include(FindYder)
         find_package(Yder ${YDER_VERSION_REQUIRED} QUIET) # try to find Yder
         if (NOT YDER_FOUND)
-            include(DownloadProject)
-            download_project(PROJ yder # ... otherwise, download archive
-                              URL "https://github.com/babelouest/yder/archive/v${YDER_VERSION_REQUIRED}.tar.gz"
-                              QUIET)
-            add_subdirectory(${yder_SOURCE_DIR} ${yder_BINARY_DIR})
-            include_directories(${yder_SOURCE_DIR}/include)
-            add_dependencies(ulfius yder)
-            set(YDER_LIBRARIES yder orcania)
-            include_directories(${yder_BINARY_DIR})
+            if (DOWNLOAD_DEPENDENCIES)
+                include(DownloadProject)
+                download_project(PROJ yder # ... otherwise, download archive
+                                  URL "https://github.com/babelouest/yder/archive/v${YDER_VERSION_REQUIRED}.tar.gz"
+                                  QUIET)
+                add_subdirectory(${yder_SOURCE_DIR} ${yder_BINARY_DIR})
+                include_directories(${yder_SOURCE_DIR}/include)
+                add_dependencies(ulfius yder)
+                set(YDER_LIBRARIES yder orcania)
+                include_directories(${yder_BINARY_DIR})
+            else ()
+                message( FATAL_ERROR "Yder not found")
+            endif ()
         else()
             set(LIBS ${LIBS} ${YDER_LIBRARIES})
             include_directories(${YDER_INCLUDE_DIRS})

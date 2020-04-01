@@ -1,5 +1,10 @@
 # Ulfius Changelog
 
+## 2.6.6
+
+- Update doc generation
+- Fix jansson memoy management bug
+
 ## 2.6.5
 
 - Fix build on MinGW-w64
