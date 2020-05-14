@@ -249,6 +249,12 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
             }
 #endif
 
+            if (curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 1L) != CURLE_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting CURLOPT_NOPROGRESS option");
+              ret = U_ERROR_LIBCURL;
+              break;
+            }
+            
             // Set proxy if defined
             if (copy_request->proxy != NULL) {
               if (curl_easy_setopt(curl_handle, CURLOPT_PROXY, copy_request->proxy) != CURLE_OK) {
