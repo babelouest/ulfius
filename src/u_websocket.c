@@ -584,7 +584,7 @@ static int ulfius_websocket_connection_handshake(struct _u_request * request, st
   
   keys = u_map_enum_keys(request->map_header);
   for (i=0; keys[i] != NULL; i++) {
-    http_line = msprintf("%s: %s\r\n", keys[i], u_map_get(request->map_header, keys[i]));
+    http_line = msprintf("%s: %s\r\n", keys[i], u_map_get_case(request->map_header, keys[i]));
     ulfius_websocket_send_frame(websocket->websocket_manager, (uint8_t *)http_line, o_strlen(http_line));
     o_free(http_line);
     if (0 == o_strcmp("Sec-WebSocket-Protocol", keys[i])) {
@@ -628,7 +628,7 @@ static int ulfius_websocket_connection_handshake(struct _u_request * request, st
           } else if (0 == o_strcmp(key, "Sec-WebSocket-Extension")) {
             websocket->websocket_manager->extensions = o_strdup(value);
             websocket_response |= WEBSOCKET_RESPONSE_EXTENSION;
-          } else if (0 == o_strcmp(buffer, "Sec-WebSocket-Accept") && ulfius_check_handshake_response(u_map_get(request->map_header, "Sec-WebSocket-Key"), value) == U_OK) {
+          } else if (0 == o_strcmp(buffer, "Sec-WebSocket-Accept") && ulfius_check_handshake_response(u_map_get_case(request->map_header, "Sec-WebSocket-Key"), value) == U_OK) {
             websocket_response |= WEBSOCKET_RESPONSE_ACCEPT;
           }
           o_free(key);
