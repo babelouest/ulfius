@@ -1236,7 +1236,7 @@ START_TEST(test_ulfius_server_ca_trust)
 }
 END_TEST
 
-START_TEST(test_ulfius_client_certificate)
+START_TEST(test_ulfius_server_client_certificate_ca_trust)
 {
   struct _u_instance u_instance;
   struct _u_request request;
@@ -1302,6 +1302,61 @@ START_TEST(test_ulfius_client_certificate)
   ulfius_clean_instance(&u_instance);
 }
 END_TEST
+
+START_TEST(test_ulfius_server_client_certificate_no_ca_trust)
+{
+  struct _u_instance u_instance;
+  struct _u_request request;
+  struct _u_response response;
+  char * cert = get_file_content("cert/server.crt"), * key = get_file_content("cert/server.key");
+  
+  ck_assert_ptr_ne(cert, NULL);
+  ck_assert_ptr_ne(key, NULL);
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "cert_auth", NULL, 0, &callback_no_auth_client_cert, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "nocert_auth", NULL, 0, &callback_no_auth_client_cert, NULL), U_OK);
+  ck_assert_int_eq(ulfius_start_secure_framework(&u_instance, key, cert), U_OK);
+
+  // Test with a certificate
+  ulfius_init_request(&request);
+  request.http_url = o_strdup("https://localhost:8080/cert_auth");
+  request.check_server_certificate = 0;
+  request.client_cert_file = o_strdup("cert/client1.crt");
+  request.client_key_file = o_strdup("cert/client1.key");
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 200);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+  
+  // Test with a valid certificate signed by another CA (root2)
+  ulfius_init_request(&request);
+  request.http_url = o_strdup("https://localhost:8080/cert_auth");
+  request.check_server_certificate = 0;
+  request.client_cert_file = o_strdup("cert/client2.crt");
+  request.client_key_file = o_strdup("cert/client2.key");
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 200);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+
+  // Test without a certificate
+  ulfius_init_request(&request);
+  request.http_url = o_strdup("https://localhost:8080/nocert_auth");
+  request.check_server_certificate = 0;
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 200);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+  
+  o_free(cert);
+  o_free(key);
+  ulfius_stop_framework(&u_instance);
+  ulfius_clean_instance(&u_instance);
+}
+END_TEST
 #endif
 
 static Suite *ulfius_suite(void)
@@ -1328,7 +1383,8 @@ static Suite *ulfius_suite(void)
   tcase_add_test(tc_core, test_ulfius_follow_redirect);
 #ifndef U_DISABLE_GNUTLS
   tcase_add_test(tc_core, test_ulfius_server_ca_trust);
-  tcase_add_test(tc_core, test_ulfius_client_certificate);
+  tcase_add_test(tc_core, test_ulfius_server_client_certificate_ca_trust);
+  tcase_add_test(tc_core, test_ulfius_server_client_certificate_no_ca_trust);
 #endif
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
