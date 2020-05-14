@@ -105,90 +105,74 @@ int y_close_logs();
 #define U_STREAM_ERROR MHD_CONTENT_READER_END_WITH_ERROR
 #define U_STREAM_SIZE_UNKOWN MHD_SIZE_UNKNOWN
 
-/**
- * @def No error
-*/
-#define U_OK                 0
-/**
- * @def Error
-*/
-#define U_ERROR              1
-/**
- * @def Error in memory allocation
-*/
-#define U_ERROR_MEMORY       2
-/**
- * @def Error in input parameters
-*/
-#define U_ERROR_PARAMS       3
-/**
- * @def Error in libmicrohttpd execution
-*/
-#define U_ERROR_LIBMHD       4
-/**
- * @def Error in libcurl execution
-*/
-#define U_ERROR_LIBCURL      5
-/**
- * @def Something was not found
-*/
-#define U_ERROR_NOT_FOUND    6
-/**
- * @def Connection closed
-*/
-#define U_ERROR_DISCONNECTED 7
+#define U_OK                 0 ///< No error
+#define U_ERROR              1 ///< Error
+#define U_ERROR_MEMORY       2 ///< Error in memory allocation
+#define U_ERROR_PARAMS       3 ///< Error in input parameters
+#define U_ERROR_LIBMHD       4 ///< Error in libmicrohttpd execution
+#define U_ERROR_LIBCURL      5 ///< Error in libcurl execution
+#define U_ERROR_NOT_FOUND    6 ///< Something was not found
+#define U_ERROR_DISCONNECTED 7 ///< Connection closed
+
+#define U_CALLBACK_CONTINUE     0 ///< Callback exited with success, continue to next callback
+#define U_CALLBACK_COMPLETE     1 ///< Callback exited with success, exit callback list
+#define U_CALLBACK_UNAUTHORIZED 2 ///< Request is unauthorized, exit callback list and return status 401
+#define U_CALLBACK_ERROR        3 ///< Error during request process, exit callback list and return status 500
+
+#define U_COOKIE_SAME_SITE_NONE   0 ///< Set same_site cookie property to 0
+#define U_COOKIE_SAME_SITE_STRICT 1 ///< Set same_site cookie property to strict
+#define U_COOKIE_SAME_SITE_LAX    2 ///< Set same_site cookie property to lax
+
+#define U_USE_IPV4 0x0001 ///< Use instance in IPV4 mode only
+#define U_USE_IPV6 0x0010 ///< Use instance in IPV6 mode only
+#define U_USE_ALL (U_USE_IPV4|U_USE_IPV6) ///< Use instance in both IPV4 and IPV6 mode
+
+#define U_SSL_VERIFY_PEER     0x0001 ///< Verify TLS session with peers
+#define U_SSL_VERIFY_HOSTNAME 0x0010 ///< Verify TLS session with hostname
 
 /**
- * @def Callback exited with success, continue to next callback
-*/
-#define U_CALLBACK_CONTINUE     0
-/**
- * @def Callback exited with success, exit callback list
-*/
-#define U_CALLBACK_COMPLETE     1
-/**
- * @def Request is unauthorized, exit callback list and return status 401
-*/
-#define U_CALLBACK_UNAUTHORIZED 2 
-/**
- * @def Error during request process, exit callback list and return status 500
-*/
-#define U_CALLBACK_ERROR        3
-
-/**
- * @def Set same_site cookie property to 0
-*/
-#define U_COOKIE_SAME_SITE_NONE   0
-/**
- * @def Set same_site cookie property to strict
-*/
-#define U_COOKIE_SAME_SITE_STRICT 1
-/**
- * @def Set same_site cookie property to lax
-*/
-#define U_COOKIE_SAME_SITE_LAX    2
-
-/**
- * @def Use instance in IPV4 mode only
-*/
-#define U_USE_IPV4 0x0001
-/**
- * @def Use instance in IPV6 mode only
-*/
-#define U_USE_IPV6 0x0010
-/**
- * @def Use instance in both IPV4 and IPV6 mode
-*/
-#define U_USE_ALL (U_USE_IPV4|U_USE_IPV6)
-
-/**
- * @def Verify TLS session with peers
-*/
-#define U_SSL_VERIFY_PEER     0x0001
-/**
- * @def Verify TLS session with hostname
-*/
-#define U_SSL_VERIFY_HOSTNAME 0x0010
+ * Options available to set or get properties using
+ * ulfius_set_request_properties or ulfius_set_request_properties
+ */
+typedef enum {
+  U_OPT_NONE                          = 0, ///< Empty option to complete a ulfius_set_request_properties or ulfius_set_request_properties
+  U_OPT_HTTP_VERB                     = 1, ///< http method (GET, POST, PUT, DELETE, etc.), expected option value type: const char *
+  U_OPT_HTTP_URL                      = 2, ///< full url used to call this callback function or full url to call when used in a ulfius_send_http_request, expected option value type: const char *
+  U_OPT_HTTP_PROXY                    = 3, ///< proxy address to use for outgoing connections, used by ulfius_send_http_request, expected option value type: const char *
+#if MHD_VERSION >= 0x00095208
+  U_OPT_NETWORK_TYPE                  = 4, ///< Force connect to ipv4, ipv6 addresses or both, values available are U_USE_ALL, U_USE_IPV4 or U_USE_IPV6, expected option value type: unsigned short
+#endif
+  U_OPT_CHECK_SERVER_CERTIFICATE      = 5, ///< check server certificate and hostname, default true, used by ulfius_send_http_request, expected option value type: int
+  U_OPT_CHECK_SERVER_CERTIFICATE_FLAG = 6, ///< check certificate peer and or server hostname if check_server_certificate is enabled, values available are U_SSL_VERIFY_PEER, U_SSL_VERIFY_HOSTNAME or both, default value is both (U_SSL_VERIFY_PEER|U_SSL_VERIFY_HOSTNAME), used by ulfius_send_http_request, expected option value type: int
+  U_OPT_CHECK_PROXY_CERTIFICATE       = 7, ///< check proxy certificate and hostname, default true, used by ulfius_send_http_request, requires libcurl >= 7.52, expected option value type: int
+  U_OPT_CHECK_PROXY_CERTIFICATE_FLAG  = 8, ///< check certificate peer and or proxy hostname if check_proxy_certificate is enabled, values available are U_SSL_VERIFY_PEER, U_SSL_VERIFY_HOSTNAME or both, default value is both (U_SSL_VERIFY_PEER|U_SSL_VERIFY_HOSTNAME), used by ulfius_send_http_request, requires libcurl >= 7.52, expected option value type: int
+  U_OPT_FOLLOW_REDIRECT               = 9, ///< follow url redirections, used by ulfius_send_http_request, expected option value type: int
+  U_OPT_CA_PATH                       = 10, ///< specify a path to CA certificates instead of system path, used by ulfius_send_http_request, expected option value type: const char *
+  U_OPT_TIMEOUT                       = 11, ///< connection timeout used by ulfius_send_http_request, default is 0 _or_ Timeout in seconds to close the connection because of inactivity between the client and the server, expected option value type: unsigned long
+  U_OPT_AUTH_BASIC_USER               = 12, ///< basic authentication username, expected option value type: const char *
+  U_OPT_AUTH_BASIC_PASSWORD           = 13, ///< basic authentication password, expected option value type: const char *
+  U_OPT_URL_PARAMETER                 = 14, ///< Add to the map containing the url variables, both from the route and the ?key=value variables, expected option value type: const char *, const char *
+  U_OPT_HEADER_PARAMETER              = 15, ///< Add to the map containing the header variables, expected option value type: const char *, const char *
+  U_OPT_COOKIE_PARAMETER              = 16, ///< Add to the map containing the cookie variables, expected option value type: const char *, const char *
+  U_OPT_POST_BODY_PARAMETER           = 17, ///< Add to the map containing the post body variables (if available), expected option value type: const char *, const char *
+  U_OPT_URL_PARAMETER_REMOVE          = 18, ///< Remove from the map containing the url variables, both from the route and the ?key=value variables, expected option value type: const char *
+  U_OPT_HEADER_PARAMETER_REMOVE       = 19, ///< Remove from map containing the header variables, expected option value type: const char *
+  U_OPT_COOKIE_PARAMETER_REMOVE       = 20, ///< Remove from map containing the cookie variables, expected option value type: const char *
+  U_OPT_POST_BODY_PARAMETER_REMOVE    = 21, ///< Remove from map containing the post body variables (if available), expected option value type: const char *
+  U_OPT_BINARY_BODY                   = 22, ///< Set a raw body to the request or the reponse, expected option value type: const char *, size_t
+  U_OPT_STRING_BODY                   = 23, ///< Set a char * body to the request or the reponse, expected option value type: const char *
+#ifndef U_DISABLE_JANSSON
+  U_OPT_JSON_BODY                     = 24, ///< Set a stringified json_t * body to the request or the reponse, expected option value type: json_t *
+#endif
+#ifndef U_DISABLE_GNUTLS
+  U_OPT_CLIENT_CERT_FILE              = 25, ///< path to client certificate file for sending http requests with certificate authentication, available only if GnuTLS support is enabled, expected option value type: const char *
+  U_OPT_CLIENT_KEY_FILE               = 26, ///< path to client key file for sending http requests with certificate authentication, available only if GnuTLS support is enabled, expected option value type: const char *
+  U_OPT_CLIENT_KEY_PASSWORD           = 27, ///< password to unlock client key file, available only if GnuTLS support is enabled, expected option value type: const char *
+#endif
+  U_OPT_STATUS                        = 28, ///< HTTP response status code (200, 404, 500, etc), expected option value type: long
+  U_OPT_AUTH_REALM                    = 29, ///< realm to send to the client response on authenticationb failed, expected option value type: const char *
+  U_OPT_SHARED_DATA                   = 30  ///< any data shared between callback functions, must be allocated and freed by the callback functions, expected option value type: void *
+} u_option;
 
 /**
  * @}
@@ -263,10 +247,10 @@ struct _u_request {
   size_t               binary_body_length; /* !< length of raw body */
   unsigned int         callback_position; /* !< position of the current callback function in the callback list, starts at 0 */
 #ifndef U_DISABLE_GNUTLS
-  gnutls_x509_crt_t    client_cert; /* !< x509 certificate of the client if the instance uses client certificate authentication and the client is authenticated, available only if websocket support is enabled */
-  char *               client_cert_file; /* !< path to client certificate file for sending http requests with certificate authentication, available only if websocket support is enabled */
-  char *               client_key_file; /* !< path to client key file for sending http requests with certificate authentication, available only if websocket support is enabled */
-  char *               client_key_password; /* !< password to unlock client key file, available only if websocket support is enabled */
+  gnutls_x509_crt_t    client_cert; /* !< x509 certificate of the client if the instance uses client certificate authentication and the client is authenticated, available only if GnuTLS support is enabled */
+  char *               client_cert_file; /* !< path to client certificate file for sending http requests with certificate authentication, available only if GnuTLS support is enabled */
+  char *               client_key_file; /* !< path to client key file for sending http requests with certificate authentication, available only if GnuTLS support is enabled */
+  char *               client_key_password; /* !< password to unlock client key file, available only if GnuTLS support is enabled */
 #endif
 };
 
@@ -959,6 +943,13 @@ int ulfius_clean_request_full(struct _u_request * request);
 int ulfius_copy_request(struct _u_request * dest, const struct _u_request * source);
 
 /**
+ * ulfius_set_request_properties
+ * Set a list of properties to a request
+ * return U_OK on success
+ */
+int ulfius_set_request_properties(struct _u_request * request, ...);
+
+/**
  * ulfius_init_response
  * Initialize a response structure by allocating inner elements
  * @param response the response to initialize
@@ -1024,6 +1015,13 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
  * @return a heap-allocated response
  */
 struct _u_response * ulfius_duplicate_response(const struct _u_response * response);
+
+/**
+ * ulfius_set_response_properties
+ * Set a list of properties to a response
+ * return U_OK on success
+ */
+int ulfius_set_response_properties(struct _u_response * response, ...);
 
 /**
  * @}

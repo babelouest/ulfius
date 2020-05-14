@@ -23,6 +23,7 @@
  * 
  */
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -518,6 +519,195 @@ int ulfius_copy_request(struct _u_request * dest, const struct _u_request * sour
   } else {
     return U_ERROR_PARAMS;
   }
+}
+
+/**
+ * ulfius_set_request_properties
+ * Set a list of properties to a request
+ * return U_OK on success
+ */
+int ulfius_set_request_properties(struct _u_request * request, ...) {
+  u_option option;
+  int ret = U_OK;
+  const char * str_key, * str_value;
+  size_t size_value;
+#ifndef U_DISABLE_JANSSON
+  json_t * j_value;
+#endif
+  va_list vl;
+
+  if (request != NULL) {
+    va_start(vl, request);
+    for (option = va_arg(vl, uint); option != U_OPT_NONE && ret == U_OK; option = va_arg(vl, uint)) {
+      switch (option) {
+        case U_OPT_HTTP_VERB:
+          str_value = va_arg(vl, const char *);
+          o_free(request->http_verb);
+          if (o_strlen(str_value)) {
+            request->http_verb = o_strdup(str_value);
+          } else {
+            request->http_verb = NULL;
+          }
+          break;
+        case U_OPT_HTTP_URL:
+          str_value = va_arg(vl, const char *);
+          o_free(request->http_url);
+          if (o_strlen(str_value)) {
+            request->http_url = o_strdup(str_value);
+          } else {
+            request->http_url = NULL;
+          }
+          break;
+        case U_OPT_HTTP_PROXY:
+          str_value = va_arg(vl, const char *);
+          o_free(request->proxy);
+          if (o_strlen(str_value)) {
+            request->proxy = o_strdup(str_value);
+          } else {
+            request->proxy = NULL;
+          }
+          break;
+#if MHD_VERSION >= 0x00095208
+        case U_OPT_NETWORK_TYPE:
+          request->network_type = (unsigned short)va_arg(vl, int);
+          break;
+#endif
+        case U_OPT_CHECK_SERVER_CERTIFICATE:
+          request->check_server_certificate = va_arg(vl, int);
+          break;
+        case U_OPT_CHECK_SERVER_CERTIFICATE_FLAG:
+          request->check_server_certificate_flag = va_arg(vl, int);
+          break;
+        case U_OPT_CHECK_PROXY_CERTIFICATE:
+          request->check_proxy_certificate = va_arg(vl, int);
+          break;
+        case U_OPT_CHECK_PROXY_CERTIFICATE_FLAG:
+          request->check_proxy_certificate_flag = va_arg(vl, int);
+          break;
+        case U_OPT_FOLLOW_REDIRECT:
+          request->follow_redirect = va_arg(vl, int);
+          break;
+        case U_OPT_CA_PATH:
+          str_value = va_arg(vl, const char *);
+          o_free(request->ca_path);
+          if (o_strlen(str_value)) {
+            request->ca_path = o_strdup(str_value);
+          } else {
+            request->ca_path = NULL;
+          }
+          break;
+        case U_OPT_TIMEOUT:
+          request->timeout = va_arg(vl, unsigned long);
+          break;
+        case U_OPT_AUTH_BASIC_USER:
+          str_value = va_arg(vl, const char *);
+          o_free(request->auth_basic_user);
+          if (o_strlen(str_value)) {
+            request->auth_basic_user = o_strdup(str_value);
+          } else {
+            request->auth_basic_user = NULL;
+          }
+          break;
+        case U_OPT_AUTH_BASIC_PASSWORD:
+          str_value = va_arg(vl, const char *);
+          o_free(request->auth_basic_password);
+          if (o_strlen(str_value)) {
+            request->auth_basic_password = o_strdup(str_value);
+          } else {
+            request->auth_basic_password = NULL;
+          }
+          break;
+        case U_OPT_URL_PARAMETER:
+          str_key = va_arg(vl, const char *);
+          str_value = va_arg(vl, const char *);
+          ret = u_map_put(request->map_url, str_key, str_value);
+          break;
+        case U_OPT_HEADER_PARAMETER:
+          str_key = va_arg(vl, const char *);
+          str_value = va_arg(vl, const char *);
+          ret = u_map_put(request->map_header, str_key, str_value);
+          break;
+        case U_OPT_COOKIE_PARAMETER:
+          str_key = va_arg(vl, const char *);
+          str_value = va_arg(vl, const char *);
+          ret = u_map_put(request->map_cookie, str_key, str_value);
+          break;
+        case U_OPT_POST_BODY_PARAMETER:
+          str_key = va_arg(vl, const char *);
+          str_value = va_arg(vl, const char *);
+          ret = u_map_put(request->map_post_body, str_key, str_value);
+          break;
+        case U_OPT_URL_PARAMETER_REMOVE:
+          str_value = va_arg(vl, const char *);
+          ret = u_map_remove_from_key(request->map_url, str_value);
+          break;
+        case U_OPT_HEADER_PARAMETER_REMOVE:
+          str_value = va_arg(vl, const char *);
+          ret = u_map_remove_from_key(request->map_header, str_value);
+          break;
+        case U_OPT_COOKIE_PARAMETER_REMOVE:
+          str_value = va_arg(vl, const char *);
+          ret = u_map_remove_from_key(request->map_cookie, str_value);
+          break;
+        case U_OPT_POST_BODY_PARAMETER_REMOVE:
+          str_value = va_arg(vl, const char *);
+          ret = u_map_remove_from_key(request->map_post_body, str_value);
+          break;
+        case U_OPT_BINARY_BODY:
+          str_value = va_arg(vl, const char *);
+          size_value = va_arg(vl, size_t);
+          ret = ulfius_set_binary_body_request(request, str_value, size_value);
+          break;
+        case U_OPT_STRING_BODY:
+          str_value = va_arg(vl, const char *);
+          ret = ulfius_set_string_body_request(request, str_value);
+          break;
+#ifndef U_DISABLE_JANSSON
+        case U_OPT_JSON_BODY:
+          j_value = va_arg(vl, json_t *);
+          ret = ulfius_set_json_body_request(request, j_value);
+          break;
+#endif
+#ifndef U_DISABLE_GNUTLS
+        case U_OPT_CLIENT_CERT_FILE:
+          str_value = va_arg(vl, const char *);
+          o_free(request->client_cert_file);
+          if (o_strlen(str_value)) {
+            request->client_cert_file = o_strdup(str_value);
+          } else {
+            request->client_cert_file = NULL;
+          }
+          break;
+        case U_OPT_CLIENT_KEY_FILE:
+          str_value = va_arg(vl, const char *);
+          o_free(request->client_key_file);
+          if (o_strlen(str_value)) {
+            request->client_key_file = o_strdup(str_value);
+          } else {
+            request->client_key_file = NULL;
+          }
+          break;
+        case U_OPT_CLIENT_KEY_PASSWORD:
+          str_value = va_arg(vl, const char *);
+          o_free(request->client_key_password);
+          if (o_strlen(str_value)) {
+            request->client_key_password = o_strdup(str_value);
+          } else {
+            request->client_key_password = NULL;
+          }
+          break;
+#endif
+        default:
+          ret = U_ERROR_PARAMS;
+          break;
+      }
+    }
+    va_end(vl);
+  } else {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "Ulfius - Error input parameter");
+    ret = U_ERROR_PARAMS;
+  }
+  return ret;
 }
 
 /**

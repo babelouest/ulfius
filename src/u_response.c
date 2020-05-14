@@ -661,6 +661,80 @@ int ulfius_set_stream_response(struct _u_response * response,
   }
 }
 
+/**
+ * ulfius_set_response_properties
+ * Set a list of properties to a response
+ * return U_OK on success
+ */
+int ulfius_set_response_properties(struct _u_response * response, ...) {
+  u_option option;
+  int ret = U_OK;
+  const char * str_key, * str_value;
+  size_t size_value;
+#ifndef U_DISABLE_JANSSON
+  json_t * j_value;
+#endif
+  va_list vl;
+
+  if (response != NULL) {
+    va_start(vl, response);
+    for (option = va_arg(vl, uint); option != U_OPT_NONE && ret == U_OK; option = va_arg(vl, uint)) {
+      switch (option) {
+        case U_OPT_STATUS:
+          response->status = va_arg(vl, long);
+          break;
+        case U_OPT_HEADER_PARAMETER:
+          str_key = va_arg(vl, const char *);
+          str_value = va_arg(vl, const char *);
+          ret = u_map_put(response->map_header, str_key, str_value);
+          break;
+        case U_OPT_HEADER_PARAMETER_REMOVE:
+          str_key = va_arg(vl, const char *);
+          ret = u_map_remove_from_key(response->map_header, str_key);
+          break;
+        case U_OPT_AUTH_REALM:
+          str_value = va_arg(vl, const char *);
+          o_free(response->auth_realm);
+          if (o_strlen(str_value)) {
+            response->auth_realm = o_strdup(str_value);
+          } else {
+            response->auth_realm = NULL;
+          }
+          break;
+        case U_OPT_BINARY_BODY:
+          str_value = va_arg(vl, const char *);
+          size_value = va_arg(vl, size_t);
+          ret = ulfius_set_binary_body_response(response, response->status, str_value, size_value);
+          break;
+        case U_OPT_STRING_BODY:
+          str_value = va_arg(vl, const char *);
+          ret = ulfius_set_string_body_response(response, response->status, str_value);
+          break;
+#ifndef U_DISABLE_JANSSON
+        case U_OPT_JSON_BODY:
+          j_value = va_arg(vl, json_t *);
+          ret = ulfius_set_json_body_response(response, response->status, j_value);
+          break;
+#endif
+        case U_OPT_SHARED_DATA:
+          response->shared_data = va_arg(vl, void *);
+          break;
+        case U_OPT_TIMEOUT:
+          response->timeout = va_arg(vl, unsigned int);
+          break;
+        default:
+          ret = U_ERROR_PARAMS;
+          break;
+      }
+    }
+    va_end(vl);
+  } else {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "Ulfius - Error input parameter");
+    ret = U_ERROR_PARAMS;
+  }
+  return ret;
+}
+
 #ifndef U_DISABLE_JANSSON
 /**
  * ulfius_set_json_body_response
