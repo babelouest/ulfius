@@ -1,5 +1,12 @@
 # Ulfius Changelog
 
+## 2.6.7
+
+- Retrieve certificates in any https connection if present
+- Check header property case insensitive in websocket client
+- Add libcurl option `CURLOPT_NOPROGRESS` in `ulfius_send_http_streaming_request`
+- 
+
 ## 2.6.6
 
 - Update doc generation
