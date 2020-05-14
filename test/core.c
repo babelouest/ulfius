@@ -320,6 +320,159 @@ START_TEST(test_ulfius_request)
 }
 END_TEST
 
+START_TEST(test_ulfius_set_request_properties)
+{
+  struct _u_request req;
+  
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req,
+                                                 U_OPT_HTTP_VERB, HTTP_VERB,
+                                                 U_OPT_HTTP_URL, HTTP_URL,
+                                                 U_OPT_HTTP_PROXY, PROXY,
+#if MHD_VERSION >= 0x00095208
+                                                 U_OPT_NETWORK_TYPE, U_USE_IPV4,
+#endif
+                                                 U_OPT_CHECK_SERVER_CERTIFICATE, 0,
+                                                 U_OPT_CHECK_SERVER_CERTIFICATE_FLAG, U_SSL_VERIFY_PEER,
+                                                 U_OPT_CHECK_PROXY_CERTIFICATE, 0,
+                                                 U_OPT_CHECK_PROXY_CERTIFICATE_FLAG, U_SSL_VERIFY_HOSTNAME,
+                                                 U_OPT_FOLLOW_REDIRECT, 1,
+                                                 U_OPT_CA_PATH, CA_PATH,
+                                                 U_OPT_TIMEOUT, TIMEOUT,
+                                                 U_OPT_AUTH_BASIC_USER, AUTH_BASIC_USER,
+                                                 U_OPT_AUTH_BASIC_PASSWORD, AUTH_BASIC_PASSWORD,
+                                                 U_OPT_URL_PARAMETER, MAP_URL_KEY, MAP_URL_VALUE,
+                                                 U_OPT_HEADER_PARAMETER, MAP_HEADER_KEY, MAP_HEADER_VALUE,
+                                                 U_OPT_COOKIE_PARAMETER, MAP_COOKIE_KEY, MAP_COOKIE_VALUE,
+                                                 U_OPT_POST_BODY_PARAMETER, MAP_POST_BODY_KEY, MAP_POST_BODY_VALUE,
+                                                 U_OPT_BINARY_BODY, BINARY_BODY, BINARY_BODY_LEN,
+#ifndef U_DISABLE_GNUTLS
+                                                 U_OPT_CLIENT_CERT_FILE, CLIENT_CERT_FILE,
+                                                 U_OPT_CLIENT_KEY_FILE, CLIENT_KEY_FILE,
+                                                 U_OPT_CLIENT_KEY_PASSWORD, CLIENT_KEY_PASSWORD,
+#endif
+                                                 U_OPT_NONE), U_OK);
+
+  ck_assert_str_eq(req.http_verb, HTTP_VERB);
+  ck_assert_str_eq(req.http_url, HTTP_URL);
+  ck_assert_str_eq(req.proxy, PROXY);
+#if MHD_VERSION >= 0x00095208
+  ck_assert_int_eq(req.network_type, U_USE_IPV4);
+#endif
+  ck_assert_int_eq(req.check_server_certificate, 0);
+  ck_assert_int_eq(req.check_server_certificate_flag, U_SSL_VERIFY_PEER);
+  ck_assert_int_eq(req.check_proxy_certificate, 0);
+  ck_assert_int_eq(req.check_proxy_certificate_flag, U_SSL_VERIFY_HOSTNAME);
+  ck_assert_int_eq(req.follow_redirect, 1);
+  ck_assert_str_eq(req.ca_path, CA_PATH);
+  ck_assert_int_eq(req.timeout, TIMEOUT);
+  ck_assert_str_eq(req.auth_basic_user, AUTH_BASIC_USER);
+  ck_assert_str_eq(req.auth_basic_password, AUTH_BASIC_PASSWORD);
+  ck_assert_int_eq(u_map_count(req.map_url), 1);
+  ck_assert_str_eq(u_map_get(req.map_url, MAP_URL_KEY), MAP_URL_VALUE);
+  ck_assert_int_eq(u_map_count(req.map_header), 1);
+  ck_assert_str_eq(u_map_get(req.map_header, MAP_HEADER_KEY), MAP_HEADER_VALUE);
+  ck_assert_int_eq(u_map_count(req.map_cookie), 1);
+  ck_assert_str_eq(u_map_get(req.map_cookie, MAP_COOKIE_KEY), MAP_COOKIE_VALUE);
+  ck_assert_int_eq(u_map_count(req.map_post_body), 1);
+  ck_assert_str_eq(u_map_get(req.map_post_body, MAP_POST_BODY_KEY), MAP_POST_BODY_VALUE);
+  ck_assert_ptr_ne(req.binary_body, NULL);
+  ck_assert_int_eq(req.binary_body_length, o_strlen(BINARY_BODY));
+#ifndef U_DISABLE_GNUTLS
+  ck_assert_str_eq(req.client_cert_file, CLIENT_CERT_FILE);
+  ck_assert_str_eq(req.client_key_file, CLIENT_KEY_FILE);
+  ck_assert_str_eq(req.client_key_password, CLIENT_KEY_PASSWORD);
+#endif
+
+  ck_assert_int_eq(ulfius_set_request_properties(&req,
+                                                 U_OPT_STRING_BODY, STRING_BODY,
+                                                 U_OPT_URL_PARAMETER_REMOVE, MAP_URL_KEY,
+                                                 U_OPT_HEADER_PARAMETER_REMOVE, MAP_HEADER_KEY,
+                                                 U_OPT_COOKIE_PARAMETER_REMOVE, MAP_COOKIE_KEY,
+                                                 U_OPT_POST_BODY_PARAMETER_REMOVE, MAP_POST_BODY_KEY,
+                                                 U_OPT_NONE), U_OK);
+  ck_assert_ptr_ne(req.binary_body, NULL);
+  ck_assert_int_eq(req.binary_body_length, o_strlen(STRING_BODY));
+  ck_assert_int_eq(u_map_count(req.map_url), 0);
+  ck_assert_int_eq(u_map_count(req.map_header), 0);
+  ck_assert_int_eq(u_map_count(req.map_cookie), 0);
+  ck_assert_int_eq(u_map_count(req.map_post_body), 0);
+
+#ifndef U_DISABLE_JANSSON
+  json_t * j_body = json_pack("{ss}", "result", "body");
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_JSON_BODY, j_body, U_OPT_NONE), U_OK);
+  ck_assert_str_eq(req.binary_body, "{\"result\":\"body\"}");
+  json_decref(j_body);
+#endif
+
+  // Test memory leaks on multiple ulfius_set_request_properties for the same properties
+  ck_assert_int_eq(ulfius_set_request_properties(&req,
+                                                 U_OPT_HTTP_VERB, HTTP_VERB,
+                                                 U_OPT_HTTP_URL, HTTP_URL,
+                                                 U_OPT_HTTP_PROXY, PROXY,
+#if MHD_VERSION >= 0x00095208
+                                                 U_OPT_NETWORK_TYPE, U_USE_IPV4,
+#endif
+                                                 U_OPT_CHECK_SERVER_CERTIFICATE, 0,
+                                                 U_OPT_CHECK_SERVER_CERTIFICATE_FLAG, U_SSL_VERIFY_PEER,
+                                                 U_OPT_CHECK_PROXY_CERTIFICATE, 0,
+                                                 U_OPT_CHECK_PROXY_CERTIFICATE_FLAG, U_SSL_VERIFY_HOSTNAME,
+                                                 U_OPT_FOLLOW_REDIRECT, 1,
+                                                 U_OPT_CA_PATH, CA_PATH,
+                                                 U_OPT_TIMEOUT, TIMEOUT,
+                                                 U_OPT_AUTH_BASIC_USER, AUTH_BASIC_USER,
+                                                 U_OPT_AUTH_BASIC_PASSWORD, AUTH_BASIC_PASSWORD,
+                                                 U_OPT_URL_PARAMETER, MAP_URL_KEY, MAP_URL_VALUE,
+                                                 U_OPT_HEADER_PARAMETER, MAP_HEADER_KEY, MAP_HEADER_VALUE,
+                                                 U_OPT_COOKIE_PARAMETER, MAP_COOKIE_KEY, MAP_COOKIE_VALUE,
+                                                 U_OPT_POST_BODY_PARAMETER, MAP_POST_BODY_KEY, MAP_POST_BODY_VALUE,
+                                                 U_OPT_BINARY_BODY, BINARY_BODY, BINARY_BODY_LEN,
+#ifndef U_DISABLE_GNUTLS
+                                                 U_OPT_CLIENT_CERT_FILE, CLIENT_CERT_FILE,
+                                                 U_OPT_CLIENT_KEY_FILE, CLIENT_KEY_FILE,
+                                                 U_OPT_CLIENT_KEY_PASSWORD, CLIENT_KEY_PASSWORD,
+#endif
+                                                 U_OPT_NONE), U_OK);
+
+  ck_assert_str_eq(req.http_verb, HTTP_VERB);
+  ck_assert_str_eq(req.http_url, HTTP_URL);
+  ck_assert_str_eq(req.proxy, PROXY);
+#if MHD_VERSION >= 0x00095208
+  ck_assert_int_eq(req.network_type, U_USE_IPV4);
+#endif
+  ck_assert_int_eq(req.check_server_certificate, 0);
+  ck_assert_int_eq(req.check_server_certificate_flag, U_SSL_VERIFY_PEER);
+  ck_assert_int_eq(req.check_proxy_certificate, 0);
+  ck_assert_int_eq(req.check_proxy_certificate_flag, U_SSL_VERIFY_HOSTNAME);
+  ck_assert_int_eq(req.follow_redirect, 1);
+  ck_assert_str_eq(req.ca_path, CA_PATH);
+  ck_assert_int_eq(req.timeout, TIMEOUT);
+  ck_assert_str_eq(req.auth_basic_user, AUTH_BASIC_USER);
+  ck_assert_str_eq(req.auth_basic_password, AUTH_BASIC_PASSWORD);
+  ck_assert_int_eq(u_map_count(req.map_url), 1);
+  ck_assert_str_eq(u_map_get(req.map_url, MAP_URL_KEY), MAP_URL_VALUE);
+#ifndef U_DISABLE_JANSSON
+  ck_assert_int_eq(u_map_count(req.map_header), 2); // contains keys MAP_HEADER_KEY and "Content-Type"
+#else
+  ck_assert_int_eq(u_map_count(req.map_header), 1);
+#endif
+  ck_assert_str_eq(u_map_get(req.map_header, MAP_HEADER_KEY), MAP_HEADER_VALUE);
+  ck_assert_int_eq(u_map_count(req.map_cookie), 1);
+  ck_assert_str_eq(u_map_get(req.map_cookie, MAP_COOKIE_KEY), MAP_COOKIE_VALUE);
+  ck_assert_int_eq(u_map_count(req.map_post_body), 1);
+  ck_assert_str_eq(u_map_get(req.map_post_body, MAP_POST_BODY_KEY), MAP_POST_BODY_VALUE);
+  ck_assert_ptr_ne(req.binary_body, NULL);
+  ck_assert_int_eq(req.binary_body_length, o_strlen(BINARY_BODY));
+#ifndef U_DISABLE_GNUTLS
+  ck_assert_str_eq(req.client_cert_file, CLIENT_CERT_FILE);
+  ck_assert_str_eq(req.client_key_file, CLIENT_KEY_FILE);
+  ck_assert_str_eq(req.client_key_password, CLIENT_KEY_PASSWORD);
+#endif
+
+  ulfius_clean_request(&req);
+}
+END_TEST
+
 START_TEST(test_ulfius_request_limits)
 {
   struct _u_request request;
@@ -570,6 +723,72 @@ START_TEST(test_ulfius_response)
 }
 END_TEST
 
+START_TEST(test_ulfius_set_response_properties)
+{
+  struct _u_response resp;
+  
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  
+  ck_assert_int_eq(ulfius_set_response_properties(&resp,
+                                                  U_OPT_STATUS, STATUS,
+                                                  U_OPT_HEADER_PARAMETER, MAP_HEADER_KEY, MAP_HEADER_VALUE,
+                                                  U_OPT_AUTH_REALM, AUTH_REALM,
+                                                  U_OPT_BINARY_BODY, BINARY_BODY, BINARY_BODY_LEN,
+                                                  U_OPT_SHARED_DATA, SHARED_DATA,
+                                                  U_OPT_TIMEOUT, TIMEOUT,
+                                                  U_OPT_NONE), U_OK);
+
+  ck_assert_int_eq(resp.status, STATUS);
+  ck_assert_int_eq(u_map_count(resp.map_header), 1);
+  ck_assert_str_eq(u_map_get(resp.map_header, MAP_HEADER_KEY), MAP_HEADER_VALUE);
+  ck_assert_str_eq(resp.auth_realm, AUTH_REALM);
+  ck_assert_ptr_ne(resp.binary_body, NULL);
+  ck_assert_int_eq(resp.binary_body_length, BINARY_BODY_LEN);
+  ck_assert_ptr_eq(resp.shared_data, (void *)SHARED_DATA);
+  ck_assert_int_eq(resp.timeout, TIMEOUT);
+  
+  ck_assert_int_eq(ulfius_set_response_properties(&resp,
+                                                  U_OPT_STRING_BODY, STRING_BODY,
+                                                  U_OPT_HEADER_PARAMETER_REMOVE, MAP_HEADER_KEY,
+                                                  U_OPT_NONE), U_OK);
+  ck_assert_ptr_ne(resp.binary_body, NULL);
+  ck_assert_int_eq(resp.binary_body_length, o_strlen(STRING_BODY));
+  ck_assert_int_eq(u_map_count(resp.map_header), 0);
+  
+#ifndef U_DISABLE_JANSSON
+  json_t * j_body = json_pack("{ss}", "result", "body");
+  ck_assert_int_eq(ulfius_set_response_properties(&resp, U_OPT_JSON_BODY, j_body, U_OPT_NONE), U_OK);
+  ck_assert_str_eq(resp.binary_body, "{\"result\":\"body\"}");
+  json_decref(j_body);
+#endif
+
+  // Test memory leaks on multiple ulfius_set_request_properties for the same properties
+  ck_assert_int_eq(ulfius_set_response_properties(&resp,
+                                                  U_OPT_STATUS, STATUS,
+                                                  U_OPT_HEADER_PARAMETER, MAP_HEADER_KEY, MAP_HEADER_VALUE,
+                                                  U_OPT_AUTH_REALM, AUTH_REALM,
+                                                  U_OPT_BINARY_BODY, BINARY_BODY, BINARY_BODY_LEN,
+                                                  U_OPT_SHARED_DATA, SHARED_DATA,
+                                                  U_OPT_TIMEOUT, TIMEOUT,
+                                                  U_OPT_NONE), U_OK);
+
+  ck_assert_int_eq(resp.status, STATUS);
+#ifndef U_DISABLE_JANSSON
+  ck_assert_int_eq(u_map_count(resp.map_header), 2); // contains keys MAP_HEADER_KEY and "Content-Type"
+#else
+  ck_assert_int_eq(u_map_count(resp.map_header), 1);
+#endif
+  ck_assert_str_eq(u_map_get(resp.map_header, MAP_HEADER_KEY), MAP_HEADER_VALUE);
+  ck_assert_str_eq(resp.auth_realm, AUTH_REALM);
+  ck_assert_ptr_ne(resp.binary_body, NULL);
+  ck_assert_int_eq(resp.binary_body_length, BINARY_BODY_LEN);
+  ck_assert_ptr_eq(resp.shared_data, (void *)SHARED_DATA);
+  ck_assert_int_eq(resp.timeout, TIMEOUT);
+  
+  ck_assert_int_eq(ulfius_clean_response(&resp), U_OK);
+}
+END_TEST
+
 START_TEST(test_endpoint)
 {
   struct _u_instance u_instance;
@@ -784,8 +1003,10 @@ static Suite *ulfius_suite(void)
 	tc_core = tcase_create("test_ulfius_core");
 	tcase_add_test(tc_core, test_ulfius_init_instance);
 	tcase_add_test(tc_core, test_ulfius_request);
+	tcase_add_test(tc_core, test_ulfius_set_request_properties);
 	tcase_add_test(tc_core, test_ulfius_request_limits);
 	tcase_add_test(tc_core, test_ulfius_response);
+	tcase_add_test(tc_core, test_ulfius_set_response_properties);
 	tcase_add_test(tc_core, test_endpoint);
 	tcase_add_test(tc_core, test_endpoint_weirder);
 	tcase_add_test(tc_core, test_ulfius_start_instance);
