@@ -470,8 +470,10 @@ int ulfius_start_secure_ca_trust_framework(struct _u_instance * u_instance, cons
  */
 int ulfius_start_framework_with_mhd_options(struct _u_instance * u_instance, unsigned int mhd_flags, struct MHD_OptionItem * options);
 
+/**
+ * Internal functions externalized to use ulfius_start_framework_with_mhd_options
+ */
 void mhd_request_completed (void *cls, struct MHD_Connection *connection, void **con_cls, enum MHD_RequestTerminationCode toe);
-
 void * ulfius_uri_logger (void * cls, const char * uri);
 
 /**
