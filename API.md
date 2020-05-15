@@ -458,6 +458,26 @@ int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * 
  * return U_OK on success
  */
 int ulfius_start_secure_ca_trust_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem, const char * root_ca_pem);
+
+/**
+ * ulfius_start_framework_with_mhd_options
+ * Initializes the framework and run the webservice based on the specified MHD options table given in parameter
+ * Read https://www.gnu.org/software/libmicrohttpd/tutorial.html for more information
+ * This is for user who know what they do, Ulfius' options used in other `ulfius_start_framework_*`
+ * are good for most use cases where you need a multi-threaded HTTP webservice
+ * Some struct MHD_OptionItem may cause unexpected problems with Ulfius API
+ * If you find an unresolved issue with this function you can open an issue in GitHub
+ * But some issues may not be solvable if fixing them would break Ulfius API or philosophy
+ * i.e.: you're on your own
+ * @param u_instance pointer to a struct _u_instance that describe its port and bind address
+ * @param mhd_flags OR-ed combination of MHD_FLAG values
+ * @param mhd_ops struct MHD_OptionItem * options table, 
+ * - MUST contain an option with the fllowing value: {.option = MHD_OPTION_NOTIFY_COMPLETED; .value = (intptr_t)mhd_request_completed; .ptr_value = NULL;}
+ * - MUST contain an option with the fllowing value: {.option = MHD_OPTION_URI_LOG_CALLBACK; .value = (intptr_t)ulfius_uri_logger; .ptr_value = NULL;}
+ * - MUST end with a terminal struct MHD_OptionItem: {.option = MHD_OPTION_END; .value = 0; .ptr_value = NULL;}
+ * @return U_OK on success
+ */
+int ulfius_start_framework_with_mhd_options(struct _u_instance * u_instance, unsigned int mhd_flags, struct MHD_OptionItem * options);
 ```
 
 In your program, where you want to start the web server, execute the function `ulfius_start_framework(struct _u_instance * u_instance)` for a non-secure http connection. Use the function `ulfius_start_secure_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem)` for a secure https connection, using a valid private key and a valid corresponding server certificate, see openssl documentation for certificate generation. Finally, use the function `int ulfius_start_secure_ca_trust_framework(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem, const char * root_ca_pem)` to start a secure https connection and be able to authenticate clients with a certificate.
@@ -798,7 +818,7 @@ Options available:
 | U_OPT_STATUS | HTTP response status code (200, 404, 500, etc), expected option value type: long |
 | U_OPT_AUTH_REALM | realm to send to the client response on authenticationb failed, expected option value type: const char * |
 | U_OPT_SHARED_DATA | any data shared between callback functions, must be allocated and freed by the callback functions, expected option value type: void * |
-| U_OPT_TIMEOUT | connection timeout used by ulfius_send_http_request, default is 0 _or_ Timeout in seconds to close the connection because of inactivity between the client and the server, expected option value type: long |
+| U_OPT_TIMEOUT | Timeout in seconds to close the connection because of inactivity between the client and the server, expected option value type: long |
 | U_OPT_HEADER_PARAMETER | Add to the map containing the header variables, expected option value type: const char *, const char * |
 | U_OPT_HEADER_PARAMETER_REMOVE | Remove from map containing the header variables, expected option value type: const char * |
 | U_OPT_BINARY_BODY | Set a raw body to the request or the reponse, expected option value type: const char *, size_t |
