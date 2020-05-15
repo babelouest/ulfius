@@ -597,7 +597,7 @@ int ulfius_set_request_properties(struct _u_request * request, ...) {
           }
           break;
         case U_OPT_TIMEOUT:
-          request->timeout = va_arg(vl, unsigned long);
+          request->timeout = (unsigned long)va_arg(vl, int);
           break;
         case U_OPT_AUTH_BASIC_USER:
           str_value = va_arg(vl, const char *);
