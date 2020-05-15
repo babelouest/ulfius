@@ -186,7 +186,7 @@ static int ulfius_validate_instance(const struct _u_instance * u_instance) {
 /**
  * Internal method used to duplicate the full url before it's manipulated and modified by MHD
  */
-static void * ulfius_uri_logger (void * cls, const char * uri) {
+void * ulfius_uri_logger (void * cls, const char * uri) {
   struct connection_info_struct * con_info = o_malloc (sizeof (struct connection_info_struct));
   UNUSED(cls);
   
@@ -263,7 +263,7 @@ static int ulfius_get_body_from_response(struct _u_response * response, void ** 
  * mhd_request_completed
  * function used to clean data allocated after a web call is complete
  */
-static void mhd_request_completed (void *cls, struct MHD_Connection *connection,
+void mhd_request_completed (void *cls, struct MHD_Connection *connection,
                         void **con_cls, enum MHD_RequestTerminationCode toe) {
   struct connection_info_struct *con_info = *con_cls;
   UNUSED(toe);
@@ -1045,6 +1045,44 @@ int ulfius_start_secure_ca_trust_framework(struct _u_instance * u_instance, cons
   }
 }
 #endif
+
+/**
+ * ulfius_start_framework_with_mhd_options
+ * Initializes the framework and run the webservice based on the specified MHD options table given in parameter
+ * Read https://www.gnu.org/software/libmicrohttpd/tutorial.html for more information
+ * This is for user who know what they do, Ulfius' options used in other `ulfius_start_framework_*`
+ * are good for most use cases where you need a multi-threaded HTTP webservice
+ * Some struct MHD_OptionItem may cause unexpected problems with Ulfius API
+ * If you find an unresolved issue with this function you can open an issue in GitHub
+ * But some issues may not be solvable if fixing them would break Ulfius API or philosophy
+ * i.e.: you're on your own
+ * @param u_instance pointer to a struct _u_instance that describe its port and bind address
+ * @param mhd_flags OR-ed combination of MHD_FLAG values
+ * @param mhd_ops struct MHD_OptionItem * options table
+ * - MUST contain an option with the fllowing value: {.option = MHD_OPTION_NOTIFY_COMPLETED; .value = (intptr_t)mhd_request_completed; .ptr_value = NULL;}
+ * - MUST contain an option with the fllowing value: {.option = MHD_OPTION_URI_LOG_CALLBACK; .value = (intptr_t)ulfius_uri_logger; .ptr_value = NULL;}
+ * - MUST end with a terminal struct MHD_OptionItem: {.option = MHD_OPTION_END; .value = 0; .ptr_value = NULL;}
+ * @return U_OK on success
+ */
+int ulfius_start_framework_with_mhd_options(struct _u_instance * u_instance, unsigned int mhd_flags, struct MHD_OptionItem * mhd_ops) {
+  if (u_instance == NULL) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_start_framework_with_mhd_options - Error, u_instance is NULL");
+    return U_ERROR_PARAMS;
+  } else if (mhd_ops == NULL) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_start_framework_with_mhd_options - Error, mhd_ops is NULL");
+    return U_ERROR_PARAMS;
+  } else {
+    u_instance->mhd_daemon = MHD_start_daemon (mhd_flags, u_instance->port, NULL, NULL, &ulfius_webservice_dispatcher, (void *)u_instance, MHD_OPTION_ARRAY, mhd_ops, MHD_OPTION_END);
+    if (u_instance->mhd_daemon != NULL) {
+      u_instance->status = U_STATUS_RUNNING;
+      return U_OK;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_start_framework_with_mhd_options - Error MHD_start_daemon, aborting");
+      u_instance->status = U_STATUS_ERROR;
+      return U_ERROR_LIBMHD;
+    }
+  }
+}
 
 /**
  * ulfius_stop_framework
