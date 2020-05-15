@@ -1,0 +1,421 @@
+==424492== Memcheck, a memory error detector
+==424492== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==424492== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
+==424492== Command: ./websocket
+==424492== 
+==424492== 
+==424492== HEAP SUMMARY:
+==424492==     in use at exit: 96,272 bytes in 713 blocks
+==424492==   total heap usage: 4,175 allocs, 3,462 frees, 547,369 bytes allocated
+==424492== 
+==424492== 16 bytes in 1 blocks are still reachable in loss record 1 of 35
+==424492==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4D3CC50: gnutls_rnd (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4A77F65: random_at_most (u_websocket.c:1457)
+==424492==    by 0x4A78057: rand_string (u_websocket.c:1475)
+==424492==    by 0x4A7827A: ulfius_set_websocket_request (u_websocket.c:1516)
+==424492==    by 0x10B19F: test_websocket_ulfius_set_websocket_request (websocket.c:103)
+==424492==    by 0x10EDEA: tcase_run_tfun_nofork.isra.9 (in /media/donjon/workspace/angharad/ulfius/test/websocket)
+==424492==    by 0x10F1AB: srunner_run (in /media/donjon/workspace/angharad/ulfius/test/websocket)
+==424492==    by 0x10CAD9: main (websocket.c:253)
+==424492== 
+==424492== 32 bytes in 1 blocks are still reachable in loss record 2 of 35
+==424492==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4D47EE2: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4E081A3: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D2D977: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D01564: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4011B89: call_init.part.0 (dl-init.c:72)
+==424492==    by 0x4011C90: call_init (dl-init.c:30)
+==424492==    by 0x4011C90: _dl_init (dl-init.c:119)
+==424492==    by 0x4001139: ??? (in /lib/x86_64-linux-gnu/ld-2.31.so)
+==424492== 
+==424492== 32 bytes in 1 blocks are still reachable in loss record 3 of 35
+==424492==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4D47EE2: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4E081BF: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D2D977: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D01564: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4011B89: call_init.part.0 (dl-init.c:72)
+==424492==    by 0x4011C90: call_init (dl-init.c:30)
+==424492==    by 0x4011C90: _dl_init (dl-init.c:119)
+==424492==    by 0x4001139: ??? (in /lib/x86_64-linux-gnu/ld-2.31.so)
+==424492== 
+==424492== 32 bytes in 1 blocks are still reachable in loss record 4 of 35
+==424492==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4D47EE2: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4E081E2: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D2D977: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D01564: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4011B89: call_init.part.0 (dl-init.c:72)
+==424492==    by 0x4011C90: call_init (dl-init.c:30)
+==424492==    by 0x4011C90: _dl_init (dl-init.c:119)
+==424492==    by 0x4001139: ??? (in /lib/x86_64-linux-gnu/ld-2.31.so)
+==424492== 
+==424492== 32 bytes in 1 blocks are still reachable in loss record 5 of 35
+==424492==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4D47EE2: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4E081FE: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D2D977: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D01564: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4011B89: call_init.part.0 (dl-init.c:72)
+==424492==    by 0x4011C90: call_init (dl-init.c:30)
+==424492==    by 0x4011C90: _dl_init (dl-init.c:119)
+==424492==    by 0x4001139: ??? (in /lib/x86_64-linux-gnu/ld-2.31.so)
+==424492== 
+==424492== 32 bytes in 1 blocks are still reachable in loss record 6 of 35
+==424492==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4D47EE2: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4E0821A: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D2D977: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D01564: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4011B89: call_init.part.0 (dl-init.c:72)
+==424492==    by 0x4011C90: call_init (dl-init.c:30)
+==424492==    by 0x4011C90: _dl_init (dl-init.c:119)
+==424492==    by 0x4001139: ??? (in /lib/x86_64-linux-gnu/ld-2.31.so)
+==424492== 
+==424492== 32 bytes in 1 blocks are still reachable in loss record 7 of 35
+==424492==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4D47EE2: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4E08259: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D2D977: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D01564: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4011B89: call_init.part.0 (dl-init.c:72)
+==424492==    by 0x4011C90: call_init (dl-init.c:30)
+==424492==    by 0x4011C90: _dl_init (dl-init.c:119)
+==424492==    by 0x4001139: ??? (in /lib/x86_64-linux-gnu/ld-2.31.so)
+==424492== 
+==424492== 32 bytes in 1 blocks are still reachable in loss record 8 of 35
+==424492==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4D47EE2: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4E08275: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D2D977: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D01564: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4011B89: call_init.part.0 (dl-init.c:72)
+==424492==    by 0x4011C90: call_init (dl-init.c:30)
+==424492==    by 0x4011C90: _dl_init (dl-init.c:119)
+==424492==    by 0x4001139: ??? (in /lib/x86_64-linux-gnu/ld-2.31.so)
+==424492== 
+==424492== 32 bytes in 1 blocks are still reachable in loss record 9 of 35
+==424492==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4D47EE2: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4E08291: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D2D977: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D01564: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4011B89: call_init.part.0 (dl-init.c:72)
+==424492==    by 0x4011C90: call_init (dl-init.c:30)
+==424492==    by 0x4011C90: _dl_init (dl-init.c:119)
+==424492==    by 0x4001139: ??? (in /lib/x86_64-linux-gnu/ld-2.31.so)
+==424492== 
+==424492== 32 bytes in 1 blocks are still reachable in loss record 10 of 35
+==424492==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4D47EE2: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4E082B4: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D2D977: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D01564: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4011B89: call_init.part.0 (dl-init.c:72)
+==424492==    by 0x4011C90: call_init (dl-init.c:30)
+==424492==    by 0x4011C90: _dl_init (dl-init.c:119)
+==424492==    by 0x4001139: ??? (in /lib/x86_64-linux-gnu/ld-2.31.so)
+==424492== 
+==424492== 32 bytes in 1 blocks are still reachable in loss record 11 of 35
+==424492==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4D47EE2: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4E082D0: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D2D977: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D01564: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4011B89: call_init.part.0 (dl-init.c:72)
+==424492==    by 0x4011C90: call_init (dl-init.c:30)
+==424492==    by 0x4011C90: _dl_init (dl-init.c:119)
+==424492==    by 0x4001139: ??? (in /lib/x86_64-linux-gnu/ld-2.31.so)
+==424492== 
+==424492== 32 bytes in 1 blocks are still reachable in loss record 12 of 35
+==424492==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4D47EE2: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4E082EC: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D2D977: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D01564: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4011B89: call_init.part.0 (dl-init.c:72)
+==424492==    by 0x4011C90: call_init (dl-init.c:30)
+==424492==    by 0x4011C90: _dl_init (dl-init.c:119)
+==424492==    by 0x4001139: ??? (in /lib/x86_64-linux-gnu/ld-2.31.so)
+==424492== 
+==424492== 32 bytes in 1 blocks are still reachable in loss record 13 of 35
+==424492==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4D47EE2: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4E08308: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D2D977: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D01564: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4011B89: call_init.part.0 (dl-init.c:72)
+==424492==    by 0x4011C90: call_init (dl-init.c:30)
+==424492==    by 0x4011C90: _dl_init (dl-init.c:119)
+==424492==    by 0x4001139: ??? (in /lib/x86_64-linux-gnu/ld-2.31.so)
+==424492== 
+==424492== 32 bytes in 1 blocks are still reachable in loss record 14 of 35
+==424492==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4D47EE2: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4E08324: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D2D977: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D01564: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4011B89: call_init.part.0 (dl-init.c:72)
+==424492==    by 0x4011C90: call_init (dl-init.c:30)
+==424492==    by 0x4011C90: _dl_init (dl-init.c:119)
+==424492==    by 0x4001139: ??? (in /lib/x86_64-linux-gnu/ld-2.31.so)
+==424492== 
+==424492== 32 bytes in 1 blocks are still reachable in loss record 15 of 35
+==424492==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4D47EE2: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4E08340: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D2D977: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D01564: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4011B89: call_init.part.0 (dl-init.c:72)
+==424492==    by 0x4011C90: call_init (dl-init.c:30)
+==424492==    by 0x4011C90: _dl_init (dl-init.c:119)
+==424492==    by 0x4001139: ??? (in /lib/x86_64-linux-gnu/ld-2.31.so)
+==424492== 
+==424492== 32 bytes in 1 blocks are still reachable in loss record 16 of 35
+==424492==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4D47EE2: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4E0835C: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D2D977: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D01564: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4011B89: call_init.part.0 (dl-init.c:72)
+==424492==    by 0x4011C90: call_init (dl-init.c:30)
+==424492==    by 0x4011C90: _dl_init (dl-init.c:119)
+==424492==    by 0x4001139: ??? (in /lib/x86_64-linux-gnu/ld-2.31.so)
+==424492== 
+==424492== 32 bytes in 1 blocks are still reachable in loss record 17 of 35
+==424492==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4D47EE2: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4E083FB: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D2D977: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D01564: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4011B89: call_init.part.0 (dl-init.c:72)
+==424492==    by 0x4011C90: call_init (dl-init.c:30)
+==424492==    by 0x4011C90: _dl_init (dl-init.c:119)
+==424492==    by 0x4001139: ??? (in /lib/x86_64-linux-gnu/ld-2.31.so)
+==424492== 
+==424492== 32 bytes in 1 blocks are still reachable in loss record 18 of 35
+==424492==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4D47EE2: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4E08417: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D2D977: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D01564: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4011B89: call_init.part.0 (dl-init.c:72)
+==424492==    by 0x4011C90: call_init (dl-init.c:30)
+==424492==    by 0x4011C90: _dl_init (dl-init.c:119)
+==424492==    by 0x4001139: ??? (in /lib/x86_64-linux-gnu/ld-2.31.so)
+==424492== 
+==424492== 32 bytes in 1 blocks are still reachable in loss record 19 of 35
+==424492==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4D47EE2: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4E08433: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D2D977: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D01564: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4011B89: call_init.part.0 (dl-init.c:72)
+==424492==    by 0x4011C90: call_init (dl-init.c:30)
+==424492==    by 0x4011C90: _dl_init (dl-init.c:119)
+==424492==    by 0x4001139: ??? (in /lib/x86_64-linux-gnu/ld-2.31.so)
+==424492== 
+==424492== 32 bytes in 1 blocks are still reachable in loss record 20 of 35
+==424492==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4D47EE2: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4E0844F: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D2D977: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D01564: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4011B89: call_init.part.0 (dl-init.c:72)
+==424492==    by 0x4011C90: call_init (dl-init.c:30)
+==424492==    by 0x4011C90: _dl_init (dl-init.c:119)
+==424492==    by 0x4001139: ??? (in /lib/x86_64-linux-gnu/ld-2.31.so)
+==424492== 
+==424492== 36 bytes in 1 blocks are still reachable in loss record 21 of 35
+==424492==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x401F53E: strdup (strdup.c:42)
+==424492==    by 0x4019A81: _dl_load_cache_lookup (dl-cache.c:320)
+==424492==    by 0x400A989: _dl_map_object (dl-load.c:2102)
+==424492==    by 0x4015D36: dl_open_worker (dl-open.c:513)
+==424492==    by 0x49CA727: _dl_catch_exception (dl-error-skeleton.c:208)
+==424492==    by 0x40155F9: _dl_open (dl-open.c:837)
+==424492==    by 0x49C96D0: do_dlopen (dl-libc.c:96)
+==424492==    by 0x49CA727: _dl_catch_exception (dl-error-skeleton.c:208)
+==424492==    by 0x49CA7F2: _dl_catch_error (dl-error-skeleton.c:227)
+==424492==    by 0x49C9804: dlerror_run (dl-libc.c:46)
+==424492==    by 0x49C9804: __libc_dlopen_mode (dl-libc.c:195)
+==424492==    by 0x4BF899A: pthread_cancel_init (unwind-forcedunwind.c:53)
+==424492== 
+==424492== 36 bytes in 1 blocks are still reachable in loss record 22 of 35
+==424492==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x400D5A7: _dl_new_object (dl-object.c:196)
+==424492==    by 0x4006E96: _dl_map_object_from_fd (dl-load.c:997)
+==424492==    by 0x400A61A: _dl_map_object (dl-load.c:2236)
+==424492==    by 0x4015D36: dl_open_worker (dl-open.c:513)
+==424492==    by 0x49CA727: _dl_catch_exception (dl-error-skeleton.c:208)
+==424492==    by 0x40155F9: _dl_open (dl-open.c:837)
+==424492==    by 0x49C96D0: do_dlopen (dl-libc.c:96)
+==424492==    by 0x49CA727: _dl_catch_exception (dl-error-skeleton.c:208)
+==424492==    by 0x49CA7F2: _dl_catch_error (dl-error-skeleton.c:227)
+==424492==    by 0x49C9804: dlerror_run (dl-libc.c:46)
+==424492==    by 0x49C9804: __libc_dlopen_mode (dl-libc.c:195)
+==424492==    by 0x4BF899A: pthread_cancel_init (unwind-forcedunwind.c:53)
+==424492== 
+==424492== 40 bytes in 1 blocks are still reachable in loss record 23 of 35
+==424492==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4D33934: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D2D931: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D01564: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4011B89: call_init.part.0 (dl-init.c:72)
+==424492==    by 0x4011C90: call_init (dl-init.c:30)
+==424492==    by 0x4011C90: _dl_init (dl-init.c:119)
+==424492==    by 0x4001139: ??? (in /lib/x86_64-linux-gnu/ld-2.31.so)
+==424492== 
+==424492== 40 bytes in 1 blocks are still reachable in loss record 24 of 35
+==424492==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4D33934: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D2D947: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D01564: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4011B89: call_init.part.0 (dl-init.c:72)
+==424492==    by 0x4011C90: call_init (dl-init.c:30)
+==424492==    by 0x4011C90: _dl_init (dl-init.c:119)
+==424492==    by 0x4001139: ??? (in /lib/x86_64-linux-gnu/ld-2.31.so)
+==424492== 
+==424492== 64 bytes in 4 blocks are still reachable in loss record 25 of 35
+==424492==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4D3CC50: gnutls_rnd (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4A748BF: ulfius_build_message (u_websocket.c:226)
+==424492==    by 0x4A749F5: ulfius_send_websocket_message_managed (u_websocket.c:266)
+==424492==    by 0x4A7748A: ulfius_websocket_send_fragmented_message (u_websocket.c:1123)
+==424492==    by 0x10A91E: websocket_manager_callback_client (websocket.c:54)
+==424492==    by 0x4A75114: ulfius_thread_websocket_manager_run (u_websocket.c:424)
+==424492==    by 0x4BEC608: start_thread (pthread_create.c:477)
+==424492==    by 0x4989102: clone (clone.S:95)
+==424492== 
+==424492== 64 bytes in 4 blocks are still reachable in loss record 26 of 35
+==424492==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4D3CC50: gnutls_rnd (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4A748BF: ulfius_build_message (u_websocket.c:226)
+==424492==    by 0x4A749F5: ulfius_send_websocket_message_managed (u_websocket.c:266)
+==424492==    by 0x4A7738D: ulfius_websocket_send_fragmented_message (u_websocket.c:1100)
+==424492==    by 0x4A774EB: ulfius_websocket_send_message (u_websocket.c:1139)
+==424492==    by 0x4A7522D: ulfius_thread_websocket (u_websocket.c:457)
+==424492==    by 0x4BEC608: start_thread (pthread_create.c:477)
+==424492==    by 0x4989102: clone (clone.S:95)
+==424492== 
+==424492== 176 bytes in 1 blocks are still reachable in loss record 27 of 35
+==424492==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4E12B5F: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D3CC27: gnutls_rnd (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4A77F65: random_at_most (u_websocket.c:1457)
+==424492==    by 0x4A78057: rand_string (u_websocket.c:1475)
+==424492==    by 0x4A7827A: ulfius_set_websocket_request (u_websocket.c:1516)
+==424492==    by 0x10B19F: test_websocket_ulfius_set_websocket_request (websocket.c:103)
+==424492==    by 0x10EDEA: tcase_run_tfun_nofork.isra.9 (in /media/donjon/workspace/angharad/ulfius/test/websocket)
+==424492==    by 0x10F1AB: srunner_run (in /media/donjon/workspace/angharad/ulfius/test/websocket)
+==424492==    by 0x10CAD9: main (websocket.c:253)
+==424492== 
+==424492== 199 bytes in 9 blocks are still reachable in loss record 28 of 35
+==424492==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x541F9A7: ??? (in /usr/lib/x86_64-linux-gnu/libtasn1.so.6.6.0)
+==424492==    by 0x5420E25: asn1_array2tree (in /usr/lib/x86_64-linux-gnu/libtasn1.so.6.6.0)
+==424492==    by 0x4D2D894: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D01564: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4011B89: call_init.part.0 (dl-init.c:72)
+==424492==    by 0x4011C90: call_init (dl-init.c:30)
+==424492==    by 0x4011C90: _dl_init (dl-init.c:119)
+==424492==    by 0x4001139: ??? (in /lib/x86_64-linux-gnu/ld-2.31.so)
+==424492== 
+==424492== 384 bytes in 1 blocks are still reachable in loss record 29 of 35
+==424492==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x401330A: _dl_check_map_versions (dl-version.c:274)
+==424492==    by 0x40160EC: dl_open_worker (dl-open.c:577)
+==424492==    by 0x49CA727: _dl_catch_exception (dl-error-skeleton.c:208)
+==424492==    by 0x40155F9: _dl_open (dl-open.c:837)
+==424492==    by 0x49C96D0: do_dlopen (dl-libc.c:96)
+==424492==    by 0x49CA727: _dl_catch_exception (dl-error-skeleton.c:208)
+==424492==    by 0x49CA7F2: _dl_catch_error (dl-error-skeleton.c:227)
+==424492==    by 0x49C9804: dlerror_run (dl-libc.c:46)
+==424492==    by 0x49C9804: __libc_dlopen_mode (dl-libc.c:195)
+==424492==    by 0x4BF899A: pthread_cancel_init (unwind-forcedunwind.c:53)
+==424492==    by 0x4BF8BB3: _Unwind_ForcedUnwind (unwind-forcedunwind.c:127)
+==424492==    by 0x4BF6F05: __pthread_unwind (unwind.c:121)
+==424492== 
+==424492== 704 bytes in 4 blocks are still reachable in loss record 30 of 35
+==424492==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4E12B5F: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D3CC27: gnutls_rnd (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4A748BF: ulfius_build_message (u_websocket.c:226)
+==424492==    by 0x4A749F5: ulfius_send_websocket_message_managed (u_websocket.c:266)
+==424492==    by 0x4A7748A: ulfius_websocket_send_fragmented_message (u_websocket.c:1123)
+==424492==    by 0x10A91E: websocket_manager_callback_client (websocket.c:54)
+==424492==    by 0x4A75114: ulfius_thread_websocket_manager_run (u_websocket.c:424)
+==424492==    by 0x4BEC608: start_thread (pthread_create.c:477)
+==424492==    by 0x4989102: clone (clone.S:95)
+==424492== 
+==424492== 704 bytes in 4 blocks are still reachable in loss record 31 of 35
+==424492==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x4E12B5F: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D3CC27: gnutls_rnd (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4A748BF: ulfius_build_message (u_websocket.c:226)
+==424492==    by 0x4A749F5: ulfius_send_websocket_message_managed (u_websocket.c:266)
+==424492==    by 0x4A7738D: ulfius_websocket_send_fragmented_message (u_websocket.c:1100)
+==424492==    by 0x4A774EB: ulfius_websocket_send_message (u_websocket.c:1139)
+==424492==    by 0x4A7522D: ulfius_thread_websocket (u_websocket.c:457)
+==424492==    by 0x4BEC608: start_thread (pthread_create.c:477)
+==424492==    by 0x4989102: clone (clone.S:95)
+==424492== 
+==424492== 1,198 bytes in 1 blocks are still reachable in loss record 32 of 35
+==424492==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x400D273: _dl_new_object (dl-object.c:89)
+==424492==    by 0x4006E96: _dl_map_object_from_fd (dl-load.c:997)
+==424492==    by 0x400A61A: _dl_map_object (dl-load.c:2236)
+==424492==    by 0x4015D36: dl_open_worker (dl-open.c:513)
+==424492==    by 0x49CA727: _dl_catch_exception (dl-error-skeleton.c:208)
+==424492==    by 0x40155F9: _dl_open (dl-open.c:837)
+==424492==    by 0x49C96D0: do_dlopen (dl-libc.c:96)
+==424492==    by 0x49CA727: _dl_catch_exception (dl-error-skeleton.c:208)
+==424492==    by 0x49CA7F2: _dl_catch_error (dl-error-skeleton.c:227)
+==424492==    by 0x49C9804: dlerror_run (dl-libc.c:46)
+==424492==    by 0x49C9804: __libc_dlopen_mode (dl-libc.c:195)
+==424492==    by 0x4BF899A: pthread_cancel_init (unwind-forcedunwind.c:53)
+==424492== 
+==424492== 1,411 bytes in 65 blocks are still reachable in loss record 33 of 35
+==424492==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x541F9A7: ??? (in /usr/lib/x86_64-linux-gnu/libtasn1.so.6.6.0)
+==424492==    by 0x5420E25: asn1_array2tree (in /usr/lib/x86_64-linux-gnu/libtasn1.so.6.6.0)
+==424492==    by 0x4D2D7E8: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D01564: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4011B89: call_init.part.0 (dl-init.c:72)
+==424492==    by 0x4011C90: call_init (dl-init.c:30)
+==424492==    by 0x4011C90: _dl_init (dl-init.c:119)
+==424492==    by 0x4001139: ??? (in /lib/x86_64-linux-gnu/ld-2.31.so)
+==424492== 
+==424492== 17,936 bytes in 118 blocks are still reachable in loss record 34 of 35
+==424492==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x541F61B: ??? (in /usr/lib/x86_64-linux-gnu/libtasn1.so.6.6.0)
+==424492==    by 0x5420DEB: asn1_array2tree (in /usr/lib/x86_64-linux-gnu/libtasn1.so.6.6.0)
+==424492==    by 0x4D2D894: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D01564: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4011B89: call_init.part.0 (dl-init.c:72)
+==424492==    by 0x4011C90: call_init (dl-init.c:30)
+==424492==    by 0x4011C90: _dl_init (dl-init.c:119)
+==424492==    by 0x4001139: ??? (in /lib/x86_64-linux-gnu/ld-2.31.so)
+==424492== 
+==424492== 72,656 bytes in 478 blocks are still reachable in loss record 35 of 35
+==424492==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==424492==    by 0x541F61B: ??? (in /usr/lib/x86_64-linux-gnu/libtasn1.so.6.6.0)
+==424492==    by 0x5420DEB: asn1_array2tree (in /usr/lib/x86_64-linux-gnu/libtasn1.so.6.6.0)
+==424492==    by 0x4D2D7E8: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4D01564: ??? (in /usr/lib/x86_64-linux-gnu/libgnutls.so.30.27.0)
+==424492==    by 0x4011B89: call_init.part.0 (dl-init.c:72)
+==424492==    by 0x4011C90: call_init (dl-init.c:30)
+==424492==    by 0x4011C90: _dl_init (dl-init.c:119)
+==424492==    by 0x4001139: ??? (in /lib/x86_64-linux-gnu/ld-2.31.so)
+==424492== 
+==424492== LEAK SUMMARY:
+==424492==    definitely lost: 0 bytes in 0 blocks
+==424492==    indirectly lost: 0 bytes in 0 blocks
+==424492==      possibly lost: 0 bytes in 0 blocks
+==424492==    still reachable: 96,272 bytes in 713 blocks
+==424492==         suppressed: 0 bytes in 0 blocks
+==424492== 
+==424492== For lists of detected and suppressed errors, rerun with: -s
+==424492== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
