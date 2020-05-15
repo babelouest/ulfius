@@ -734,7 +734,7 @@ START_TEST(test_ulfius_set_response_properties)
                                                   U_OPT_HEADER_PARAMETER, MAP_HEADER_KEY, MAP_HEADER_VALUE,
                                                   U_OPT_AUTH_REALM, AUTH_REALM,
                                                   U_OPT_BINARY_BODY, BINARY_BODY, BINARY_BODY_LEN,
-                                                  U_OPT_SHARED_DATA, SHARED_DATA,
+                                                  U_OPT_SHARED_DATA, (void *)SHARED_DATA,
                                                   U_OPT_TIMEOUT, TIMEOUT,
                                                   U_OPT_NONE), U_OK);
 
@@ -768,7 +768,7 @@ START_TEST(test_ulfius_set_response_properties)
                                                   U_OPT_HEADER_PARAMETER, MAP_HEADER_KEY, MAP_HEADER_VALUE,
                                                   U_OPT_AUTH_REALM, AUTH_REALM,
                                                   U_OPT_BINARY_BODY, BINARY_BODY, BINARY_BODY_LEN,
-                                                  U_OPT_SHARED_DATA, SHARED_DATA,
+                                                  U_OPT_SHARED_DATA, (void *)SHARED_DATA,
                                                   U_OPT_TIMEOUT, TIMEOUT,
                                                   U_OPT_NONE), U_OK);
 
@@ -909,6 +909,8 @@ END_TEST
 START_TEST(test_ulfius_start_instance)
 {
   struct _u_instance u_instance;
+  struct MHD_OptionItem mhd_ops[3];
+  unsigned int mhd_flags = MHD_USE_THREAD_PER_CONNECTION|MHD_ALLOW_UPGRADE;
 
   ck_assert_int_eq(ulfius_init_instance(&u_instance, 8081, NULL, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", NULL, "test", 0, &callback_function_empty, NULL), U_OK);
@@ -966,6 +968,21 @@ glwRuTmowAZQtaSiE1Ox7QtWj858HDzzTZyFWRG/MNqQptn7AMTPJv3DivNfDNPj\
 fYxFAheH3CjryHqqR9DD+d9396W8mqEaUp+plMwSjpcTDSR4rEQkUJg=\
 -----END CERTIFICATE-----"), U_OK);
   ck_assert_int_eq(ulfius_stop_framework(&u_instance), U_OK);
+  
+  mhd_ops[0].option = MHD_OPTION_NOTIFY_COMPLETED;
+  mhd_ops[0].value = (intptr_t)mhd_request_completed;
+  mhd_ops[0].ptr_value = NULL;
+
+  mhd_ops[1].option = MHD_OPTION_URI_LOG_CALLBACK;
+  mhd_ops[1].value = (intptr_t)ulfius_uri_logger;
+  mhd_ops[1].ptr_value = NULL;
+
+  mhd_ops[2].option = MHD_OPTION_END;
+  mhd_ops[2].value = 0;
+  mhd_ops[2].ptr_value = NULL;
+  ck_assert_int_eq(ulfius_start_framework_with_mhd_options(&u_instance, mhd_flags, mhd_ops), U_OK);
+  ck_assert_int_eq(ulfius_stop_framework(&u_instance), U_OK);
+  
   ulfius_clean_instance(&u_instance);
 }
 END_TEST
