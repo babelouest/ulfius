@@ -43,7 +43,7 @@
 #define STREAM_SIZE 4
 #define STREAM_BLOCK_SIZE 5
 #define STREAM_USER_DATA 0x06
-#define SHARED_DATA 0x07
+#define SHARED_DATA 0x42
 #define COOKIE_KEY "key"
 #define COOKIE_VALUE "value"
 #define COOKIE_EXPIRES "expires"
