@@ -26,6 +26,10 @@
 #include "u_private.h"
 #include "ulfius.h"
 
+#if defined(__APPLE__) && !defined (MSG_NOSIGNAL)
+  #define MSG_NOSIGNAL 0
+#endif
+
 #ifndef U_DISABLE_WEBSOCKET
 #include "yuarel.h"
 #include <string.h>
