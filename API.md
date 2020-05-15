@@ -573,7 +573,7 @@ struct _u_request {
 };
 ```
 
-Some functions are dedicated to handle the request:
+Functions dedicated to handle the request:
 
 ```C
 /**
@@ -597,6 +597,56 @@ int ulfius_set_binary_body_request(struct _u_response * request, const char * bi
  * return U_OK on success
  */
 int ulfius_set_empty_body_request(struct _u_request * request);
+```
+
+The function `ulfius_set_request_properties` allows to put a variable set of request properties in a single-line. The parameter list MUST end with the option `U_OPT_NONE`
+
+```
+/**
+ * ulfius_set_request_properties
+ * Set a list of properties to a request
+ * return U_OK on success
+ */
+int ulfius_set_request_properties(struct _u_request * request, ...);
+```
+
+Options available:
+
+| Option | Description |
+|---|---|
+| U_OPT_NONE | Empty option to complete a ulfius_set_request_properties or ulfius_set_request_properties |
+| U_OPT_HTTP_VERB | http method (GET, POST, PUT, DELETE, etc.), expected option value type: const char * |
+| U_OPT_HTTP_URL | full url used to call this callback function or full url to call when used in a ulfius_send_http_request, expected option value type: const char * |
+| U_OPT_HTTP_PROXY | proxy address to use for outgoing connections, used by ulfius_send_http_request, expected option value type: const char * |
+| U_OPT_NETWORK_TYPE | Force connect to ipv4, ipv6 addresses or both, values available are U_USE_ALL, U_USE_IPV4 or U_USE_IPV6, expected option value type: unsigned short |
+| U_OPT_CHECK_SERVER_CERTIFICATE | check server certificate and hostname, default true, used by ulfius_send_http_request, expected option value type: int |
+| U_OPT_CHECK_SERVER_CERTIFICATE_FLAG | check certificate peer and or server hostname if check_server_certificate is enabled, values available are U_SSL_VERIFY_PEER, U_SSL_VERIFY_HOSTNAME or both, default value is both (U_SSL_VERIFY_PEER|U_SSL_VERIFY_HOSTNAME), used by ulfius_send_http_request, expected option value type: int |
+| U_OPT_CHECK_PROXY_CERTIFICATE | check proxy certificate and hostname, default true, used by ulfius_send_http_request, requires libcurl >= 7.52, expected option value type: int |
+| U_OPT_CHECK_PROXY_CERTIFICATE_FLAG | check certificate peer and or proxy hostname if check_proxy_certificate is enabled, values available are U_SSL_VERIFY_PEER, U_SSL_VERIFY_HOSTNAME or both, default value is both (U_SSL_VERIFY_PEER|U_SSL_VERIFY_HOSTNAME), used by ulfius_send_http_request, requires libcurl >= 7.52, expected option value type: int |
+| U_OPT_FOLLOW_REDIRECT | follow url redirections, used by ulfius_send_http_request, expected option value type: int |
+| U_OPT_CA_PATH | specify a path to CA certificates instead of system path, used by ulfius_send_http_request, expected option value type: const char * |
+| U_OPT_TIMEOUT | connection timeout used by ulfius_send_http_request, default is 0 _or_ Timeout in seconds to close the connection because of inactivity between the client and the server, expected option value type: unsigned long |
+| U_OPT_AUTH_BASIC_USER | basic authentication username, expected option value type: const char * |
+| U_OPT_AUTH_BASIC_PASSWORD | basic authentication password, expected option value type: const char * |
+| U_OPT_URL_PARAMETER | Add to the map containing the url variables, both from the route and the ?key=value variables, expected option value type: const char *, const char * |
+| U_OPT_HEADER_PARAMETER | Add to the map containing the header variables, expected option value type: const char *, const char * |
+| U_OPT_COOKIE_PARAMETER | Add to the map containing the cookie variables, expected option value type: const char *, const char * |
+| U_OPT_POST_BODY_PARAMETER | Add to the map containing the post body variables (if available), expected option value type: const char *, const char * |
+| U_OPT_URL_PARAMETER_REMOVE | Remove from the map containing the url variables, both from the route and the ?key=value variables, expected option value type: const char * |
+| U_OPT_HEADER_PARAMETER_REMOVE | Remove from map containing the header variables, expected option value type: const char * |
+| U_OPT_COOKIE_PARAMETER_REMOVE | Remove from map containing the cookie variables, expected option value type: const char * |
+| U_OPT_POST_BODY_PARAMETER_REMOVE | Remove from map containing the post body variables (if available), expected option value type: const char * |
+| U_OPT_BINARY_BODY | Set a raw body to the request or the reponse, expected option value type: const char *, size_t |
+| U_OPT_STRING_BODY | Set a char * body to the request or the reponse, expected option value type: const char * |
+| U_OPT_JSON_BODY | Set a stringified json_t * body to the request or the reponse, expected option value type: json_t * |
+| U_OPT_CLIENT_CERT_FILE | path to client certificate file for sending http requests with certificate authentication, available only if GnuTLS support is enabled, expected option value type: const char * |
+| U_OPT_CLIENT_KEY_FILE | path to client key file for sending http requests with certificate authentication, available only if GnuTLS support is enabled, expected option value type: const char * |
+| U_OPT_CLIENT_KEY_PASSWORD | password to unlock client key file, available only if GnuTLS support is enabled, expected option value type: const char * |
+
+Example:
+
+```C
+ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "POST", U_OPT_HTTP_URL, "https://www.example.com/", U_OPT_CHECK_SERVER_CERTIFICATE, 0, U_OPT_STRING_BODY, "Hello World!", U_OPT_HEADER_PARAMETER, "Content-Type", "PlainText", U_OPT_NONE);
 ```
 
 #### Response structure
@@ -727,6 +777,38 @@ int ulfius_set_websocket_response(struct _u_response * response,
                                                                         struct _websocket_manager * websocket_manager,
                                                                         void * websocket_onclose_user_data),
                                    void * websocket_onclose_user_data);
+```
+
+The function `ulfius_set_response_properties` allows to put a variable set of response properties in a single-line. The parameter list MUST end with the option `U_OPT_NONE`
+
+```C
+/**
+ * ulfius_set_response_properties
+ * Set a list of properties to a response
+ * return U_OK on success
+ */
+int ulfius_set_response_properties(struct _u_response * response, ...);
+```
+
+Options available:
+
+| Option | Description |
+|---|---|
+| U_OPT_NONE | Empty option to complete a ulfius_set_request_properties or ulfius_set_request_properties |
+| U_OPT_STATUS | HTTP response status code (200, 404, 500, etc), expected option value type: long |
+| U_OPT_AUTH_REALM | realm to send to the client response on authenticationb failed, expected option value type: const char * |
+| U_OPT_SHARED_DATA | any data shared between callback functions, must be allocated and freed by the callback functions, expected option value type: void * |
+| U_OPT_TIMEOUT | connection timeout used by ulfius_send_http_request, default is 0 _or_ Timeout in seconds to close the connection because of inactivity between the client and the server, expected option value type: long |
+| U_OPT_HEADER_PARAMETER | Add to the map containing the header variables, expected option value type: const char *, const char * |
+| U_OPT_HEADER_PARAMETER_REMOVE | Remove from map containing the header variables, expected option value type: const char * |
+| U_OPT_BINARY_BODY | Set a raw body to the request or the reponse, expected option value type: const char *, size_t |
+| U_OPT_STRING_BODY | Set a char * body to the request or the reponse, expected option value type: const char * |
+| U_OPT_JSON_BODY | Set a stringified json_t * body to the request or the reponse, expected option value type: json_t * |
+
+Example:
+
+```C
+ulfius_set_response_properties(&req, U_OPT_STATUS, 200, U_OPT_STRING_BODY, "Hello World!", U_OPT_HEADER_PARAMETER, "Content-Type", "PlainText", U_OPT_NONE);
 ```
 
 #### Callback functions return value
