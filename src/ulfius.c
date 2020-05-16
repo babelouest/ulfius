@@ -419,16 +419,6 @@ static int ulfius_webservice_dispatcher (void * cls,
             gnutls_x509_crt_deinit(con_info->request->client_cert);
           }
         }
-      } else {
-        pcert = gnutls_certificate_get_peers(ci->tls_session, NULL);
-        if (pcert != NULL) {
-          if (gnutls_x509_crt_init(&(con_info->request->client_cert))) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Failed to initialize client certificate");
-          } else if (gnutls_x509_crt_import(con_info->request->client_cert, &pcert[0], GNUTLS_X509_FMT_DER)) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Failed to import client certificate");
-            gnutls_x509_crt_deinit(con_info->request->client_cert);
-          }
-        }
       }
     }
 #endif
