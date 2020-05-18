@@ -72,18 +72,20 @@ static ssize_t read_data_from_socket(struct _websocket_manager * websocket_manag
   
   if (len > 0) {
     do {
-      if (websocket_manager->tls) {
-        data_len = gnutls_record_recv(websocket_manager->gnutls_session, data, (len - ret));
-      } else if (websocket_manager->type == U_WEBSOCKET_SERVER) {
-        data_len = read(websocket_manager->mhd_sock, data, (len - ret));
-      } else {
-        data_len = read(websocket_manager->tcp_sock, data, (len - ret));
-      }
-      if (data_len > 0) {
-        ret += data_len;
-      } else if (data_len < 0) {
-        ret = -1;
-        break;
+      if (is_websocket_data_available(websocket_manager)) {
+        if (websocket_manager->tls) {
+          data_len = gnutls_record_recv(websocket_manager->gnutls_session, &data[ret], (len - ret));
+        } else if (websocket_manager->type == U_WEBSOCKET_SERVER) {
+          data_len = read(websocket_manager->mhd_sock, &data[ret], (len - ret));
+        } else {
+          data_len = read(websocket_manager->tcp_sock, &data[ret], (len - ret));
+        }
+        if (data_len > 0) {
+          ret += data_len;
+        } else if (data_len < 0) {
+          ret = -1;
+          break;
+        }
       }
     } while (ret < (ssize_t)len);
   }
@@ -131,7 +133,7 @@ static int ulfius_build_frame (const struct _websocket_message * message,
   uint64_t off, frame_data_len;
   if (message != NULL && frame != NULL && frame_len != NULL) {
     *frame_len = 2;
-    if (message->data_len > 65536) {
+    if (message->data_len >= 65536) {
       *frame_len += 8;
     } else if (message->data_len > 125) {
       *frame_len += 2;
@@ -153,7 +155,7 @@ static int ulfius_build_frame (const struct _websocket_message * message,
       } else {
         (*frame)[0] = 0;
       }
-      if (message->data_len > 65536) {
+      if (message->data_len >= 65536) {
         (*frame)[1] = 127;
         (*frame)[2] = (uint8_t)(frame_data_len >> 54);
         (*frame)[3] = (uint8_t)(frame_data_len >> 48);
