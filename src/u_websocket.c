@@ -47,6 +47,7 @@
 
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
+#define U_WS_MAX_READ_RETRIES 100
 
 /**********************************/
 /** Internal websocket functions **/
@@ -69,19 +70,26 @@ static int is_websocket_data_available(struct _websocket_manager * websocket_man
 
 static ssize_t read_data_from_socket(struct _websocket_manager * websocket_manager, uint8_t * data, size_t len) {
   ssize_t ret = 0, data_len;
+  int retries = 0;
   
   if (len > 0) {
     do {
-      if (websocket_manager->tls) {
-        data_len = gnutls_record_recv(websocket_manager->gnutls_session, &data[ret], (len - ret));
-      } else if (websocket_manager->type == U_WEBSOCKET_SERVER) {
-        data_len = read(websocket_manager->mhd_sock, &data[ret], (len - ret));
-      } else {
-        data_len = read(websocket_manager->tcp_sock, &data[ret], (len - ret));
+      if (is_websocket_data_available(websocket_manager)) {
+        if (websocket_manager->tls) {
+          data_len = gnutls_record_recv(websocket_manager->gnutls_session, &data[ret], (len - ret));
+        } else if (websocket_manager->type == U_WEBSOCKET_SERVER) {
+          data_len = read(websocket_manager->mhd_sock, &data[ret], (len - ret));
+        } else {
+          data_len = read(websocket_manager->tcp_sock, &data[ret], (len - ret));
+        }
+        if (data_len > 0) {
+          ret += data_len;
+        } else if (data_len < 0) {
+          ret = -1;
+          break;
+        }
       }
-      if (data_len > 0) {
-        ret += data_len;
-      } else if (data_len < 0) {
+      if ((retries++) > U_WS_MAX_READ_RETRIES) {
         ret = -1;
         break;
       }
