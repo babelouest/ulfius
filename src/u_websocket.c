@@ -73,11 +73,11 @@ static ssize_t read_data_from_socket(struct _websocket_manager * websocket_manag
   if (len > 0) {
     do {
       if (websocket_manager->tls) {
-        data_len = gnutls_record_recv(websocket_manager->gnutls_session, data, (len - ret));
+        data_len = gnutls_record_recv(websocket_manager->gnutls_session, &data[ret], (len - ret));
       } else if (websocket_manager->type == U_WEBSOCKET_SERVER) {
-        data_len = read(websocket_manager->mhd_sock, data, (len - ret));
+        data_len = read(websocket_manager->mhd_sock, &data[ret], (len - ret));
       } else {
-        data_len = read(websocket_manager->tcp_sock, data, (len - ret));
+        data_len = read(websocket_manager->tcp_sock, &data[ret], (len - ret));
       }
       if (data_len > 0) {
         ret += data_len;
