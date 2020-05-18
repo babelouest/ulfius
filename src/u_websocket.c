@@ -131,7 +131,7 @@ static int ulfius_build_frame (const struct _websocket_message * message,
   uint64_t off, frame_data_len;
   if (message != NULL && frame != NULL && frame_len != NULL) {
     *frame_len = 2;
-    if (message->data_len > 65536) {
+    if (message->data_len >= 65536) {
       *frame_len += 8;
     } else if (message->data_len > 125) {
       *frame_len += 2;
@@ -153,7 +153,7 @@ static int ulfius_build_frame (const struct _websocket_message * message,
       } else {
         (*frame)[0] = 0;
       }
-      if (message->data_len > 65536) {
+      if (message->data_len >= 65536) {
         (*frame)[1] = 127;
         (*frame)[2] = (uint8_t)(frame_data_len >> 54);
         (*frame)[3] = (uint8_t)(frame_data_len >> 48);
