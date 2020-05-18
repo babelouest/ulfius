@@ -47,7 +47,6 @@
 
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
-#define U_WS_MAX_READ_RETRIES 100
 
 /**********************************/
 /** Internal websocket functions **/
@@ -70,7 +69,6 @@ static int is_websocket_data_available(struct _websocket_manager * websocket_man
 
 static ssize_t read_data_from_socket(struct _websocket_manager * websocket_manager, uint8_t * data, size_t len) {
   ssize_t ret = 0, data_len;
-  int retries = 0;
   
   if (len > 0) {
     do {
@@ -88,10 +86,6 @@ static ssize_t read_data_from_socket(struct _websocket_manager * websocket_manag
           ret = -1;
           break;
         }
-      }
-      if ((retries++) > U_WS_MAX_READ_RETRIES) {
-        ret = -1;
-        break;
       }
     } while (ret < (ssize_t)len);
   }
