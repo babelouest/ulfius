@@ -5,6 +5,7 @@
 - Check header property case insensitive in websocket client
 - Add libcurl option `CURLOPT_NOPROGRESS` in `ulfius_send_http_streaming_request`
 - Add `ulfius_start_framework_with_mhd_options` for expert mode
+- Fix websocket bugs: #163 (Thanks wouher!)
 
 ## 2.6.6
 
