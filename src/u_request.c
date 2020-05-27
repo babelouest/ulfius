@@ -6,7 +6,7 @@
  * 
  * u_request.c: request related functions defintions
  * 
- * Copyright 2015-2017 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2015-2020 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License

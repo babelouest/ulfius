@@ -3,7 +3,7 @@
 #
 # Makefile used to build all programs
 #
-# Copyright 2014-2015 Nicolas Mora <mail@babelouest.org>
+# Copyright 2014-2020 Nicolas Mora <mail@babelouest.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License
