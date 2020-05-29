@@ -1295,6 +1295,17 @@ START_TEST(test_ulfius_client_certificate)
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
 
+  // Test with a certificate self-signed (client3)
+  ulfius_init_request(&request);
+  request.http_url = o_strdup("https://localhost:8080/nocert_auth");
+  request.check_server_certificate = 0;
+  request.client_cert_file = o_strdup("cert/client3.crt");
+  request.client_key_file = o_strdup("cert/client3.key");
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_ERROR_LIBCURL);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+
   o_free(cert);
   o_free(key);
   o_free(ca);
