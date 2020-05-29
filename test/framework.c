@@ -1302,7 +1302,7 @@ START_TEST(test_ulfius_client_certificate)
   request.client_cert_file = o_strdup("cert/client3.crt");
   request.client_key_file = o_strdup("cert/client3.key");
   ulfius_init_response(&response);
-  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_ERROR_LIBCURL);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
 
