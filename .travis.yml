@@ -1,6 +1,6 @@
 # travis configuration file
 # Copyright 2018      Ilya Shipitsin <chipitsine@gmail.com>
-#           2018-2019 Nicolas Mora <mail@babelouest.org>
+#           2018-2020 Nicolas Mora <mail@babelouest.org>
 language: c
 os: linux
 dist: bionic
