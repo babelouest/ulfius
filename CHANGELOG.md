@@ -6,6 +6,7 @@
 - Add libcurl option `CURLOPT_NOPROGRESS` in `ulfius_send_http_streaming_request`
 - Add `ulfius_start_framework_with_mhd_options` for expert mode
 - Fix websocket bugs: #163 (Thanks wouher!)
+- Add `ulfius_set_request_properties` and `ulfius_set_response_properties`
 
 ## 2.6.6
 
