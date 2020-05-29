@@ -422,7 +422,7 @@ int main() {
 
 #### Start webservice
 
-The starting point function are `ulfius_start_framework`, `ulfius_start_secure_framework` or `ulfius_start_secure_ca_trust_framework`:
+The starting point function are `ulfius_start_framework`, `ulfius_start_secure_framework`, `ulfius_start_secure_ca_trust_framework` or `ulfius_start_framework_with_mhd_options`:
 
 ```C
 /**
