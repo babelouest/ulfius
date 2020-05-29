@@ -82,7 +82,7 @@ else
   RET=$STATUS
 fi
 
-# client 3
+# client 2
 certtool --generate-privkey --outfile $DEST/client2.key --sec-param High 2>>$DEST/certtool.log
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
@@ -100,3 +100,20 @@ else
   RET=$STATUS
 fi
 
+# client 3 self-signed
+certtool --generate-privkey --outfile $DEST/client3.key --sec-param High 2>>$DEST/certtool.log
+STATUS=$?
+if [ $STATUS -eq 0 ]; then
+  printf "client3.key        \033[0;32mOK\033[0m\n"
+else
+  printf "client3.key        \033[0;31mError\033[0m\n"
+  RET=$STATUS
+fi
+certtool --generate-self-signed --load-privkey $DEST/client3.key --outfile $DEST/client3.crt --template $DEST/template-client.cfg 2>>$DEST/certtool.log
+STATUS=$?
+if [ $STATUS -eq 0 ]; then
+  printf "client3.crt        \033[0;32mOK\033[0m\n"
+else
+  printf "client3.crt        \033[0;31mError\033[0m\n"
+  RET=$STATUS
+fi
