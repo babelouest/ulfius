@@ -418,7 +418,9 @@ install(TARGETS ${TARGETS}
     install(DIRECTORY example_callbacks/
             DESTINATION ${CMAKE_INSTALL_DOCDIR}/example_callbacks/ COMPONENT runtime)
     install(DIRECTORY example_programs/
-            DESTINATION ${CMAKE_INSTALL_DOCDIR}/example_programs/ COMPONENT runtime)
+            DESTINATION ${CMAKE_INSTALL_DOCDIR}/example_programs/
+            COMPONENT runtime
+			PATTERN example_programs/.gitignore EXCLUDE)
     install(FILES README.md
             DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT runtime)
     install(FILES INSTALL.md
