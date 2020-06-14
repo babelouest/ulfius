@@ -1,5 +1,5 @@
 #.rst:
-# FindJansson
+# FindMHD
 # -----------
 #
 # Find libmicrohttpd
@@ -58,7 +58,7 @@ elseif (MHD_INCLUDE_DIR AND EXISTS "${MHD_INCLUDE_DIR}/microhttpd.h")
 endif ()
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(mhd
+find_package_handle_standard_args(MHD
         REQUIRED_VARS MHD_LIBRARY MHD_INCLUDE_DIR
         VERSION_VAR MHD_VERSION_STRING)
 
