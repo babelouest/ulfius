@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.com/babelouest/ulfius.svg?branch=master)](https://travis-ci.com/babelouest/ulfius)
 ![.github/workflows/ccpp.yml](https://github.com/babelouest/ulfius/workflows/.github/workflows/ccpp.yml/badge.svg)
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3195/badge)](https://bestpractices.coreinfrastructure.org/projects/3195)
+[![Say Thanks!](https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg)](https://saythanks.io/to/github@babelouest.org)
 
 HTTP Framework for REST Applications in C.
 
