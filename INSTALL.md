@@ -115,6 +115,15 @@ To disable two or more libraries, append options, example:
 $ make CURLFLAG=1 JANSSONFLAG=1
 ```
 
+#### Install libulfius as a static archive
+
+Install  libulfius as a static archive, `libulfius.a`, use the make commands `make static*`:
+
+```shell
+$ cd src
+$ make static && sudo make static-install # or make DESTDIR=/tmp static-install if you want to install in `/tmp/lib`
+```
+
 #### Enable embedded systems flags
 
 To build Ulfius on [FreeRTOS](https://www.freertos.org/), append the option `FREERTOSFLAG=1` to the make command when you build Ulfius:
