@@ -4,7 +4,7 @@ Simple command-line application to connect to websocket services
 
 Copyright 2018-2020 Nicolas Mora <mail@babelouest.org>
 
-This program is free software; you can redistribute it and/or modify it under the terms of the MIT License.
+This program is free software; you can redistribute it and/or modify it under the terms of the GPL3 License.
 
 ## Overview
 
@@ -14,7 +14,7 @@ To quit uwsc during connection, enter the message `!q`.
 
 ## Options
 
-uwsc has some options available:
+Options available:
 
 ```shell
 -o --output-log-file=PATH
@@ -44,7 +44,7 @@ uwsc has some options available:
 	Print this message
 ```
 
-### Examples
+## Examples
 
 Here are some examples on how to use uwsc options
 
