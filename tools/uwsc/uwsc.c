@@ -271,7 +271,7 @@ static void exit_program(struct _config ** config, int exit_value) {
 int main (int argc, char ** argv) {
   struct _config * config;
   int next_option;
-  const char * short_options = "o::x::b::t::i::l::f::p::e::s::v::h::";
+  const char * short_options = "o:x:b:t:i::l::f:p:e::s::v::h::";
   static const struct option long_options[]= {
     {"output-log-file", required_argument, NULL, 'o'},  // Sets an output file for logging messages
     {"add-header", required_argument, NULL, 'x'},       // Add the specified header of the form 'key:value'
