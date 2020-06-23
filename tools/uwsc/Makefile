@@ -31,7 +31,7 @@ CFLAGS+=-c -Wall -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS) $(CPPFLAGS)
 LIBS=-lc -lulfius -lorcania $(LYDER) -L$(ULFIUS_LOCATION)
 
 REMOTE_URL=http://localhost:9275/websocket/echo
-COMMAND=./uwsc --output-log-file=out.log $(REMOTE_URL)
+COMMAND=./uwsc --output-log-file out.log $(REMOTE_URL)
 
 all: uwsc
 
