@@ -55,6 +55,11 @@
 static int is_websocket_data_available(struct _websocket_manager * websocket_manager) {
   int ret = 0, poll_ret = 0;
   
+  if (websocket_manager->tls) {
+    ret = gnutls_record_check_pending(websocket_manager->gnutls_session);
+    if (ret)
+      return ret;
+  }
   poll_ret = poll(&websocket_manager->fds, 1, U_WEBSOCKET_USEC_WAIT);
   if (poll_ret == -1) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error poll websocket read");
