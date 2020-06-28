@@ -1730,7 +1730,7 @@ int ulfius_set_websocket_request(struct _u_request * request,
 #define ULFIUS_COOKIE_ATTRIBUTE_SECURE   "Secure"
 #define ULFIUS_COOKIE_ATTRIBUTE_HTTPONLY "HttpOnly"
 
-#define ULFIUS_POSTBUFFERSIZE 1024
+#define ULFIUS_POSTBUFFERSIZE 65536
 
 #define U_STATUS_STOP     0
 #define U_STATUS_RUNNING  1
