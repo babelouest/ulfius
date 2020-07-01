@@ -40,7 +40,7 @@ OBJECTS=ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o
 OUTPUT=libulfius.so
 VERSION_MAJOR=2
 VERSION_MINOR=6
-VERSION_PATCH=7
+VERSION_PATCH=8
 
 ifndef JANSSONFLAG
 DISABLE_JANSSON=0
