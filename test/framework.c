@@ -202,7 +202,7 @@ static void * simple_smtp(void * args) {
   int addrlen = sizeof(address); 
   
   if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) != 0) {
-    if (!setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
+    if (!setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
       address.sin_family = AF_INET;
       address.sin_addr.s_addr = INADDR_ANY;
       address.sin_port = htons( manager->port );
@@ -1116,7 +1116,8 @@ START_TEST(test_ulfius_MHD_set_response_with_other_free)
 }
 END_TEST
 
-#define PORT 2525
+#define PORT_PLAIN 2525
+#define PORT_RICH 2526
 #define FROM "from"
 #define TO "to"
 #define CC "cc"
@@ -1131,17 +1132,17 @@ START_TEST(test_ulfius_send_smtp)
   struct smtp_manager manager;
 
   manager.mail_data = NULL;
-  manager.port = PORT;
+  manager.port = PORT_PLAIN;
   manager.sockfd = 0;
 
-  ck_assert_int_eq(ulfius_send_smtp_email("localhost", PORT, 0, 0, NULL, NULL, FROM, TO, CC, BCC, SUBJECT, BODY), U_ERROR_LIBCURL);
-  ck_assert_int_eq(ulfius_send_smtp_email(NULL, PORT, 0, 0, NULL, NULL, FROM, TO, CC, BCC, SUBJECT, BODY), U_ERROR_PARAMS);
-  ck_assert_int_eq(ulfius_send_smtp_email("localhost", PORT, 0, 0, NULL, NULL, NULL, TO, CC, BCC, SUBJECT, BODY), U_ERROR_PARAMS);
-  ck_assert_int_eq(ulfius_send_smtp_email("localhost", PORT, 0, 0, NULL, NULL, FROM, NULL, CC, BCC, SUBJECT, BODY), U_ERROR_PARAMS);
-  ck_assert_int_eq(ulfius_send_smtp_email("localhost", PORT, 0, 0, NULL, NULL, FROM, TO, CC, BCC, SUBJECT, NULL), U_ERROR_PARAMS);
+  ck_assert_int_eq(ulfius_send_smtp_email("localhost", PORT_PLAIN, 0, 0, NULL, NULL, FROM, TO, CC, BCC, SUBJECT, BODY), U_ERROR_LIBCURL);
+  ck_assert_int_eq(ulfius_send_smtp_email(NULL, PORT_PLAIN, 0, 0, NULL, NULL, FROM, TO, CC, BCC, SUBJECT, BODY), U_ERROR_PARAMS);
+  ck_assert_int_eq(ulfius_send_smtp_email("localhost", PORT_PLAIN, 0, 0, NULL, NULL, NULL, TO, CC, BCC, SUBJECT, BODY), U_ERROR_PARAMS);
+  ck_assert_int_eq(ulfius_send_smtp_email("localhost", PORT_PLAIN, 0, 0, NULL, NULL, FROM, NULL, CC, BCC, SUBJECT, BODY), U_ERROR_PARAMS);
+  ck_assert_int_eq(ulfius_send_smtp_email("localhost", PORT_PLAIN, 0, 0, NULL, NULL, FROM, TO, CC, BCC, SUBJECT, NULL), U_ERROR_PARAMS);
   
   pthread_create(&thread, NULL, simple_smtp, &manager);
-  ck_assert_int_eq(ulfius_send_smtp_email("localhost", PORT, 0, 0, NULL, NULL, FROM, TO, CC, BCC, SUBJECT, BODY), U_OK);
+  ck_assert_int_eq(ulfius_send_smtp_email("localhost", PORT_PLAIN, 0, 0, NULL, NULL, FROM, TO, CC, BCC, SUBJECT, BODY), U_OK);
   pthread_join(thread, NULL);
   ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, "HELO"));
   ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, "MAIL FROM:<" FROM ">"));
@@ -1161,11 +1162,11 @@ START_TEST(test_ulfius_send_rich_smtp)
   struct smtp_manager manager;
 
   manager.mail_data = NULL;
-  manager.port = PORT;
+  manager.port = PORT_RICH;
   manager.sockfd = 0;
 
   pthread_create(&thread, NULL, simple_smtp, &manager);
-  ck_assert_int_eq(ulfius_send_smtp_rich_email("localhost", PORT, 0, 0, NULL, NULL, FROM, TO, CC, BCC, CONTENT_TYPE, SUBJECT, BODY), U_OK);
+  ck_assert_int_eq(ulfius_send_smtp_rich_email("localhost", PORT_RICH, 0, 0, NULL, NULL, FROM, TO, CC, BCC, CONTENT_TYPE, SUBJECT, BODY), U_OK);
   pthread_join(thread, NULL);
   ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, "HELO"));
   ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, "MAIL FROM:<" FROM ">"));
@@ -1352,7 +1353,7 @@ int main(int argc, char *argv[])
   int number_failed;
   Suite *s;
   SRunner *sr;
-  y_init_logs("Ulfius", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Ulfius core tests");
+  //y_init_logs("Ulfius", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Ulfius framework tests");
   s = ulfius_suite();
   sr = srunner_create(s);
 
@@ -1360,6 +1361,6 @@ int main(int argc, char *argv[])
   number_failed = srunner_ntests_failed(sr);
   srunner_free(sr);
   
-  y_close_logs();
+  //y_close_logs();
   return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
