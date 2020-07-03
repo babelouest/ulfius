@@ -56,7 +56,9 @@ memcheck: uwsc
 	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all $(COMMAND) 2>valgrind.txt
 
 install: uwsc
-	cp uwsc $(DESTDIR)/bin
+	mkdir -p $(DESTDIR)/bin $(DESTDIR)/man/man1/
+	install -m755 uwsc $(DESTDIR)/bin
+	install -m644 uwsc.1 $(DESTDIR)/man/man1/
 
 uninstall:
 	rm -f $(DESTDIR)/bin/uwsc
