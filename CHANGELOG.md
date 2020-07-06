@@ -2,9 +2,9 @@
 
 ## 2.6.8
 
-- Increase ULFIUS_POSTBUFFERSIZE to follow MHD documentation
+- Increase `ULFIUS_POSTBUFFERSIZE` to follow MHD documentation
 - Adapt code to be compatible with all MHD version
-- In case of secure websocket communication, use a combination of gnutls_record_check_pending() and poll() to determine if data is ready. (Thanks Wouter van Herpen!)
+- In case of secure websocket communication, use a combination of `gnutls_record_check_pending()` and `poll()` to determine if data is ready. (Thanks **Wouter van Herpen**!)
 - Install uwsc manpage
 
 ## 2.6.7
