@@ -6,6 +6,7 @@
 - Adapt code to be compatible with all MHD version
 - In case of secure websocket communication, use a combination of `gnutls_record_check_pending()` and `poll()` to determine if data is ready. (Thanks **Wouter van Herpen**!)
 - Install uwsc manpage
+- Fix bug about missing `res` variable assignment. (Thanks **Gianfranco Costamagna**!)
 
 ## 2.6.7
 
