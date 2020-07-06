@@ -864,9 +864,8 @@ int ulfius_send_smtp_rich_email(const char * host,
           break;
         }
 
-        res = curl_easy_perform(curl_handle);
-        if (res != CURLE_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error sending smtp message, error message %s", curl_easy_strerror(res));
+        if ((res = curl_easy_perform(curl_handle)) != CURLE_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error sending smtp message, error message '%s'", curl_easy_strerror(res));
           ret = U_ERROR_LIBCURL;
           break;
         }
