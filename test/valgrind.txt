@@ -1,0 +1,123 @@
+==266354== Memcheck, a memory error detector
+==266354== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==266354== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
+==266354== Command: ./core
+==266354== 
+==266354== Thread 3 MHD-connection:
+==266354== Invalid write of size 2
+==266354==    at 0x4842B33: memmove (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==266354==    by 0x4C3717F: memcpy (string_fortified.h:34)
+==266354==    by 0x4C3717F: post_process_urlencoded (postprocessor.c:640)
+==266354==    by 0x4C37B9D: MHD_post_process (postprocessor.c:1383)
+==266354==    by 0x4A6DE09: ulfius_webservice_dispatcher (ulfius.c:481)
+==266354==    by 0x4C2B0D0: process_request_body (connection.c:2422)
+==266354==    by 0x4C2B0D0: MHD_connection_handle_idle (connection.c:3433)
+==266354==    by 0x4C2C45D: call_handlers (daemon.c:1215)
+==266354==    by 0x4C2FC58: thread_main_handle_connection (daemon.c:2077)
+==266354==    by 0x4C08608: start_thread (pthread_create.c:477)
+==266354==    by 0x498E102: clone (clone.S:95)
+==266354==  Address 0x5f89af8 is 1,192 bytes inside a block of size 1,193 alloc'd
+==266354==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==266354==    by 0x4C379D2: MHD_create_post_processor (postprocessor.c:340)
+==266354==    by 0x4A6DB44: ulfius_webservice_dispatcher (ulfius.c:452)
+==266354==    by 0x4C289B0: call_connection_handler (connection.c:2220)
+==266354==    by 0x4C2A27F: MHD_connection_handle_idle (connection.c:3397)
+==266354==    by 0x4C2C45D: call_handlers (daemon.c:1215)
+==266354==    by 0x4C2FC58: thread_main_handle_connection (daemon.c:2077)
+==266354==    by 0x4C08608: start_thread (pthread_create.c:477)
+==266354==    by 0x498E102: clone (clone.S:95)
+==266354== 
+==266354== Invalid write of size 1
+==266354==    at 0x4842B63: memmove (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==266354==    by 0x4C3717F: memcpy (string_fortified.h:34)
+==266354==    by 0x4C3717F: post_process_urlencoded (postprocessor.c:640)
+==266354==    by 0x4C37B9D: MHD_post_process (postprocessor.c:1383)
+==266354==    by 0x4A6DE09: ulfius_webservice_dispatcher (ulfius.c:481)
+==266354==    by 0x4C2B0D0: process_request_body (connection.c:2422)
+==266354==    by 0x4C2B0D0: MHD_connection_handle_idle (connection.c:3433)
+==266354==    by 0x4C2C45D: call_handlers (daemon.c:1215)
+==266354==    by 0x4C2FC58: thread_main_handle_connection (daemon.c:2077)
+==266354==    by 0x4C08608: start_thread (pthread_create.c:477)
+==266354==    by 0x498E102: clone (clone.S:95)
+==266354==  Address 0x5fbfa89 is 0 bytes after a block of size 1,193 alloc'd
+==266354==    at 0x483DD99: calloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==266354==    by 0x4C379D2: MHD_create_post_processor (postprocessor.c:340)
+==266354==    by 0x4A6DB44: ulfius_webservice_dispatcher (ulfius.c:452)
+==266354==    by 0x4C289B0: call_connection_handler (connection.c:2220)
+==266354==    by 0x4C2A27F: MHD_connection_handle_idle (connection.c:3397)
+==266354==    by 0x4C2C45D: call_handlers (daemon.c:1215)
+==266354==    by 0x4C2FC58: thread_main_handle_connection (daemon.c:2077)
+==266354==    by 0x4C08608: start_thread (pthread_create.c:477)
+==266354==    by 0x498E102: clone (clone.S:95)
+==266354== 
+--266354-- VALGRIND INTERNAL ERROR: Valgrind received a signal 11 (SIGSEGV) - exiting
+--266354-- si_code=128;  Faulting address: 0x0;  sp: 0x1005e87df0
+
+valgrind: the 'impossible' happened:
+   Killed by fatal signal
+
+host stacktrace:
+==266354==    at 0x5805200D: ??? (in /usr/lib/x86_64-linux-gnu/valgrind/memcheck-amd64-linux)
+==266354==    by 0x58004EBB: ??? (in /usr/lib/x86_64-linux-gnu/valgrind/memcheck-amd64-linux)
+==266354==    by 0x5800663F: ??? (in /usr/lib/x86_64-linux-gnu/valgrind/memcheck-amd64-linux)
+==266354==    by 0x580A6A6A: ??? (in /usr/lib/x86_64-linux-gnu/valgrind/memcheck-amd64-linux)
+==266354==    by 0x580F5FD4: ??? (in /usr/lib/x86_64-linux-gnu/valgrind/memcheck-amd64-linux)
+==266354==    by 0x580F62D0: ??? (in /usr/lib/x86_64-linux-gnu/valgrind/memcheck-amd64-linux)
+==266354==    by 0x580B88ED: ??? (in /usr/lib/x86_64-linux-gnu/valgrind/memcheck-amd64-linux)
+==266354==    by 0xDEADBEEFDEADBEEE: ???
+==266354==    by 0xDEADBEEFDEADBEEE: ???
+==266354==    by 0xDEADBEEFDEADBEEE: ???
+
+sched status:
+  running_tid=3
+
+Thread 1: status = VgTs_WaitSys syscall 7 (lwpid 266354)
+==266354==    at 0x498196F: poll (poll.c:29)
+==266354==    by 0x4C833D8: ??? (in /usr/lib/x86_64-linux-gnu/libcurl-gnutls.so.4.6.0)
+==266354==    by 0x4C7D061: ??? (in /usr/lib/x86_64-linux-gnu/libcurl-gnutls.so.4.6.0)
+==266354==    by 0x4C7D255: curl_multi_poll (in /usr/lib/x86_64-linux-gnu/libcurl-gnutls.so.4.6.0)
+==266354==    by 0x4C75CC7: curl_easy_perform (in /usr/lib/x86_64-linux-gnu/libcurl-gnutls.so.4.6.0)
+==266354==    by 0x4A79B67: ulfius_send_http_streaming_request (u_send_request.c:593)
+==266354==    by 0x4A7825F: ulfius_send_http_request (u_send_request.c:163)
+==266354==    by 0x1137EF: test_ulfius_request_limits (core.c:571)
+==266354==    by 0x11DDFA: tcase_run_tfun_nofork.isra.9 (in /media/donjon/workspace/angharad/ulfius/test/core)
+==266354==    by 0x11E1BB: srunner_run (in /media/donjon/workspace/angharad/ulfius/test/core)
+==266354==    by 0x11BAE2: main (core.c:1046)
+client stack range: [0x1FFEFFD000 0x1FFF000FFF] client SP: 0x1FFEFFF360
+valgrind stack range: [0x1002BAE000 0x1002CADFFF] top usage: 9480 of 1048576
+
+Thread 2: status = VgTs_WaitSys syscall 23 (lwpid 266355)
+==266354==    at 0x4983F9B: select (select.c:41)
+==266354==    by 0x4C31E77: MHD_select (daemon.c:3825)
+==266354==    by 0x4C321BC: MHD_polling_thread (daemon.c:4770)
+==266354==    by 0x4C08608: start_thread (pthread_create.c:477)
+==266354==    by 0x498E102: clone (clone.S:95)
+client stack range: [0x62C3000 0x6AC1FFF] client SP: 0x6AC19F0
+valgrind stack range: [0x1005833000 0x1005932FFF] top usage: 3400 of 1048576
+
+Thread 3: status = VgTs_Runnable (lwpid 266369)
+==266354==    at 0x483DFAF: realloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==266354==    by 0x4A61FE3: o_realloc (memory.c:31)
+==266354==    by 0x4A6DCBE: ulfius_webservice_dispatcher (ulfius.c:470)
+==266354==    by 0x4C2B0D0: process_request_body (connection.c:2422)
+==266354==    by 0x4C2B0D0: MHD_connection_handle_idle (connection.c:3433)
+==266354==    by 0x4C2C45D: call_handlers (daemon.c:1215)
+==266354==    by 0x4C2FC58: thread_main_handle_connection (daemon.c:2077)
+==266354==    by 0x4C08608: start_thread (pthread_create.c:477)
+==266354==    by 0x498E102: clone (clone.S:95)
+client stack range: [0x72D9000 0x7AD7FFF] client SP: 0x7AD75E0
+valgrind stack range: [0x1005D88000 0x1005E87FFF] top usage: 8384 of 1048576
+
+
+Note: see also the FAQ in the source distribution.
+It contains workarounds to several common problems.
+In particular, if Valgrind aborted or crashed after
+identifying problems in your program, there's a good chance
+that fixing those problems will prevent Valgrind aborting or
+crashing, especially if it happened in m_mallocfree.c.
+
+If that doesn't help, please report this bug to: www.valgrind.org
+
+In the bug report, send all the above text, the valgrind
+version, and what OS and version you are using.  Thanks.
+
