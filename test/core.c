@@ -910,7 +910,11 @@ START_TEST(test_ulfius_start_instance)
 {
   struct _u_instance u_instance;
   struct MHD_OptionItem mhd_ops[3];
+#ifndef U_DISABLE_WEBSOCKET
   unsigned int mhd_flags = MHD_USE_THREAD_PER_CONNECTION|MHD_ALLOW_UPGRADE;
+#else
+  unsigned int mhd_flags = MHD_USE_THREAD_PER_CONNECTION;
+#endif
 
   ck_assert_int_eq(ulfius_init_instance(&u_instance, 8081, NULL, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", NULL, "test", 0, &callback_function_empty, NULL), U_OK);
