@@ -62,3 +62,6 @@ install: uwsc
 
 uninstall:
 	rm -f $(DESTDIR)/bin/uwsc
+
+manpage:
+	help2man uwsc -s 1 -n "Command-line websocket client" > uwsc.1
