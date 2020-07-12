@@ -14,8 +14,10 @@
 Ulfius is available in multiple distributions as official package. Check out your distribution documentation to install the package automatically.
 
 ```shell
-$ # Example for Debian testing
-$ sudo apt install libulfius-dev uwsc # Or 'apt install libulfius2.6 uwsc' if you don't need the development files
+$ # Example for Debian testing, install ulfius library with development files and uwsc
+$ sudo apt install libulfius-dev uwsc
+$ # Example for Debian testing, install uwsc only
+$ sudo apt install uwsc
 ```
 
 ## Pre-compiled packages
