@@ -15,22 +15,22 @@ Ulfius is available in multiple distributions as official package. Check out you
 
 ```shell
 $ # Example for Debian testing
-$ sudo apt install libulfius-dev # Or apt install libulfius2.3 if you don't need the development files
+$ sudo apt install libulfius-dev uwsc # Or 'apt install libulfius2.6 uwsc' if you don't need the development files
 ```
 
 ## Pre-compiled packages
 
 You can install Ulfius with a pre-compiled package available in the [release pages](https://github.com/babelouest/ulfius/releases/latest/). `jansson`, `libmicrohttpd`, `gnutls` and `libcurl-gnutls` development files packages are required to install Ulfius. The packages files `ulfius-dev-full_*` contain the libraries `orcania`, `yder` and `ulfius`.
 
-For example, to install Ulfius with the `ulfius-dev-full_2.3.0_Debian_stretch_x86_64.tar.gz` package downloaded on the `releases` page, you must execute the following commands:
+For example, to install Ulfius with the `ulfius-dev-full_2.6.8_Debian_stretch_x86_64.tar.gz` package downloaded on the `releases` page, you must execute the following commands:
 
 ```shell
 $ sudo apt install -y libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev libgnutls28-dev libgcrypt20-dev libsystemd-dev
-$ wget https://github.com/babelouest/ulfius/releases/download/v2.3.0/ulfius-dev-full_2.3.0_Debian_stretch_x86_64.tar.gz
-$ tar xf ulfius-dev-full_2.3.0_Debian_stretch_x86_64.tar.gz
-$ sudo dpkg -i liborcania-dev_1.2.0_Debian_stretch_x86_64.deb
-$ sudo dpkg -i libyder-dev_1.2.0_Debian_stretch_x86_64.deb
-$ sudo dpkg -i libulfius-dev_2.3.0_Debian_stretch_x86_64.deb
+$ wget https://github.com/babelouest/ulfius/releases/download/v2.6.8/ulfius-dev-full_2.6.8_debian_buster_x86_64.tar.gz
+$ tar xf ulfius-dev-full_2.6.8_debian_buster_x86_64.tar.gz
+$ sudo dpkg -i liborcania-dev_2.1.1_Debian_stretch_x86_64.deb
+$ sudo dpkg -i libyder-dev_1.4.11_Debian_stretch_x86_64.deb
+$ sudo dpkg -i libulfius-dev_2.6.8_Debian_stretch_x86_64.deb
 ```
 
 If there's no package available for your distribution, you can recompile it manually using `CMake` or `Makefile`.
