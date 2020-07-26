@@ -683,6 +683,19 @@ int ulfius_equals_endpoints(const struct _u_endpoint * endpoint1, const struct _
  ********************************************/
 
 /**
+ * Initialize send request global parameters
+ * This function isn't thread-safe so it must be called once before any call to
+ * `ulfius_send_http_request`, `ulfius_send_http_streaming_request`, `ulfius_send_smtp_email` or `ulfius_send_smtp_rich_email`
+ * @return U_OK on success
+ */
+int ulfius_send_request_init();
+
+/**
+ * Close send request global parameters
+ */
+void ulfius_send_request_close();
+
+/**
  * ulfius_send_http_request
  * Send a HTTP request and store the result into a _u_response
  * @param request the struct _u_request that contains all the input parameters to perform the HTTP request

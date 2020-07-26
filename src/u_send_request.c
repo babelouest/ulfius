@@ -149,6 +149,19 @@ static size_t smtp_payload_source(void * ptr, size_t size, size_t nmemb, void * 
   return len;
 }
 
+int ulfius_send_request_init() {
+  if (curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error initializing libcurl");
+    return U_ERROR;
+  } else {
+    return U_OK;
+  }
+}
+
+void ulfius_send_request_close() {
+  curl_global_cleanup();
+}
+
 /**
  * ulfius_send_http_request
  * Send a HTTP request and store the result into a _u_response
