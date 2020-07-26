@@ -1044,6 +1044,7 @@ int main(int argc, char *argv[])
   Suite *s;
   SRunner *sr;
   //y_init_logs("Ulfius", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Ulfius core tests");
+  ulfius_send_request_init();
   s = ulfius_suite();
   sr = srunner_create(s);
 
@@ -1051,6 +1052,7 @@ int main(int argc, char *argv[])
   number_failed = srunner_ntests_failed(sr);
   srunner_free(sr);
   
+  ulfius_send_request_close();
   //y_close_logs();
 	return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

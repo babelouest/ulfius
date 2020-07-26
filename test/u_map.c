@@ -203,6 +203,8 @@ int main(int argc, char *argv[])
   Suite *s;
   SRunner *sr;
   
+  ulfius_send_request_init();
+  
   s = ulfius_suite();
   sr = srunner_create(s);
 
@@ -210,5 +212,6 @@ int main(int argc, char *argv[])
   number_failed = srunner_ntests_failed(sr);
   srunner_free(sr);
   
-	return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+  ulfius_send_request_close();
+  return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
