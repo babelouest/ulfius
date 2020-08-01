@@ -1486,6 +1486,24 @@ $ make CURLFLAG=-DU_DISABLE_CURL # Makefile
 $ cmake -DWITH_CURL=off # CMake
 ```
 
+It's **recommended** to use `ulfius_send_request_init` and `ulfius_send_request_close` at the beginning and at the end of your program to initialize and cleanup internal values and settings. This will maks outgoing requests faster, especially if you use lots of them. These functions are **NOT** thread-safe, so you must use them in a single thread execution.
+
+```C
+/**
+ * Initialize send request global parameters
+ * This function isn't thread-safe so it must be called once before any call to
+ * ulfius_send_http_request, ulfius_send_http_streaming_request, ulfius_send_smtp_email or ulfius_send_smtp_rich_email
+ * The function ulfius_send_request_close must be called when ulfius send request functions are no longer needed
+ * @return U_OK on success
+ */
+int ulfius_send_request_init();
+
+/**
+ * Close send request global parameters
+ */
+void ulfius_send_request_close();
+```
+
 ### Send HTTP request API
 
 The functions `int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response)` and `int ulfius_send_http_streaming_request(const struct _u_request * request, struct _u_response * response, size_t (* write_body_function)(void * contents, size_t size, size_t nmemb, void * user_data), void * write_body_data)` are based on `libcurl` api.
