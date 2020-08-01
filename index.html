@@ -42,75 +42,7 @@ $(function() {
 <div class="title">Ulfius API Documentation </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><ul>
-<li><a href="#header-file">Header file</a></li>
-<li><a href="#return-values">Return values</a></li>
-<li><a href="#memory-management">Memory management</a></li>
-<li><a href="#webservice-initialization">Webservice initialization</a><ul>
-<li><a href="#instance-structure">Instance structure</a></li>
-<li><a href="#endpoint-structure">Endpoint structure</a></li>
-<li><a href="#multiple-callback-functions">Multiple callback functions</a></li>
-<li><a href="#multiple-urls-with-similar-pattern">Multiple urls with similar pattern</a></li>
-</ul>
-</li>
-<li><a href="#start-and-stop-webservice">Start and stop webservice</a></li>
-<li><a href="#callback-functions-management">Callback functions management</a><ul>
-<li><a href="#request-structure">Request structure</a></li>
-<li><a href="#response-structure">Response structure</a></li>
-<li><a href="#callback-functions-return-value">Callback functions return value</a></li>
-<li><a href="#use-json-in-request-and-response-body">Use JSON in request and response body</a></li>
-<li><a href="#additional-functions">Additional functions</a></li>
-<li><a href="#memory-management">Memory management</a></li>
-<li><a href="#character-encoding">Character encoding</a></li>
-<li><a href="#accessing-post-parameters">Accessing POST parameters</a></li>
-<li><a href="#accessing-query-string-and-url-parameters">Accessing query string and URL parameters</a></li>
-<li><a href="#accessing-header-parameters">Accessing header parameters</a></li>
-<li><a href="#cookie-management">Cookie management</a></li>
-<li><a href="#file-upload">File upload</a></li>
-<li><a href="#streaming-data">Streaming data</a></li>
-<li><a href="#websockets-communication">Websockets communication</a><ul>
-<li><a href="#websocket-management">Websocket management</a></li>
-<li><a href="#messages-manipulation">Messages manipulation</a></li>
-<li><a href="#server-side-websocket">Server-side websocket</a><ul>
-<li><a href="#open-a-websocket-communication">Open a websocket communication</a></li>
-<li><a href="#close-a-websocket-communication">Close a websocket communication</a></li>
-<li><a href="#websocket-status">Websocket status</a></li>
-</ul>
-</li>
-<li><a href="#client-side-websocket">Client-side websocket</a><ul>
-<li><a href="#prepare-the-request">Prepare the request</a></li>
-<li><a href="#open-the-websocket">Open the websocket</a></li>
-<li><a href="#websocket-status-1">Websocket status</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a href="#outgoing-request-functions">Outgoing request functions</a><ul>
-<li><a href="#send-http-request-api">Send HTTP request API</a></li>
-<li><a href="#send-http-request-api">Send SMTP request API</a></li>
-</ul>
-</li>
-<li><a href="#struct-_u_map-api">struct _u_map API</a></li>
-<li><a href="#whats-new-in-ulfius-26">What's new in Ulfius 2.6?</a></li>
-<li><a href="#whats-new-in-ulfius-25">What's new in Ulfius 2.5?</a></li>
-<li><a href="#whats-new-in-ulfius-24">What's new in Ulfius 2.4?</a></li>
-<li><a href="#whats-new-in-ulfius-23">What's new in Ulfius 2.3?</a></li>
-<li><a href="#whats-new-in-ulfius-22">What's new in Ulfius 2.2?</a></li>
-<li><a href="#whats-new-in-ulfius-21">What's new in Ulfius 2.1?</a></li>
-<li><a href="#whats-new-in-ulfius-20">What's new in Ulfius 2.0?</a><ul>
-<li><a href="#multiple-callback-functions-1">Multiple callback functions</a></li>
-<li><a href="#keep-only-binary_body-in-struct-_u_request-and-struct-_u_response">Keep only binary_body in struct _u_request and struct _u_response</a></li>
-<li><a href="#websocket-service">Websocket service</a></li>
-<li><a href="#remove-libjansson-and-libcurl-hard-dependency">Remove libjansson and libcurl hard dependency</a></li>
-<li><a href="#ready-to-use-callback-functions">Ready-to-use callback functions</a></li>
-</ul>
-</li>
-<li><a href="#update-existing-programs-from-ulfius-20-to-21">Update existing programs from Ulfius 2.0 to 2.1</a></li>
-<li><a href="#update-existing-programs-from-ulfius-1x-to-20">Update existing programs from Ulfius 1.x to 2.0</a></li>
-</ul>
-<h2>Header file</h2>
+<div class="textblock"><h2>Header file</h2>
 <p>Include file <code><a class="el" href="ulfius_8h.html" title="Ulfius framework. ">ulfius.h</a></code> in your source file:</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="ulfius_8h.html">ulfius.h</a>&gt;</span></div></div><!-- fragment --><p>On your linker command, add ulfius as a dependency library, e.g. <code>-lulfius</code> for gcc.</p>
 <h3>Return values</h3>
@@ -451,7 +383,8 @@ $(function() {
 <p>The following functions allow the application to know if the the websocket is still open, to enforce closing the websocket or to wait until the websocket is closed by the server:</p>
 <div class="fragment"><div class="line"></div><div class="line"><span class="keywordtype">int</span> <a class="code" href="u__websocket_8c.html#a0f01cd89ce14766ebb9572645e36ec8f">ulfius_websocket_client_connection_send_close_signal</a>(<span class="keyword">struct</span> _websocket_client_handler * websocket_client_handler);</div><div class="line"></div><div class="line"><span class="keywordtype">int</span> <a class="code" href="u__websocket_8c.html#ad193bf928fd587b3fdad653bd7c82301">ulfius_websocket_client_connection_close</a>(<span class="keyword">struct</span> _websocket_client_handler * websocket_client_handler);</div><div class="line"></div><div class="line"><span class="keywordtype">int</span> <a class="code" href="u__websocket_8c.html#a48680b98db86851f2273ab2d22f8e61d">ulfius_websocket_client_connection_status</a>(<span class="keyword">struct</span> _websocket_client_handler * websocket_client_handler);</div><div class="line"></div><div class="line"><span class="keywordtype">int</span> <a class="code" href="u__websocket_8c.html#a44701d788570a3a6ae72102786c261fd">ulfius_websocket_client_connection_wait_close</a>(<span class="keyword">struct</span> _websocket_client_handler * websocket_client_handler, <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> timeout);</div></div><!-- fragment --><h2>Outgoing request functions</h2>
 <p>Ulfius allows output functions to send HTTP or SMTP requests. These functions use <code>libcurl</code>. You can disable these functions by appending the argument <code>CURLFLAG=-DU_DISABLE_CURL</code> when you build the library with Makefile or by disabling the flag in CMake build:</p>
-<div class="fragment"><div class="line">$ make CURLFLAG=-DU_DISABLE_CURL # Makefile</div><div class="line">$ cmake -DWITH_CURL=off # CMake</div></div><!-- fragment --><h3>Send HTTP request API</h3>
+<div class="fragment"><div class="line">$ make CURLFLAG=-DU_DISABLE_CURL # Makefile</div><div class="line">$ cmake -DWITH_CURL=off # CMake</div></div><!-- fragment --><p>It's <b>recommended</b> to use <code>ulfius_send_request_init</code> and <code>ulfius_send_request_close</code> at the beginning and at the end of your program to initialize and cleanup internal values and settings. This will maks outgoing requests faster, especially if you use lots of them. These functions are <b>NOT</b> thread-safe, so you must use them in a single thread execution.</p>
+<div class="fragment"><div class="line"></div><div class="line"><span class="keywordtype">int</span> <a class="code" href="group__http__smtp__client.html#gae6843498ab29451d31745c0db0d41c75">ulfius_send_request_init</a>();</div><div class="line"></div><div class="line"><span class="keywordtype">void</span> <a class="code" href="group__http__smtp__client.html#gaec6789d7cc62192868808215a0c188d2">ulfius_send_request_close</a>();</div></div><!-- fragment --><h3>Send HTTP request API</h3>
 <p>The functions <code>int <a class="el" href="group__http__smtp__client.html#gac63db90a4e78f6c86b559c8fb96251e4">ulfius_send_http_request(const struct _u_request * request, struct _u_response * response)</a></code> and <code>int ulfius_send_http_streaming_request(const struct <a class="el" href="struct__u__request.html" title="definition of the parameters available in a struct _u_request ">_u_request</a> * request, struct <a class="el" href="struct__u__response.html" title="definition of the parameters available in a struct _u_response ">_u_response</a> * response, size_t (* write_body_function)(void * contents, size_t size, size_t nmemb, void * user_data), void * write_body_data)</code> are based on <code>libcurl</code> api.</p>
 <p>They allow to send an HTTP request with the parameters specified by the <code><a class="el" href="struct__u__request.html" title="definition of the parameters available in a struct _u_request ">_u_request</a></code> structure. Use the parameter <code><a class="el" href="struct__u__request.html#ae1b2bb23752f9f54829845b38f7cdeb0">_u_request.http_url</a></code> to specify the distant url to call.</p>
 <p>You can fill the maps in the <code><a class="el" href="struct__u__request.html" title="definition of the parameters available in a struct _u_request ">_u_request</a></code> structure with parameters, they will be used to build the request. Note that if you fill <code><a class="el" href="struct__u__request.html#a78094a8748f9bd47411e48a1839bfc24">_u_request.map_post_body</a></code> with parameters, the content-type <code>application/x-www-form-urlencoded</code> will be use to encode the data.</p>
