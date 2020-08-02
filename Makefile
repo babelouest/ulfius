@@ -37,7 +37,7 @@ clean:
 	cd $(EXAMPLES_LOCATION) && $(MAKE) clean
 	cd $(UWSC_LOCATION) && $(MAKE) clean
 	cd $(TESTS_LOCATION) && $(MAKE) clean
-	rm -rf doc/API.md doc/html
+	rm -rf doc/html
 
 examples:
 	cd $(EXAMPLES_LOCATION) && $(MAKE) $*
@@ -53,7 +53,4 @@ check:
 	cd $(TESTS_LOCATION) && $(MAKE)
 
 doxygen:
-	echo "# Ulfius API Documentation" > doc/API.md
-	echo "" >> doc/API.md
-	tail -n +$(shell grep -n "## Header file" API.md | cut -f1 -d:) API.md >> doc/API.md
 	doxygen doc/doxygen.cfg
