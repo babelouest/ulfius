@@ -47,9 +47,23 @@ jobs:
     #    uses a compiled language
 
     - run: |
-    #   make bootstrap
-    #   make release
-    make
+        # prepare build folders
+        mkdir build
+        mkdir example_programs/build
+
+        # build ulfius, run tests, build package
+        cd build
+        cmake -DBUILD_ULFIUS_TESTING=on ..
+        ln -s ../test/cert/ .
+        ./cert/create-cert.sh || (cat ../test/cert/certtool.log && false)
+        make test || (cat Testing/Temporary/LastTest.log && false)
+        make package
+        sudo make install
+
+        # build examples
+        cd ../example_programs/build
+        cmake ..
+        make
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
