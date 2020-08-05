@@ -47,10 +47,15 @@ jobs:
     #    uses a compiled language
 
     - run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake pkg-config check libsubunit-dev cppcheck libsystemd-dev libmicrohttpd-dev libgnutls28-dev libjansson-dev libcurl4-gnutls-dev gnutls-bin
+        sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
+        sudo sysctl -w net.ipv6.conf.lo.disable_ipv6=0
+        
         # prepare build folders
         mkdir build
         mkdir example_programs/build
-
+        
         # build ulfius, run tests, build package
         cd build
         cmake -DBUILD_ULFIUS_TESTING=on ..
@@ -59,7 +64,7 @@ jobs:
         make test || (cat Testing/Temporary/LastTest.log && false)
         make package
         sudo make install
-
+        
         # build examples
         cd ../example_programs/build
         cmake ..
