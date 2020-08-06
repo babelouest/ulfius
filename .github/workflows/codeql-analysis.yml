@@ -48,7 +48,7 @@ jobs:
 
     - run: |
         sudo apt-get update
-        sudo apt-get install -y cmake pkg-config check libsubunit-dev cppcheck libsystemd-dev libmicrohttpd-dev libgnutls28-dev libjansson-dev libcurl4-gnutls-dev gnutls-bin
+        sudo apt-get install -y cmake pkg-config libsystemd-dev libmicrohttpd-dev libgnutls28-dev libjansson-dev libcurl4-gnutls-dev gnutls-bin doxygen
         
         # prepare build folders
         mkdir build
