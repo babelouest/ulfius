@@ -49,8 +49,6 @@ jobs:
     - run: |
         sudo apt-get update
         sudo apt-get install -y cmake pkg-config check libsubunit-dev cppcheck libsystemd-dev libmicrohttpd-dev libgnutls28-dev libjansson-dev libcurl4-gnutls-dev gnutls-bin
-        sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
-        sudo sysctl -w net.ipv6.conf.lo.disable_ipv6=0
         
         # prepare build folders
         mkdir build
@@ -58,17 +56,16 @@ jobs:
         
         # build ulfius, run tests, build package
         cd build
-        cmake -DBUILD_ULFIUS_TESTING=on ..
-        ln -s ../test/cert/ .
-        ./cert/create-cert.sh || (cat ../test/cert/certtool.log && false)
-        make test || (cat Testing/Temporary/LastTest.log && false)
-        make package
+        cmake -DBUILD_ULFIUS_DOCUMENTATION=on ..
+        make
+        make doc
         sudo make install
         
         # build examples
         cd ../example_programs/build
         cmake ..
         make
+        sudo make install
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
