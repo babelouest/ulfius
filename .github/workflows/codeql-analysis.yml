@@ -65,7 +65,6 @@ jobs:
         cd ../example_programs/build
         cmake ..
         make
-        sudo make install
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
