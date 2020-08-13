@@ -67,6 +67,17 @@ void websocket_manager_callback(const struct _u_request * request,
     }
   }
   
+  // Send JSON message without fragmentation
+#ifndef U_DISABLE_JANSSON
+  if (ulfius_websocket_wait_close(websocket_manager, 2000) == U_WEBSOCKET_STATUS_OPEN) {
+    json_t * message = json_pack("{ss}", "send", "JSON message without fragmentation");
+    if (ulfius_websocket_send_json_message(websocket_manager, message) != U_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error send JSON message without fragmentation");
+    }
+    json_decref(message);
+  }
+#endif
+
   y_log_message(Y_LOG_LEVEL_DEBUG, "Closing websocket_manager_callback");
 }
 
