@@ -1568,6 +1568,17 @@ int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websock
                                              const uint64_t fragment_len);
 
 /**
+ * Sends a JSON message in the websocket
+ * @param websocket_manager the websocket manager to use for sending the message
+ * @param message the message to send
+ * @return U_OK on success
+ */
+#ifndef U_DISABLE_JANSSON
+int ulfius_websocket_send_json_message(struct _websocket_manager * websocket_manager,
+                                       json_t * message);
+#endif
+
+/**
  * Return the first message of the message list
  * Return NULL if message_list has no message
  * Use it with struct _websocket_manager->message_list_incoming

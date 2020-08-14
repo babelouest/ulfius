@@ -1217,7 +1217,7 @@ U_WEBSOCKET_OPCODE_CLOSE
 U_WEBSOCKET_OPCODE_PING
 ```
 
-If you want to send a message to the client, you must use the dedicated functions `ulfius_websocket_send_message` or `ulfius_websocket_send_fragmented_message`:
+If you want to send a message to the client, you must use the dedicated functions `ulfius_websocket_send_message`, `ulfius_websocket_send_fragmented_message` or `ulfius_websocket_send_json_message`:
 
 ```C
 /**
@@ -1239,6 +1239,12 @@ int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websock
                                              const uint64_t data_len,
                                              const char * data,
                                              const size_t fragment_len);
+/**
+ * Send a JSON message in the websocket
+ * Return U_OK on success
+ */
+int ulfius_websocket_send_json_message(struct _websocket_manager * websocket_manager,
+                                       json_t * message);
 ```
 
 To get the first message of the incoming or outcoming if you need to with `ulfius_websocket_pop_first_message`, this will remove the first message of the list, and return it as a pointer. You must free the message using the function `ulfius_clear_websocket_message` after use:

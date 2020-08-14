@@ -1151,6 +1151,20 @@ int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
 }
 
 /**
+ * Send a JSON message in the websocket
+ * Return U_OK on success
+ */
+#ifndef U_DISABLE_JANSSON
+int ulfius_websocket_send_json_message(struct _websocket_manager * websocket_manager,
+                                       json_t *message) {
+  char * json = json_dumps(message, JSON_COMPACT);
+  int ret = ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, strlen(json), json);
+  o_free(json);
+  return ret;
+}
+#endif
+
+/**
  * Return the first message of the message list
  * Return NULL if message_list has no message
  * Returned value must be cleared after use
