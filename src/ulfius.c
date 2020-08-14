@@ -30,6 +30,10 @@
 #include "u_private.h"
 #include "ulfius.h"
 
+#ifndef U_DISABLE_CURL
+#include <curl/curl.h>
+#endif
+
 /** Define mock yder functions when yder is disabled **/
 #ifdef U_DISABLE_YDER
 int y_init_logs(const char * app, const unsigned long init_mode, const unsigned long init_level, const char * init_log_file, const char * message) {
@@ -1808,4 +1812,34 @@ char * ulfius_url_decode(const char * str) {
   } else {
     return NULL;
   }
+}
+
+int ulfius_global_init() {
+  int ret = U_OK;
+  o_malloc_t malloc_fn;
+  o_realloc_t realloc_fn;
+  o_free_t free_fn;
+  
+  o_get_alloc_funcs(&malloc_fn, &realloc_fn, &free_fn);
+#ifndef U_DISABLE_CURL
+  if (curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error curl_global_init");
+    ret = U_ERROR;
+  } else {
+    if (curl_global_init_mem(CURL_GLOBAL_DEFAULT, malloc_fn, free_fn, realloc_fn, *o_strdup, *calloc) != CURLE_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error curl_global_init_mem");
+      ret = U_ERROR_MEMORY;
+    }
+  }
+#endif
+#ifndef U_DISABLE_JANSSON
+  json_set_alloc_funcs((json_malloc_t)malloc_fn, (json_free_t)free_fn);
+#endif
+  return ret;
+}
+
+void ulfius_global_close() {
+#ifndef U_DISABLE_CURL
+  curl_global_cleanup();
+#endif
 }

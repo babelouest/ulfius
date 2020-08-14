@@ -149,31 +149,6 @@ static size_t smtp_payload_source(void * ptr, size_t size, size_t nmemb, void * 
   return len;
 }
 
-int ulfius_send_request_init() {
-  o_malloc_t malloc_fn;
-  o_realloc_t realloc_fn;
-  o_free_t free_fn;
-  if (curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error curl_global_init");
-    return U_ERROR;
-  } else {
-    o_get_alloc_funcs(&malloc_fn, &realloc_fn, &free_fn);
-    if (curl_global_init_mem(CURL_GLOBAL_DEFAULT, malloc_fn, free_fn, realloc_fn, *o_strdup, *calloc) == CURLE_OK) {
-#ifndef U_DISABLE_JANSSON
-      json_set_alloc_funcs((json_malloc_t)malloc_fn, (json_free_t)free_fn);
-#endif
-      return U_OK;
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error curl_global_init_mem");
-      return U_ERROR_MEMORY;
-    }
-  }
-}
-
-void ulfius_send_request_close() {
-  curl_global_cleanup();
-}
-
 /**
  * ulfius_send_http_request
  * Send a HTTP request and store the result into a _u_response
