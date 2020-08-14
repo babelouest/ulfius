@@ -371,6 +371,20 @@ struct connection_info_struct {
 void u_free(void * data);
 
 /**
+ * Initialize global parameters
+ * This function isn't thread-safe so it must be called once before any call to
+ * ulfius_send_http_request, ulfius_send_http_streaming_request, ulfius_send_smtp_email or ulfius_send_smtp_rich_email
+ * The function ulfius_send_request_close must be called when ulfius send request functions are no longer needed
+ * @return U_OK on success
+ */
+int ulfius_global_init();
+
+/**
+ * Close global parameters
+ */
+void ulfius_global_close();
+
+/**
  * @}
  */
 
@@ -681,20 +695,6 @@ int ulfius_equals_endpoints(const struct _u_endpoint * endpoint1, const struct _
 /********************************************
  * Requests/Responses functions declarations
  ********************************************/
-
-/**
- * Initialize send request global parameters
- * This function isn't thread-safe so it must be called once before any call to
- * ulfius_send_http_request, ulfius_send_http_streaming_request, ulfius_send_smtp_email or ulfius_send_smtp_rich_email
- * The function ulfius_send_request_close must be called when ulfius send request functions are no longer needed
- * @return U_OK on success
- */
-int ulfius_send_request_init();
-
-/**
- * Close send request global parameters
- */
-void ulfius_send_request_close();
 
 /**
  * ulfius_send_http_request
