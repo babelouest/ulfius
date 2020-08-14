@@ -131,6 +131,24 @@ int u_map_clean(struct _u_map * u_map);
 void u_free(void * data);
 ```
 
+It's **recommended** to use `ulfius_global_init` and `ulfius_global_close` at the beginning and at the end of your program to initialize and cleanup internal values and settings. This will make outgoing requests faster, especially if you use lots of them, and dispatch your memory allocation functions in curl and Jansson if you changed them. These functions are **NOT** thread-safe, so you must use them in a single thread context.
+
+```C
+/**
+ * Initialize global parameters
+ * This function isn't thread-safe so it must be called once before any call to
+ * ulfius_send_http_request, ulfius_send_http_streaming_request, ulfius_send_smtp_email or ulfius_send_smtp_rich_email
+ * The function ulfius_send_request_close must be called when ulfius send request functions are no longer needed
+ * @return U_OK on success
+ */
+int ulfius_global_init();
+
+/**
+ * Close global parameters
+ */
+void ulfius_global_close();
+```
+
 ## Webservice initialization <a name="webservice-initialization"></a>
 
 Ulfius framework runs as an async task in the background. When initialized, a thread is executed in the background. This thread will listen to the specified port and dispatch the calls to the specified callback functions. Ulfius allows adding and removing new endpoints during the instance execution.
@@ -1496,24 +1514,6 @@ Ulfius allows output functions to send HTTP or SMTP requests. These functions us
 ```
 $ make CURLFLAG=-DU_DISABLE_CURL # Makefile
 $ cmake -DWITH_CURL=off # CMake
-```
-
-It's **recommended** to use `ulfius_global_init` and `ulfius_global_close` at the beginning and at the end of your program to initialize and cleanup internal values and settings. This will make outgoing requests faster, especially if you use lots of them, and dispatch your memory allocation functions in curl and Jansson if you changed them. These functions are **NOT** thread-safe, so you must use them in a single thread context.
-
-```C
-/**
- * Initialize global parameters
- * This function isn't thread-safe so it must be called once before any call to
- * ulfius_send_http_request, ulfius_send_http_streaming_request, ulfius_send_smtp_email or ulfius_send_smtp_rich_email
- * The function ulfius_send_request_close must be called when ulfius send request functions are no longer needed
- * @return U_OK on success
- */
-int ulfius_global_init();
-
-/**
- * Close global parameters
- */
-void ulfius_global_close();
 ```
 
 ### Send HTTP request API <a name="send-http-request-api"></a>
