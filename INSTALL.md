@@ -1,4 +1,4 @@
-# Install Ulfius
+libelous# Install Ulfius
 
 - [Distribution packages](#distribution-packages)
 - [Pre-compiled packages](#pre-compiled-packages)
@@ -47,9 +47,9 @@ Ulfius requires the following dependencies.
 - libjansson (optional), minimum 2.4, required for json support
 - libgnutls, libgcrypt (optional), required for Websockets and https support
 - libcurl (optional), required to send http/smtp requests
-- libsystemd (optional), required for [yder](https://github.com/babelouest/yder) to log messages in journald
+- libsystemd (optional), required for [Yder](https://github.com/babelouest/yder) to log messages in journald
 
-Note: the build stacks require a compiler (`gcc` or `clang`), `make`, `cmake` (if using cmake build), and `pkg-config`.
+Note: the build stacks require a compiler (`gcc` or `clang`), `make`, `cmake` (if using CMake build), and `pkg-config`.
 
 For example, to install all the external dependencies on Debian Stretch, run as root:
 
@@ -59,7 +59,7 @@ For example, to install all the external dependencies on Debian Stretch, run as 
 
 ### Good ol' Makefile
 
-Download Orcania, Yder and Ulfius source code from Github, compile and install Orcania, then Yder, then compile and install ulfius:
+Download Orcania, Yder and Ulfius source code from GitHub, compile and install Orcania, then Yder, then compile and install Ulfius:
 
 ```shell
 $ git clone https://github.com/babelouest/orcania.git
@@ -105,7 +105,7 @@ To disable websocket implementation, append the option `WEBSOCKETFLAG=1` to the 
 $ make WEBSOCKETFLAG=1
 ```
 
-To disable yder library (you will no longer have log messages available!), append the option `YDERFLAG=1` to the make command when you build Ulfius:
+To disable Yder library (you will no longer have log messages available!), append the option `YDERFLAG=1` to the make command when you build Ulfius:
 
 ```shell
 $ make YDERFLAG=1
@@ -117,9 +117,9 @@ To disable two or more libraries, append options, example:
 $ make CURLFLAG=1 JANSSONFLAG=1
 ```
 
-#### Install libulfius as a static archive
+#### Install Ulfius as a static archive
 
-Install  libulfius as a static archive, `libulfius.a`, use the make commands `make static*`:
+Install  Ulfius as a static archive, `libulfius.a`, use the make commands `make static*`:
 
 ```shell
 $ cd src
@@ -167,7 +167,7 @@ This will compile and install uwsc in `/usr/local/bin`, to install it in another
 
 ### CMake - Multi architecture
 
-You can build Ulfius library using cmake, example:
+You can build Ulfius library using CMake, example:
 
 ```shell
 $ mkdir build
@@ -176,7 +176,7 @@ $ cmake ..
 $ make && sudo make install
 ```
 
-The available options for cmake are:
+The available options for CMake are:
 - `-DWITH_JANSSON=[on|off]` (default `on`): Build with Jansson dependency
 - `-DWITH_CURL=[on|off]` (default `on`): Build with libcurl dependency
 - `-DWITH_GNUTLS=[on|off]` (default `on`): Build with GNU TLS extensions (HTTPS client certificate support), requires GnuTLS library.

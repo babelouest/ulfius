@@ -7,7 +7,7 @@
   - [Instance structure](#instance-structure)
   - [Endpoint structure](#endpoint-structure)
   - [Multiple callback functions](#multiple-callback-functions)
-  - [Multiple urls with similar pattern](#multiple-urls-with-similar-pattern)
+  - [Multiple URLs with similar pattern](#multiple-urls-with-similar-pattern)
 - [Start and stop webservice](#start-and-stop-webservice)
 - [Callback functions management](#callback-functions-management)
   - [Request structure](#request-structure)
@@ -63,7 +63,7 @@ Include file `ulfius.h` in your source file:
 #include <ulfius.h>
 ```
 
-On your linker command, add ulfius as a dependency library, e.g. `-lulfius` for gcc.
+On your linker command, add Ulfius as a dependency library, e.g. `-lulfius` for gcc.
 
 ## Return values <a name="return-values"></a>
 
@@ -390,7 +390,7 @@ int ulfius_set_default_callback_function(struct _u_instance * u_instance,
 
 HTTP Method can be an existing or not existing method, or `*` for any method. You must specify a url_prefix, a url_format or both, callback_function is mandatory, user_data is optional.
 
-If you fill your array of endoints manually, your `struct _u_endpoint` array **MUST** end with an empty `struct _u_endpoint`.
+If you fill your array of endpoints manually, your `struct _u_endpoint` array **MUST** end with an empty `struct _u_endpoint`.
 
 You can manually declare an endpoint or use the dedicated functions as `int ulfius_add_endpoint` or `int ulfius_add_endpoint_by_val`. It's recommended to use the dedicated functions to fill this array though.
 
@@ -400,24 +400,24 @@ If you manipulate the attribute `u_instance.endpoint_list`, you must end the lis
 
 Ulfius allows multiple callbacks for the same endpoint. This is helpful when you need to execute several actions in sequence, for example check authentication, get resource, set cookie, then gzip response body. That's also why a priority must be set for each callback.
 
-The priority is in descending order, which means that it starts with 0 (highest priority) and priority decreases when priority number increases. There is no more signification to the priority number, which means you can use any incrementation of your choice.
+The priority is in descending order, which means that it starts with 0 (highest priority) and priority decreases when priority number increases. There is no more signification to the priority number, which means you can use any increments of your choice.
 
 `Warning`: Having 2 callback functions with the same priority number will result in an undefined execution order result.
 
-To help passing parameters between callback functions of the same request, the value `struct _u_response.shared_data` can bse used. But it will not be allocated or freed by the framework, the program using this variable must free by itself.
+To help passing parameters between callback functions of the same request, the value `struct _u_response.shared_data` can be used. But it will not be allocated or freed by the framework, the program using this variable must free by itself.
 
-### Multiple urls with similar pattern <a name="multiple-urls-with-similar-pattern"></a>
+### Multiple URLs with similar pattern <a name="multiple-urls-with-similar-pattern"></a>
 
-If you need to differentiate multiple urls with similar pattern, you can use priorities among multiple callback function.
+If you need to differentiate multiple URLs with similar pattern, you can use priorities among multiple callback function.
 
 For example, if you have 2 endpoints with the following patterns:
 
 1- `/example/:id`
 2- `/example/findByStatus`
 
-You'll probably need the callback referred in 2- to be called and the callback referred in 1- not when the url called is the exact pattern as in 2-. Nevertheless, you'll need callback referred in 1- in all the other cases.
+You'll probably need the callback referred in 2- to be called and the callback referred in 1- not when the URL called is the exact pattern as in 2-. Nevertheless, you'll need callback referred in 1- in all the other cases.
 
-In that case, you'll have to set a higher priority to the endpoint with the url 2- and return its callback function with the value `U_CALLBACK_COMPLETE`. Remember, if the first callback returns `U_CALLBACK_CONTINUE`, the second callback will be called afterwards.
+In that case, you'll have to set a higher priority to the endpoint with the URL 2- and return its callback function with the value `U_CALLBACK_COMPLETE`. Remember, if the first callback returns `U_CALLBACK_CONTINUE`, the second callback will be called afterwards.
 
 ```C
 int callback_example_find_by_status(const struct _u_request * request, struct _u_response * response, void * user_data) {
@@ -658,29 +658,29 @@ Options available:
 |---|---|
 | U_OPT_NONE | Empty option to complete a ulfius_set_request_properties or ulfius_set_request_properties |
 | U_OPT_HTTP_VERB | http method (GET, POST, PUT, DELETE, etc.), expected option value type: const char * |
-| U_OPT_HTTP_URL | full url used to call this callback function or full url to call when used in a ulfius_send_http_request, expected option value type: const char * |
+| U_OPT_HTTP_URL | full URL used to call this callback function or full URL to call when used in a ulfius_send_http_request, expected option value type: const char * |
 | U_OPT_HTTP_PROXY | proxy address to use for outgoing connections, used by ulfius_send_http_request, expected option value type: const char * |
-| U_OPT_NETWORK_TYPE | Force connect to ipv4, ipv6 addresses or both, values available are U_USE_ALL, U_USE_IPV4 or U_USE_IPV6, expected option value type: unsigned short |
+| U_OPT_NETWORK_TYPE | Force connect to IPv4, IPv6 addresses or both, values available are U_USE_ALL, U_USE_IPV4 or U_USE_IPV6, expected option value type: unsigned short |
 | U_OPT_CHECK_SERVER_CERTIFICATE | check server certificate and hostname, default true, used by ulfius_send_http_request, expected option value type: int |
 | U_OPT_CHECK_SERVER_CERTIFICATE_FLAG | check certificate peer and or server hostname if check_server_certificate is enabled, values available are U_SSL_VERIFY_PEER, U_SSL_VERIFY_HOSTNAME or both, default value is both (U_SSL_VERIFY_PEER\|U_SSL_VERIFY_HOSTNAME), used by ulfius_send_http_request, expected option value type: int |
 | U_OPT_CHECK_PROXY_CERTIFICATE | check proxy certificate and hostname, default true, used by ulfius_send_http_request, requires libcurl >= 7.52, expected option value type: int |
 | U_OPT_CHECK_PROXY_CERTIFICATE_FLAG | check certificate peer and or proxy hostname if check_proxy_certificate is enabled, values available are U_SSL_VERIFY_PEER, U_SSL_VERIFY_HOSTNAME or both, default value is both (U_SSL_VERIFY_PEER\|U_SSL_VERIFY_HOSTNAME), used by ulfius_send_http_request, requires libcurl >= 7.52, expected option value type: int |
-| U_OPT_FOLLOW_REDIRECT | follow url redirections, used by ulfius_send_http_request, expected option value type: int |
+| U_OPT_FOLLOW_REDIRECT | follow URL redirections, used by ulfius_send_http_request, expected option value type: int |
 | U_OPT_CA_PATH | specify a path to CA certificates instead of system path, used by ulfius_send_http_request, expected option value type: const char * |
 | U_OPT_TIMEOUT | connection timeout used by ulfius_send_http_request, default is 0 _or_ Timeout in seconds to close the connection because of inactivity between the client and the server, expected option value type: unsigned long |
 | U_OPT_AUTH_BASIC_USER | basic authentication username, expected option value type: const char * |
 | U_OPT_AUTH_BASIC_PASSWORD | basic authentication password, expected option value type: const char * |
-| U_OPT_URL_PARAMETER | Add to the map containing the url variables, both from the route and the ?key=value variables, expected option value type: const char *, const char * |
+| U_OPT_URL_PARAMETER | Add to the map containing the URL variables, both from the route and the ?key=value variables, expected option value type: const char *, const char * |
 | U_OPT_HEADER_PARAMETER | Add to the map containing the header variables, expected option value type: const char *, const char * |
 | U_OPT_COOKIE_PARAMETER | Add to the map containing the cookie variables, expected option value type: const char *, const char * |
 | U_OPT_POST_BODY_PARAMETER | Add to the map containing the post body variables (if available), expected option value type: const char *, const char * |
-| U_OPT_URL_PARAMETER_REMOVE | Remove from the map containing the url variables, both from the route and the ?key=value variables, expected option value type: const char * |
+| U_OPT_URL_PARAMETER_REMOVE | Remove from the map containing the URL variables, both from the route and the ?key=value variables, expected option value type: const char * |
 | U_OPT_HEADER_PARAMETER_REMOVE | Remove from map containing the header variables, expected option value type: const char * |
 | U_OPT_COOKIE_PARAMETER_REMOVE | Remove from map containing the cookie variables, expected option value type: const char * |
 | U_OPT_POST_BODY_PARAMETER_REMOVE | Remove from map containing the post body variables (if available), expected option value type: const char * |
-| U_OPT_BINARY_BODY | Set a raw body to the request or the reponse, expected option value type: const char *, size_t |
-| U_OPT_STRING_BODY | Set a char * body to the request or the reponse, expected option value type: const char * |
-| U_OPT_JSON_BODY | Set a stringified json_t * body to the request or the reponse, expected option value type: json_t * |
+| U_OPT_BINARY_BODY | Set a raw body to the request or the response, expected option value type: const char *, size_t |
+| U_OPT_STRING_BODY | Set a char * body to the request or the response, expected option value type: const char * |
+| U_OPT_JSON_BODY | Set a stringified json_t * body to the request or the response, expected option value type: json_t * |
 | U_OPT_CLIENT_CERT_FILE | path to client certificate file for sending http requests with certificate authentication, available only if GnuTLS support is enabled, expected option value type: const char * |
 | U_OPT_CLIENT_KEY_FILE | path to client key file for sending http requests with certificate authentication, available only if GnuTLS support is enabled, expected option value type: const char * |
 | U_OPT_CLIENT_KEY_PASSWORD | password to unlock client key file, available only if GnuTLS support is enabled, expected option value type: const char * |
@@ -711,7 +711,7 @@ The response variable is defined as:
  * binary_body_length:   the length of the binary_body
  * stream_callback:      callback function to stream data in response body
  * stream_callback_free: callback function to free data allocated for streaming
- * stream_size:          size of the streamed data (U_STREAM_SIZE_UNKOWN if unknown)
+ * stream_size:          size of the streamed data (U_STREAM_SIZE_UNKNOWN if unknown)
  * stream_block_size:    size of each block to be streamed, set according to your system
  * stream_user_data:     user defined data that will be available in your callback stream functions
  * websocket_handle:     handle for websocket extension
@@ -741,7 +741,7 @@ struct _u_response {
 
 In the response variable set by the framework to the callback function, the structure is initialized with no data.
 
-The user can set the `binary_body` before the return statement, or no response body at all if no need. If a `binary_body` is set, its size must be set to `binary_body_length`. `binary_body` is free'd by the framework when the response has been sent to the client, so you must use dynamically allocated values. If no status is set, status 200 will be sent to the client.
+The user can set the `binary_body` before the return statement, or no response body at all if no need. If a `binary_body` is set, its size must be set to `binary_body_length`. `binary_body` is freed by the framework when the response has been sent to the client, so you must use dynamically allocated values. If no status is set, status 200 will be sent to the client.
 
 Some functions are dedicated to handle the response:
 
@@ -840,14 +840,14 @@ Options available:
 |---|---|
 | U_OPT_NONE | Empty option to complete a ulfius_set_request_properties or ulfius_set_request_properties |
 | U_OPT_STATUS | HTTP response status code (200, 404, 500, etc), expected option value type: long |
-| U_OPT_AUTH_REALM | realm to send to the client response on authenticationb failed, expected option value type: const char * |
+| U_OPT_AUTH_REALM | realm to send to the client response on authentication failed, expected option value type: const char * |
 | U_OPT_SHARED_DATA | any data shared between callback functions, must be allocated and freed by the callback functions, expected option value type: void * |
 | U_OPT_TIMEOUT | Timeout in seconds to close the connection because of inactivity between the client and the server, expected option value type: long |
 | U_OPT_HEADER_PARAMETER | Add to the map containing the header variables, expected option value type: const char *, const char * |
 | U_OPT_HEADER_PARAMETER_REMOVE | Remove from map containing the header variables, expected option value type: const char * |
-| U_OPT_BINARY_BODY | Set a raw body to the request or the reponse, expected option value type: const char *, size_t |
-| U_OPT_STRING_BODY | Set a char * body to the request or the reponse, expected option value type: const char * |
-| U_OPT_JSON_BODY | Set a stringified json_t * body to the request or the reponse, expected option value type: json_t * |
+| U_OPT_BINARY_BODY | Set a raw body to the request or the response, expected option value type: const char *, size_t |
+| U_OPT_STRING_BODY | Set a char * body to the request or the response, expected option value type: const char * |
+| U_OPT_JSON_BODY | Set a stringified json_t * body to the request or the response, expected option value type: json_t * |
 
 Example:
 
@@ -862,15 +862,15 @@ The callback returned value can have the following values:
 - `U_CALLBACK_CONTINUE`: The framework can transfer the request and the response to the next callback function in priority order if there is one, or complete the transaction and send back the response to the client.
 - `U_CALLBACK_COMPLETE`: The framework must complete the transaction and send the response to the client without calling any further callback function.
 - `U_CALLBACK_UNAUTHORIZED`: The framework must complete the transaction without calling any further callback function and send an unauthorized response to the client with the status 401, the body specified and the `auth_realm` value if specified.
-- `U_CALLBACK_ERROR`: An error occured during execution, the framework will complete the transaction without calling any further callback function and send an error 500 to the client.
+- `U_CALLBACK_ERROR`: An error occurred during execution, the framework will complete the transaction without calling any further callback function and send an error 500 to the client.
 
 Except for the return values `U_CALLBACK_UNAUTHORIZED` and `U_CALLBACK_ERROR`, the callback return value isn't useful to specify the response sent back to the client. Use the `struct _u_response` variable in your callback function to set all values in the HTTP response.
 
 ### Use JSON in request and response body <a name="use-json-in-request-and-response-body"></a>
 
-In Ulfius 2.0, hard dependency with `libjansson` has been removed, the jansson library is now optional but enabled by default.
+In Ulfius 2.0, hard dependency with `libjansson` has been removed, the Jansson library is now optional but enabled by default.
 
-If you want to remove JSON dependency, build Ulfius library using Makefile with the flag `JANSSONFLAG=-DU_DISABLE_JANSSON` or with CMake with th option `-DWITH_WEBSOCKET=off`.
+If you want to remove JSON dependency, build Ulfius library using Makefile with the flag `JANSSONFLAG=-DU_DISABLE_JANSSON` or with CMake with the option `-DWITH_WEBSOCKET=off`.
 
 ```
 $ make JANSSONFLAG=-DU_DISABLE_JANSSON # Makefile
@@ -913,7 +913,7 @@ json_t * ulfius_get_json_body_response(struct _u_response * response, json_error
 int ulfius_set_json_body_response(struct _u_response * response, const uint status, const json_t * body);
 ```
 
-The `jansson` api documentation is available at the following address: [Jansson documentation](https://jansson.readthedocs.org/).
+The `jansson` API documentation is available at the following address: [Jansson documentation](https://jansson.readthedocs.org/).
 
 Note: According to the [JSON RFC section 6](https://tools.ietf.org/html/rfc4627#section-6), the MIME media type for JSON text is `application/json`. Thus, if there is no HTTP header specifying JSON content-type, the functions `ulfius_get_json_body_request` and `ulfius_get_json_body_response` will return NULL.
 
@@ -1007,11 +1007,11 @@ The Ulfius framework will automatically free the variables referenced by the req
 
 ### Character encoding <a name="character-encoding"></a>
 
-You may be careful with characters encoding if you use non UTF8 characters in your application or webservice source code, and especially if you use different encodings in the same application. Ulfius may not work properly.
+You may be careful with characters encoding if you use non UTF8 characters in your application or webservice source code, and especially if you use different encoding in the same application. Ulfius may not work properly.
 
 ### Accessing POST parameters <a name="accessing-post-parameters"></a>
 
-In the callback function, you can access the POST parameters in the `struct _u_request.map_post_body`. The parameters keys are case-sensntive.
+In the callback function, you can access the POST parameters in the `struct _u_request.map_post_body`. The parameters keys are case-sensitive.
 
 This variable is a `struct _u_map`, therefore you can access it using the [struct _u_map documentation](#struct-_u_map-api).
 
@@ -1025,7 +1025,7 @@ int callback_test (const struct _u_request * request, struct _u_response * respo
 
 ### Accessing query string and URL parameters <a name="accessing-query-string-and-url-parameters"></a>
 
-In the callback function, you can access the URL and query parameters in the `struct _u_request.map_url`. This variable contains both URL parameters and query string parameters, the parameters keys are case-sensntive. If a parameter appears multiple times in the URL and the query string, the values will be chained in the `struct _u_request.map_url`, separated by a comma `,`.
+In the callback function, you can access the URL and query parameters in the `struct _u_request.map_url`. This variable contains both URL parameters and query string parameters, the parameters keys are case-sensitive. If a parameter appears multiple times in the URL and the query string, the values will be chained in the `struct _u_request.map_url`, separated by a comma `,`.
 
 This variable is a `struct _u_map`, therefore you can access it using the [struct _u_map documentation](#struct-_u_map-api).
 
@@ -1047,7 +1047,7 @@ int callback_test (const struct _u_request * request, struct _u_response * respo
 
 In the callback function, you can access the header parameters in the `struct _u_request.map_header`.
 
-In the callback function, you can access the header parameters in the `struct _u_request.map_header`. The parameters keys are case-sensntive. If a parameter appears multiple times in the header, the values will be chained in the `struct _u_request.map_header`, separated by a comma `,`.
+In the callback function, you can access the header parameters in the `struct _u_request.map_header`. The parameters keys are case-sensitive. If a parameter appears multiple times in the header, the values will be chained in the `struct _u_request.map_header`, separated by a comma `,`.
 
 This variable is a `struct _u_map`, therefore you can access it using the [struct _u_map documentation](#struct-_u_map-api).
 
@@ -1120,7 +1120,7 @@ Please note that the client (browser, app, etc.) doesn't have to remove the cook
 
 ## File upload <a name="file-upload"></a>
 
-Ulifius allows file upload to the server. Beware that an uploaded file will be stored in the request object in memory, so uploading large files may dramatically slow the application or even crash it, depending on your system. An uploaded file is stored in the `request->map_body` structure. You can use `u_map_get_length` to get the exact length of the file as it may not be a string format.
+Ulfius allows file upload to the server. Beware that an uploaded file will be stored in the request object in memory, so uploading large files may dramatically slow the application or even crash it, depending on your system. An uploaded file is stored in the `request->map_body` structure. You can use `u_map_get_length` to get the exact length of the file as it may not be a string format.
 
 If you want to limit the size of a post parameter, if you want to limit the file size for example, set the value `struct _u_instance.max_post_param_size`. Files or post data exceeding this size will be truncated to the size `struct _u_instance.max_post_param_size`. If this parameter is 0, then no limit is set. Default value is 0.
 
@@ -1161,7 +1161,7 @@ int ulfius_set_upload_file_callback_function(struct _u_instance * u_instance,
                                              void * cls);
 ```
 
-This callback function will be called before all the other callback functions, and be aware that not all parameters, especially url parameters, will be present during the file upload callback function executions.
+This callback function will be called before all the other callback functions, and be aware that not all parameters, especially URL parameters, will be present during the file upload callback function executions.
 
 See `examples/sheep_counter` for a file upload example.
 
@@ -1169,7 +1169,7 @@ See `examples/sheep_counter` for a file upload example.
 
 If you need to stream data, i.e. send a variable and potentially large amount of data, or if you need to send a chunked response, you can define and use `stream_callback_function` in the `struct _u_response`.
 
-Not that if you stream data to the client, any data that was in the `response->binary_body` will be ignored. You must at least set the function pointer `struct _u_response.stream_callback` to stream data. Set `stream_size` to U_STREAM_SIZE_UNKOWN if you don't know the size of the data you need to send, like in audio stream for example. Set `stream_block_size` according to you system resources to avoid out of memory errors, also, set `stream_callback_free` with a pointer to a function that will free values allocated by your stream callback function, as a `close()` file for example, and finally, you can set `stream_user_data` to a pointer.
+Not that if you stream data to the client, any data that was in the `response->binary_body` will be ignored. You must at least set the function pointer `struct _u_response.stream_callback` to stream data. Set `stream_size` to U_STREAM_SIZE_UNKNOWN if you don't know the size of the data you need to send, like in audio stream for example. Set `stream_block_size` according to you system resources to avoid out of memory errors, also, set `stream_callback_free` with a pointer to a function that will free values allocated by your stream callback function, as a `close()` file for example, and finally, you can set `stream_user_data` to a pointer.
 
 You can use the function `ulfius_set_stream_response` to set those parameters.
 
@@ -1186,7 +1186,7 @@ The return value must be the size of the data put in `out_buf`.
 
 This function will be called over and over in loop as long as the client has the connection opened.
 
-If you want to close the stream from the server side, return `U_STREAM_END` in the `stream_callback` function. If a problem occured, you can close the connection with a `U_STREAM_ERROR` return value.
+If you want to close the stream from the server side, return `U_STREAM_END` in the `stream_callback` function. If a problem occurred, you can close the connection with a `U_STREAM_ERROR` return value.
 
 While the `stream_callback_free` function is as simple as:
 
@@ -1198,7 +1198,7 @@ Check the application `stream_example` in the example folder.
 
 ## Websockets communication <a name="websockets-communication"></a>
 
-The websocket protocol is defined in the [RFC6455](https://tools.ietf.org/html/rfc6455). A websocket is a full-duplex communication layer between a server and a client initiated by a HTTP request. Once the websocket handshake is complete between the client and the server, the tcp socket between them is kept open and messages in a specific format can be exchanged. Any side of the socket can send a message to the other side, which allows the server to push messages to the client.
+The websocket protocol is defined in the [RFC6455](https://tools.ietf.org/html/rfc6455). A websocket is a full-duplex communication layer between a server and a client initiated by a HTTP request. Once the websocket handshake is complete between the client and the server, the TCP socket between them is kept open and messages in a specific format can be exchanged. Any side of the socket can send a message to the other side, which allows the server to push messages to the client.
 
 Ulfius implements websocket communication, both server-side and client-side. The following chapter will describe how to create a websocket service or a websocket client by using callback functions. The framework will handle sending and receiving messages with the clients, and your application will deal with high level functions to facilitate the communication process.
 
@@ -1518,15 +1518,15 @@ $ cmake -DWITH_CURL=off # CMake
 
 ### Send HTTP request API <a name="send-http-request-api"></a>
 
-The functions `int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response)` and `int ulfius_send_http_streaming_request(const struct _u_request * request, struct _u_response * response, size_t (* write_body_function)(void * contents, size_t size, size_t nmemb, void * user_data), void * write_body_data)` are based on `libcurl` api.
+The functions `int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response)` and `int ulfius_send_http_streaming_request(const struct _u_request * request, struct _u_response * response, size_t (* write_body_function)(void * contents, size_t size, size_t nmemb, void * user_data), void * write_body_data)` are based on `libcurl` API.
 
-They allow to send an HTTP request with the parameters specified by the `_u_request` structure. Use the parameter `_u_request.http_url` to specify the distant url to call.
+They allow to send an HTTP request with the parameters specified by the `_u_request` structure. Use the parameter `_u_request.http_url` to specify the distant URL to call.
 
 You can fill the maps in the `_u_request` structure with parameters, they will be used to build the request. Note that if you fill `_u_request.map_post_body` with parameters, the content-type `application/x-www-form-urlencoded` will be use to encode the data.
 
 The response parameters is stored into the `_u_response` structure. If you specify NULL for the response structure, the http call will still be made but no response details will be returned. If you use `ulfius_send_http_request`, the response body will be stored in the parameter `response->*body*`.
 
-If you use `ulfius_send_http_streaming_request`, the response body will be available in the `write_body_function` specified in the call. The `ulfius_send_http_streaming_request` can be used for streaming data or large response, or if you need to receive a chenked response from the server.
+If you use `ulfius_send_http_streaming_request`, the response body will be available in the `write_body_function` specified in the call. The `ulfius_send_http_streaming_request` can be used for streaming data or large response, or if you need to receive a checked response from the server.
 
 Return value is `U_OK` on success.
 
@@ -1813,7 +1813,7 @@ Add `struct _u_request->callback_position` to know the position of the current c
 
 ## What's new in Ulfius 2.5? <a name="whats-new-in-ulfius-25"></a>
 
-Add option to ignore non utf8 strings in incoming requests.
+Add option to ignore non UTF8 strings in incoming requests.
 
 Allow client certificate authentication
 
@@ -1839,9 +1839,9 @@ Allow to use your own callback function when uploading files with `ulfius_set_up
 I know it wasn't long since Ulfius 2.0 was released. But after some review and tests, I realized some adjustments had to be made to avoid bugs and to clean the framework a little bit more.
 
 Some of the adjustments made in the new release:
-- An annoying bug has been fixed that made streaming data a little buggy when used on raspbian. Now if you don't know the data size you're sending, use the macro U_STREAM_SIZE_UNKOWN instead of the previous value -1. There is some updates in the stream callback function parameter types. Check the [streaming data documentation](API.md#streaming-data).
+- An annoying bug has been fixed that made streaming data a little buggy when used on Raspbian. Now if you don't know the data size you're sending, use the macro U_STREAM_SIZE_UNKNOWN instead of the previous value -1. There is some updates in the stream callback function parameter types. Check the [streaming data documentation](API.md#streaming-data).
 - Fix bug on `ulfius_send_http_request` that didn't send back all headers value with the same name (#19)
-- Fix websocket declaration structures to have them outside of the `ulfius.h`, because it could lead to horrifying bugs when you compile ulfius with websocket but add `#define U_DISABLE_WEBSOCKET` in your application.
+- Fix websocket declaration structures to have them outside of the `ulfius.h`, because it could lead to horrifying bugs when you compile Ulfius with websocket but add `#define U_DISABLE_WEBSOCKET` in your application.
 - Add proxy value for outgoing requests (#18)
 - Unify and update functions name `ulfius_set_[string|json|binary]_body`. You may have to update your legacy code.
 
@@ -1863,14 +1863,14 @@ For example, let's say you have the following endpoints defined:
 - `*` `*` => `authentication_callback` function, priority 1
 - `GET` `*` => `gzip_body_callback` function, priority 99
 
-Then if the client calls the url `GET` `/api/potato/myPotato`, the following callback functions will be called in that order:
+Then if the client calls the URL `GET` `/api/potato/myPotato`, the following callback functions will be called in that order:
 
 - `authentication_callback`
 - `api_validate_callback`
 - `potato_get_callback`
 - `gzip_body_callback`
 
-*Warning:* In this example, the url parameter `myPotato` will be availabe only in the `potato_get_callback` function, because the other endpoints did not defined a url parameter after `/potato`.
+*Warning:* In this example, the URL parameter `myPotato` will be available only in the `potato_get_callback` function, because the other endpoints did not defined a URL parameter after `/potato`.
 
 If you need to communicate between callback functions for any purpose, you can use the new parameter `struct _u_response.shared_data`. This is a `void *` pointer initialized to `NULL`. If you use it, remember to free it after use, because the framework won't.
 
@@ -1884,7 +1884,7 @@ Ulfius now allows websockets communication between the client and the server. Ch
 
 Using websocket requires [libgnutls](https://www.gnutls.org/). It also requires a recent version of [Libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/), at least 0.9.53.
 
-If you dont need or can't use this feature, you can disable it by adding the option `WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET` to the make command when you build Ulfius:
+If you don't need or can't use this feature, you can disable it by adding the option `WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET` to the make command when you build Ulfius:
 
 ```shell
 $ make WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET
@@ -2049,7 +2049,7 @@ You can find some ready-to-use callback functions in the folder [example_callbac
 
 ## Update existing programs from Ulfius 2.0 to 2.1 <a name="update-existing-programs-from-ulfius-20-to-21"></a>
 
-- An annoying bug has been fixed that made streaming data a little buggy when used on raspbian. Now if you don't know the data size you're sending, use the macro U_STREAM_SIZE_UNKOWN instead of the previous value -1.
+- An annoying bug has been fixed that made streaming data a little buggy when used on Raspbian. Now if you don't know the data size you're sending, use the macro U_STREAM_SIZE_UNKNOWN instead of the previous value -1.
 - There are some updates in the stream callback function parameter types. Check the [streaming data documentation](#streaming-data).
 - The websocket data structures are no longer available directly in `struct _u_response` or `struct _u_instance`. But you shouldn't use them like this anyway so it won't be a problem.
 - Unify and update functions name `ulfius_set_*_body_response`. You may have to update your legacy code.

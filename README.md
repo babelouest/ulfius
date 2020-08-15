@@ -75,7 +75,7 @@ int main(void) {
 
 ### Webservice
 
-- Create a webservice in a separate thread, the endpoint is identified by its method (ex: `GET`, `POST`, `PUT`, `DELETE`, etc.) and its url path with its optional parameters (ex: `/api/doc/@id`). The webservice is executed in a callback function.
+- Create a webservice in a separate thread, the endpoint is identified by its method (ex: `GET`, `POST`, `PUT`, `DELETE`, etc.) and its URL path with its optional parameters (ex: `/api/doc/@id`). The webservice is executed in a callback function.
 
 - Stream large amount of data with a reduced memory footprint.
 
@@ -119,9 +119,9 @@ Example callback functions are available in the folder [example_callbacks](https
 
 - [Angharad](https://github.com/babelouest/angharad), House automation system for ZWave and other types of devices
 - [Glewlwyd](https://github.com/babelouest/glewlwyd), a lightweight SSO server that provides OAuth2 and OpenID Connect authentication protocols
-- [Hutch](https://github.com/babelouest/hutch), a safe locker for passwords and other secrets, using javascript client side encryption only
+- [Hutch](https://github.com/babelouest/hutch), a safe locker for passwords and other secrets, using JavaScript client side encryption only
 - [Taliesin](https://github.com/babelouest/taliesin), a lightweight audio streaming server
-- [Taulas Raspberry Pi Serial interface](https://github.com/babelouest/taulas/tree/master/taulas_raspberrypi_serial), an interface for Arduino devices that implent [Taulas](https://github.com/babelouest/taulas/) protocol, a house automation protocol for Angharad
+- [Taulas Raspberry Pi Serial interface](https://github.com/babelouest/taulas/tree/master/taulas_raspberrypi_serial), an interface for Arduino devices that implement [Taulas](https://github.com/babelouest/taulas/) protocol, a house automation protocol for Angharad
 
 ## Questions, problems ?
 
