@@ -434,7 +434,7 @@ int ulfius_init_response(struct _u_response * response) {
     response->binary_body = NULL;
     response->binary_body_length = 0;
     response->stream_callback = NULL;
-    response->stream_size = U_STREAM_SIZE_UNKOWN;
+    response->stream_size = U_STREAM_SIZE_UNKNOWN;
     response->stream_block_size = ULFIUS_STREAM_BLOCK_SIZE_DEFAULT;
     response->stream_callback_free = NULL;
     response->stream_user_data = NULL;
