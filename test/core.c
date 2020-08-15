@@ -597,7 +597,7 @@ START_TEST(test_ulfius_response)
   ck_assert_int_eq(resp1.binary_body_length, 0);
   ck_assert_ptr_eq(resp1.stream_callback, NULL);
   ck_assert_ptr_eq(resp1.stream_callback_free, NULL);
-  ck_assert_int_eq(resp1.stream_size, U_STREAM_SIZE_UNKOWN);
+  ck_assert_int_eq(resp1.stream_size, U_STREAM_SIZE_UNKNOWN);
   ck_assert_int_eq(resp1.stream_block_size, ULFIUS_STREAM_BLOCK_SIZE_DEFAULT);
   ck_assert_ptr_eq(resp1.stream_user_data, NULL);
 #ifndef U_DISABLE_WEBSOCKET

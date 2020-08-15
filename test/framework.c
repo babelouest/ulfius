@@ -399,7 +399,7 @@ void free_stream_data(void * cls) {
 }
 
 int callback_function_stream (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  ulfius_set_stream_response(response, 200, stream_data, free_stream_data, U_STREAM_SIZE_UNKOWN, 32 * 1024, o_strdup("stream test"));
+  ulfius_set_stream_response(response, 200, stream_data, free_stream_data, U_STREAM_SIZE_UNKNOWN, 32 * 1024, o_strdup("stream test"));
   return U_CALLBACK_CONTINUE;
 }
 
