@@ -103,7 +103,8 @@ int y_close_logs();
 #define ULFIUS_STREAM_BLOCK_SIZE_DEFAULT 1024
 #define U_STREAM_END MHD_CONTENT_READER_END_OF_STREAM
 #define U_STREAM_ERROR MHD_CONTENT_READER_END_WITH_ERROR
-#define U_STREAM_SIZE_UNKOWN MHD_SIZE_UNKNOWN
+#define U_STREAM_SIZE_UNKNOWN MHD_SIZE_UNKNOWN
+#define U_STREAM_SIZE_UNKOWN U_STREAM_SIZE_UNKNOWN // Backward compatibility
 
 #define U_OK                 0 ///< No error
 #define U_ERROR              1 ///< Error
@@ -271,7 +272,7 @@ struct _u_response {
   size_t             binary_body_length; /* !< length of the binary_body */
   ssize_t         (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max); /* !< callback function to stream data in response body */
   void            (* stream_callback_free) (void * stream_user_data); /* !< callback function to free data allocated for streaming */
-  uint64_t           stream_size; /* !< size of the streamed data (U_STREAM_SIZE_UNKOWN if unknown) */
+  uint64_t           stream_size; /* !< size of the streamed data (U_STREAM_SIZE_UNKNOWN if unknown) */
   size_t             stream_block_size; /* !< size of each block to be streamed, set according to your system */
   void             * stream_user_data; /* !< user defined data that will be available in your callback stream functions */
   void             * websocket_handle; /* !< handle for websocket extension */
@@ -924,7 +925,7 @@ int ulfius_set_empty_body_response(struct _u_response * response, const unsigned
  * @param status the http status code to set to the response
  * @param stream_callback a pointer to a function that will handle the response stream
  * @param stream_callback_free a pointer to a function that will free its allocated resoures during stream_callback
- * @param stream_size size of the streamed data (U_STREAM_SIZE_UNKOWN if unknown)
+ * @param stream_size size of the streamed data (U_STREAM_SIZE_UNKNOWN if unknown)
  * @param stream_block_size preferred size of each stream chunk, may be overwritten by the system if necessary
  * @param stream_user_data a user-defined pointer that will be available in stream_callback and stream_callback_free
  * @return U_OK on success
