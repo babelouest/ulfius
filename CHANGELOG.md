@@ -1,5 +1,13 @@
 # Ulfius Changelog
 
+## 2.6.9
+
+- Update doc generation
+- Add `ulfius_websocket_send_json_message`, thanks to Olivier Girondel
+- Update pkg-config Libs with all dependencies
+- Add `ulfius_global_init` and `ulfius_global_close`
+- Rename `U_STREAM_SIZE_UNKOWN` to `U_STREAM_SIZE_UNKNOWN`, keep `U_STREAM_SIZE_UNKOWN` for backward compatibility
+
 ## 2.6.8
 
 - Increase `ULFIUS_POSTBUFFERSIZE` to follow MHD documentation
