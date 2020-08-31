@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.13"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Ulfius: Install Ulfius</title>
+<title>Ulfius: INSTALL</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -39,10 +39,11 @@ $(function() {
 </div><!-- top -->
 <div class="header">
   <div class="headertitle">
-<div class="title">Install Ulfius </div>  </div>
+<div class="title">INSTALL </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><ul>
+<div class="textblock"><p>libelous# Install Ulfius</p>
+<ul>
 <li><a href="#distribution-packages">Distribution packages</a></li>
 <li><a href="#pre-compiled-packages">Pre-compiled packages</a></li>
 <li><a href="#manual-install">Manual install</a><ul>
@@ -67,12 +68,12 @@ $(function() {
 <li>libjansson (optional), minimum 2.4, required for json support</li>
 <li>libgnutls, libgcrypt (optional), required for Websockets and https support</li>
 <li>libcurl (optional), required to send http/smtp requests</li>
-<li>libsystemd (optional), required for <a href="https://github.com/babelouest/yder">yder</a> to log messages in journald</li>
+<li>libsystemd (optional), required for <a href="https://github.com/babelouest/yder">Yder</a> to log messages in journald</li>
 </ul>
-<p>Note: the build stacks require a compiler (<code>gcc</code> or <code>clang</code>), <code>make</code>, <code>cmake</code> (if using cmake build), and <code>pkg-config</code>.</p>
+<p>Note: the build stacks require a compiler (<code>gcc</code> or <code>clang</code>), <code>make</code>, <code>cmake</code> (if using CMake build), and <code>pkg-config</code>.</p>
 <p>For example, to install all the external dependencies on Debian Stretch, run as root:</p>
 <div class="fragment"><div class="line"># apt-get install libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev libgnutls28-dev libgcrypt20-dev</div></div><!-- fragment --><h3>Good ol' Makefile</h3>
-<p>Download Orcania, Yder and Ulfius source code from Github, compile and install Orcania, then Yder, then compile and install ulfius:</p>
+<p>Download Orcania, Yder and Ulfius source code from GitHub, compile and install Orcania, then Yder, then compile and install Ulfius:</p>
 <div class="fragment"><div class="line">$ git clone https://github.com/babelouest/orcania.git</div><div class="line">$ git clone https://github.com/babelouest/yder.git</div><div class="line">$ git clone https://github.com/babelouest/ulfius.git</div><div class="line">$ cd orcania/</div><div class="line">$ make &amp;&amp; sudo make install</div><div class="line">$ cd ../yder/</div><div class="line">$ make &amp;&amp; sudo make install</div><div class="line">$ cd ../ulfius/</div><div class="line">$ make &amp;&amp; sudo make install</div></div><!-- fragment --><h4>Disable Ulfius dependencies</h4>
 <p>To disable libcurl functions, append the option <code>CURLFLAG=1</code> to the make command when you build Ulfius:</p>
 <div class="fragment"><div class="line">$ make CURLFLAG=1</div></div><!-- fragment --><p>If libcurl functions are disabled, <code>libcurl4-gnutls-dev</code> is no longer mandatory for install.</p>
@@ -81,10 +82,10 @@ $(function() {
 <p>To disable GNU TLS extensions (HTTPS client certificate support) and avoid installing libgnutls, append the option <code>GNUTLSFLAG=1</code> to the make command when you build Ulfius:</p>
 <div class="fragment"><div class="line">$ make GNUTLSFLAG=1</div></div><!-- fragment --><p>If GNU TLS extensions are disabled, <code>libgnutls-dev</code> is no longer mandatory for install. However, this will also disable websocket support, since it depends on libgnutls.</p>
 <p>To disable websocket implementation, append the option <code>WEBSOCKETFLAG=1</code> to the make command when you build Ulfius:</p>
-<div class="fragment"><div class="line">$ make WEBSOCKETFLAG=1</div></div><!-- fragment --><p>To disable yder library (you will no longer have log messages available!), append the option <code>YDERFLAG=1</code> to the make command when you build Ulfius:</p>
+<div class="fragment"><div class="line">$ make WEBSOCKETFLAG=1</div></div><!-- fragment --><p>To disable Yder library (you will no longer have log messages available!), append the option <code>YDERFLAG=1</code> to the make command when you build Ulfius:</p>
 <div class="fragment"><div class="line">$ make YDERFLAG=1</div></div><!-- fragment --><p>To disable two or more libraries, append options, example:</p>
-<div class="fragment"><div class="line">$ make CURLFLAG=1 JANSSONFLAG=1</div></div><!-- fragment --><h4>Install libulfius as a static archive</h4>
-<p>Install libulfius as a static archive, <code>libulfius.a</code>, use the make commands <code>make static*</code>:</p>
+<div class="fragment"><div class="line">$ make CURLFLAG=1 JANSSONFLAG=1</div></div><!-- fragment --><h4>Install Ulfius as a static archive</h4>
+<p>Install Ulfius as a static archive, <code>libulfius.a</code>, use the make commands <code>make static*</code>:</p>
 <p>```shell $ cd src $ make static &amp;&amp; sudo make static-install # or make DESTDIR=/tmp static-install if you want to install in <code>/tmp/lib</code> </p><div class="fragment"><div class="line">#### Enable embedded systems flags</div><div class="line"></div><div class="line">To build Ulfius on [FreeRTOS](https://www.freertos.org/), append the option `FREERTOSFLAG=1` to the make command when you build Ulfius:</div><div class="line"></div><div class="line">```shell</div><div class="line">$ make FREERTOSFLAG=1</div></div><!-- fragment --><p>To build Ulfius with the <a href="https://savannah.nongnu.org/projects/lwip/">LWIP</a> library, append the option <code>LWIPFLAG=1</code> to the make command when you build Ulfius:</p>
 <div class="fragment"><div class="line">$ make LWIPFLAG=1</div></div><!-- fragment --><p>Those two options are exclusive, you can't use them both at the same time.</p>
 <h4>Installation directory</h4>
@@ -94,8 +95,8 @@ $(function() {
 <p>uwsc is a small command-line tool to connect to websocket services. To install uwsc only, you can use the <code>Makefile</code> in the <code>uwsc/</code> directory:</p>
 <div class="fragment"><div class="line">$ cd ulfius/uwsc</div><div class="line">$ make &amp;&amp; sudo make install</div></div><!-- fragment --><p>This will compile and install uwsc in <code>/usr/local/bin</code>, to install it in another directory, you can change the value of <code>DESTDIR</code>.</p>
 <h3>CMake - Multi architecture</h3>
-<p>You can build Ulfius library using cmake, example:</p>
-<div class="fragment"><div class="line">$ mkdir build</div><div class="line">$ cd build</div><div class="line">$ cmake ..</div><div class="line">$ make &amp;&amp; sudo make install</div></div><!-- fragment --><p>The available options for cmake are:</p><ul>
+<p>You can build Ulfius library using CMake, example:</p>
+<div class="fragment"><div class="line">$ mkdir build</div><div class="line">$ cd build</div><div class="line">$ cmake ..</div><div class="line">$ make &amp;&amp; sudo make install</div></div><!-- fragment --><p>The available options for CMake are:</p><ul>
 <li><code>-DWITH_JANSSON=[on|off]</code> (default <code>on</code>): Build with Jansson dependency</li>
 <li><code>-DWITH_CURL=[on|off]</code> (default <code>on</code>): Build with libcurl dependency</li>
 <li><code>-DWITH_GNUTLS=[on|off]</code> (default <code>on</code>): Build with GNU TLS extensions (HTTPS client certificate support), requires GnuTLS library.</li>

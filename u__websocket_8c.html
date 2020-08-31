@@ -101,6 +101,8 @@ Functions</h2></td></tr>
 <tr class="separator:ad60f10e65b744bc9391c520e8f9245af"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad53ce5b968d66afa962c85e17e326bbd"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="u__websocket_8c.html#ad53ce5b968d66afa962c85e17e326bbd">ulfius_websocket_send_message</a> (struct _websocket_manager *websocket_manager, const uint8_t opcode, const uint64_t data_len, const char *data)</td></tr>
 <tr class="separator:ad53ce5b968d66afa962c85e17e326bbd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1d13f9a4d0039d32f5e409e2993f08d7"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="u__websocket_8c.html#a1d13f9a4d0039d32f5e409e2993f08d7">ulfius_websocket_send_json_message</a> (struct _websocket_manager *websocket_manager, json_t *message)</td></tr>
+<tr class="separator:a1d13f9a4d0039d32f5e409e2993f08d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae768a7ec5f7e8be229d8c2642022c6ce"><td class="memItemLeft" align="right" valign="top">struct _websocket_message *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="u__websocket_8c.html#ae768a7ec5f7e8be229d8c2642022c6ce">ulfius_websocket_pop_first_message</a> (struct _websocket_message_list *message_list)</td></tr>
 <tr class="separator:ae768a7ec5f7e8be229d8c2642022c6ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af4aada66b8cb2ccde8f6c5eccfbf35dd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="u__websocket_8c.html#af4aada66b8cb2ccde8f6c5eccfbf35dd">ulfius_clear_websocket_message</a> (struct _websocket_message *message)</td></tr>
@@ -628,6 +630,35 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>Send a message in the websocket Return U_OK on success </p>
+
+</div>
+</div>
+<a id="a1d13f9a4d0039d32f5e409e2993f08d7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1d13f9a4d0039d32f5e409e2993f08d7">&#9670;&nbsp;</a></span>ulfius_websocket_send_json_message()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int ulfius_websocket_send_json_message </td>
+          <td>(</td>
+          <td class="paramtype">struct _websocket_manager *&#160;</td>
+          <td class="paramname"><em>websocket_manager</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">json_t *&#160;</td>
+          <td class="paramname"><em>message</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Send a JSON message in the websocket Return U_OK on success </p>
 
 </div>
 </div>
