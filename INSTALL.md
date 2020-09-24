@@ -1,4 +1,4 @@
-libelous# Install Ulfius
+# Install Ulfius
 
 - [Distribution packages](#distribution-packages)
 - [Pre-compiled packages](#pre-compiled-packages)
