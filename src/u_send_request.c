@@ -41,6 +41,8 @@
 #include <curl/curl.h>
 #include <string.h>
 
+#define U_ACCEPT_HEADER  "Accept-Encoding"
+
 #ifdef _MSC_VER
 #define strtok_r strtok_s
 
@@ -207,6 +209,15 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
 
         // Here comes the fake loop with breaks to exit smoothly
         do {
+          // Set proxy if defined
+          if (u_map_has_key_case(copy_request->map_header, U_ACCEPT_HEADER)) {
+            if (curl_easy_setopt(curl_handle, CURLOPT_ACCEPT_ENCODING, u_map_get_case(copy_request->map_header, U_ACCEPT_HEADER)) != CURLE_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting accept encoding option");
+              ret = U_ERROR_LIBCURL;
+              break;
+            }
+          }
+          
           // Set basic auth if defined
           if (copy_request->auth_basic_user != NULL && copy_request->auth_basic_password != NULL) {
             if (curl_easy_setopt(curl_handle, CURLOPT_HTTPAUTH, CURLAUTH_BASIC) == CURLE_OK) {
