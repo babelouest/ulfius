@@ -2,33 +2,28 @@
  *
  * Static file server Ulfius callback
  *
- * Copyright 2017-2018 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2017-2020 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20181110
+ * Version 20190118
  *
- * The MIT License (MIT)
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * License as published by the Free Software Foundation;
+ * version 3 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU GENERAL PUBLIC LICENSE for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
 #include <string.h>
+#include <orcania.h>
+#include <yder.h>
 #include <ulfius.h>
 
 #include "static_file_callback.h"
@@ -49,6 +44,7 @@ const char * get_filename_ext(const char *path) {
  * Streaming callback function to ease sending large files
  */
 static ssize_t callback_static_file_stream(void * cls, uint64_t pos, char * buf, size_t max) {
+  (void)(pos);
   if (cls != NULL) {
     return fread (buf, 1, max, (FILE *)cls);
   } else {
@@ -75,13 +71,11 @@ int callback_static_file (const struct _u_request * request, struct _u_response 
   const char * content_type;
 
   /*
-   * Comment this if statement if you put static files url not in root, like /app
+   * Comment this if statement if you don't access static files url from root dir, like /app
    */
-  if (response->shared_data != NULL) {
+  if (request->callback_position > 0) {
     return U_CALLBACK_CONTINUE;
-  }
-  
-  if (user_data != NULL && ((struct _static_file_config *)user_data)->files_path != NULL) {
+  } else if (user_data != NULL && ((struct _static_file_config *)user_data)->files_path != NULL) {
     file_requested = o_strdup(request->http_url);
     url_dup_save = file_requested;
     
