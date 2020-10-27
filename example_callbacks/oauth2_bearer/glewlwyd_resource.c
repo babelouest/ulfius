@@ -2,9 +2,9 @@
  *
  * Glewlwyd SSO Access Token token check
  *
- * Copyright 2016-2019 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2020 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20190810
+ * Version 20200508
  *
  * The MIT License (MIT)
  * 
@@ -32,7 +32,6 @@
 #include <time.h>
 #include <orcania.h>
 #include <ulfius.h>
-#include <jansson.h>
 
 #include "glewlwyd_resource.h"
 
@@ -45,6 +44,116 @@ static int check_result_value(json_t * result, const int value) {
           json_object_get(result, "result") != NULL && 
           json_is_integer(json_object_get(result, "result")) && 
           json_integer_value(json_object_get(result, "result")) == value);
+}
+
+/**
+ * Validates if an access_token grants has a valid scope
+ * return the final scope list on success
+ */
+static json_t * access_token_check_scope(struct _glewlwyd_resource_config * config, json_t * j_access_token) {
+  int i, scope_count_token, scope_count_expected;
+  char ** scope_list_token, ** scope_list_expected;
+  json_t * j_res = NULL, * j_scope_final_list = json_array();
+  
+  if (j_scope_final_list != NULL) {
+    if (j_access_token != NULL) {
+      scope_count_token = split_string(json_string_value(json_object_get(j_access_token, "scope")), " ", &scope_list_token);
+      if (o_strlen(config->oauth_scope)) {
+        scope_count_expected = split_string(config->oauth_scope, " ", &scope_list_expected);
+        if (scope_count_token > 0 && scope_count_expected > 0) {
+          for (i=0; scope_count_expected > 0 && scope_list_expected[i] != NULL; i++) {
+            if (string_array_has_value((const char **)scope_list_token, scope_list_expected[i])) {
+              json_array_append_new(j_scope_final_list, json_string(scope_list_expected[i]));
+            }
+          }
+          if (json_array_size(j_scope_final_list) > 0) {
+            j_res = json_pack("{sisO}", "result", G_TOKEN_OK, "scope", j_scope_final_list);
+          } else {
+            j_res = json_pack("{si}", "result", G_TOKEN_ERROR_INSUFFICIENT_SCOPE);
+          }
+        } else {
+          j_res = json_pack("{si}", "result", G_TOKEN_ERROR_INTERNAL);
+        }
+        free_string_array(scope_list_expected);
+      } else {
+        j_res = json_pack("{sis[]}", "result", G_TOKEN_OK, "scope");
+      }
+      free_string_array(scope_list_token);
+    } else {
+      j_res = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
+    }
+  } else {
+    j_res = json_pack("{si}", "result", G_TOKEN_ERROR_INTERNAL);
+  }
+  json_decref(j_scope_final_list);
+  return j_res;
+}
+
+/**
+ * Validates if an access_token grants has valid parameters:
+ * - username: non empty string
+ * - type: match "access_token"
+ * - iat + expires_in < now
+ */
+static int access_token_check_validity(struct _glewlwyd_resource_config * config, json_t * j_access_token) {
+  time_t now;
+  json_int_t expiration;
+  int res;
+  
+  if (j_access_token != NULL) {
+    // Token is valid, check type and expiration date
+    time(&now);
+    expiration = json_integer_value(json_object_get(j_access_token, "iat")) + json_integer_value(json_object_get(j_access_token, "expires_in"));
+    if (now < expiration &&
+        json_object_get(j_access_token, "type") != NULL &&
+        json_is_string(json_object_get(j_access_token, "type"))) {
+      if (config->accept_access_token &&
+        0 == o_strcmp("access_token", json_string_value(json_object_get(j_access_token, "type"))) &&
+        json_object_get(j_access_token, "username") != NULL &&
+        json_is_string(json_object_get(j_access_token, "username")) &&
+        json_string_length(json_object_get(j_access_token, "username")) > 0) {
+        res = G_TOKEN_OK;
+      } else if (config->accept_client_token &&
+        0 == o_strcmp("client_token", json_string_value(json_object_get(j_access_token, "type"))) &&
+        json_object_get(j_access_token, "client_id") != NULL &&
+        json_is_string(json_object_get(j_access_token, "client_id")) &&
+        json_string_length(json_object_get(j_access_token, "client_id")) > 0) {
+        res = G_TOKEN_OK;
+      } else {
+        res = G_TOKEN_ERROR_INVALID_REQUEST;
+      }
+    } else {
+      res = G_TOKEN_ERROR_INVALID_REQUEST;
+    }
+  } else {
+    res = G_TOKEN_ERROR_INVALID_TOKEN;
+  }
+  return res;
+}
+
+/**
+ * validates if the token value is a valid jwt and has a valid signature
+ */
+static json_t * access_token_check_signature(struct _glewlwyd_resource_config * config, const char * token_value) {
+  json_t * j_return, * j_grants;
+  jwt_t * jwt = r_jwt_copy(config->jwt);
+  
+  if (token_value != NULL) {
+    if (r_jwt_parse(jwt, token_value, 0) == RHN_OK && r_jwt_verify_signature(jwt, NULL, 0) == RHN_OK && r_jwt_get_sign_alg(jwt) == config->alg) {
+      j_grants = r_jwt_get_full_claims_json_t(jwt);
+      if (j_grants != NULL) {
+        j_return = json_pack("{siso}", "result", G_TOKEN_OK, "grants", j_grants);
+      } else {
+        j_return = json_pack("{si}", "result", G_TOKEN_ERROR);
+      }
+    } else {
+      j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
+    }
+  } else {
+    j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
+  }
+  r_jwt_free(jwt);
+  return j_return;
 }
 
 /**
@@ -67,7 +176,7 @@ int callback_check_glewlwyd_access_token (const struct _u_request * request, str
         }
         break;
       case G_METHOD_BODY:
-        if (o_strstr(u_map_get(request->map_header, ULFIUS_HTTP_HEADER_CONTENT), MHD_HTTP_POST_ENCODING_FORM_URLENCODED) != NULL && u_map_get(request->map_post_body, BODY_URL_PARAMETER) != NULL) {
+        if (o_strstr(u_map_get_case(request->map_header, ULFIUS_HTTP_HEADER_CONTENT), MHD_HTTP_POST_ENCODING_FORM_URLENCODED) != NULL && u_map_get(request->map_post_body, BODY_URL_PARAMETER) != NULL) {
           token_value = u_map_get(request->map_post_body, BODY_URL_PARAMETER);
         }
         break;
@@ -119,145 +228,4 @@ int callback_check_glewlwyd_access_token (const struct _u_request * request, str
     }
   }
   return res;
-}
-
-/**
- * Validates if an access_token grants has a valid scope
- * return the final scope list on success
- */
-json_t * access_token_check_scope(struct _glewlwyd_resource_config * config, json_t * j_access_token) {
-  int i, scope_count_token, scope_count_expected;
-  char ** scope_list_token, ** scope_list_expected;
-  json_t * j_res = NULL, * j_scope_final_list = json_array();
-  
-  if (j_scope_final_list != NULL) {
-    if (j_access_token != NULL) {
-      scope_count_token = split_string(json_string_value(json_object_get(j_access_token, "scope")), " ", &scope_list_token);
-      if (o_strlen(config->oauth_scope)) {
-        scope_count_expected = split_string(config->oauth_scope, " ", &scope_list_expected);
-        if (scope_count_token > 0 && scope_count_expected > 0) {
-          for (i=0; scope_count_expected > 0 && scope_list_expected[i] != NULL; i++) {
-            if (string_array_has_value((const char **)scope_list_token, scope_list_expected[i])) {
-              json_array_append_new(j_scope_final_list, json_string(scope_list_expected[i]));
-            }
-          }
-          if (json_array_size(j_scope_final_list) > 0) {
-            j_res = json_pack("{sisO}", "result", G_TOKEN_OK, "scope", j_scope_final_list);
-          } else {
-            j_res = json_pack("{si}", "result", G_TOKEN_ERROR_INSUFFICIENT_SCOPE);
-          }
-        } else {
-          j_res = json_pack("{si}", "result", G_TOKEN_ERROR_INTERNAL);
-        }
-        free_string_array(scope_list_expected);
-      } else {
-        j_res = json_pack("{sis[]}", "result", G_TOKEN_OK, "scope");
-      }
-      free_string_array(scope_list_token);
-    } else {
-      j_res = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
-    }
-  } else {
-    j_res = json_pack("{si}", "result", G_TOKEN_ERROR_INTERNAL);
-  }
-  json_decref(j_scope_final_list);
-  return j_res;
-}
-
-/**
- * Validates if an access_token grants has valid parameters:
- * - username: non empty string
- * - type: match "access_token"
- * - iat + expires_in < now
- */
-int access_token_check_validity(struct _glewlwyd_resource_config * config, json_t * j_access_token) {
-  time_t now;
-  json_int_t expiration;
-  int res;
-  
-  if (j_access_token != NULL) {
-    // Token is valid, check type and expiration date
-    time(&now);
-    expiration = json_integer_value(json_object_get(j_access_token, "iat")) + json_integer_value(json_object_get(j_access_token, "expires_in"));
-    if (now < expiration &&
-        json_object_get(j_access_token, "type") != NULL &&
-        json_is_string(json_object_get(j_access_token, "type"))) {
-      if (config->accept_access_token &&
-        0 == o_strcmp("access_token", json_string_value(json_object_get(j_access_token, "type"))) &&
-        json_object_get(j_access_token, "username") != NULL &&
-        json_is_string(json_object_get(j_access_token, "username")) &&
-        json_string_length(json_object_get(j_access_token, "username")) > 0) {
-        res = G_TOKEN_OK;
-      } else if (config->accept_client_token &&
-        0 == o_strcmp("client_token", json_string_value(json_object_get(j_access_token, "type"))) &&
-        json_object_get(j_access_token, "client_id") != NULL &&
-        json_is_string(json_object_get(j_access_token, "client_id")) &&
-        json_string_length(json_object_get(j_access_token, "client_id")) > 0) {
-        res = G_TOKEN_OK;
-      } else {
-        res = G_TOKEN_ERROR_INVALID_REQUEST;
-      }
-    } else {
-      res = G_TOKEN_ERROR_INVALID_REQUEST;
-    }
-  } else {
-    res = G_TOKEN_ERROR_INVALID_TOKEN;
-  }
-  return res;
-}
-
-/**
- * validates if the token value is a valid jwt and has a valid signature
- */
-json_t * access_token_check_signature(struct _glewlwyd_resource_config * config, const char * token_value) {
-  json_t * j_return, * j_grants;
-  jwt_t * jwt = NULL;
-  char  * grants;
-  
-  if (token_value != NULL) {
-    if (!jwt_decode(&jwt, token_value, (const unsigned char *)config->jwt_decode_key, o_strlen(config->jwt_decode_key)) && jwt_get_alg(jwt) == config->jwt_alg) {
-      grants = jwt_get_grants_json(jwt, NULL);
-      j_grants = json_loads(grants, JSON_DECODE_ANY, NULL);
-      if (j_grants != NULL) {
-        j_return = json_pack("{siso}", "result", G_TOKEN_OK, "grants", j_grants);
-      } else {
-        j_return = json_pack("{si}", "result", G_TOKEN_ERROR);
-      }
-      o_free(grants);
-    } else {
-      j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
-    }
-    jwt_free(jwt);
-  } else {
-    j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
-  }
-  return j_return;
-}
-
-/**
- * Return the payload of an access token
- */
-json_t * access_token_get_payload(const char * token_value) {
-  json_t * j_return, * j_grants;
-  jwt_t * jwt = NULL;
-  char  * grants;
-  
-  if (token_value != NULL) {
-    if (!jwt_decode(&jwt, token_value, NULL, 0)) {
-      grants = jwt_get_grants_json(jwt, NULL);
-      j_grants = json_loads(grants, JSON_DECODE_ANY, NULL);
-      if (j_grants != NULL) {
-        j_return = json_pack("{siso}", "result", G_TOKEN_OK, "grants", j_grants);
-      } else {
-        j_return = json_pack("{si}", "result", G_TOKEN_ERROR);
-      }
-      o_free(grants);
-    } else {
-      j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
-    }
-    jwt_free(jwt);
-  } else {
-    j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
-  }
-  return j_return;
 }
