@@ -19,7 +19,7 @@
 #include <ulfius.h>
 #include <u_example.h>
 
-#include "static_file_callback.h"
+#include "static_compressed_inmemory_website_callback.h"
 
 #define PORT 9275
 #define PREFIX_WEBSOCKET "/websocket"
@@ -68,72 +68,71 @@ static char * read_file(const char * filename) {
 int main(int argc, char ** argv) {
   int ret;
   struct _u_instance instance;
-  struct _static_file_config file_config;
+  struct _u_compressed_inmemory_website_config file_config;
   char * cert_file = NULL, * key_file = NULL;
   
   y_init_logs("websocket_example", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting websocket_example");
   
-  file_config.mime_types = o_malloc(sizeof(struct _u_map));
-  u_map_init(file_config.mime_types);
-  u_map_put(file_config.mime_types, ".html", "text/html");
-  u_map_put(file_config.mime_types, ".css", "text/css");
-  u_map_put(file_config.mime_types, ".js", "application/javascript");
-  u_map_put(file_config.mime_types, ".png", "image/png");
-  u_map_put(file_config.mime_types, ".jpg", "image/jpeg");
-  u_map_put(file_config.mime_types, ".jpeg", "image/jpeg");
-  u_map_put(file_config.mime_types, ".ttf", "font/ttf");
-  u_map_put(file_config.mime_types, ".woff", "font/woff");
-  u_map_put(file_config.mime_types, ".woff2", "font/woff2");
-  u_map_put(file_config.mime_types, ".map", "application/octet-stream");
-  u_map_put(file_config.mime_types, "*", "application/octet-stream");
-  file_config.files_path = "static";
-  file_config.url_prefix = PREFIX_STATIC;
-  file_config.map_header = o_malloc(sizeof(struct _u_map));
-  u_map_init(file_config.map_header);
-  
-  if (ulfius_init_instance(&instance, PORT, NULL, NULL) != U_OK) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_init_instance, abort");
-    return(1);
-  }
-  
-  u_map_put(instance.default_headers, "Access-Control-Allow-Origin", "*");
-  
-  // Endpoint list declaration
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX_WEBSOCKET, NULL, 0, &callback_websocket, NULL);
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX_WEBSOCKET, "/echo", 0, &callback_websocket_echo, NULL);
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX_WEBSOCKET, "/file", 0, &callback_websocket_file, NULL);
-  ulfius_add_endpoint_by_val(&instance, "GET", PREFIX_STATIC, "*", 0, &callback_static_file, &file_config);
-  
-  // Start the framework
-  if (argc > 3 && 0 == o_strcmp(argv[1], "-https")) {
-    key_file = read_file(argv[2]);
-    cert_file = read_file(argv[3]);
-    if (key_file == NULL || cert_file == NULL) {
-      printf("Error reading https certificate files\n");
-      ret = U_ERROR_PARAMS;
-    } else {
-      ret = ulfius_start_secure_framework(&instance, key_file, cert_file);
-    }
-    o_free(key_file);
-    o_free(cert_file);
-  } else {
-    ret = ulfius_start_framework(&instance);
-  }
-  
-  if (ret == U_OK) {
-    y_log_message(Y_LOG_LEVEL_INFO, "Start framework on port %d %s", instance.port, (argc > 1 && 0 == o_strcmp(argv[1], "-https"))?"https mode":"http mode");
+  if (u_init_compressed_inmemory_website_config(&file_config) == U_OK) {
+    u_map_put(&file_config.mime_types, ".html", "text/html");
+    u_map_put(&file_config.mime_types, ".css", "text/css");
+    u_map_put(&file_config.mime_types, ".js", "application/javascript");
+    u_map_put(&file_config.mime_types, ".png", "image/png");
+    u_map_put(&file_config.mime_types, ".jpg", "image/jpeg");
+    u_map_put(&file_config.mime_types, ".jpeg", "image/jpeg");
+    u_map_put(&file_config.mime_types, ".ttf", "font/ttf");
+    u_map_put(&file_config.mime_types, ".woff", "font/woff");
+    u_map_put(&file_config.mime_types, ".woff2", "font/woff2");
+    u_map_put(&file_config.mime_types, ".map", "application/octet-stream");
+    u_map_put(&file_config.mime_types, ".json", "application/json");
+    u_map_put(&file_config.mime_types, "*", "application/octet-stream");
+    file_config.files_path = "static";
+    file_config.url_prefix = PREFIX_STATIC;
     
-    // Wait for the user to press <enter> on the console to quit the application
-    getchar();
-  } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Error starting framework");
+    if (ulfius_init_instance(&instance, PORT, NULL, NULL) != U_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_init_instance, abort");
+      return(1);
+    }
+    
+    u_map_put(instance.default_headers, "Access-Control-Allow-Origin", "*");
+    
+    // Endpoint list declaration
+    ulfius_add_endpoint_by_val(&instance, "GET", PREFIX_WEBSOCKET, NULL, 0, &callback_websocket, NULL);
+    ulfius_add_endpoint_by_val(&instance, "GET", PREFIX_WEBSOCKET, "/echo", 0, &callback_websocket_echo, NULL);
+    ulfius_add_endpoint_by_val(&instance, "GET", PREFIX_WEBSOCKET, "/file", 0, &callback_websocket_file, NULL);
+    ulfius_add_endpoint_by_val(&instance, "GET", PREFIX_STATIC, "*", 0, &callback_static_compressed_inmemory_website, &file_config);
+    
+    // Start the framework
+    if (argc > 3 && 0 == o_strcmp(argv[1], "-https")) {
+      key_file = read_file(argv[2]);
+      cert_file = read_file(argv[3]);
+      if (key_file == NULL || cert_file == NULL) {
+        printf("Error reading https certificate files\n");
+        ret = U_ERROR_PARAMS;
+      } else {
+        ret = ulfius_start_secure_framework(&instance, key_file, cert_file);
+      }
+      o_free(key_file);
+      o_free(cert_file);
+    } else {
+      ret = ulfius_start_framework(&instance);
+    }
+    
+    if (ret == U_OK) {
+      y_log_message(Y_LOG_LEVEL_INFO, "Start framework on port %d %s", instance.port, (argc > 1 && 0 == o_strcmp(argv[1], "-https"))?"https mode":"http mode");
+      
+      // Wait for the user to press <enter> on the console to quit the application
+      getchar();
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error starting framework");
+    }
+    y_log_message(Y_LOG_LEVEL_INFO, "End framework");
+    
+    ulfius_stop_framework(&instance);
+    ulfius_clean_instance(&instance);
+    u_clean_compressed_inmemory_website_config(&file_config);
   }
-  y_log_message(Y_LOG_LEVEL_INFO, "End framework");
-  
-  ulfius_stop_framework(&instance);
-  ulfius_clean_instance(&instance);
-  u_map_clean_full(file_config.mime_types);
-  u_map_clean_full(file_config.map_header);
+
   y_close_logs();
   
   return 0;

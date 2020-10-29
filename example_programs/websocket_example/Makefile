@@ -3,7 +3,7 @@
 #
 # Makefile used to build the software
 #
-# Copyright 2017 Nicolas Mora <mail@babelouest.org>
+# Copyright 2017-2020 Nicolas Mora <mail@babelouest.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License
@@ -16,9 +16,10 @@ CC=gcc
 ULFIUS_LOCATION=../../src
 ULFIUS_INCLUDE=../../include
 EXAMPLE_INCLUDE=../include
-CFLAGS+=-c -Wall -I$(ULFIUS_INCLUDE) -I$(EXAMPLE_INCLUDE) -I$(STATIC_FILE_LOCATION) $(ADDITIONALFLAGS) $(CPPFLAGS)
+CFLAGS+=-c -Wall -I$(ULFIUS_INCLUDE) -I$(EXAMPLE_INCLUDE) -I$(STATIC_FILE_LOCATION) -I$(STATIC_COMPRESSED_INMEMORY_WEBSITE) $(ADDITIONALFLAGS) $(CPPFLAGS)
 STATIC_FILE_LOCATION=../../example_callbacks/static_file
-LIBS=-lc -lulfius -lorcania -L$(ULFIUS_LOCATION)
+STATIC_COMPRESSED_INMEMORY_WEBSITE=../../example_callbacks/static_compressed_inmemory_website
+LIBS=-lc -lz -lpthread -lulfius -lorcania -L$(ULFIUS_LOCATION)
 #SECUREFLAG=-https test.key test.pem
 
 ifndef YDERFLAG
@@ -40,9 +41,12 @@ debug: websocket_server websocket_client
 static_file_callback.o: $(STATIC_FILE_LOCATION)/static_file_callback.c
 	$(CC) $(CFLAGS) $(STATIC_FILE_LOCATION)/static_file_callback.c
 
-websocket_server: ../../src/libulfius.so static_file_callback.o websocket_server.c
+static_compressed_inmemory_website_callback.o: $(STATIC_COMPRESSED_INMEMORY_WEBSITE)/static_compressed_inmemory_website_callback.c
+	$(CC) $(CFLAGS) $(STATIC_COMPRESSED_INMEMORY_WEBSITE)/static_compressed_inmemory_website_callback.c
+
+websocket_server: ../../src/libulfius.so static_compressed_inmemory_website_callback.o websocket_server.c
 	$(CC) $(CFLAGS) websocket_server.c
-	$(CC) -o websocket_server websocket_server.o static_file_callback.o $(LIBS)
+	$(CC) -o websocket_server websocket_server.o static_compressed_inmemory_website_callback.o $(LIBS)
 
 websocket_client: ../../src/libulfius.so websocket_client.c
 	$(CC) $(CFLAGS) websocket_client.c 
