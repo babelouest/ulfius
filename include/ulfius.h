@@ -116,9 +116,10 @@ int y_close_logs();
 #define U_ERROR_DISCONNECTED 7 ///< Connection closed
 
 #define U_CALLBACK_CONTINUE     0 ///< Callback exited with success, continue to next callback
-#define U_CALLBACK_COMPLETE     1 ///< Callback exited with success, exit callback list
-#define U_CALLBACK_UNAUTHORIZED 2 ///< Request is unauthorized, exit callback list and return status 401
-#define U_CALLBACK_ERROR        3 ///< Error during request process, exit callback list and return status 500
+#define U_CALLBACK_IGNORE       1 ///< Callback decided to be ignored, request.callback_position will not be incremented, continue to next callback
+#define U_CALLBACK_COMPLETE     2 ///< Callback exited with success, exit callback list
+#define U_CALLBACK_UNAUTHORIZED 3 ///< Request is unauthorized, exit callback list and return status 401
+#define U_CALLBACK_ERROR        4 ///< Error during request process, exit callback list and return status 500
 
 #define U_COOKIE_SAME_SITE_NONE   0 ///< Set same_site cookie property to 0
 #define U_COOKIE_SAME_SITE_STRICT 1 ///< Set same_site cookie property to strict
