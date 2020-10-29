@@ -574,7 +574,9 @@ static int ulfius_webservice_dispatcher (void * cls,
           }
           // Run callback function with the input parameters filled for the current callback
           callback_ret = current_endpoint->callback_function(con_info->request, response, current_endpoint->user_data);
-          con_info->request->callback_position++;
+          if (callback_ret != U_CALLBACK_IGNORE) {
+            con_info->request->callback_position++;
+          }
           if (response->timeout > 0 && MHD_set_connection_option(connection, MHD_CONNECTION_OPTION_TIMEOUT, response->timeout) !=  MHD_YES) {
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting connection response timeout value");
           }
@@ -713,13 +715,14 @@ static int ulfius_webservice_dispatcher (void * cls,
             }
 #endif
           } else {
-            if (callback_ret == U_CALLBACK_CONTINUE && current_endpoint_list[i+1] == NULL) {
-              // If callback_ret is U_CALLBACK_CONTINUE but callback function is the last one on the list
+            if ((callback_ret == U_CALLBACK_CONTINUE || callback_ret == U_CALLBACK_IGNORE) && current_endpoint_list[i+1] == NULL) {
+              // If callback_ret is U_CALLBACK_CONTINUE or U_CALLBACK_IGNORE but callback function is the last one on the list
               callback_ret = U_CALLBACK_COMPLETE;
             }
             // Test callback_ret to know what to do
             switch (callback_ret) {
               case U_CALLBACK_CONTINUE:
+              case U_CALLBACK_IGNORE:
                 break;
               case U_CALLBACK_COMPLETE:
                 close_loop = 1;
@@ -800,6 +803,91 @@ static int ulfius_webservice_dispatcher (void * cls,
             }
           }
         }
+        
+        if (!con_info->request->callback_position && ((struct _u_instance *)cls)->default_endpoint != NULL && ((struct _u_instance *)cls)->default_endpoint->callback_function != NULL) {
+          callback_ret = ((struct _u_instance *)cls)->default_endpoint->callback_function(con_info->request, response, ((struct _u_instance *)cls)->default_endpoint->user_data);
+          // Test callback_ret to know what to do
+          switch (callback_ret) {
+            case U_CALLBACK_UNAUTHORIZED:
+              // Wrong credentials, send status 401 and realm value if set
+              if (ulfius_get_body_from_response(response, &response_buffer, &response_buffer_len) == U_OK) {
+                mhd_response = MHD_CREATE_RESPONSE_FROM_BUFFER_PIMPED (response_buffer_len, response_buffer, mhd_response_flag );
+                if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
+                  inner_error = U_ERROR_PARAMS;
+                  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
+                  response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
+                  response->binary_body = o_strdup(ULFIUS_HTTP_ERROR_BODY);
+                  response->binary_body_length = o_strlen(ULFIUS_HTTP_ERROR_BODY);
+                  if (response->binary_body == NULL) {
+                    inner_error = U_ERROR_MEMORY;
+                    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->binary_body");
+                    mhd_ret = MHD_NO;
+                  }
+                } else {
+                  inner_error = U_CALLBACK_UNAUTHORIZED;
+                }
+              } else {
+                // Error building response, sending error 500
+                response_buffer = o_strdup(ULFIUS_HTTP_ERROR_BODY);
+                if (response_buffer == NULL) {
+                  inner_error = U_ERROR_MEMORY;
+                  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
+                  mhd_ret = MHD_NO;
+                } else {
+                  response_buffer_len = o_strlen(ULFIUS_HTTP_ERROR_BODY);
+                  mhd_response = MHD_CREATE_RESPONSE_FROM_BUFFER_PIMPED (response_buffer_len, response_buffer, mhd_response_flag );
+                  inner_error = U_CALLBACK_UNAUTHORIZED;
+                }
+              }
+              if (response->auth_realm != NULL) {
+                auth_realm = response->auth_realm;
+              } else if (((struct _u_instance *)cls)->default_auth_realm != NULL) {
+                auth_realm = ((struct _u_instance *)cls)->default_auth_realm;
+              }
+              break;
+            case U_CALLBACK_ERROR:
+              close_loop = 1;
+              response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
+              response_buffer = o_strdup(ULFIUS_HTTP_ERROR_BODY);
+              if (response_buffer == NULL) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
+                mhd_ret = MHD_NO;
+              } else {
+                response_buffer_len = o_strlen(ULFIUS_HTTP_ERROR_BODY);
+                mhd_response = MHD_CREATE_RESPONSE_FROM_BUFFER_PIMPED (response_buffer_len, response_buffer, mhd_response_flag );
+              }
+              break;
+            case U_CALLBACK_CONTINUE:
+            case U_CALLBACK_IGNORE:
+            case U_CALLBACK_COMPLETE:
+              if (ulfius_get_body_from_response(response, &response_buffer, &response_buffer_len) == U_OK) {
+                // Build the response binary_body
+                mhd_response = MHD_CREATE_RESPONSE_FROM_BUFFER_PIMPED (response_buffer_len, response_buffer, mhd_response_flag );
+                if (mhd_response == NULL) {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error MHD_create_response_from_buffer");
+                  mhd_ret = MHD_NO;
+                } else if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
+                  mhd_ret = MHD_NO;
+                }
+              } else {
+                // Error building response, sending error 500
+                response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
+                response_buffer = o_strdup(ULFIUS_HTTP_ERROR_BODY);
+                if (response_buffer == NULL) {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
+                  mhd_ret = MHD_NO;
+                } else {
+                  response_buffer_len = o_strlen(ULFIUS_HTTP_ERROR_BODY);
+                  mhd_response = MHD_CREATE_RESPONSE_FROM_BUFFER_PIMPED (response_buffer_len, response_buffer, mhd_response_flag );
+                }
+              }
+              break;
+            default:
+              break;
+          }
+        }
+        
         if (mhd_response != NULL) {
           if (auth_realm != NULL && inner_error == U_CALLBACK_UNAUTHORIZED) {
             mhd_ret = MHD_queue_basic_auth_fail_response (connection, auth_realm, mhd_response);
