@@ -1,5 +1,12 @@
 # Ulfius Changelog
 
+## 2.6.10
+
+- Allow `Content-Enconding` header with `ulfius_send_http_request` to compress the response body
+- Add http_compression callback example
+- Add static_compressed_inmemory_website callback example
+- Add callback return value `U_CALLBACK_IGNORE` to igore incrementation of `request->callback_position`
+
 ## 2.6.9
 
 - Update doc generation
