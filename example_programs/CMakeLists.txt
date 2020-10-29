@@ -48,6 +48,16 @@ if (_GNU_SOURCE)
     add_definitions(-D_GNU_SOURCE)
 endif ()
 
+include(FindZLIB)
+find_package(ZLIB REQUIRED)
+if (ZLIB_FOUND)
+	set(LIBS ${LIBS} ${ZLIB_LIBRARIES})
+	include_directories(${ZLIB_INCLUDE_DIRS})
+endif ()
+
+find_package(Threads REQUIRED)
+set(LIBS ${LIBS} ${CMAKE_THREAD_LIBS_INIT})
+
 include(FindUlfius)
 set(ULFIUS_MIN_VERSION "2.6")
 find_package(Ulfius ${ULFIUS_MIN_VERSION} REQUIRED)
@@ -63,8 +73,11 @@ endif ()
 
 # examples
 
-set(STATIC_CALLBACK_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../example_callbacks/static_file/)
+set(STATIC_CALLBACK_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../example_callbacks/static_compressed_inmemory_website/)
 include_directories(${STATIC_CALLBACK_DIR})
+
+set(HTTP_COMRESSION_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../example_callbacks/http_compression/)
+include_directories(${HTTP_COMRESSION_DIR})
 
 add_executable(simple_example ${CMAKE_CURRENT_SOURCE_DIR}/simple_example/simple_example.c)
 target_link_libraries(simple_example ${LIBS})
@@ -87,7 +100,7 @@ if (WITH_JANSSON)
   add_executable(injection_example ${CMAKE_CURRENT_SOURCE_DIR}/injection_example/injection_example.c)
   target_link_libraries(injection_example ${LIBS})
 
-  add_executable(sheep_counter ${CMAKE_CURRENT_SOURCE_DIR}/sheep_counter/sheep_counter.c)
+  add_executable(sheep_counter ${CMAKE_CURRENT_SOURCE_DIR}/sheep_counter/sheep_counter.c ${STATIC_CALLBACK_DIR}/static_compressed_inmemory_website_callback.c ${HTTP_COMRESSION_DIR}/http_compression_callback.c)
   target_link_libraries(sheep_counter ${LIBS})
 endif ()
 
@@ -106,9 +119,11 @@ if (WITH_CURL AND WITH_JANSSON)
 endif ()
 
 if (WITH_WEBSOCKET)
-  add_executable(websocket_server ${CMAKE_CURRENT_SOURCE_DIR}/websocket_example/websocket_server.c ${STATIC_CALLBACK_DIR}/static_file_callback.c)
+  add_executable(websocket_server ${CMAKE_CURRENT_SOURCE_DIR}/websocket_example/websocket_server.c ${STATIC_CALLBACK_DIR}/static_compressed_inmemory_website_callback.c)
+  set_target_properties(websocket_server PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/websocket_example/")
   target_link_libraries(websocket_server ${LIBS})
-  add_executable(websocket_client ${CMAKE_CURRENT_SOURCE_DIR}/websocket_example/websocket_client.c ${STATIC_CALLBACK_DIR}/static_file_callback.c)
+  add_executable(websocket_client ${CMAKE_CURRENT_SOURCE_DIR}/websocket_example/websocket_client.c)
+  set_target_properties(websocket_client PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/websocket_example/")
   target_link_libraries(websocket_client ${LIBS})
 
   add_executable(auth_server ${CMAKE_CURRENT_SOURCE_DIR}/auth_example/auth_server.c)
@@ -124,4 +139,3 @@ message(STATUS "Websocket support: ${WITH_WEBSOCKET}")
 message(STATUS "Outgoing requests support: ${WITH_CURL}")
 message(STATUS "Jansson library support: ${WITH_JANSSON}")
 message(STATUS "Yder library support: ${WITH_YDER}")
-
