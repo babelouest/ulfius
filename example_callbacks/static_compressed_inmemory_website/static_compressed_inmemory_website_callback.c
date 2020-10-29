@@ -111,7 +111,7 @@
 
 static void * u_zalloc(void * q, unsigned n, unsigned m) {
   (void)q;
-  return o_malloc(n*m);
+  return o_malloc((size_t) n * m);
 }
 
 static void u_zfree(void *q, void *p) {
