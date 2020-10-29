@@ -19,36 +19,14 @@
 #include <ulfius.h>
 #include <u_example.h>
 
+#include "static_compressed_inmemory_website_callback.h"
+#include "http_compression_callback.h"
+
 #define PORT 7437
 #define PREFIX "/sheep"
 #define FILE_PREFIX "/upload"
 #define STATIC_FOLDER "static"
 
-// Callback function used to serve static files that are present in the static folder
-int callback_static_file (const struct _u_request * request, struct _u_response * response, void * user_data);
-
-// Callback function used to start a new count by setting the number of sheeps
-int callback_sheep_counter_start (const struct _u_request * request, struct _u_response * response, void * user_data);
-
-// Callback function used to reset the number of sheeps to 0
-int callback_sheep_counter_reset (const struct _u_request * request, struct _u_response * response, void * user_data);
-
-// Callback function used to add one sheep to the counter
-int callback_sheep_counter_add (const struct _u_request * request, struct _u_response * response, void * user_data);
-
-// Callback function used to upload file
-int callback_upload_file (const struct _u_request * request, struct _u_response * response, void * user_data);
-
-// File upload callback function
-int file_upload_callback (const struct _u_request * request, 
-                          const char * key, 
-                          const char * filename, 
-                          const char * content_type, 
-                          const char * transfer_encoding, 
-                          const char * data, 
-                          uint64_t off, 
-                          size_t size, 
-                          void * user_data);
 /**
  * decode a u_map into a string
  */
@@ -83,97 +61,13 @@ char * print_map(const struct _u_map * map) {
 }
 
 /**
- * return the filename extension
- */
-const char * get_filename_ext(const char *path) {
-    const char *dot = o_strrchr(path, '.');
-    if(!dot || dot == path) return "*";
-    return dot + 1;
-}
-
-/**
- * Main function
- */
-int main (int argc, char **argv) {
-  
-  // jansson integer type can vary
-#if JSON_INTEGER_IS_LONG_LONG
-  long long nb_sheep = 0;
-#else
-  long nb_sheep = 0;
-#endif
-  
-  // Initialize the instance
-  struct _u_instance instance;
-  
-  y_init_logs("sheep_counter", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting sheep_counter");
-  
-  if (ulfius_init_instance(&instance, PORT, NULL, NULL) != U_OK) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_init_instance, abort");
-    return(1);
-  }
-  
-  // Max post param size is 16 Kb, which means an uploaded file is no more than 16 Kb
-  instance.max_post_param_size = 16*1024;
-  
-  if (ulfius_set_upload_file_callback_function(&instance, &file_upload_callback, "my cls") != U_OK) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_set_upload_file_callback_function");
-  }
-  
-  // MIME types that will define the static files
-  struct _u_map mime_types;
-  u_map_init(&mime_types);
-  u_map_put(&mime_types, ".html", "text/html");
-  u_map_put(&mime_types, ".css", "text/css");
-  u_map_put(&mime_types, ".js", "application/javascript");
-  u_map_put(&mime_types, ".png", "image/png");
-  u_map_put(&mime_types, ".jpeg", "image/jpeg");
-  u_map_put(&mime_types, ".jpg", "image/jpeg");
-  u_map_put(&mime_types, "*", "application/octet-stream");
-  
-  // Endpoint list declaration
-  // The first 3 are webservices with a specific url
-  // The last endpoint will be called for every GET call and will serve the static files
-  ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, NULL, 1, &callback_sheep_counter_start, &nb_sheep);
-  ulfius_add_endpoint_by_val(&instance, "PUT", PREFIX, NULL, 1, &callback_sheep_counter_add, &nb_sheep);
-  ulfius_add_endpoint_by_val(&instance, "DELETE", PREFIX, NULL, 1, &callback_sheep_counter_reset, &nb_sheep);
-  ulfius_add_endpoint_by_val(&instance, "*", FILE_PREFIX, NULL, 1, &callback_upload_file, NULL);
-  ulfius_add_endpoint_by_val(&instance, "GET", "*", NULL, 1, &callback_static_file, &mime_types);
-  
-  // Start the framework
-  if (ulfius_start_framework(&instance) == U_OK) {
-    printf("Start sheep counter on port %u\n", instance.port);
-    
-    // Wait for the user to press <enter> on the console to quit the application
-    getchar();
-  } else {
-    printf("Error starting framework\n");
-  }
-
-  // Clean the mime map
-  u_map_clean(&mime_types);
-  
-  printf("End framework\n");
-  ulfius_stop_framework(&instance);
-  ulfius_clean_instance(&instance);
-  
-  y_close_logs();
-  
-  return 0;
-}
-
-/**
  * Start a new counter by setting the number of sheeps to a specific value
  * return the current number of sheeps in a json object
  */
-int callback_sheep_counter_start (const struct _u_request * request, struct _u_response * response, void * user_data) {
+static int callback_sheep_counter_start (const struct _u_request * request, struct _u_response * response, void * user_data) {
   json_t * json_nb_sheep = ulfius_get_json_body_request(request, NULL), * json_body = NULL;
   
-#if JSON_INTEGER_IS_LONG_LONG
-  long long * nb_sheep = user_data;
-#else
-  long * nb_sheep = user_data;
-#endif
+  json_int_t * nb_sheep = user_data;
 
   if (json_nb_sheep != NULL) {
     * nb_sheep = json_integer_value(json_object_get(json_nb_sheep,"nbsheep"));
@@ -193,13 +87,9 @@ int callback_sheep_counter_start (const struct _u_request * request, struct _u_r
  * Reset the number of sheeps to 0
  * return the current number of sheeps in a json object
  */
-int callback_sheep_counter_reset (const struct _u_request * request, struct _u_response * response, void * user_data) {
+static int callback_sheep_counter_reset (const struct _u_request * request, struct _u_response * response, void * user_data) {
   json_t * json_body = NULL;
-#if JSON_INTEGER_IS_LONG_LONG
-  long long * nb_sheep = user_data;
-#else
-  long * nb_sheep = user_data;
-#endif
+  json_int_t * nb_sheep = user_data;
   * nb_sheep = 0;
   
   json_body = json_object();
@@ -214,13 +104,9 @@ int callback_sheep_counter_reset (const struct _u_request * request, struct _u_r
  * Adds one sheep
  * return the current number of sheeps in a json object
  */
-int callback_sheep_counter_add (const struct _u_request * request, struct _u_response * response, void * user_data) {
+static int callback_sheep_counter_add (const struct _u_request * request, struct _u_response * response, void * user_data) {
   json_t * json_body = NULL;
-#if JSON_INTEGER_IS_LONG_LONG
-  long long * nb_sheep = user_data;
-#else
-  long * nb_sheep = user_data;
-#endif
+  json_int_t * nb_sheep = user_data;
   
   (*nb_sheep)++;
   
@@ -233,48 +119,9 @@ int callback_sheep_counter_add (const struct _u_request * request, struct _u_res
 }
 
 /**
- * serve a static file to the client as a very simple http server
- */
-int callback_static_file (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  void * buffer = NULL;
-  long length;
-  FILE * f;
-  char  * file_path = msprintf("%s%s", STATIC_FOLDER, request->http_url);
-  const char * content_type;
-  
-  if (access(file_path, F_OK) != -1) {
-    f = fopen (file_path, "rb");
-    if (f) {
-      fseek (f, 0, SEEK_END);
-      length = ftell (f);
-      fseek (f, 0, SEEK_SET);
-      buffer = o_malloc(length*sizeof(void));
-      if (buffer) {
-        fread (buffer, 1, length, f);
-      }
-      fclose (f);
-    }
-
-    if (buffer) {
-      content_type = u_map_get((struct _u_map *)user_data, get_filename_ext(request->http_url));
-      response->binary_body = buffer;
-      response->binary_body_length = length;
-      u_map_put(response->map_header, "Content-Type", content_type);
-      response->status = 200;
-    } else {
-      response->status = 404;
-    }
-  } else {
-    response->status = 404;
-  }
-  o_free(file_path);
-  return U_CALLBACK_CONTINUE;
-}
-
-/**
  * upload a file
  */
-int callback_upload_file (const struct _u_request * request, struct _u_response * response, void * user_data) {
+static int callback_upload_file (const struct _u_request * request, struct _u_response * response, void * user_data) {
   char * url_params = print_map(request->map_url), * headers = print_map(request->map_header), * cookies = print_map(request->map_cookie), 
         * post_params = print_map(request->map_post_body);
 
@@ -292,7 +139,7 @@ int callback_upload_file (const struct _u_request * request, struct _u_response 
 /**
  * File upload callback function
  */
-int file_upload_callback (const struct _u_request * request, 
+static int file_upload_callback (const struct _u_request * request, 
                           const char * key, 
                           const char * filename, 
                           const char * content_type, 
@@ -303,4 +150,76 @@ int file_upload_callback (const struct _u_request * request,
                           void * cls) {
   y_log_message(Y_LOG_LEVEL_DEBUG, "Got from file '%s' of the key '%s', offset %llu, size %zu, cls is '%s'", filename, key, off, size, cls);
   return U_OK;
+}
+
+/**
+ * Main function
+ */
+int main (int argc, char **argv) {
+  
+  struct _u_compressed_inmemory_website_config file_config;
+  json_int_t nb_sheep = 0;
+  
+  // Initialize the instance
+  struct _u_instance instance;
+  
+  y_init_logs("sheep_counter", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting sheep_counter");
+  
+  if (u_init_compressed_inmemory_website_config(&file_config) == U_OK) {
+    u_map_put(&file_config.mime_types, ".html", "text/html");
+    u_map_put(&file_config.mime_types, ".css", "text/css");
+    u_map_put(&file_config.mime_types, ".js", "application/javascript");
+    u_map_put(&file_config.mime_types, ".png", "image/png");
+    u_map_put(&file_config.mime_types, ".jpg", "image/jpeg");
+    u_map_put(&file_config.mime_types, ".jpeg", "image/jpeg");
+    u_map_put(&file_config.mime_types, ".ttf", "font/ttf");
+    u_map_put(&file_config.mime_types, ".woff", "font/woff");
+    u_map_put(&file_config.mime_types, ".woff2", "font/woff2");
+    u_map_put(&file_config.mime_types, ".map", "application/octet-stream");
+    u_map_put(&file_config.mime_types, ".json", "application/json");
+    u_map_put(&file_config.mime_types, "*", "application/octet-stream");
+    file_config.files_path = "static";
+    file_config.url_prefix = FILE_PREFIX;
+
+    if (ulfius_init_instance(&instance, PORT, NULL, NULL) != U_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_init_instance, abort");
+      return(1);
+    }
+    
+    // Max post param size is 16 Kb, which means an uploaded file is no more than 16 Kb
+    instance.max_post_param_size = 16*1024;
+    
+    if (ulfius_set_upload_file_callback_function(&instance, &file_upload_callback, "my cls") != U_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_set_upload_file_callback_function");
+    }
+    
+    // Endpoint list declaration
+    // The first 3 are webservices with a specific url
+    // The last endpoint will be called for every GET call and will serve the static files
+    ulfius_add_endpoint_by_val(&instance, "POST", PREFIX, NULL, 1, &callback_sheep_counter_start, &nb_sheep);
+    ulfius_add_endpoint_by_val(&instance, "PUT", PREFIX, NULL, 1, &callback_sheep_counter_add, &nb_sheep);
+    ulfius_add_endpoint_by_val(&instance, "DELETE", PREFIX, NULL, 1, &callback_sheep_counter_reset, &nb_sheep);
+    ulfius_add_endpoint_by_val(&instance, "*", PREFIX, NULL, 2, &callback_http_compression, NULL);
+    ulfius_add_endpoint_by_val(&instance, "*", FILE_PREFIX, NULL, 1, &callback_upload_file, NULL);
+    ulfius_add_endpoint_by_val(&instance, "GET", "*", NULL, 1, &callback_static_compressed_inmemory_website, &file_config);
+    
+    // Start the framework
+    if (ulfius_start_framework(&instance) == U_OK) {
+      printf("Start sheep counter on port %u\n", instance.port);
+      
+      // Wait for the user to press <enter> on the console to quit the application
+      getchar();
+    } else {
+      printf("Error starting framework\n");
+    }
+
+    printf("End framework\n");
+    ulfius_stop_framework(&instance);
+    ulfius_clean_instance(&instance);
+    u_clean_compressed_inmemory_website_config(&file_config);
+  }
+  
+  y_close_logs();
+  
+  return 0;
 }
