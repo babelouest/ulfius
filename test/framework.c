@@ -459,6 +459,24 @@ int callback_function_redirect_last(const struct _u_request * request, struct _u
   return U_CALLBACK_CONTINUE;
 }
 
+int callback_function_continue(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_function_ignore(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  return U_CALLBACK_IGNORE;
+}
+
+int callback_function_default_because_ignore(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  response->status = 205;
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_function_complete_after_flow(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  response->status = 200 + request->callback_position;
+  return U_CALLBACK_CONTINUE;
+}
+
 int via_free_with_test = 0;
 
 void free_with_test(void * ptr) {
@@ -999,6 +1017,41 @@ START_TEST(test_ulfius_endpoint_stream)
 }
 END_TEST
 
+START_TEST(test_ulfius_endpoint_ignored)
+{
+  struct _u_instance u_instance;
+  struct _u_request request;
+  struct _u_response response;
+  
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "ignore", NULL, 0, &callback_function_ignore, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "continue", NULL, 0, &callback_function_continue, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "continue", NULL, 1, &callback_function_ignore, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "continue", NULL, 2, &callback_function_complete_after_flow, NULL), U_OK);
+  ck_assert_int_eq(ulfius_set_default_endpoint(&u_instance, &callback_function_default_because_ignore, NULL), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
+  
+  ulfius_init_request(&request);
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_set_request_properties(&request, U_OPT_HTTP_VERB, "GET", U_OPT_HTTP_URL, "http://localhost:8080/ignore", U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 205);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+  
+  ulfius_init_request(&request);
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_set_request_properties(&request, U_OPT_HTTP_VERB, "GET", U_OPT_HTTP_URL, "http://localhost:8080/continue", U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 201);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+  
+  ulfius_stop_framework(&u_instance);
+  ulfius_clean_instance(&u_instance);
+}
+END_TEST
+
 START_TEST(test_ulfius_utf8_not_ignored)
 {
   char * invalid_utf8_seq2 = msprintf("value %c%c", 0xC3, 0x28);
@@ -1331,6 +1384,7 @@ static Suite *ulfius_suite(void)
   tcase_add_test(tc_core, test_ulfius_endpoint_injection);
   tcase_add_test(tc_core, test_ulfius_endpoint_multiple);
   tcase_add_test(tc_core, test_ulfius_endpoint_stream);
+  tcase_add_test(tc_core, test_ulfius_endpoint_ignored);
   tcase_add_test(tc_core, test_ulfius_utf8_not_ignored);
   tcase_add_test(tc_core, test_ulfius_utf8_ignored);
   tcase_add_test(tc_core, test_ulfius_endpoint_callback_position);
