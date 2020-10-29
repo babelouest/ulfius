@@ -90,8 +90,6 @@
 #include <pthread.h>
 #include <zlib.h>
 #include <string.h>
-#include <orcania.h>
-#include <yder.h>
 #include <ulfius.h>
 
 #include "static_compressed_inmemory_website_callback.h"

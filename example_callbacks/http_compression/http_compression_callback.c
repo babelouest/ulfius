@@ -34,8 +34,6 @@
 
 #include <zlib.h>
 #include <string.h>
-#include <orcania.h>
-#include <yder.h>
 #include <ulfius.h>
 
 #include "http_compression_callback.h"
