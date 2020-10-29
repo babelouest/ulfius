@@ -860,6 +860,7 @@ ulfius_set_response_properties(&req, U_OPT_STATUS, 200, U_OPT_STRING_BODY, "Hell
 The callback returned value can have the following values:
 
 - `U_CALLBACK_CONTINUE`: The framework can transfer the request and the response to the next callback function in priority order if there is one, or complete the transaction and send back the response to the client.
+- `U_CALLBACK_IGNORE`: The framework can transfer the request and the response to the next callback function in priority order if there is one, or complete the transaction and send back the response to the client, the counter `request->callback_position` will not be incremented. If at the end of the callback list `request->callback_position` is 0, the default callback (if set) will be called.
 - `U_CALLBACK_COMPLETE`: The framework must complete the transaction and send the response to the client without calling any further callback function.
 - `U_CALLBACK_UNAUTHORIZED`: The framework must complete the transaction without calling any further callback function and send an unauthorized response to the client with the status 401, the body specified and the `auth_realm` value if specified.
 - `U_CALLBACK_ERROR`: An error occurred during execution, the framework will complete the transaction without calling any further callback function and send an error 500 to the client.
@@ -2088,9 +2089,10 @@ The return value for the callback functions must be adapted, instead of U_OK, U_
 
 ```C
 #define U_CALLBACK_CONTINUE     0 // Will replace U_OK
-#define U_CALLBACK_COMPLETE     1
-#define U_CALLBACK_UNAUTHORIZED 2 // Will replace U_ERROR_UNAUTHORIZED
-#define U_CALLBACK_ERROR        3 // Will replace U_ERROR
+#define U_CALLBACK_IGNORE       1
+#define U_CALLBACK_COMPLETE     2
+#define U_CALLBACK_UNAUTHORIZED 3 // Will replace U_ERROR_UNAUTHORIZED
+#define U_CALLBACK_ERROR        4 // Will replace U_ERROR
 ```
 
 If you want more details on the multiple callback functions, check the [documentation](#callback-functions-return-value).
