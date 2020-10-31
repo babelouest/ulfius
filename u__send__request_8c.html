@@ -44,6 +44,7 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Data Structures</a> &#124;
+<a href="#define-members">Macros</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
 <div class="title">u_send_request.c File Reference</div>  </div>
@@ -63,6 +64,11 @@ Data Structures</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct__u__smtp__payload.html">_u_smtp_payload</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
+Macros</h2></td></tr>
+<tr class="memitem:aa15e63eaf30ff89bb6245103a96f83e0"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="u__send__request_8c.html#aa15e63eaf30ff89bb6245103a96f83e0">U_ACCEPT_HEADER</a>&#160;&#160;&#160;&quot;Accept-Encoding&quot;</td></tr>
+<tr class="separator:aa15e63eaf30ff89bb6245103a96f83e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:gac63db90a4e78f6c86b559c8fb96251e4"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__http__smtp__client.html#gac63db90a4e78f6c86b559c8fb96251e4">ulfius_send_http_request</a> (const struct <a class="el" href="struct__u__request.html">_u_request</a> *request, struct <a class="el" href="struct__u__response.html">_u_response</a> *response)</td></tr>
@@ -74,6 +80,28 @@ Functions</h2></td></tr>
 <tr class="memitem:ga2403cd5bffb26626a9911f34806aa3e5"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__http__smtp__client.html#ga2403cd5bffb26626a9911f34806aa3e5">ulfius_send_smtp_email</a> (const char *host, const int port, const int use_tls, const int verify_certificate, const char *user, const char *password, const char *from, const char *to, const char *cc, const char *bcc, const char *subject, const char *mail_body)</td></tr>
 <tr class="separator:ga2403cd5bffb26626a9911f34806aa3e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Macro Definition Documentation</h2>
+<a id="aa15e63eaf30ff89bb6245103a96f83e0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa15e63eaf30ff89bb6245103a96f83e0">&#9670;&nbsp;</a></span>U_ACCEPT_HEADER</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define U_ACCEPT_HEADER&#160;&#160;&#160;&quot;Accept-Encoding&quot;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Ulfius Framework</p>
+<p>REST framework library</p>
+<p><a class="el" href="u__send__request_8c.html">u_send_request.c</a>: send request related functions defintions</p>
+<p>Copyright 2015-2020 Nicolas Mora <a href="#" onclick="location.href='mai'+'lto:'+'mai'+'l@'+'bab'+'el'+'oue'+'st'+'.or'+'g'; return false;">mail@<span style="display: none;">.nosp@m.</span>babe<span style="display: none;">.nosp@m.</span>loues<span style="display: none;">.nosp@m.</span>t.or<span style="display: none;">.nosp@m.</span>g</a></p>
+<p>This program is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; version 2.1 of the License.</p>
+<p>This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU GENERAL PUBLIC LICENSE for more details.</p>
+<p>You should have received a copy of the GNU General Public License along with this library. If not, see <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>. Enables POSIX functions on non-MSVC targets. This is required for gmtime_r() which is not part of the ISO C standard. </p>
+
+</div>
+</div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
