@@ -66,7 +66,7 @@ static void u_zfree(void *q, void *p) {
 int callback_http_compression (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _http_compression_config * config = (struct _http_compression_config *)user_data;
   char ** accept_list = NULL;
-  int ret = U_CALLBACK_CONTINUE, compress_mode = U_COMPRESS_NONE, res;
+  int ret = U_CALLBACK_IGNORE, compress_mode = U_COMPRESS_NONE, res;
   z_stream defstream;
   char * data_zip = NULL;
   size_t data_zip_len;
@@ -106,7 +106,7 @@ int callback_http_compression (const struct _u_request * request, struct _u_resp
               ret = U_CALLBACK_ERROR;
             }
           }
-          if (ret == U_CALLBACK_CONTINUE) {
+          if (ret == U_CALLBACK_IGNORE) {
             res = deflate(&defstream, Z_FINISH);
             if (res == Z_STREAM_END) {
               ulfius_set_binary_body_response(response, response->status, (const char *)data_zip, defstream.total_out);
