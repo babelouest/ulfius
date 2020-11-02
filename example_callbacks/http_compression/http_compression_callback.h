@@ -4,7 +4,7 @@
  *
  * Copyright 2020 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20201028
+ * Version 20201101
  *
  * Compress the response body using `deflate` or `gzip` depending on the request header `Accept-Encoding` and the callback configuration.
  * The rest of the response, status, headers, cookies won't change.
