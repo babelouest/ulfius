@@ -24,9 +24,9 @@
     
     function connectSocket(echo) {
       if (location.protocol === "https:") {
-        mySocket = new WebSocket("wss://" + location.hostname + ":" + location.port + "/websocket" + (echo?"/echo":""), ["plop"]);
+        mySocket = new WebSocket("wss://" + location.hostname + ":" + location.port + "/websocket" + (echo?"/echo":""));
       } else {
-        mySocket = new WebSocket("ws://" + location.hostname + ":" + location.port + "/websocket" + (echo?"/echo":""), ["plop"]);
+        mySocket = new WebSocket("ws://" + location.hostname + ":" + location.port + "/websocket" + (echo?"/echo":""));
       }
       mySocket.onmessage = function (event) {
         if (event.data instanceof Blob) {
@@ -98,9 +98,9 @@
         var curFileData = ev2.target.result;
         if (curFileData) {
           if (location.protocol === "https:") {
-            mySocket = new WebSocket("wss://" + location.hostname + ":" + location.port + "/websocket/file", ["file"]);
+            mySocket = new WebSocket("wss://" + location.hostname + ":" + location.port + "/websocket/file");
           } else {
-            mySocket = new WebSocket("ws://" + location.hostname + ":" + location.port + "/websocket/file", ["file"]);
+            mySocket = new WebSocket("ws://" + location.hostname + ":" + location.port + "/websocket/file");
           }
           mySocket.binaryType = "arraybuffer";
           mySocket.onopen = function () {
@@ -126,9 +126,9 @@
         var curFileText = ev2.target.result;
         if (curFileText) {
           if (location.protocol === "https:") {
-            mySocket = new WebSocket("wss://" + location.hostname + ":" + location.port + "/websocket/file", ["file"]);
+            mySocket = new WebSocket("wss://" + location.hostname + ":" + location.port + "/websocket/file");
           } else {
-            mySocket = new WebSocket("ws://" + location.hostname + ":" + location.port + "/websocket/file", ["file"]);
+            mySocket = new WebSocket("ws://" + location.hostname + ":" + location.port + "/websocket/file");
           }
           mySocket.binaryType = "arraybuffer";
           mySocket.onopen = function () {
