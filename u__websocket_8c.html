@@ -73,10 +73,12 @@ Macros</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a26e2c4201eaf8c918227a344445e4c66"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="u__websocket_8c.html#a26e2c4201eaf8c918227a344445e4c66">ulfius_thread_websocket_manager_run</a> (void *args)</td></tr>
-<tr class="separator:a26e2c4201eaf8c918227a344445e4c66"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a13977c95392d2ae82decbb9337ea030f"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="u__websocket_8c.html#a13977c95392d2ae82decbb9337ea030f">ulfius_thread_websocket</a> (void *data)</td></tr>
-<tr class="separator:a13977c95392d2ae82decbb9337ea030f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abb73fec25933c9f2b574a3a3f2c20358"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="u__websocket_8c.html#abb73fec25933c9f2b574a3a3f2c20358">ulfius_free_websocket_extension_pointer_list</a> (void *extension)</td></tr>
+<tr class="separator:abb73fec25933c9f2b574a3a3f2c20358"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac7397296d417a91b36d1b52d8912e89c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="u__websocket_8c.html#ac7397296d417a91b36d1b52d8912e89c">ulfius_free_websocket_extension</a> (struct _websocket_extension *websocket_extension)</td></tr>
+<tr class="separator:ac7397296d417a91b36d1b52d8912e89c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa3b4c1e5d503b8cbf7e5ab2205c1738b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="u__websocket_8c.html#aa3b4c1e5d503b8cbf7e5ab2205c1738b">ulfius_init_websocket_extension</a> (struct _websocket_extension *websocket_extension)</td></tr>
+<tr class="separator:aa3b4c1e5d503b8cbf7e5ab2205c1738b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab6dd5bf28c21a2ef655905d4ecb02aa6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="u__websocket_8c.html#ab6dd5bf28c21a2ef655905d4ecb02aa6">ulfius_start_websocket_cb</a> (void *cls, struct MHD_Connection *connection, void *con_cls, const char *extra_in, size_t extra_in_size, MHD_socket sock, struct MHD_UpgradeResponseHandle *urh)</td></tr>
 <tr class="separator:ab6dd5bf28c21a2ef655905d4ecb02aa6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7ab0b62c5d80d804540e1a878f10087a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="u__websocket_8c.html#a7ab0b62c5d80d804540e1a878f10087a">ulfius_check_handshake_response</a> (const char *key, const char *response)</td></tr>
@@ -119,6 +121,8 @@ Functions</h2></td></tr>
 <tr class="separator:a6a3c8c2a4e531557098c9851e1b667b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9cf9d96944f3d4fc3930075011cbb4af"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="u__websocket_8c.html#a9cf9d96944f3d4fc3930075011cbb4af">ulfius_set_websocket_response</a> (struct <a class="el" href="struct__u__response.html">_u_response</a> *response, const char *websocket_protocol, const char *websocket_extensions, void(*websocket_manager_callback)(const struct <a class="el" href="struct__u__request.html">_u_request</a> *request, struct _websocket_manager *websocket_manager, void *websocket_manager_user_data), void *websocket_manager_user_data, void(*websocket_incoming_message_callback)(const struct <a class="el" href="struct__u__request.html">_u_request</a> *request, struct _websocket_manager *websocket_manager, const struct _websocket_message *message, void *websocket_incoming_user_data), void *websocket_incoming_user_data, void(*websocket_onclose_callback)(const struct <a class="el" href="struct__u__request.html">_u_request</a> *request, struct _websocket_manager *websocket_manager, void *websocket_onclose_user_data), void *websocket_onclose_user_data)</td></tr>
 <tr class="separator:a9cf9d96944f3d4fc3930075011cbb4af"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aefa867b0ea982b4c2a5a4936767e3a67"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="u__websocket_8c.html#aefa867b0ea982b4c2a5a4936767e3a67">ulfius_add_websocket_extension_message_perform</a> (struct <a class="el" href="struct__u__response.html">_u_response</a> *response, const char *extension_server, int(*websocket_extension_message_out_perform)(const uint8_t opcode, uint8_t *rsv, const uint64_t data_len_in, const char *data_in, uint64_t *data_len_out, char **data_out, const uint64_t fragment_len, void *user_data), void *websocket_extension_message_out_perform_user_data, int(*websocket_extension_message_in_perform)(const uint8_t opcode, uint8_t rsv, const uint64_t data_len_in, const char *data_in, uint64_t *data_len_out, char **data_out, const uint64_t fragment_len, void *user_data), void *websocket_extension_message_in_perform_user_data, int(*websocket_extension_server_match)(const char *extension_client, char **extension_server, void *user_data), void *websocket_extension_server_match_user_data)</td></tr>
+<tr class="separator:aefa867b0ea982b4c2a5a4936767e3a67"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1738c8572795e4264c250a2a7d5ed2ee"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="u__websocket_8c.html#a1738c8572795e4264c250a2a7d5ed2ee">ulfius_websocket_send_close_signal</a> (struct _websocket_manager *websocket_manager)</td></tr>
 <tr class="separator:a1738c8572795e4264c250a2a7d5ed2ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a86e85c4ffc47c3161f6b016ec56fb3e7"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="u__websocket_8c.html#a86e85c4ffc47c3161f6b016ec56fb3e7">ulfius_websocket_status</a> (struct _websocket_manager *websocket_manager)</td></tr>
@@ -127,6 +131,8 @@ Functions</h2></td></tr>
 <tr class="separator:a55edeedda06a0a1d1792da77bef54cb4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad33e95eec6131d591555cc9e51e43512"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="u__websocket_8c.html#ad33e95eec6131d591555cc9e51e43512">ulfius_set_websocket_request</a> (struct <a class="el" href="struct__u__request.html">_u_request</a> *request, const char *url, const char *websocket_protocol, const char *websocket_extensions)</td></tr>
 <tr class="separator:ad33e95eec6131d591555cc9e51e43512"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aefba3d2f528de7fb9e203eea9e63ed86"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="u__websocket_8c.html#aefba3d2f528de7fb9e203eea9e63ed86">ulfius_add_websocket_client_extension_message_perform</a> (struct _websocket_client_handler *websocket_client_handler, const char *extension, int(*websocket_extension_message_out_perform)(const uint8_t opcode, uint8_t *rsv, const uint64_t data_len_in, const char *data_in, uint64_t *data_len_out, char **data_out, const uint64_t fragment_len, void *user_data), void *websocket_extension_message_out_perform_user_data, int(*websocket_extension_message_in_perform)(const uint8_t opcode, uint8_t rsv, const uint64_t data_len_in, const char *data_in, uint64_t *data_len_out, char **data_out, const uint64_t fragment_len, void *user_data), void *websocket_extension_message_in_perform_user_data, int(*websocket_extension_client_match)(const char *extension_server, void *user_data), void *websocket_extension_client_match_user_data)</td></tr>
+<tr class="separator:aefba3d2f528de7fb9e203eea9e63ed86"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a996074d603ae74f46fe2a39fbb3ac921"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="u__websocket_8c.html#a996074d603ae74f46fe2a39fbb3ac921">ulfius_open_websocket_client_connection</a> (struct <a class="el" href="struct__u__request.html">_u_request</a> *request, void(*websocket_manager_callback)(const struct <a class="el" href="struct__u__request.html">_u_request</a> *request, struct _websocket_manager *websocket_manager, void *websocket_manager_user_data), void *websocket_manager_user_data, void(*websocket_incoming_message_callback)(const struct <a class="el" href="struct__u__request.html">_u_request</a> *request, struct _websocket_manager *websocket_manager, const struct _websocket_message *message, void *websocket_incoming_user_data), void *websocket_incoming_user_data, void(*websocket_onclose_callback)(const struct <a class="el" href="struct__u__request.html">_u_request</a> *request, struct _websocket_manager *websocket_manager, void *websocket_onclose_user_data), void *websocket_onclose_user_data, struct _websocket_client_handler *websocket_client_handler, struct <a class="el" href="struct__u__response.html">_u_response</a> *response)</td></tr>
 <tr class="separator:a996074d603ae74f46fe2a39fbb3ac921"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0f01cd89ce14766ebb9572645e36ec8f"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="u__websocket_8c.html#a0f01cd89ce14766ebb9572645e36ec8f">ulfius_websocket_client_connection_send_close_signal</a> (struct _websocket_client_handler *websocket_client_handler)</td></tr>
@@ -183,41 +189,58 @@ Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
-<a id="a26e2c4201eaf8c918227a344445e4c66"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a26e2c4201eaf8c918227a344445e4c66">&#9670;&nbsp;</a></span>ulfius_thread_websocket_manager_run()</h2>
+<a id="abb73fec25933c9f2b574a3a3f2c20358"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abb73fec25933c9f2b574a3a3f2c20358">&#9670;&nbsp;</a></span>ulfius_free_websocket_extension_pointer_list()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void* ulfius_thread_websocket_manager_run </td>
+          <td class="memname">void ulfius_free_websocket_extension_pointer_list </td>
           <td>(</td>
           <td class="paramtype">void *&#160;</td>
-          <td class="paramname"><em>args</em></td><td>)</td>
+          <td class="paramname"><em>extension</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Run the websocket manager in a separated detached thread </p>
+<p>Internal websocket functions </p>
 
 </div>
 </div>
-<a id="a13977c95392d2ae82decbb9337ea030f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a13977c95392d2ae82decbb9337ea030f">&#9670;&nbsp;</a></span>ulfius_thread_websocket()</h2>
+<a id="ac7397296d417a91b36d1b52d8912e89c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac7397296d417a91b36d1b52d8912e89c">&#9670;&nbsp;</a></span>ulfius_free_websocket_extension()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void* ulfius_thread_websocket </td>
+          <td class="memname">void ulfius_free_websocket_extension </td>
           <td>(</td>
-          <td class="paramtype">void *&#160;</td>
-          <td class="paramname"><em>data</em></td><td>)</td>
+          <td class="paramtype">struct _websocket_extension *&#160;</td>
+          <td class="paramname"><em>websocket_extension</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Run websocket in a separate thread then sets a listening message loop Complete the callback when the websocket is closed The websocket can be closed by the client, the manager, the program, or on network disconnect </p>
+
+</div>
+</div>
+<a id="aa3b4c1e5d503b8cbf7e5ab2205c1738b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa3b4c1e5d503b8cbf7e5ab2205c1738b">&#9670;&nbsp;</a></span>ulfius_init_websocket_extension()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int ulfius_init_websocket_extension </td>
+          <td>(</td>
+          <td class="paramtype">struct _websocket_extension *&#160;</td>
+          <td class="paramname"><em>websocket_extension</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -866,6 +889,70 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="aefa867b0ea982b4c2a5a4936767e3a67"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aefa867b0ea982b4c2a5a4936767e3a67">&#9670;&nbsp;</a></span>ulfius_add_websocket_extension_message_perform()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int ulfius_add_websocket_extension_message_perform </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="struct__u__response.html">_u_response</a> *&#160;</td>
+          <td class="paramname"><em>response</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>extension_server</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int(*)(const uint8_t opcode, uint8_t *rsv, const uint64_t data_len_in, const char *data_in, uint64_t *data_len_out, char **data_out, const uint64_t fragment_len, void *user_data)&#160;</td>
+          <td class="paramname"><em>websocket_extension_message_out_perform</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>websocket_extension_message_out_perform_user_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int(*)(const uint8_t opcode, uint8_t rsv, const uint64_t data_len_in, const char *data_in, uint64_t *data_len_out, char **data_out, const uint64_t fragment_len, void *user_data)&#160;</td>
+          <td class="paramname"><em>websocket_extension_message_in_perform</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>websocket_extension_message_in_perform_user_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int(*)(const char *extension_client, char **extension_server, void *user_data)&#160;</td>
+          <td class="paramname"><em>websocket_extension_server_match</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>websocket_extension_server_match_user_data</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a1738c8572795e4264c250a2a7d5ed2ee"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1738c8572795e4264c250a2a7d5ed2ee">&#9670;&nbsp;</a></span>ulfius_websocket_send_close_signal()</h2>
 
@@ -971,6 +1058,70 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>Set values for a struct <a class="el" href="struct__u__request.html" title="definition of the parameters available in a struct _u_request ">_u_request</a> to open a websocket request must be previously initialized Return U_OK on success </p>
+
+</div>
+</div>
+<a id="aefba3d2f528de7fb9e203eea9e63ed86"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aefba3d2f528de7fb9e203eea9e63ed86">&#9670;&nbsp;</a></span>ulfius_add_websocket_client_extension_message_perform()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int ulfius_add_websocket_client_extension_message_perform </td>
+          <td>(</td>
+          <td class="paramtype">struct _websocket_client_handler *&#160;</td>
+          <td class="paramname"><em>websocket_client_handler</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&#160;</td>
+          <td class="paramname"><em>extension</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int(*)(const uint8_t opcode, uint8_t *rsv, const uint64_t data_len_in, const char *data_in, uint64_t *data_len_out, char **data_out, const uint64_t fragment_len, void *user_data)&#160;</td>
+          <td class="paramname"><em>websocket_extension_message_out_perform</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>websocket_extension_message_out_perform_user_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int(*)(const uint8_t opcode, uint8_t rsv, const uint64_t data_len_in, const char *data_in, uint64_t *data_len_out, char **data_out, const uint64_t fragment_len, void *user_data)&#160;</td>
+          <td class="paramname"><em>websocket_extension_message_in_perform</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>websocket_extension_message_in_perform_user_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int(*)(const char *extension_server, void *user_data)&#160;</td>
+          <td class="paramname"><em>websocket_extension_client_match</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>websocket_extension_client_match_user_data</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
 
 </div>
 </div>
