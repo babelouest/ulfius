@@ -30,6 +30,7 @@
     - [Messages manipulation](#messages-manipulation)
     - [Server-side websocket](#server-side-websocket)
       - [Open a websocket communication](#open-a-websocket-communication)
+      - [Advanced websocket extension](#advanced-websocket-extension)
       - [Close a websocket communication](#close-a-websocket-communication)
       - [Websocket status](#websocket-status)
     - [Client-side websocket](#client-side-websocket)
