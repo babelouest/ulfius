@@ -101,6 +101,12 @@ const unsigned char * utf8_check(const char * s_orig);
 
 #ifndef U_DISABLE_WEBSOCKET
 
+void ulfius_free_websocket_extension_pointer_list(void * extension);
+
+void ulfius_free_websocket_extension(struct _websocket_extension * websocket_extension);
+
+int ulfius_init_websocket_extension(struct _websocket_extension * websocket_extension);
+
 /**
  * Websocket callback function for MHD
  * Starts the websocket manager if set,
@@ -166,11 +172,6 @@ void ulfius_clear_websocket_manager(struct _websocket_manager * websocket_manage
  * Close the websocket
  */
 int ulfius_close_websocket(struct _websocket * websocket);
-
-/**
- * Run the websocket manager in a separated detached thread
- */
-void * ulfius_thread_websocket_manager_run(void * args);
 
 /**
  * Add a websocket in the list of active websockets of the instance
