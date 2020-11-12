@@ -388,6 +388,8 @@ int ulfius_clean_response(struct _u_response * response) {
     if ((struct _websocket_handle *)response->websocket_handle) {
       o_free(((struct _websocket_handle *)response->websocket_handle)->websocket_protocol);
       o_free(((struct _websocket_handle *)response->websocket_handle)->websocket_extensions);
+      pointer_list_clean_free(((struct _websocket_handle *)response->websocket_handle)->websocket_extension_list, &ulfius_free_websocket_extension_pointer_list);
+      o_free(((struct _websocket_handle *)response->websocket_handle)->websocket_extension_list);
       o_free(response->websocket_handle);
     }
 #endif
@@ -454,6 +456,12 @@ int ulfius_init_response(struct _u_response * response) {
     ((struct _websocket_handle *)response->websocket_handle)->websocket_incoming_user_data = NULL;
     ((struct _websocket_handle *)response->websocket_handle)->websocket_onclose_callback = NULL;
     ((struct _websocket_handle *)response->websocket_handle)->websocket_onclose_user_data = NULL;
+    if ((((struct _websocket_handle *)response->websocket_handle)->websocket_extension_list = o_malloc(sizeof(struct _pointer_list))) == NULL) {
+      o_free(response->websocket_handle);
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->websocket_handle->websocket_extension_list");
+      return U_ERROR_MEMORY;
+    }
+    pointer_list_init(((struct _websocket_handle *)response->websocket_handle)->websocket_extension_list);
 #endif
     return U_OK;
   } else {

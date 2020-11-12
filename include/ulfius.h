@@ -1447,12 +1447,30 @@ int u_map_empty(struct _u_map * u_map);
 #define U_WEBSOCKET_STATUS_CLOSE 1
 #define U_WEBSOCKET_STATUS_ERROR 2
 
+#define U_WEBSOCKET_RSV1 0x40
+#define U_WEBSOCKET_RSV2 0x20
+#define U_WEBSOCKET_RSV3 0x10
+
 #define WEBSOCKET_RESPONSE_HTTP       0x0001
 #define WEBSOCKET_RESPONSE_UPGRADE    0x0002
 #define WEBSOCKET_RESPONSE_CONNECTION 0x0004
 #define WEBSOCKET_RESPONSE_ACCEPT     0x0008
 #define WEBSOCKET_RESPONSE_PROTCOL    0x0010
 #define WEBSOCKET_RESPONSE_EXTENSION  0x0020
+
+struct _websocket_extension {
+  char  * extension_server;
+  char  * extension_client;
+  int  (* websocket_extension_message_out_perform)(const uint8_t opcode, uint8_t * rsv, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data);
+  void  * websocket_extension_message_out_perform_user_data;
+  int  (* websocket_extension_message_in_perform)(const uint8_t opcode, uint8_t rsv, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data);
+  void  * websocket_extension_message_in_perform_user_data;
+  int  (* websocket_extension_server_match)(const char * extension_server, char ** extension_client, void * user_data);
+  void  * websocket_extension_server_match_user_data;
+  int  (* websocket_extension_client_match)(const char * extension_server, void * user_data);
+  void  * websocket_extension_client_match_user_data;
+  int     enabled;
+};
 
 /**
  * @struct _websocket_manager Websocket manager structure
@@ -1478,6 +1496,7 @@ struct _websocket_manager {
   pthread_cond_t                   status_cond; /* !< condition to broadcast new status */
   struct pollfd                    fds;
   int                              type;
+  struct _pointer_list           * websocket_extension_list;
 };
 
 /**
@@ -1487,6 +1506,7 @@ struct _websocket_manager {
  */
 struct _websocket_message {
   time_t  datestamp; /* !< date stamp of the message */
+  uint8_t rsv; /* !< flags RSV1-3 of the message */
   uint8_t opcode; /* !< opcode for the message (string or binary) */
   uint8_t has_mask; /* !< does the message contain a mask? */
   uint8_t mask[4]; /* !< mask used if any */
@@ -1633,6 +1653,27 @@ int ulfius_set_websocket_response(struct _u_response * response,
                                    void * websocket_onclose_user_data);
 
 /**
+ * Adds a set of callback functions to perform a message transformation via an extension
+ * @param response struct _u_response to send back the websocket initialization, mandatory
+ * @param extension the expected extension value
+ * @param websocket_extension_message_out_perform a callback function called before a message is sent to the server
+ * @param websocket_extension_message_out_perform_user_data a user-defined pointer passed to websocket_extension_message_out_perform
+ * @param websocket_extension_message_in_perform a callback function called after a message is received from the server
+ * @param websocket_extension_message_in_perform_user_data a user-defined pointer passed to websocket_extension_message_in_perform
+ * @param websocket_extension_server_match a callback function called on handshake response to match an extensions value with the given callback message perform extensions
+ *        if NULL, then extension_client and the extension sent by the server will be compared for an exact match to enable this extension
+ * @param websocket_extension_server_match_user_data a user-defined pointer passed to websocket_extension_server_match
+ */
+int ulfius_add_websocket_extension_message_perform(struct _u_response * response,
+                                                   const char * extension,
+                                                   int (* websocket_extension_message_out_perform)(const uint8_t opcode, uint8_t * rsv, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data),
+                                                   void * websocket_extension_message_out_perform_user_data,
+                                                   int (* websocket_extension_message_in_perform)(const uint8_t opcode, uint8_t rsv, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data),
+                                                   void * websocket_extension_message_in_perform_user_data,
+                                                   int (* websocket_extension_server_match)(const char * extension_server, char ** extension_client, void * user_data),
+                                                   void * websocket_extension_server_match_user_data);
+
+/**
  * Sets the websocket in closing mode
  * The websocket will not necessarily be closed at the return of this function,
  * it will process through the end of the `websocket_manager_callback`
@@ -1695,6 +1736,28 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
                                             void * websocket_onclose_user_data,
                                             struct _websocket_client_handler * websocket_client_handler,
                                             struct _u_response * response);
+
+/**
+ * Adds a set of callback functions to perform a message transformation via an extension
+ * @param websocket_client_handler the handler of the websocket
+ * @param extension the expected extension value
+ * @param websocket_extension_message_out_perform a callback function called before a message is sent to the client
+ * @param websocket_extension_message_out_perform_user_data a user-defined pointer passed to websocket_extension_message_out_perform
+ * @param websocket_extension_message_in_perform a callback function called after a message is received from the client
+ * @param websocket_extension_message_in_perform_user_data a user-defined pointer passed to websocket_extension_message_in_perform
+ * @param websocket_extension_client_match a callback function called on handshake response to match an extensions value with the given callback message perform extensions
+ *        if NULL, then extension and the extension sent by the client will be compared for an exact match to enable this extension
+ * @param websocket_extension_client_match_user_data a user-defined pointer passed to websocket_extension_client_match
+ */
+int ulfius_add_websocket_client_extension_message_perform(struct _websocket_client_handler * websocket_client_handler,
+                                                          const char * extension,
+                                                          int (* websocket_extension_message_out_perform)(const uint8_t opcode, uint8_t * rsv, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data),
+                                                          void * websocket_extension_message_out_perform_user_data,
+                                                          int (* websocket_extension_message_in_perform)(const uint8_t opcode, uint8_t rsv, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data),
+                                                          void * websocket_extension_message_in_perform_user_data,
+                                                          int (* websocket_extension_client_match)(const char * extension_server, void * user_data),
+                                                          void * websocket_extension_client_match_user_data);
+
 /**
  * Send a close signal to the websocket
  * @param websocket_client_handler the handler to the websocket connection
@@ -1769,21 +1832,22 @@ int ulfius_set_websocket_request(struct _u_request * request,
  * @struct _websocket_handle handle for a websocket
  */
 struct _websocket_handle {
-  char             * websocket_protocol; /* !< protocol for the websocket */
-  char             * websocket_extensions; /* !< extensions for the websocket */
-  void            (* websocket_manager_callback) (const struct _u_request * request, /* !< callback function for working with the websocket */
-                                                  struct _websocket_manager * websocket_manager,
-                                                  void * websocket_manager_user_data);
-  void             * websocket_manager_user_data; /* !< user-defined data that will be handled to websocket_manager_callback */
-  void            (* websocket_incoming_message_callback) (const struct _u_request * request, /* !< callback function that will be called every time a message arrives from the client in the websocket */
-                                                           struct _websocket_manager * websocket_manager,
-                                                           const struct _websocket_message * message,
-                                                           void * websocket_incoming_user_data);
-  void             * websocket_incoming_user_data; /* !< user-defined data that will be handled to websocket_incoming_message_callback */
-  void            (* websocket_onclose_callback) (const struct _u_request * request, /* !< callback function that will be called if the websocket is open while the program calls ulfius_stop_framework */
-                                                  struct _websocket_manager * websocket_manager,
-                                                  void * websocket_onclose_user_data);
-  void             * websocket_onclose_user_data; /* !< user-defined data that will be handled to websocket_onclose_callback */
+  char                 * websocket_protocol; /* !< protocol for the websocket */
+  char                 * websocket_extensions; /* !< extensions for the websocket */
+  void                (* websocket_manager_callback) (const struct _u_request * request, /* !< callback function for working with the websocket */
+                                                      struct _websocket_manager * websocket_manager,
+                                                      void * websocket_manager_user_data);
+  void                 * websocket_manager_user_data; /* !< user-defined data that will be handled to websocket_manager_callback */
+  void                (* websocket_incoming_message_callback) (const struct _u_request * request, /* !< callback function that will be called every time a message arrives from the client in the websocket */
+                                                               struct _websocket_manager * websocket_manager,
+                                                               const struct _websocket_message * message,
+                                                               void * websocket_incoming_user_data);
+  void                 * websocket_incoming_user_data; /* !< user-defined data that will be handled to websocket_incoming_message_callback */
+  void                (* websocket_onclose_callback) (const struct _u_request * request, /* !< callback function that will be called if the websocket is open while the program calls ulfius_stop_framework */
+                                                      struct _websocket_manager * websocket_manager,
+                                                      void * websocket_onclose_user_data);
+  void                 * websocket_onclose_user_data; /* !< user-defined data that will be handled to websocket_onclose_callback */
+  struct _pointer_list * websocket_extension_list;
 };
 
 /**
