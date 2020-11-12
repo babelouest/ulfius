@@ -548,6 +548,7 @@ static void * ulfius_thread_websocket(void * data) {
                             ret = U_ERROR_MEMORY;
                           }
                           o_free(data_out);
+                          data_out = NULL;
                         }
                       }
                     }
@@ -1261,6 +1262,7 @@ int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websock
                   ret = U_ERROR_MEMORY;
                 }
                 o_free(data_out);
+                data_out = NULL;
               }
             }
           }
@@ -1552,7 +1554,7 @@ int ulfius_add_websocket_extension_message_perform(struct _u_response * response
                                                    void * websocket_extension_message_out_perform_user_data,
                                                    int (* websocket_extension_message_in_perform)(const uint8_t opcode, uint8_t rsv, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data),
                                                    void * websocket_extension_message_in_perform_user_data,
-                                                   int (* websocket_extension_server_match)(const char * extension_server, char ** extension_client, void * user_data),
+                                                   int (* websocket_extension_server_match)(const char * extension_client, char ** extension_server, void * user_data),
                                                    void * websocket_extension_server_match_user_data) {
   int ret;
   struct _websocket_extension * extension;
