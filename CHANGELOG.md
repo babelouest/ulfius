@@ -6,6 +6,7 @@
 - Add http_compression callback example
 - Add static_compressed_inmemory_website callback example
 - Add callback return value `U_CALLBACK_IGNORE` to igore incrementation of `request->callback_position`
+- Add `ulfius_add_websocket_extension_message_perform` and `ulfius_add_websocket_client_extension_message_perform` for advanced websocket extensions management
 
 ## 2.6.9
 
