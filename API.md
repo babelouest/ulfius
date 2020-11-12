@@ -1219,6 +1219,7 @@ A websocket message has the following structure:
  */
 struct _websocket_message {
   time_t  datestamp; // datestamp when the message was transmitted
+  uint8_t rsv;       // RSV (extension) flags, must be binary tested over U_WEBSOCKET_RSV1, U_WEBSOCKET_RSV2, U_WEBSOCKET_RSV3
   uint8_t opcode;    // opcode of the message: U_WEBSOCKET_OPCODE_TEXT, U_WEBSOCKET_OPCODE_BINARY, U_WEBSOCKET_OPCODE_PING, U_WEBSOCKET_OPCODE_PONG
   uint8_t has_mask;  // Flag to specify if the message has a mask
   uint8_t mask[4];   // mask
@@ -1345,6 +1346,89 @@ You must specify at least one of the callback functions between `websocket_manag
 When the function `ulfius_stop_framework` is called, it will wait for all running websockets to end by themselves, there is no force close. So if you have a `websocket_manager_callback` function running, you *MUST* end this function in order to make a clean stop of the http daemon.
 
 For each of these callback function, you can specify a `*_user_data` pointer containing any data you need.
+
+#### Advanced websocket extension
+
+Since Ulfius 2.6.10, you have advanced functions to handle websocket extensions based on the functions `ulfius_add_websocket_extension_message_perform` for the server websockets and `ulfius_add_websocket_client_extension_message_perform` for the clients websockets.
+
+```C
+/**
+ * Adds a set of callback functions to perform a message transformation via an extension
+ * @param response struct _u_response to send back the websocket initialization, mandatory
+ * @param extension the expected extension value
+ * @param websocket_extension_message_out_perform a callback function called before a message is sent to the server
+ * @param websocket_extension_message_out_perform_user_data a user-defined pointer passed to websocket_extension_message_out_perform
+ * @param websocket_extension_message_in_perform a callback function called after a message is received from the server
+ * @param websocket_extension_message_in_perform_user_data a user-defined pointer passed to websocket_extension_message_in_perform
+ * @param websocket_extension_server_match a callback function called on handshake response to match an extensions value with the given callback message perform extensions
+ *        if NULL, then extension_client and the extension sent by the server will be compared for an exact match to enable this extension
+ * @param websocket_extension_server_match_user_data a user-defined pointer passed to websocket_extension_server_match
+ * @return U_OK on success
+ */
+int ulfius_add_websocket_extension_message_perform(struct _u_response * response,
+                                                   const char * extension,
+                                                   int (* websocket_extension_message_out_perform)(const uint8_t opcode, uint8_t * rsv, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data),
+                                                   void * websocket_extension_message_out_perform_user_data,
+                                                   int (* websocket_extension_message_in_perform)(const uint8_t opcode, uint8_t rsv, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data),
+                                                   void * websocket_extension_message_in_perform_user_data,
+                                                   int (* websocket_extension_server_match)(const char * extension_server, char ** extension_client, void * user_data),
+                                                   void * websocket_extension_server_match_user_data);
+
+/**
+ * Adds a set of callback functions to perform a message transformation via an extension
+ * @param websocket_client_handler the handler of the websocket
+ * @param extension the expected extension value
+ * @param websocket_extension_message_out_perform a callback function called before a message is sent to the client
+ * @param websocket_extension_message_out_perform_user_data a user-defined pointer passed to websocket_extension_message_out_perform
+ * @param websocket_extension_message_in_perform a callback function called after a message is received from the client
+ * @param websocket_extension_message_in_perform_user_data a user-defined pointer passed to websocket_extension_message_in_perform
+ * @param websocket_extension_client_match a callback function called on handshake response to match an extensions value with the given callback message perform extensions
+ *        if NULL, then extension and the extension sent by the client will be compared for an exact match to enable this extension
+ * @param websocket_extension_client_match_user_data a user-defined pointer passed to websocket_extension_client_match
+ * @return U_OK on success
+ */
+int ulfius_add_websocket_client_extension_message_perform(struct _websocket_client_handler * websocket_client_handler,
+                                                          const char * extension,
+                                                          int (* websocket_extension_message_out_perform)(const uint8_t opcode, uint8_t * rsv, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data),
+                                                          void * websocket_extension_message_out_perform_user_data,
+                                                          int (* websocket_extension_message_in_perform)(const uint8_t opcode, uint8_t rsv, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data),
+                                                          void * websocket_extension_message_in_perform_user_data,
+                                                          int (* websocket_extension_client_match)(const char * extension_server, void * user_data),
+                                                          void * websocket_extension_client_match_user_data);
+```
+
+These functions add the possibility to run a callback function before a message is sent and/or after a message is received.
+
+The callback functions `websocket_extension_server_match` and `websocket_extension_client_match` can be use if you expect to match an extension with parameters. If `NULL`, then instead an exact match between `const char * extension` and the extension received will be checked to enable or not this extension callback functions.
+
+```C
+/**
+ * Checks an extension sent by the client if it matches the expected extension
+ * if the function return U_OK, the extension will be enabled and the functions
+ * websocket_extension_message_out_perform and websocket_extension_message_in_perform available
+ * @param extension_client the extension and its parameters (if any) sent by the client
+ * @param extension_server the extension value to return to the client if the extension is allowed by the server.
+ *        Must be an `o_malloc`'ed string
+ * @param user_data the user-defined pointer previously given
+ * @return U_OK on success
+ */
+int websocket_extension_server_match(const char * extension_client, char ** extension_server, void * user_data);
+
+/**
+ * Checks an extension sent by the server if it matches the expected extension
+ * if the function return U_OK, the extension will be enabled and the functions
+ * websocket_extension_message_out_perform and websocket_extension_message_in_perform available
+ * @param extension_server the extension and its parameters (if any) sent by the server
+ * @param user_data the user-defined pointer previously given
+ * @return U_OK on success
+ */
+int websocket_extension_client_match(const char * extension_server, void * user_data);
+```
+
+The callback function `websocket_extension_message_out_perform` can modify the message data and data lenght and the RSV flags. The callback function `websocket_extension_message_in_perform` can modify the message data only. Inside these functions, `data_in` and `data_len_in` are the current data, your extension callback function must update `data_out` with a `o_malloc`'ed data and set the new data length using `data_len_out` and return `U_OK` on success.
+If your function doesn't return `U_OK`, the message data won't be updated and `data_out` won't be free'd if set.
+
+You can call `ulfius_add_websocket_extension_message_perform` or `ulfius_add_websocket_client_extension_message_perform` multiple times for a websocket definition. In that case the extension callbacks function will be called in the same order for the `websocket_extension_message_out_perform` callbacks, and in reverse order for the `websocket_extension_message_in_perform` callbacks.
 
 #### Close a websocket communication <a name="close-a-websocket-communication"></a>
 
