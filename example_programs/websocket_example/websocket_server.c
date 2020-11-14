@@ -272,6 +272,7 @@ int callback_websocket (const struct _u_request * request, struct _u_response * 
   int ret;
   
   if ((ret = ulfius_set_websocket_response(response, NULL, NULL, &websocket_manager_callback, websocket_user_data, &websocket_incoming_message_callback, websocket_user_data, &websocket_onclose_callback, websocket_user_data)) == U_OK) {
+    ulfius_add_websocket_compression_extension(response, 1);
     return U_CALLBACK_CONTINUE;
   } else {
     return U_CALLBACK_ERROR;
@@ -284,6 +285,7 @@ int callback_websocket_echo (const struct _u_request * request, struct _u_respon
   
   y_log_message(Y_LOG_LEVEL_DEBUG, "Client connected to echo websocket");
   if ((ret = ulfius_set_websocket_response(response, NULL, NULL, NULL, NULL, &websocket_echo_message_callback, websocket_user_data, &websocket_onclose_callback, websocket_user_data)) == U_OK) {
+    ulfius_add_websocket_compression_extension(response, 1);
     return U_CALLBACK_CONTINUE;
   } else {
     return U_CALLBACK_ERROR;
@@ -294,6 +296,7 @@ int callback_websocket_file (const struct _u_request * request, struct _u_respon
   int ret;
   
   if ((ret = ulfius_set_websocket_response(response, NULL, NULL, &websocket_manager_file_callback, NULL, &websocket_incoming_file_callback, NULL, &websocket_onclose_file_callback, NULL)) == U_OK) {
+    ulfius_add_websocket_compression_extension(response, 1);
     return U_CALLBACK_CONTINUE;
   } else {
     return U_CALLBACK_ERROR;

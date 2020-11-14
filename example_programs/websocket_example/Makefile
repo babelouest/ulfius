@@ -19,7 +19,8 @@ EXAMPLE_INCLUDE=../include
 CFLAGS+=-c -Wall -I$(ULFIUS_INCLUDE) -I$(EXAMPLE_INCLUDE) -I$(STATIC_FILE_LOCATION) -I$(STATIC_COMPRESSED_INMEMORY_WEBSITE) $(ADDITIONALFLAGS) $(CPPFLAGS)
 STATIC_FILE_LOCATION=../../example_callbacks/static_file
 STATIC_COMPRESSED_INMEMORY_WEBSITE=../../example_callbacks/static_compressed_inmemory_website
-LIBS=-lc -lz -lpthread -lulfius -lorcania -L$(ULFIUS_LOCATION)
+LIBS=-lc -lz -lpthread -ljansson -lulfius -lorcania -L$(ULFIUS_LOCATION)
+LIBULFIUS=../../src/libulfius.so
 #SECUREFLAG=-https test.key test.pem
 
 ifndef YDERFLAG
@@ -35,8 +36,8 @@ debug: ADDITIONALFLAGS=-DDEBUG -g -O0
 
 debug: websocket_server websocket_client
 
-../../src/libulfius.so:
-	cd $(ULFIUS_LOCATION) && $(MAKE) debug JANSSONFLAG=1
+$(LIBULFIUS): $(ULFIUS_LOCATION)/ulfius.c $(ULFIUS_LOCATION)/u_map.c $(ULFIUS_LOCATION)/u_request.c $(ULFIUS_LOCATION)/u_response.c $(ULFIUS_LOCATION)/u_send_request.c $(ULFIUS_LOCATION)/u_websocket.c $(ULFIUS_LOCATION)/yuarel.c $(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h
+	cd $(ULFIUS_LOCATION) && $(MAKE) debug
 
 static_file_callback.o: $(STATIC_FILE_LOCATION)/static_file_callback.c
 	$(CC) $(CFLAGS) $(STATIC_FILE_LOCATION)/static_file_callback.c
@@ -44,11 +45,11 @@ static_file_callback.o: $(STATIC_FILE_LOCATION)/static_file_callback.c
 static_compressed_inmemory_website_callback.o: $(STATIC_COMPRESSED_INMEMORY_WEBSITE)/static_compressed_inmemory_website_callback.c
 	$(CC) $(CFLAGS) $(STATIC_COMPRESSED_INMEMORY_WEBSITE)/static_compressed_inmemory_website_callback.c
 
-websocket_server: ../../src/libulfius.so static_compressed_inmemory_website_callback.o websocket_server.c
+websocket_server: $(LIBULFIUS) static_compressed_inmemory_website_callback.o websocket_server.c
 	$(CC) $(CFLAGS) websocket_server.c
 	$(CC) -o websocket_server websocket_server.o static_compressed_inmemory_website_callback.o $(LIBS)
 
-websocket_client: ../../src/libulfius.so websocket_client.c
+websocket_client: $(LIBULFIUS) websocket_client.c
 	$(CC) $(CFLAGS) websocket_client.c 
 	$(CC) -o websocket_client websocket_client.o $(LIBS)
 
