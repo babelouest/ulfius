@@ -5,6 +5,7 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
+#include <zlib.h>
 
 #include <check.h>
 #include <ulfius.h>
@@ -21,8 +22,9 @@
 #define MESSAGE_EXT1 "Grut"
 #define MESSAGE_EXT2 "Plop"
 #define MESSAGE_EXT3 "Gna"
+#define _U_W_BUFF_LEN 256
 
-int websocket_client_counter, websocket_server_counter;
+int websocket_client_counter, websocket_server_counter, has_deflate, has_inflate;
 
 #ifndef U_DISABLE_WEBSOCKET
 void websocket_manager_callback_empty (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_manager_user_data) {
@@ -85,6 +87,14 @@ void websocket_manager_extension_callback (const struct _u_request * request, st
   }
 }
 
+void websocket_manager_extension_deflate_callback (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_manager_user_data) {
+  ck_assert_int_eq(ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(MESSAGE_SERVER), MESSAGE_SERVER), U_OK);
+  y_log_message(Y_LOG_LEVEL_DEBUG, "server message sent");
+  if (ulfius_websocket_wait_close(websocket_manager, 50) == U_WEBSOCKET_STATUS_OPEN) {
+    ck_assert_int_eq(ulfius_websocket_send_close_signal(websocket_manager), U_OK);
+  }
+}
+
 void websocket_incoming_extension_callback (const struct _u_request * request,
                                             struct _websocket_manager * websocket_manager,
                                             const struct _websocket_message * last_message,
@@ -104,6 +114,22 @@ void websocket_incoming_extension_callback (const struct _u_request * request,
     ck_assert_int_ne(last_message->rsv&U_WEBSOCKET_RSV3, 0);
     ck_assert_ptr_ne(NULL, o_strnstr(last_message->data, MESSAGE_EXT3, last_message->data_len));
   }
+}
+
+void websocket_incoming_extension_deflate_client_callback (const struct _u_request * request,
+                                                    struct _websocket_manager * websocket_manager,
+                                                    const struct _websocket_message * last_message,
+                                                    void * user_data) {
+  ck_assert_int_eq(0, o_strncmp(last_message->data, MESSAGE_SERVER, last_message->data_len));
+  ck_assert_int_ne(last_message->rsv&U_WEBSOCKET_RSV1, 0);
+}
+
+void websocket_incoming_extension_deflate_server_callback (const struct _u_request * request,
+                                                    struct _websocket_manager * websocket_manager,
+                                                    const struct _websocket_message * last_message,
+                                                    void * user_data) {
+  ck_assert_int_eq(0, o_strncmp(last_message->data, MESSAGE_CLIENT, last_message->data_len));
+  ck_assert_int_ne(last_message->rsv&U_WEBSOCKET_RSV1, 0);
 }
 
 int websocket_extension1_message_out_perform(const uint8_t opcode, uint8_t * rsv, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data) {
@@ -228,6 +254,157 @@ int callback_websocket_extension_match (const struct _u_request * request, struc
   ck_assert_int_eq(ulfius_set_websocket_response(response, NULL, NULL, &websocket_manager_extension_callback, NULL, &websocket_incoming_extension_callback, user_data, NULL, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_websocket_extension_message_perform(response, MESSAGE_EXT1, &websocket_extension1_message_out_perform, NULL, &websocket_extension1_message_in_perform, NULL, &websocket_extension_server_match_ext1, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_websocket_extension_message_perform(response, MESSAGE_EXT2, &websocket_extension2_message_out_perform, NULL, &websocket_extension2_message_in_perform, NULL, &websocket_extension_server_match_ext2, NULL), U_OK);
+  return U_CALLBACK_CONTINUE;
+}
+
+int websocket_extension_message_out_deflate_test(const uint8_t opcode,
+                                                uint8_t * rsv,
+                                                const uint64_t data_len_in,
+                                                const char * data_in,
+                                                uint64_t * data_len_out,
+                                                char ** data_out,
+                                                const uint64_t fragment_len,
+                                                void * user_data) {
+  z_stream defstream;
+  unsigned char data_out_pre[_U_W_BUFF_LEN] = {0};
+  int ret;
+  (void)opcode;
+  (void)fragment_len;
+  (void)user_data;
+  
+  if (data_len_in) {
+      defstream.zalloc = Z_NULL;
+      defstream.zfree = Z_NULL;
+      defstream.opaque = Z_NULL;
+      defstream.avail_in = (uInt)data_len_in;
+      defstream.next_in = (Bytef *)data_in;
+      defstream.avail_out = (uInt)_U_W_BUFF_LEN;
+      defstream.next_out = (Bytef *)data_out_pre;
+      
+      if (deflateInit2(&defstream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, -15, 8, Z_DEFAULT_STRATEGY) == Z_OK) {
+        ret = U_OK;
+        has_deflate = 1;
+        do {
+          switch (deflate(&defstream, Z_SYNC_FLUSH)) {
+            case Z_OK:
+            case Z_STREAM_END:
+            case Z_BUF_ERROR:
+              if ((*data_out = o_realloc(*data_out, (*data_len_out + defstream.total_out + 1))) != NULL) {
+                memcpy((*data_out)+(*data_len_out), data_out_pre, defstream.total_out);
+                *data_len_out += defstream.total_out;
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_message_out_deflate_test - Error o_realloc for data_out");
+                ret = U_ERROR;
+              }
+              break;
+            default:
+              y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_message_out_deflate_test - Error deflate");
+              o_free(*data_out);
+              ret = U_ERROR;
+              break;
+          }
+        } while(defstream.total_out == 0 && ret == U_OK);
+        deflateEnd(&defstream);
+        
+        if ((*(unsigned char **)data_out)[*data_len_out-1] == 0xff && (*(unsigned char **)data_out)[*data_len_out-2] == 0xff && (*(unsigned char **)data_out)[*data_len_out-3] == 0x00 && (*(unsigned char **)data_out)[*data_len_out-4] == 0x00) {
+          *data_len_out -= 4;
+        } else {
+          (*(unsigned char **)data_out)[defstream.total_out] = '\0';
+          (*data_len_out)++;
+        }
+        *rsv |= U_WEBSOCKET_RSV1;
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_message_out_deflate_test - Error deflateInit");
+        ret = U_ERROR;
+      }
+  } else {
+    *data_len_out = 0;
+    *rsv |= U_WEBSOCKET_RSV1;
+    ret = U_OK;
+  }
+  ck_assert_int_eq(U_OK, ret);
+  return ret;
+}
+
+int websocket_extension_message_in_inflate_test(const uint8_t opcode,
+                                               uint8_t rsv,
+                                               const uint64_t data_len_in,
+                                               const char * data_in,
+                                               uint64_t * data_len_out,
+                                               char ** data_out,
+                                               const uint64_t fragment_len,
+                                               void * user_data) {
+  z_stream infstream;
+  unsigned char inf_out[_U_W_BUFF_LEN] = {0}, * data_in_suffix;
+  unsigned char suffix[4] = {0x00, 0x00, 0xff, 0xff};
+  int ret;
+  (void)opcode;
+  (void)fragment_len;
+  (void)user_data;
+
+  if (data_len_in && rsv&U_WEBSOCKET_RSV1) {
+    if ((data_in_suffix = o_malloc(data_len_in+4)) != NULL) {
+      memcpy(data_in_suffix, data_in, data_len_in);
+      memcpy(data_in_suffix+data_len_in, suffix, 4);
+      infstream.zalloc = Z_NULL;
+      infstream.zfree = Z_NULL;
+      infstream.opaque = Z_NULL;
+      infstream.avail_in = (uInt)data_len_in+4;
+      infstream.next_in = (Bytef *)data_in_suffix;
+      infstream.avail_out = _U_W_BUFF_LEN;
+      infstream.next_out = (Bytef *)inf_out;
+      
+      if (inflateInit2(&infstream, -15) == Z_OK) {
+        ret = U_OK;
+        has_inflate = 1;
+        do {
+          int res;
+          switch ((res = inflate(&infstream, Z_SYNC_FLUSH))) {
+            case Z_OK:
+            case Z_STREAM_END:
+            case Z_BUF_ERROR:
+              if ((*data_out = o_realloc(*data_out, (*data_len_out + infstream.total_out))) != NULL) {
+                memcpy((*data_out)+(*data_len_out), inf_out, infstream.total_out);
+                *data_len_out += infstream.total_out;
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_message_in_inflate_test - Error o_realloc for data_out");
+                ret = U_ERROR;
+              }
+              break;
+            default:
+              y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_message_in_inflate_test - Error inflate %d", res);
+              o_free(*data_out);
+              ret = U_ERROR;
+              break;
+          }
+        } while (infstream.total_out == 0 && ret == U_OK);
+        inflateEnd(&infstream);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_message_in_inflate_test - Error inflateInit");
+        ret = U_ERROR;
+      }
+      o_free(data_in_suffix);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_message_in_inflate_test - Error allocating resources for data_in_suffix");
+      ret = U_ERROR;
+    }
+  } else {
+    *data_len_out = 0;
+    ret = U_OK;
+  }
+  ck_assert_int_eq(U_OK, ret);
+  return ret;
+}
+
+int callback_websocket_extension_deflate (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  ck_assert_int_eq(ulfius_set_websocket_response(response, NULL, NULL, &websocket_manager_extension_deflate_callback, NULL, &websocket_incoming_extension_deflate_server_callback, NULL, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_websocket_compression_extension(response, user_data==NULL?0:1), U_OK);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_websocket_extension_deflate_debug (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  ck_assert_int_eq(ulfius_set_websocket_response(response, NULL, NULL, &websocket_manager_extension_deflate_callback, NULL, &websocket_incoming_extension_deflate_server_callback, NULL, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_websocket_extension_message_perform(response, "permessage-deflate", &websocket_extension_message_out_deflate_test, NULL, &websocket_extension_message_in_inflate_test, NULL, NULL, NULL), U_OK);
   return U_CALLBACK_CONTINUE;
 }
 
@@ -415,7 +592,7 @@ START_TEST(test_ulfius_websocket_extension_match_function)
   struct _u_response response;
   struct _websocket_client_handler websocket_client_handler = {NULL, NULL};
   char url[64];
-  int user_data = U_WEBSOCKET_RSV1;
+  int user_data = U_WEBSOCKET_RSV1|U_WEBSOCKET_RSV2;
 
   websocket_server_counter = 0;
   websocket_client_counter = 0;
@@ -444,6 +621,108 @@ START_TEST(test_ulfius_websocket_extension_match_function)
 }
 END_TEST
 
+START_TEST(test_ulfius_websocket_extension_deflate_server_force_no_parameters)
+{
+  struct _u_instance instance;
+  struct _u_request request;
+  struct _u_response response;
+  struct _websocket_client_handler websocket_client_handler = {NULL, NULL};
+  char url[64];
+
+  has_deflate = 0;
+  has_inflate = 0;
+  
+  ck_assert_int_eq(ulfius_init_instance(&instance, PORT, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", PREFIX_WEBSOCKET, NULL, 0, &callback_websocket_extension_deflate, NULL), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
+
+  ulfius_init_request(&request);
+  ulfius_init_response(&response);
+  sprintf(url, "ws://localhost:%d/%s", PORT, PREFIX_WEBSOCKET);
+
+  ck_assert_int_eq(ulfius_set_websocket_request(&request, url, NULL, "permessage-deflate"), U_OK);
+  ck_assert_int_eq(ulfius_add_websocket_client_extension_message_perform(&websocket_client_handler, "permessage-deflate", &websocket_extension_message_out_deflate_test, NULL, &websocket_extension_message_in_inflate_test, NULL, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_open_websocket_client_connection(&request, &websocket_extension_callback_client, NULL, &websocket_incoming_extension_deflate_client_callback, NULL, NULL, NULL, &websocket_client_handler, &response), U_OK);
+  ck_assert_int_eq(ulfius_websocket_client_connection_wait_close(&websocket_client_handler, 0), U_WEBSOCKET_STATUS_CLOSE);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+  ck_assert_int_eq(ulfius_stop_framework(&instance), U_OK);
+
+  ck_assert_int_eq(has_deflate, 1);
+  ck_assert_int_eq(has_inflate, 1);
+  
+  ulfius_clean_instance(&instance);
+}
+END_TEST
+
+START_TEST(test_ulfius_websocket_extension_deflate_server_no_force_no_parameters)
+{
+  struct _u_instance instance;
+  struct _u_request request;
+  struct _u_response response;
+  struct _websocket_client_handler websocket_client_handler = {NULL, NULL};
+  char url[64];
+
+  has_deflate = 0;
+  has_inflate = 0;
+  
+  ck_assert_int_eq(ulfius_init_instance(&instance, PORT, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", PREFIX_WEBSOCKET, NULL, 0, &callback_websocket_extension_deflate, (void *)0x1), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
+
+  ulfius_init_request(&request);
+  ulfius_init_response(&response);
+  sprintf(url, "ws://localhost:%d/%s", PORT, PREFIX_WEBSOCKET);
+
+  ck_assert_int_eq(ulfius_set_websocket_request(&request, url, NULL, "permessage-deflate; client_max_window_bits; server_max_window_bits=10"), U_OK);
+  ck_assert_int_eq(ulfius_add_websocket_client_extension_message_perform(&websocket_client_handler, "permessage-deflate", &websocket_extension_message_out_deflate_test, NULL, &websocket_extension_message_in_inflate_test, NULL, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_open_websocket_client_connection(&request, &websocket_extension_callback_client, NULL, &websocket_incoming_extension_deflate_client_callback, NULL, NULL, NULL, &websocket_client_handler, &response), U_OK);
+  ck_assert_int_eq(ulfius_websocket_client_connection_wait_close(&websocket_client_handler, 0), U_WEBSOCKET_STATUS_CLOSE);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+  ck_assert_int_eq(ulfius_stop_framework(&instance), U_OK);
+
+  ck_assert_int_eq(has_deflate, 1);
+  ck_assert_int_eq(has_inflate, 1);
+  
+  ulfius_clean_instance(&instance);
+}
+END_TEST
+
+START_TEST(test_ulfius_websocket_extension_deflate_client)
+{
+  struct _u_instance instance;
+  struct _u_request request;
+  struct _u_response response;
+  struct _websocket_client_handler websocket_client_handler = {NULL, NULL};
+  char url[64];
+
+  has_deflate = 0;
+  has_inflate = 0;
+  
+  ck_assert_int_eq(ulfius_init_instance(&instance, PORT, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", PREFIX_WEBSOCKET, NULL, 0, &callback_websocket_extension_deflate_debug, NULL), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
+
+  ulfius_init_request(&request);
+  ulfius_init_response(&response);
+  sprintf(url, "ws://localhost:%d/%s", PORT, PREFIX_WEBSOCKET);
+
+  ck_assert_int_eq(ulfius_set_websocket_request(&request, url, NULL, "permessage-deflate"), U_OK);
+  ck_assert_int_eq(ulfius_add_websocket_client_compression_extension(&websocket_client_handler), U_OK);
+  ck_assert_int_eq(ulfius_open_websocket_client_connection(&request, &websocket_extension_callback_client, NULL, &websocket_incoming_extension_deflate_client_callback, NULL, NULL, NULL, &websocket_client_handler, &response), U_OK);
+  ck_assert_int_eq(ulfius_websocket_client_connection_wait_close(&websocket_client_handler, 0), U_WEBSOCKET_STATUS_CLOSE);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+  ck_assert_int_eq(ulfius_stop_framework(&instance), U_OK);
+
+  ck_assert_int_eq(has_deflate, 1);
+  ck_assert_int_eq(has_inflate, 1);
+  
+  ulfius_clean_instance(&instance);
+}
+END_TEST
+
 #endif
 
 static Suite *ulfius_suite(void)
@@ -461,6 +740,9 @@ static Suite *ulfius_suite(void)
 	tcase_add_test(tc_websocket, test_ulfius_websocket_client_no_onclose);
 	tcase_add_test(tc_websocket, test_ulfius_websocket_extension_no_match_function);
 	tcase_add_test(tc_websocket, test_ulfius_websocket_extension_match_function);
+	tcase_add_test(tc_websocket, test_ulfius_websocket_extension_deflate_server_force_no_parameters);
+	tcase_add_test(tc_websocket, test_ulfius_websocket_extension_deflate_server_no_force_no_parameters);
+	tcase_add_test(tc_websocket, test_ulfius_websocket_extension_deflate_client);
 #endif
 	tcase_set_timeout(tc_websocket, 30);
 	suite_add_tcase(s, tc_websocket);
