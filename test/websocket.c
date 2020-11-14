@@ -428,7 +428,7 @@ START_TEST(test_ulfius_websocket_extension_match_function)
   ulfius_init_response(&response);
   sprintf(url, "ws://localhost:%d/%s", PORT, PREFIX_WEBSOCKET);
 
-  ck_assert_int_eq(ulfius_set_websocket_request(&request, url, NULL, MESSAGE_EXT1 "; " MESSAGE_EXT2), U_OK);
+  ck_assert_int_eq(ulfius_set_websocket_request(&request, url, NULL, MESSAGE_EXT1 ", " MESSAGE_EXT2), U_OK);
   ck_assert_int_eq(ulfius_add_websocket_client_extension_message_perform(&websocket_client_handler, MESSAGE_EXT1, &websocket_extension1_message_out_perform, (void *)1, &websocket_extension1_message_in_perform, (void *)1, &websocket_extension_client_match_ext1, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_websocket_client_extension_message_perform(&websocket_client_handler, MESSAGE_EXT2, &websocket_extension2_message_out_perform, (void *)1, &websocket_extension2_message_in_perform, (void *)1, &websocket_extension_client_match_ext2, NULL), U_OK);
   ck_assert_int_eq(ulfius_open_websocket_client_connection(&request, &websocket_extension_callback_client, NULL, &websocket_incoming_extension_callback, &user_data, NULL, NULL, &websocket_client_handler, &response), U_OK);

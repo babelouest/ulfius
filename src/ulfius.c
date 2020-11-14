@@ -611,7 +611,7 @@ static int ulfius_webservice_dispatcher (void * cls,
                 int ret_protocol = U_ERROR, ret_extensions = U_OK;
                 // Check websocket_protocol and websocket_extensions to match ours
                 if (u_map_has_key(con_info->request->map_header, "Sec-WebSocket-Extensions") && (extension_len = pointer_list_size(((struct _websocket_handle *)response->websocket_handle)->websocket_extension_list))) {
-                  if (split_string(u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Extensions"), ";", &extension_list)) {
+                  if (split_string(u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Extensions"), ",", &extension_list)) {
                     for (x=0; extension_list[x]!=NULL; x++) {
                       for (y=0; y<extension_len; y++) {
                         struct _websocket_extension * ws_ext = (struct _websocket_extension *)pointer_list_get_at(((struct _websocket_handle *)response->websocket_handle)->websocket_extension_list, y);
@@ -620,7 +620,7 @@ static int ulfius_webservice_dispatcher (void * cls,
                             if (ws_ext->websocket_extension_server_match(trimwhitespace(extension_list[x]), &ws_ext->extension_client, ws_ext->websocket_extension_server_match_user_data) == U_OK) {
                               ws_ext->enabled = 1;
                               if (extension != NULL) {
-                                extension = mstrcatf(extension, "; %s", ws_ext->extension_client);
+                                extension = mstrcatf(extension, ", %s", ws_ext->extension_client);
                               } else {
                                 extension = o_strdup(ws_ext->extension_client);
                               }
@@ -631,7 +631,7 @@ static int ulfius_webservice_dispatcher (void * cls,
                               ws_ext->extension_client = o_strdup(extension_list[x]);
                               ws_ext->enabled = 1;
                               if (extension != NULL) {
-                                extension = mstrcatf(extension, "; %s", ws_ext->extension_client);
+                                extension = mstrcatf(extension, ", %s", ws_ext->extension_client);
                               } else {
                                 extension = o_strdup(ws_ext->extension_client);
                               }

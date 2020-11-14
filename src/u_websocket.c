@@ -750,7 +750,7 @@ static int ulfius_websocket_connection_handshake(struct _u_request * request, st
     if (o_strlen(websocket->websocket_manager->extensions)) {
       extension_len = pointer_list_size(websocket->websocket_manager->websocket_extension_list);
       if (extension_len) {
-        if (split_string(websocket->websocket_manager->extensions, ";", &extension_list)) {
+        if (split_string(websocket->websocket_manager->extensions, ",", &extension_list)) {
           for (i=0; extension_list[i]!=NULL; i++) {
             for (j=0; j<extension_len; j++) {
               w_extension = pointer_list_get_at(websocket->websocket_manager->websocket_extension_list, j);
