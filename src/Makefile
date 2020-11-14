@@ -31,7 +31,7 @@ PKGCONFIG_TEMPLATE=../libulfius.pc.in
 DESTDIR=/usr/local
 CC=gcc
 CFLAGS+=-c -pedantic -std=gnu99 -fPIC -Wall -Werror -Wextra -D_REENTRANT -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS) $(CPPFLAGS)
-LIBS=-L$(DESTDIR)/lib -lc -lmicrohttpd -lorcania -lpthread $(LDFLAGS)
+LIBS=-L$(DESTDIR)/lib -lc -lmicrohttpd -lorcania -lpthread -lz $(LDFLAGS)
 SONAME = -soname
 ifeq ($(shell uname -s),Darwin)
 	SONAME = -install_name

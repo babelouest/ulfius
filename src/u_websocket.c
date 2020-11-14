@@ -44,6 +44,7 @@
 #include <netdb.h>
 #include <stdlib.h>
 #include <gnutls/crypto.h>
+#include <zlib.h>
 
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
@@ -314,7 +315,11 @@ static int ulfius_send_websocket_message_managed(struct _websocket_manager * web
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error pushing new websocket message in list");
         }
         while (offset < data_len) {
-          cur_len = fragment_len<(data_len - offset)?fragment_len:(data_len - offset);
+          if (!fragment_len) {
+            cur_len = data_len<(data_len - offset)?data_len:(data_len - offset);
+          } else {
+            cur_len = fragment_len<(data_len - offset)?fragment_len:(data_len - offset);
+          }
           if ((ret = ulfius_build_frame(message, offset, cur_len, &frame, &frame_len)) != U_OK) {
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_build_frame");
             break;
@@ -444,6 +449,8 @@ static int ulfius_read_incoming_message(struct _websocket_manager * websocket_ma
               memcpy((*message)->data+(*message)->data_len, payload_data, msg_len);
             }
             (*message)->data_len += msg_len;
+            for (i=0; (unsigned int)i<msg_len; i++) {
+            }
           }
           o_free(payload_data);
         }
@@ -549,6 +556,7 @@ static void * ulfius_thread_websocket(void * data) {
                           }
                           o_free(data_out);
                           data_out = NULL;
+                          data_out_len = 0;
                         }
                       }
                     }
@@ -1263,6 +1271,7 @@ int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websock
                 }
                 o_free(data_out);
                 data_out = NULL;
+                data_out_len = 0;
               }
             }
           }
@@ -1290,7 +1299,7 @@ int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
                                   const uint8_t opcode,
                                   const uint64_t data_len,
                                   const char * data) {
-  return ulfius_websocket_send_fragmented_message(websocket_manager, opcode, data_len, data, data_len);
+  return ulfius_websocket_send_fragmented_message(websocket_manager, opcode, data_len, data, 0);
 }
 
 /**
@@ -1587,6 +1596,155 @@ int ulfius_add_websocket_extension_message_perform(struct _u_response * response
     ret = U_ERROR_PARAMS;
   }
   return ret;
+}
+
+int websocket_extension_message_out_deflate(const uint8_t opcode,
+                                            uint8_t * rsv,
+                                            const uint64_t data_len_in,
+                                            const char * data_in,
+                                            uint64_t * data_len_out,
+                                            char ** data_out,
+                                            const uint64_t fragment_len,
+                                            void * user_data) {
+  z_stream defstream;
+  unsigned char data_out_pre[_U_W_BUFF_LEN] = {0};
+  int ret;
+  (void)opcode;
+  (void)fragment_len;
+  (void)user_data;
+  
+  if (data_len_in) {
+      defstream.zalloc = Z_NULL;
+      defstream.zfree = Z_NULL;
+      defstream.opaque = Z_NULL;
+      defstream.avail_in = (uInt)data_len_in;
+      defstream.next_in = (Bytef *)data_in;
+      defstream.avail_out = (uInt)_U_W_BUFF_LEN;
+      defstream.next_out = (Bytef *)data_out_pre;
+      
+      if (deflateInit2(&defstream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, -15, 8, Z_DEFAULT_STRATEGY) == Z_OK) {
+        ret = U_OK;
+        do {
+          switch (deflate(&defstream, Z_SYNC_FLUSH)) {
+            case Z_OK:
+            case Z_STREAM_END:
+            case Z_BUF_ERROR:
+              if ((*data_out = o_realloc(*data_out, (*data_len_out + defstream.total_out + 1))) != NULL) {
+                memcpy((*data_out)+(*data_len_out), data_out_pre, defstream.total_out);
+                *data_len_out += defstream.total_out;
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_message_out_deflate - Error o_realloc for data_out");
+                ret = U_ERROR;
+              }
+              break;
+            default:
+              y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_message_out_deflate - Error deflate");
+              o_free(*data_out);
+              ret = U_ERROR;
+              break;
+          }
+        } while(defstream.total_out == 0 && ret == U_OK);
+        deflateEnd(&defstream);
+        
+        if ((*(unsigned char **)data_out)[*data_len_out-1] == 0xff && (*(unsigned char **)data_out)[*data_len_out-2] == 0xff && (*(unsigned char **)data_out)[*data_len_out-3] == 0x00 && (*(unsigned char **)data_out)[*data_len_out-4] == 0x00) {
+          *data_len_out -= 4;
+        } else {
+          (*(unsigned char **)data_out)[defstream.total_out] = '\0';
+          (*data_len_out)++;
+        }
+        *rsv |= U_WEBSOCKET_RSV1;
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_message_out_deflate - Error deflateInit");
+        ret = U_ERROR;
+      }
+  } else {
+    *data_len_out = 0;
+    *rsv |= U_WEBSOCKET_RSV1;
+    ret = U_OK;
+  }
+  return ret;
+}
+
+int websocket_extension_message_in_inflate(const uint8_t opcode,
+                                           uint8_t rsv,
+                                           const uint64_t data_len_in,
+                                           const char * data_in,
+                                           uint64_t * data_len_out,
+                                           char ** data_out,
+                                           const uint64_t fragment_len,
+                                           void * user_data) {
+  z_stream infstream;
+  unsigned char inf_out[_U_W_BUFF_LEN] = {0}, * data_in_suffix;
+  unsigned char suffix[4] = {0x00, 0x00, 0xff, 0xff};
+  int ret;
+  (void)opcode;
+  (void)fragment_len;
+  (void)user_data;
+
+  if (data_len_in && rsv&U_WEBSOCKET_RSV1) {
+    if ((data_in_suffix = o_malloc(data_len_in+4)) != NULL) {
+      memcpy(data_in_suffix, data_in, data_len_in);
+      memcpy(data_in_suffix+data_len_in, suffix, 4);
+      infstream.zalloc = Z_NULL;
+      infstream.zfree = Z_NULL;
+      infstream.opaque = Z_NULL;
+      infstream.avail_in = (uInt)data_len_in+4;
+      infstream.next_in = (Bytef *)data_in_suffix;
+      infstream.avail_out = _U_W_BUFF_LEN;
+      infstream.next_out = (Bytef *)inf_out;
+      
+      if (inflateInit2(&infstream, -15) == Z_OK) {
+        ret = U_OK;
+        do {
+          int res;
+          switch ((res = inflate(&infstream, Z_SYNC_FLUSH))) {
+            case Z_OK:
+            case Z_STREAM_END:
+            case Z_BUF_ERROR:
+              if ((*data_out = o_realloc(*data_out, (*data_len_out + infstream.total_out))) != NULL) {
+                memcpy((*data_out)+(*data_len_out), inf_out, infstream.total_out);
+                *data_len_out += infstream.total_out;
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_message_in_inflate - Error o_realloc for data_out");
+                ret = U_ERROR;
+              }
+              break;
+            default:
+              y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_message_in_inflate - Error inflate %d", res);
+              o_free(*data_out);
+              ret = U_ERROR;
+              break;
+          }
+        } while (infstream.total_out == 0 && ret == U_OK);
+        inflateEnd(&infstream);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_message_in_inflate - Error inflateInit");
+        ret = U_ERROR;
+      }
+      o_free(data_in_suffix);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_message_in_inflate - Error allocating resources for data_in_suffix");
+      ret = U_ERROR;
+    }
+  } else {
+    *data_len_out = 0;
+    ret = U_OK;
+  }
+  return ret;
+}
+
+int websocket_extension_server_match_deflate_no_parameters(const char * extension_client, char ** extension_server, void * user_data) {
+  (void)user_data;
+  if (0 == o_strncmp(extension_client, _U_W_EXT_DEFLATE, o_strlen(_U_W_EXT_DEFLATE))) {
+    *extension_server = o_strdup(_U_W_EXT_DEFLATE);
+    return U_OK;
+  } else {
+    return U_ERROR;
+  }
+}
+
+int ulfius_add_websocket_compression_extension(struct _u_response * response, int force_no_parameters) {
+  return ulfius_add_websocket_extension_message_perform(response, _U_W_EXT_DEFLATE, websocket_extension_message_out_deflate, NULL, websocket_extension_message_in_inflate, NULL, force_no_parameters?&websocket_extension_server_match_deflate_no_parameters:NULL, NULL);
 }
 
 /**
@@ -1920,6 +2078,10 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
     ret = U_ERROR_PARAMS;
   }
   return ret;
+}
+
+int ulfius_add_websocket_client_compression_extension(struct _websocket_client_handler * websocket_client_handler) {
+  return ulfius_add_websocket_client_extension_message_perform(websocket_client_handler, _U_W_EXT_DEFLATE, websocket_extension_message_out_deflate, NULL, websocket_extension_message_in_inflate, NULL, NULL, NULL);
 }
 
 /**

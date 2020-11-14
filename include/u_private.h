@@ -101,6 +101,11 @@ const unsigned char * utf8_check(const char * s_orig);
 
 #ifndef U_DISABLE_WEBSOCKET
 
+#define _U_W_BUFF_LEN 256
+#define _U_W_EXT_DEFLATE "permessage-deflate"
+#define _U_W_EXT_DEFLATE_S_CTX "server_no_context_takeover"
+#define _U_W_EXT_DEFLATE_C_CTX "client_no_context_takeover"
+
 void ulfius_free_websocket_extension_pointer_list(void * extension);
 
 void ulfius_free_websocket_extension(struct _websocket_extension * websocket_extension);

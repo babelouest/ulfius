@@ -646,7 +646,7 @@ static int ulfius_webservice_dispatcher (void * cls,
                   }
                   free_string_array(extension_list);
                 } else {
-                  ret_extensions = ulfius_check_list_match(u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Extensions"), ((struct _websocket_handle *)response->websocket_handle)->websocket_extensions, ";", &extension);
+                  ret_extensions = ulfius_check_list_match(u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Extensions"), ((struct _websocket_handle *)response->websocket_handle)->websocket_extensions, ",", &extension);
                 }
                 if (ret_extensions == U_OK && 
                     (ret_protocol = ulfius_check_first_match(u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Protocol"), ((struct _websocket_handle *)response->websocket_handle)->websocket_protocol, ",", &protocol)) == U_OK) {

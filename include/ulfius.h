@@ -1675,6 +1675,49 @@ int ulfius_add_websocket_extension_message_perform(struct _u_response * response
                                                    void * websocket_extension_server_match_user_data);
 
 /**
+ * websocket_extension_message_out_perform used in
+ * ulfius_add_websocket_compression_extension and ulfius_add_websocket_client_compression_extension
+ */
+int websocket_extension_message_out_deflate(const uint8_t opcode,
+                                            uint8_t * rsv,
+                                            const uint64_t data_len_in,
+                                            const char * data_in,
+                                            uint64_t * data_len_out,
+                                            char ** data_out,
+                                            const uint64_t fragment_len,
+                                            void * user_data);
+
+/**
+ * websocket_extension_message_in_perform used in
+ * ulfius_add_websocket_compression_extension and ulfius_add_websocket_client_compression_extension
+ */
+int websocket_extension_message_in_inflate(const uint8_t opcode,
+                                           uint8_t rsv,
+                                           const uint64_t data_len_in,
+                                           const char * data_in,
+                                           uint64_t * data_len_out,
+                                           char ** data_out,
+                                           const uint64_t fragment_len,
+                                           void * user_data);
+
+/**
+ * websocket_extension_server_match used in ulfius_add_websocket_compression_extension if parameter force_no_parameters is set to true
+ */
+int websocket_extension_server_match_deflate_no_parameters(const char * extension_client, char ** extension_server, void * user_data);
+
+/**
+ * Adds the required extension message perform to implement message compression according to
+ * RFC 7692: Compression Extensions for WebSocket
+ * https://tools.ietf.org/html/rfc7692
+ * @param response struct _u_response to send back the websocket initialization, mandatory
+ * @param force_no_parameters: if true, then the server response will be forced to no parameter
+ * because Ulfius' implmentation of the RFC does no implement optional parameters:
+ * client_max_window_bits, server_max_window_bits, client_no_context_takeover or server_no_context_takeover
+ * @return U_OK on success
+ */
+int ulfius_add_websocket_compression_extension(struct _u_response * response, int force_no_parameters);
+
+/**
  * Sets the websocket in closing mode
  * The websocket will not necessarily be closed at the return of this function,
  * it will process through the end of the `websocket_manager_callback`
@@ -1759,6 +1802,15 @@ int ulfius_add_websocket_client_extension_message_perform(struct _websocket_clie
                                                           void * websocket_extension_message_in_perform_user_data,
                                                           int (* websocket_extension_client_match)(const char * extension_server, void * user_data),
                                                           void * websocket_extension_client_match_user_data);
+
+/**
+ * Adds the required extension message perform to implement message compression according to
+ * RFC 7692: Compression Extensions for WebSocket
+ * https://tools.ietf.org/html/rfc7692
+ * @param websocket_client_handler the handler of the websocket
+ * @return U_OK on success
+ */
+int ulfius_add_websocket_client_compression_extension(struct _websocket_client_handler * websocket_client_handler);
 
 /**
  * Send a close signal to the websocket
