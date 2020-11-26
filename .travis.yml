@@ -17,6 +17,17 @@ jobs:
     - env: LABEL=cppcheck
       script:
         - cppcheck --force --enable=warning,missingInclude --error-exitcode=1 . >build.log 2>&1 || (cat build.log && exit 1)
+# ppc64le support code
+    - env: LABEL=gcc
+      arch: ppc64le
+      compiler: gcc
+    - env: LABEL=cland
+      arch: ppc64le
+      compiler: clang
+    - env: LABEL=cppcheck
+      arch: ppc64le
+      script:
+        - cppcheck --force --enable=warning,missingInclude --error-exitcode=1 . >build.log 2>&1 || (cat build.log && exit 1)
 
 install:
 - sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
