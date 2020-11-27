@@ -120,7 +120,7 @@ int main(int argc, char ** argv) {
   ulfius_init_request(&request);
   ulfius_init_response(&response);
   if (ulfius_set_websocket_request(&request, url, "protocol", "permessage-deflate") == U_OK) {
-    ulfius_add_websocket_client_compression_extension(&websocket_client_handler);
+    ulfius_add_websocket_client_deflate_extension(&websocket_client_handler);
     request.check_server_certificate = 0;
     if (ulfius_open_websocket_client_connection(&request, &websocket_manager_callback, websocket_user_data, &websocket_incoming_message_callback, websocket_user_data, &websocket_onclose_callback, websocket_user_data, &websocket_client_handler, &response) == U_OK) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "Wait for user to press <enter> to close the program");
