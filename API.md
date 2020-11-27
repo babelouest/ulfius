@@ -31,10 +31,12 @@
     - [Server-side websocket](#server-side-websocket)
       - [Open a websocket communication](#open-a-websocket-communication)
       - [Advanced websocket extension](#advanced-websocket-extension)
+      - [Built-in server extension permessage-deflate](#built-in-server-extension-permessage-deflate)
       - [Close a websocket communication](#close-a-websocket-communication)
       - [Websocket status](#websocket-status)
     - [Client-side websocket](#client-side-websocket)
       - [Prepare the request](#prepare-the-request)
+      - [Built-in client extension permessage-deflate](#built-in-client-extension-permessage-deflate)
       - [Open the websocket](#open-the-websocket)
       - [Websocket status](#websocket-status-1)
 - [Outgoing request functions](#outgoing-request-functions)
@@ -1348,9 +1350,9 @@ When the function `ulfius_stop_framework` is called, it will wait for all runnin
 
 For each of these callback function, you can specify a `*_user_data` pointer containing any data you need.
 
-#### Advanced websocket extension
+#### Advanced websocket extension <a name="advanced-websocket-extension"></a>
 
-Since Ulfius 2.6.10, you have advanced functions to handle websocket extensions based on the functions `ulfius_add_websocket_extension_message_perform` for the server websockets and `ulfius_add_websocket_client_extension_message_perform` for the clients websockets.
+Since Ulfius 2.7.0, you have advanced functions to handle websocket extensions based on the functions `ulfius_add_websocket_extension_message_perform` for the server websockets and `ulfius_add_websocket_client_extension_message_perform` for the clients websockets.
 
 ```C
 /**
@@ -1364,16 +1366,41 @@ Since Ulfius 2.6.10, you have advanced functions to handle websocket extensions 
  * @param websocket_extension_server_match a callback function called on handshake response to match an extensions value with the given callback message perform extensions
  *        if NULL, then extension_client and the extension sent by the server will be compared for an exact match to enable this extension
  * @param websocket_extension_server_match_user_data a user-defined pointer passed to websocket_extension_server_match
+ * @param websocket_extension_free_context a callback function called during the websocket close to free the context created in websocket_extension_server_match
+ * @param websocket_extension_free_context_user_data a user-defined pointer passed to websocket_extension_free_context
  * @return U_OK on success
  */
 int ulfius_add_websocket_extension_message_perform(struct _u_response * response,
-                                                   const char * extension,
-                                                   int (* websocket_extension_message_out_perform)(const uint8_t opcode, uint8_t * rsv, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data),
+                                                   const char * extension_server,
+                                                   int (* websocket_extension_message_out_perform)(const uint8_t opcode,
+                                                                                                   uint8_t * rsv,
+                                                                                                   const uint64_t data_len_in,
+                                                                                                   const char * data_in,
+                                                                                                   uint64_t * data_len_out,
+                                                                                                   char ** data_out,
+                                                                                                   const uint64_t fragment_len,
+                                                                                                   void * user_data,
+                                                                                                   void * context),
                                                    void * websocket_extension_message_out_perform_user_data,
-                                                   int (* websocket_extension_message_in_perform)(const uint8_t opcode, uint8_t rsv, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data),
+                                                   int (* websocket_extension_message_in_perform)(const uint8_t opcode,
+                                                                                                  uint8_t rsv,
+                                                                                                  const uint64_t data_len_in,
+                                                                                                  const char * data_in,
+                                                                                                  uint64_t * data_len_out,
+                                                                                                  char ** data_out,
+                                                                                                  const uint64_t fragment_len,
+                                                                                                  void * user_data,
+                                                                                                  void * context),
                                                    void * websocket_extension_message_in_perform_user_data,
-                                                   int (* websocket_extension_server_match)(const char * extension_server, char ** extension_client, void * user_data),
-                                                   void * websocket_extension_server_match_user_data);
+                                                   int (* websocket_extension_server_match)(const char * extension_client,
+                                                                                            const char ** extension_client_list,
+                                                                                            char ** extension_server,
+                                                                                            void * user_data,
+                                                                                            void ** context),
+                                                   void * websocket_extension_server_match_user_data,
+                                                   void (* websocket_extension_free_context)(void * user_data,
+                                                                                             void * context),
+                                                   void  * websocket_extension_free_context_user_data);
 
 /**
  * Adds a set of callback functions to perform a message transformation via an extension
@@ -1384,18 +1411,41 @@ int ulfius_add_websocket_extension_message_perform(struct _u_response * response
  * @param websocket_extension_message_in_perform a callback function called after a message is received from the client
  * @param websocket_extension_message_in_perform_user_data a user-defined pointer passed to websocket_extension_message_in_perform
  * @param websocket_extension_client_match a callback function called on handshake response to match an extensions value with the given callback message perform extensions
- *        if NULL, then extension and the extension sent by the client will be compared for an exact match to enable this extension
+ * if NULL, then extension and the extension sent by the client will be compared for an exact match to enable this extension
  * @param websocket_extension_client_match_user_data a user-defined pointer passed to websocket_extension_client_match
+ * @param websocket_extension_free_context a callback function called during the websocket close to free the context created in websocket_extension_server_match
+ * @param websocket_extension_free_context_user_data a user-defined pointer passed to websocket_extension_free_context
  * @return U_OK on success
  */
 int ulfius_add_websocket_client_extension_message_perform(struct _websocket_client_handler * websocket_client_handler,
                                                           const char * extension,
-                                                          int (* websocket_extension_message_out_perform)(const uint8_t opcode, uint8_t * rsv, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data),
+                                                          int (* websocket_extension_message_out_perform)(const uint8_t opcode,
+                                                                                                          uint8_t * rsv,
+                                                                                                          const uint64_t data_len_in,
+                                                                                                          const char * data_in,
+                                                                                                          uint64_t * data_len_out,
+                                                                                                          char ** data_out,
+                                                                                                          const uint64_t fragment_len,
+                                                                                                          void * user_data,
+                                                                                                          void * context),
                                                           void * websocket_extension_message_out_perform_user_data,
-                                                          int (* websocket_extension_message_in_perform)(const uint8_t opcode, uint8_t rsv, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data),
+                                                          int (* websocket_extension_message_in_perform)(const uint8_t opcode,
+                                                                                                         uint8_t rsv,
+                                                                                                         const uint64_t data_len_in,
+                                                                                                         const char * data_in,
+                                                                                                         uint64_t * data_len_out,
+                                                                                                         char ** data_out,
+                                                                                                         const uint64_t fragment_len,
+                                                                                                         void * user_data,
+                                                                                                         void * context),
                                                           void * websocket_extension_message_in_perform_user_data,
-                                                          int (* websocket_extension_client_match)(const char * extension_server, void * user_data),
-                                                          void * websocket_extension_client_match_user_data);
+                                                          int (* websocket_extension_client_match)(const char * extension_server,
+                                                                                                   void * user_data,
+                                                                                                   void ** context),
+                                                          void * websocket_extension_client_match_user_data,
+                                                          void (* websocket_extension_free_context)(void * user_data,
+                                                                                                    void * context),
+                                                          void  * websocket_extension_free_context_user_data);
 ```
 
 These functions add the possibility to run a callback function before a message is sent and/or after a message is received.
@@ -1407,29 +1457,53 @@ The callback functions `websocket_extension_server_match` and `websocket_extensi
  * Checks an extension sent by the client if it matches the expected extension
  * if the function return U_OK, the extension will be enabled and the functions
  * websocket_extension_message_out_perform and websocket_extension_message_in_perform available
- * @param extension_client the extension and its parameters (if any) sent by the client
- * @param extension_server the extension value to return to the client if the extension is allowed by the server.
- *        Must be an `o_malloc`'ed string
- * @param user_data the user-defined pointer previously given
+ * @param extension_client the extension value to check
+ * @param extension_client_list the list of all extension_client to match
+ * @param extension_server the extension value to return to the client
+ * @param user_data user-defined data
+ * @param context context to allocate
  * @return U_OK on success
  */
-int websocket_extension_server_match(const char * extension_client, char ** extension_server, void * user_data);
+int websocket_extension_server_match(const char * extension_client,
+                                     const char ** extension_client_list,
+                                     char ** extension_server,
+                                     void * user_data,
+                                     void ** context);
 
 /**
  * Checks an extension sent by the server if it matches the expected extension
  * if the function return U_OK, the extension will be enabled and the functions
  * websocket_extension_message_out_perform and websocket_extension_message_in_perform available
- * @param extension_server the extension and its parameters (if any) sent by the server
- * @param user_data the user-defined pointer previously given
+ * @param extension_server the extension value to check
+ * @param user_data user-defined data
+ * @param context context to allocate
  * @return U_OK on success
  */
-int websocket_extension_client_match(const char * extension_server, void * user_data);
+int websocket_extension_client_match(const char * extension_server, void * user_data, void ** context);
 ```
 
 The callback function `websocket_extension_message_out_perform` can modify the message data and data lenght and the RSV flags. The callback function `websocket_extension_message_in_perform` can modify the message data only. Inside these functions, `data_in` and `data_len_in` are the current data, your extension callback function must update `data_out` with a `o_malloc`'ed data and set the new data length using `data_len_out` and return `U_OK` on success.
 If your function doesn't return `U_OK`, the message data won't be updated and `data_out` won't be free'd if set.
 
 You can call `ulfius_add_websocket_extension_message_perform` or `ulfius_add_websocket_client_extension_message_perform` multiple times for a websocket definition. In that case the extension callbacks function will be called in the same order for the `websocket_extension_message_out_perform` callbacks, and in reverse order for the `websocket_extension_message_in_perform` callbacks.
+
+#### Built-in server extension permessage-deflate <a name="built-in-server-extension-permessage-deflate"></a>
+
+The Websocket extension [permessage-deflate](https://tools.ietf.org/html/rfc7692) used to compress the message data is available in Ulfius. To use this extension in your websocket server, you must call `ulfius_add_websocket_deflate_extension` after calling `ulfius_set_websocket_response` and before finishing the callback endpoint.
+
+```C
+/**
+ * Adds the required extension message perform to implement message compression according to
+ * RFC 7692: Compression Extensions for WebSocket
+ * https://tools.ietf.org/html/rfc7692
+ * Due to limited implementation, will force response parameters to server_no_context_takeover; client_no_context_takeover
+ * @param response struct _u_response to send back the websocket initialization, mandatory
+ * @return U_OK on success
+ */
+int ulfius_add_websocket_deflate_extension(struct _u_response * response);
+```
+
+See the sample code in [websocket_example/websocket_server.c](example_programs/websocket_example/websocket_server.c)
 
 #### Close a websocket communication <a name="close-a-websocket-communication"></a>
 
@@ -1510,6 +1584,23 @@ You can also specify additional headers or cookies to the request.
 Any body parameter or body raw value will be ignored, the header `Content-Length` will be set to 0.
 
 The header `User-Agent` value will be `Ulfius Websocket Client Framework`, feel free to modify it afterwards if you need.
+
+#### Built-in client extension permessage-deflate <a name="built-in-client-extension-permessage-deflate"></a>
+
+The Websocket extension [permessage-deflate](https://tools.ietf.org/html/rfc7692) used to compress the message data is available in Ulfius. To use this extension in your websocket client, you must call `ulfius_add_websocket_client_deflate_extension` after calling `ulfius_set_websocket_request` and before calling `ulfius_open_websocket_client_connection`. Also, the parameter `struct _websocket_client_handler` must be initialized to `{NULL, NULL}` before calling `ulfius_set_websocket_request`.
+
+```
+/**
+ * Adds the required extension message perform to implement message compression according to
+ * RFC 7692: Compression Extensions for WebSocket
+ * https://tools.ietf.org/html/rfc7692
+ * @param websocket_client_handler the handler of the websocket
+ * @return U_OK on success
+ */
+int ulfius_add_websocket_client_deflate_extension(struct _websocket_client_handler * websocket_client_handler);
+```
+
+See the sample code in [websocket_example/websocket_client.c](example_programs/websocket_example/websocket_client.c)
 
 #### Opening the websocket connection <a name="opening-the-websocket-connection"></a>
 
