@@ -2474,16 +2474,20 @@ int ulfius_websocket_client_connection_send_close_signal(struct _websocket_clien
  */
 int ulfius_websocket_client_connection_close(struct _websocket_client_handler * websocket_client_handler) {
   if (websocket_client_handler != NULL) {
-    if (ulfius_websocket_send_close_signal(websocket_client_handler->websocket->websocket_manager) == U_OK) {
-      if (ulfius_websocket_wait_close(websocket_client_handler->websocket->websocket_manager, 0) != U_WEBSOCKET_STATUS_CLOSE) {
+    if (websocket_client_handler->websocket != NULL) {
+      if (ulfius_websocket_send_close_signal(websocket_client_handler->websocket->websocket_manager) == U_OK) {
+        if (ulfius_websocket_wait_close(websocket_client_handler->websocket->websocket_manager, 0) != U_WEBSOCKET_STATUS_CLOSE) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_websocket_send_close_signal");
+          return U_ERROR;
+        }
+        ulfius_clear_websocket(websocket_client_handler->websocket);
+        return U_OK;
+      } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_websocket_send_close_signal");
         return U_ERROR;
       }
-      ulfius_clear_websocket(websocket_client_handler->websocket);
-      return U_OK;
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_websocket_send_close_signal");
-      return U_ERROR;
+      return U_OK;
     }
   } else {
     return U_ERROR_PARAMS;
