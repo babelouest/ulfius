@@ -46,6 +46,7 @@ extern "C"
 
 #ifndef U_DISABLE_WEBSOCKET
   #include <poll.h>
+  #include <zlib.h>
   #ifndef POLLRDHUP
     #define POLLRDHUP 0x2000
   #endif
@@ -1458,18 +1459,65 @@ int u_map_empty(struct _u_map * u_map);
 #define WEBSOCKET_RESPONSE_PROTCOL    0x0010
 #define WEBSOCKET_RESPONSE_EXTENSION  0x0020
 
+#define WEBSOCKET_DEFLATE_CHUNK_SIZE 32768
+#define WEBSOCKET_DEFLATE_WINDOWS_BITS 15
+
+/**
+ * @struct _websocket_deflate_context websocket extension permessage-deflate context
+ */
+struct _websocket_deflate_context {
+  z_stream infstream;
+  z_stream defstream;
+  int deflate_mask;
+  int inflate_mask;
+  uint server_no_context_takeover;
+  uint client_no_context_takeover;
+  uint server_max_window_bits;
+  uint client_max_window_bits;
+};
+
+/**
+ * @struct _websocket_extension Websocket extension structure
+ * contains callback functions and context to handle websocket extensions
+ */
 struct _websocket_extension {
   char  * extension_server;
   char  * extension_client;
-  int  (* websocket_extension_message_out_perform)(const uint8_t opcode, uint8_t * rsv, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data);
+  int  (* websocket_extension_message_out_perform)(const uint8_t opcode,
+                                                   uint8_t * rsv,
+                                                   const uint64_t data_len_in,
+                                                   const char * data_in,
+                                                   uint64_t * data_len_out,
+                                                   char ** data_out,
+                                                   const uint64_t fragment_len,
+                                                   void * user_data,
+                                                   void * context);
   void  * websocket_extension_message_out_perform_user_data;
-  int  (* websocket_extension_message_in_perform)(const uint8_t opcode, uint8_t rsv, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data);
+  int  (* websocket_extension_message_in_perform)(const uint8_t opcode,
+                                                  uint8_t rsv,
+                                                  const uint64_t data_len_in,
+                                                  const char * data_in,
+                                                  uint64_t * data_len_out,
+                                                  char ** data_out,
+                                                  const uint64_t fragment_len,
+                                                  void * user_data,
+                                                  void * context);
   void  * websocket_extension_message_in_perform_user_data;
-  int  (* websocket_extension_server_match)(const char * extension_client, char ** extension_server, void * user_data);
+  int  (* websocket_extension_server_match)(const char * extension_client,
+                                            const char ** extension_client_list,
+                                            char ** extension_server,
+                                            void * user_data,
+                                            void ** context);
   void  * websocket_extension_server_match_user_data;
-  int  (* websocket_extension_client_match)(const char * extension_server, void * user_data);
+  int  (* websocket_extension_client_match)(const char * extension_server,
+                                            void * user_data,
+                                            void ** context);
   void  * websocket_extension_client_match_user_data;
+  void (* websocket_extension_free_context)(void * user_data,
+                                            void * context);
+  void  * websocket_extension_free_context_user_data;
   int     enabled;
+  void  * context;
 };
 
 /**
@@ -1666,13 +1714,84 @@ int ulfius_set_websocket_response(struct _u_response * response,
  * @return U_OK on success
  */
 int ulfius_add_websocket_extension_message_perform(struct _u_response * response,
-                                                   const char * extension,
-                                                   int (* websocket_extension_message_out_perform)(const uint8_t opcode, uint8_t * rsv, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data),
+                                                   const char * extension_server,
+                                                   int (* websocket_extension_message_out_perform)(const uint8_t opcode,
+                                                                                                   uint8_t * rsv,
+                                                                                                   const uint64_t data_len_in,
+                                                                                                   const char * data_in,
+                                                                                                   uint64_t * data_len_out,
+                                                                                                   char ** data_out,
+                                                                                                   const uint64_t fragment_len,
+                                                                                                   void * user_data,
+                                                                                                   void * context),
                                                    void * websocket_extension_message_out_perform_user_data,
-                                                   int (* websocket_extension_message_in_perform)(const uint8_t opcode, uint8_t rsv, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data),
+                                                   int (* websocket_extension_message_in_perform)(const uint8_t opcode,
+                                                                                                  uint8_t rsv,
+                                                                                                  const uint64_t data_len_in,
+                                                                                                  const char * data_in,
+                                                                                                  uint64_t * data_len_out,
+                                                                                                  char ** data_out,
+                                                                                                  const uint64_t fragment_len,
+                                                                                                  void * user_data,
+                                                                                                  void * context),
                                                    void * websocket_extension_message_in_perform_user_data,
-                                                   int (* websocket_extension_server_match)(const char * extension_client, char ** extension_server, void * user_data),
-                                                   void * websocket_extension_server_match_user_data);
+                                                   int (* websocket_extension_server_match)(const char * extension_client,
+                                                                                            const char ** extension_client_list,
+                                                                                            char ** extension_server,
+                                                                                            void * user_data,
+                                                                                            void ** context),
+                                                   void * websocket_extension_server_match_user_data,
+                                                   void (* websocket_extension_free_context)(void * user_data,
+                                                                                             void * context),
+                                                   void  * websocket_extension_free_context_user_data);
+
+/**
+ * websocket_extension_message_out_perform used in
+ * ulfius_add_websocket_deflate_extension and ulfius_add_websocket_client_deflate_extension
+ */
+int websocket_extension_message_out_deflate(const uint8_t opcode,
+                                            uint8_t * rsv,
+                                            const uint64_t data_len_in,
+                                            const char * data_in,
+                                            uint64_t * data_len_out,
+                                            char ** data_out,
+                                            const uint64_t fragment_len,
+                                            void * user_data,
+                                            void * context);
+
+/**
+ * websocket_extension_message_in_perform used in
+ * ulfius_add_websocket_deflate_extension and ulfius_add_websocket_client_deflate_extension
+ */
+int websocket_extension_message_in_inflate(const uint8_t opcode,
+                                           uint8_t rsv,
+                                           const uint64_t data_len_in,
+                                           const char * data_in,
+                                           uint64_t * data_len_out,
+                                           char ** data_out,
+                                           const uint64_t fragment_len,
+                                           void * user_data,
+                                           void * context);
+
+/**
+ * Free deflate extension context
+ */
+void websocket_extension_deflate_free_context(void * user_data, void * context);
+
+/**
+ * websocket_extension_server_match used in ulfius_add_websocket_deflate_extension
+ */
+int websocket_extension_server_match_deflate(const char * extension_client, const char ** extension_client_list, char ** extension_server, void * user_data, void ** context);
+
+/**
+ * Adds the required extension message perform to implement message compression according to
+ * RFC 7692: Compression Extensions for WebSocket
+ * https://tools.ietf.org/html/rfc7692
+ * Due to limited implementation, will force response parameters to server_no_context_takeover; client_no_context_takeover
+ * @param response struct _u_response to send back the websocket initialization, mandatory
+ * @return U_OK on success
+ */
+int ulfius_add_websocket_deflate_extension(struct _u_response * response);
 
 /**
  * Sets the websocket in closing mode
@@ -1753,12 +1872,47 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
  */
 int ulfius_add_websocket_client_extension_message_perform(struct _websocket_client_handler * websocket_client_handler,
                                                           const char * extension,
-                                                          int (* websocket_extension_message_out_perform)(const uint8_t opcode, uint8_t * rsv, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data),
+                                                          int (* websocket_extension_message_out_perform)(const uint8_t opcode,
+                                                                                                          uint8_t * rsv,
+                                                                                                          const uint64_t data_len_in,
+                                                                                                          const char * data_in,
+                                                                                                          uint64_t * data_len_out,
+                                                                                                          char ** data_out,
+                                                                                                          const uint64_t fragment_len,
+                                                                                                          void * user_data,
+                                                                                                          void * context),
                                                           void * websocket_extension_message_out_perform_user_data,
-                                                          int (* websocket_extension_message_in_perform)(const uint8_t opcode, uint8_t rsv, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data),
+                                                          int (* websocket_extension_message_in_perform)(const uint8_t opcode,
+                                                                                                         uint8_t rsv,
+                                                                                                         const uint64_t data_len_in,
+                                                                                                         const char * data_in,
+                                                                                                         uint64_t * data_len_out,
+                                                                                                         char ** data_out,
+                                                                                                         const uint64_t fragment_len,
+                                                                                                         void * user_data,
+                                                                                                         void * context),
                                                           void * websocket_extension_message_in_perform_user_data,
-                                                          int (* websocket_extension_client_match)(const char * extension_server, void * user_data),
-                                                          void * websocket_extension_client_match_user_data);
+                                                          int (* websocket_extension_client_match)(const char * extension_server,
+                                                                                                   void * user_data,
+                                                                                                   void ** context),
+                                                          void * websocket_extension_client_match_user_data,
+                                                          void (* websocket_extension_free_context)(void * user_data,
+                                                                                                    void * context),
+                                                          void  * websocket_extension_free_context_user_data);
+
+/**
+ * websocket_extension_client_match used in ulfius_add_websocket_deflate_extension
+ */
+int websocket_extension_client_match_deflate(const char * extension_server, void * user_data, void ** context);
+
+/**
+ * Adds the required extension message perform to implement message compression according to
+ * RFC 7692: Compression Extensions for WebSocket
+ * https://tools.ietf.org/html/rfc7692
+ * @param websocket_client_handler the handler of the websocket
+ * @return U_OK on success
+ */
+int ulfius_add_websocket_client_deflate_extension(struct _websocket_client_handler * websocket_client_handler);
 
 /**
  * Send a close signal to the websocket

@@ -6,7 +6,7 @@ os: linux
 dist: bionic
 addons:
   apt:
-    packages: [ libgnutls28-dev, libjansson-dev, libcurl4-gnutls-dev, libmicrohttpd-dev, check, libsubunit-dev, libsystemd-dev, cppcheck, gnutls-bin ]
+    packages: [ libgnutls28-dev, libjansson-dev, libcurl4-gnutls-dev, libmicrohttpd-dev, check, libsubunit-dev, libsystemd-dev, zlib1g-dev, cppcheck, gnutls-bin ]
 
 jobs:
   include:

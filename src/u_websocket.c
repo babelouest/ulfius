@@ -44,9 +44,13 @@
 #include <netdb.h>
 #include <stdlib.h>
 #include <gnutls/crypto.h>
+#include <zlib.h>
 
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
+
+#define U_WEBSOCKET_DEFAULT_MEMORY_LEVEL 4
+#define U_WEBSOCKET_DEFAULT_WINDOWS_BITS 15
 
 /**********************************/
 /** Internal websocket functions **/
@@ -314,7 +318,11 @@ static int ulfius_send_websocket_message_managed(struct _websocket_manager * web
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error pushing new websocket message in list");
         }
         while (offset < data_len) {
-          cur_len = fragment_len<(data_len - offset)?fragment_len:(data_len - offset);
+          if (!fragment_len) {
+            cur_len = data_len<(data_len - offset)?data_len:(data_len - offset);
+          } else {
+            cur_len = fragment_len<(data_len - offset)?fragment_len:(data_len - offset);
+          }
           if ((ret = ulfius_build_frame(message, offset, cur_len, &frame, &frame_len)) != U_OK) {
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_build_frame");
             break;
@@ -529,32 +537,42 @@ static void * ulfius_thread_websocket(void * data) {
                 }
               } else {
                 ret = U_OK;
-                if ((data_in = o_malloc(message->data_len*sizeof(char))) != NULL) {
-                  memcpy(data_in, message->data, message->data_len);
+                if ((message->data_len && (data_in = o_malloc(message->data_len*sizeof(char))) != NULL) || (!message->data_len && (data_in = NULL))) {
+                  if (message->data != NULL) {
+                    memcpy(data_in, message->data, message->data_len);
+                  } else {
+                    memset(data_in, 0, message->data_len);
+                  }
                   data_in_len = message->data_len;
                   if ((len = pointer_list_size(websocket->websocket_manager->websocket_extension_list))) {
-                    for (i=0; i<len; i++) {
+                    for (i=0; i<len && ret == U_OK; i++) {
                       extension = pointer_list_get_at(websocket->websocket_manager->websocket_extension_list, (len-i-1));
-                      if (extension->enabled && extension->websocket_extension_message_in_perform != NULL) {
-                        if ((ret = extension->websocket_extension_message_in_perform(message->opcode, message->rsv, data_in_len, data_in, &data_out_len, &data_out, 0, extension->websocket_extension_message_out_perform_user_data)) != U_OK) {
+                      if (extension != NULL && extension->enabled && extension->websocket_extension_message_in_perform != NULL) {
+                        if ((ret = extension->websocket_extension_message_in_perform(message->opcode, message->rsv, data_in_len, data_in, &data_out_len, &data_out, 0, extension->websocket_extension_message_out_perform_user_data, extension->context)) != U_OK) {
                           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error performing websocket_extension_message_in_perform at index %zu", i);
+                          ret = U_ERROR;
                         } else {
                           o_free(data_in);
-                          if ((data_in = o_malloc(data_out_len*sizeof(char))) != NULL) {
-                            memcpy(data_in, data_out, data_out_len);
-                            data_in_len = data_out_len;
-                          } else {
-                            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for data_in (%zu)", i);
-                            ret = U_ERROR_MEMORY;
+                          data_in = NULL;
+                          data_in_len = 0;
+                          if (data_out_len) {
+                            if ((data_in = o_malloc(data_out_len*sizeof(char))) != NULL) {
+                              memcpy(data_in, data_out, data_out_len);
+                              data_in_len = data_out_len;
+                            } else {
+                              y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for data_in (%zu) (incoming)", i);
+                              ret = U_ERROR_MEMORY;
+                            }
                           }
                           o_free(data_out);
                           data_out = NULL;
+                          data_out_len = 0;
                         }
                       }
                     }
                   }
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for data_in");
+                  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for data_in (incoming)");
                   ret = U_ERROR_MEMORY;
                 }
                 o_free(message->data);
@@ -637,7 +655,7 @@ static int ulfius_get_next_line_from_http_response(struct _websocket * websocket
  * Return U_OK on success
  */
 static int ulfius_websocket_connection_handshake(struct _u_request * request, struct yuarel * y_url, struct _websocket * websocket, struct _u_response * response) {
-  int websocket_response_http = 0, ret, check_websocket = WEBSOCKET_RESPONSE_UPGRADE | WEBSOCKET_RESPONSE_CONNECTION | WEBSOCKET_RESPONSE_ACCEPT;
+  int websocket_response_http = 0, ret, check_websocket = WEBSOCKET_RESPONSE_UPGRADE | WEBSOCKET_RESPONSE_CONNECTION | WEBSOCKET_RESPONSE_ACCEPT, extension_enabled;
   unsigned int websocket_response = 0;
   char * http_line, ** split_line = NULL, * key, * value, * separator, ** extension_list = NULL;
   char buffer[4096] = {0};
@@ -702,17 +720,17 @@ static int ulfius_websocket_connection_handshake(struct _u_request * request, st
           if (u_map_put(response->map_header, key, value) != U_OK) {
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error adding header %s:%s to the response structure", key, value);
           }
-          if (0 == o_strcmp(buffer, "Upgrade: websocket")) {
+          if (0 == o_strcasecmp(buffer, "Upgrade: websocket")) {
             websocket_response |= WEBSOCKET_RESPONSE_UPGRADE;
-          } else if (0 == o_strcmp(buffer, "Connection: Upgrade")) {
+          } else if (0 == o_strcasecmp(buffer, "Connection: Upgrade")) {
             websocket_response |= WEBSOCKET_RESPONSE_CONNECTION;
-          } else if (0 == o_strcmp(key, "Sec-WebSocket-Protocol")) {
+          } else if (0 == o_strcasecmp(key, "Sec-WebSocket-Protocol")) {
             websocket->websocket_manager->protocol = o_strdup(value);
             websocket_response |= WEBSOCKET_RESPONSE_PROTCOL;
-          } else if (0 == o_strcmp(key, "Sec-WebSocket-Extensions")) {
+          } else if (0 == o_strcasecmp(key, "Sec-WebSocket-Extensions")) {
             websocket->websocket_manager->extensions = o_strdup(value);
             websocket_response |= WEBSOCKET_RESPONSE_EXTENSION;
-          } else if (0 == o_strcmp(buffer, "Sec-WebSocket-Accept") && ulfius_check_handshake_response(u_map_get_case(request->map_header, "Sec-WebSocket-Key"), value) == U_OK) {
+          } else if (0 == o_strcasecmp(buffer, "Sec-WebSocket-Accept") && ulfius_check_handshake_response(u_map_get_case(request->map_header, "Sec-WebSocket-Key"), value) == U_OK) {
             websocket_response |= WEBSOCKET_RESPONSE_ACCEPT;
           }
           o_free(key);
@@ -752,19 +770,22 @@ static int ulfius_websocket_connection_handshake(struct _u_request * request, st
       if (extension_len) {
         if (split_string(websocket->websocket_manager->extensions, ",", &extension_list)) {
           for (i=0; extension_list[i]!=NULL; i++) {
+            extension_enabled = 0;
             for (j=0; j<extension_len; j++) {
               w_extension = pointer_list_get_at(websocket->websocket_manager->websocket_extension_list, j);
               if (w_extension != NULL && !w_extension->enabled) {
                 if (w_extension->websocket_extension_client_match != NULL) {
-                  if (w_extension->websocket_extension_client_match(trimwhitespace(extension_list[i]), w_extension->websocket_extension_client_match_user_data) == U_OK) {
+                  if (w_extension->websocket_extension_client_match(trimwhitespace(extension_list[i]), w_extension->websocket_extension_client_match_user_data, &w_extension->context) == U_OK) {
                     w_extension->extension_server = o_strdup(extension_list[i]);
                     w_extension->enabled = 1;
+                    extension_enabled = 1;
                     break;
                   }
                 } else {
                   if (0 == o_strcmp(trimwhitespace(extension_list[i]), w_extension->extension_client)) {
                     w_extension->extension_server = o_strdup(extension_list[i]);
                     w_extension->enabled = 1;
+                    extension_enabled = 1;
                     break;
                   }
                 }
@@ -772,6 +793,11 @@ static int ulfius_websocket_connection_handshake(struct _u_request * request, st
                 y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error pointer_list_get_at %zu", j);
                 ret = U_ERROR;
               }
+            }
+            if (!extension_enabled) {
+              y_log_message(Y_LOG_LEVEL_DEBUG, "Extension '%s' not enabled, aborting", extension_list[i]);
+              ret = U_ERROR;
+              break;
             }
           }
         } else {
@@ -916,6 +942,16 @@ static int ulfius_open_websocket_tls(struct _u_request * request, struct yuarel 
     ret = U_ERROR;
   }
   return ret;
+}
+
+static void * u_zalloc(void * q, unsigned n, unsigned m) {
+  (void)q;
+  return o_malloc((size_t) n * m);
+}
+
+static void u_zfree(void *q, void *p) {
+  (void)q;
+  o_free(p);
 }
 
 /**
@@ -1244,25 +1280,31 @@ int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websock
       websocket_manager->connected = 0;
     } else {
       ret = U_OK;
-      if ((data_in = o_malloc(data_len*sizeof(char))) != NULL) {
-        memcpy(data_in, data, data_len);
+      if ((data_len && (data_in = o_malloc(data_len*sizeof(char))) != NULL) || (!data_len && (data_in = NULL))) {
+        if (data != NULL) {
+          memcpy(data_in, data, data_len);
+        } else {
+          memset(data_in, 0, data_len);
+        }
         data_in_len = data_len;
         if ((len = pointer_list_size(websocket_manager->websocket_extension_list)) && (opcode == U_WEBSOCKET_OPCODE_BINARY || opcode == U_WEBSOCKET_OPCODE_TEXT)) {
           for (i=0; ret == U_OK && i<len && (extension = (struct _websocket_extension *)pointer_list_get_at(websocket_manager->websocket_extension_list, i)) != NULL; i++) {
             if (extension->enabled && extension->websocket_extension_message_out_perform != NULL) {
-              if ((ret = extension->websocket_extension_message_out_perform(opcode, &rsv, data_in_len, data_in, &data_out_len, &data_out, fragment_len, extension->websocket_extension_message_out_perform_user_data)) != U_OK) {
+              if ((ret = extension->websocket_extension_message_out_perform(opcode, &rsv, data_in_len, data_in, &data_out_len, &data_out, fragment_len, extension->websocket_extension_message_out_perform_user_data, extension->context)) != U_OK) {
                 y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error performing websocket_extension_message_out_perform at index %zu", i);
+                ret = U_ERROR;
               } else {
                 o_free(data_in);
                 if ((data_in = o_malloc(data_out_len*sizeof(char))) != NULL) {
                   memcpy(data_in, data_out, data_out_len);
                   data_in_len = data_out_len;
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for data_in (%zu)", i);
+                  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for data_in (%zu) (outcoming)", i);
                   ret = U_ERROR_MEMORY;
                 }
                 o_free(data_out);
                 data_out = NULL;
+                data_out_len = 0;
               }
             }
           }
@@ -1271,7 +1313,7 @@ int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websock
           ret = ulfius_send_websocket_message_managed(websocket_manager, opcode, rsv, data_in_len, data_in, fragment_len);
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for data_in");
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for data_in (outcoming)");
         ret = U_ERROR_MEMORY;
       }
       o_free(data_in);
@@ -1290,7 +1332,7 @@ int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
                                   const uint8_t opcode,
                                   const uint64_t data_len,
                                   const char * data) {
-  return ulfius_websocket_send_fragmented_message(websocket_manager, opcode, data_len, data, data_len);
+  return ulfius_websocket_send_fragmented_message(websocket_manager, opcode, data_len, data, 0);
 }
 
 /**
@@ -1467,6 +1509,9 @@ int ulfius_init_websocket_manager(struct _websocket_manager * websocket_manager)
  * Clear data of a websocket_manager
  */
 void ulfius_clear_websocket_manager(struct _websocket_manager * websocket_manager) {
+  size_t len, i;
+  struct _websocket_extension * extension;
+  
   if (websocket_manager != NULL) {
     pthread_mutex_destroy(&websocket_manager->read_lock);
     pthread_mutex_destroy(&websocket_manager->write_lock);
@@ -1478,6 +1523,14 @@ void ulfius_clear_websocket_manager(struct _websocket_manager * websocket_manage
     websocket_manager->message_list_outcoming = NULL;
     o_free(websocket_manager->protocol);
     o_free(websocket_manager->extensions);
+    if ((len = pointer_list_size(websocket_manager->websocket_extension_list))) {
+      for (i=0; i<len; i++) {
+        extension = pointer_list_get_at(websocket_manager->websocket_extension_list, i);
+        if (extension != NULL && extension->enabled && extension->websocket_extension_free_context != NULL) {
+          extension->websocket_extension_free_context(extension->websocket_extension_free_context_user_data, extension->context);
+        }
+      }
+    }
     pointer_list_clean_free(websocket_manager->websocket_extension_list, &ulfius_free_websocket_extension_pointer_list);
     o_free(websocket_manager->websocket_extension_list);
   }
@@ -1550,12 +1603,35 @@ int ulfius_set_websocket_response(struct _u_response * response,
 
 int ulfius_add_websocket_extension_message_perform(struct _u_response * response,
                                                    const char * extension_server,
-                                                   int (* websocket_extension_message_out_perform)(const uint8_t opcode, uint8_t * rsv, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data),
+                                                   int (* websocket_extension_message_out_perform)(const uint8_t opcode,
+                                                                                                   uint8_t * rsv,
+                                                                                                   const uint64_t data_len_in,
+                                                                                                   const char * data_in,
+                                                                                                   uint64_t * data_len_out,
+                                                                                                   char ** data_out,
+                                                                                                   const uint64_t fragment_len,
+                                                                                                   void * user_data,
+                                                                                                   void * context),
                                                    void * websocket_extension_message_out_perform_user_data,
-                                                   int (* websocket_extension_message_in_perform)(const uint8_t opcode, uint8_t rsv, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data),
+                                                   int (* websocket_extension_message_in_perform)(const uint8_t opcode,
+                                                                                                  uint8_t rsv,
+                                                                                                  const uint64_t data_len_in,
+                                                                                                  const char * data_in,
+                                                                                                  uint64_t * data_len_out,
+                                                                                                  char ** data_out,
+                                                                                                  const uint64_t fragment_len,
+                                                                                                  void * user_data,
+                                                                                                  void * context),
                                                    void * websocket_extension_message_in_perform_user_data,
-                                                   int (* websocket_extension_server_match)(const char * extension_client, char ** extension_server, void * user_data),
-                                                   void * websocket_extension_server_match_user_data) {
+                                                   int (* websocket_extension_server_match)(const char * extension_client,
+                                                                                            const char ** extension_client_list,
+                                                                                            char ** extension_server,
+                                                                                            void * user_data,
+                                                                                            void ** context),
+                                                   void * websocket_extension_server_match_user_data,
+                                                   void (* websocket_extension_free_context)(void * user_data,
+                                                                                             void * context),
+                                                   void  * websocket_extension_free_context_user_data) {
   int ret;
   struct _websocket_extension * extension;
   
@@ -1569,6 +1645,9 @@ int ulfius_add_websocket_extension_message_perform(struct _u_response * response
         extension->websocket_extension_message_in_perform_user_data = websocket_extension_message_in_perform_user_data;
         extension->websocket_extension_server_match = websocket_extension_server_match;
         extension->websocket_extension_server_match_user_data = websocket_extension_server_match_user_data;
+        extension->websocket_extension_free_context = websocket_extension_free_context;
+        extension->websocket_extension_free_context_user_data = websocket_extension_free_context_user_data;
+        extension->context = NULL;
         if (pointer_list_append(((struct _websocket_handle *)response->websocket_handle)->websocket_extension_list, extension)) {
           ret = U_OK;
         } else {
@@ -1587,6 +1666,325 @@ int ulfius_add_websocket_extension_message_perform(struct _u_response * response
     ret = U_ERROR_PARAMS;
   }
   return ret;
+}
+
+int websocket_extension_message_out_deflate(const uint8_t opcode,
+                                            uint8_t * rsv,
+                                            const uint64_t data_len_in,
+                                            const char * data_in,
+                                            uint64_t * data_len_out,
+                                            char ** data_out,
+                                            const uint64_t fragment_len,
+                                            void * user_data,
+                                            void * context) {
+  struct _websocket_deflate_context * deflate_context = (struct _websocket_deflate_context *)context;
+  int ret;
+  (void)opcode;
+  (void)fragment_len;
+  (void)user_data;
+  
+  if (data_len_in) {
+    if (deflate_context != NULL) {
+      *data_out = NULL;
+      *data_len_out = 0;
+      
+      deflate_context->defstream.avail_in = (uInt)data_len_in;
+      deflate_context->defstream.next_in = (Bytef *)data_in;
+      
+      ret = U_OK;
+      do {
+        if ((*data_out = o_realloc(*data_out, (*data_len_out)+_U_W_BUFF_LEN)) != NULL) {
+          deflate_context->defstream.avail_out = _U_W_BUFF_LEN;
+          deflate_context->defstream.next_out = ((Bytef *)*data_out)+(*data_len_out);
+          int res;
+          switch ((res = deflate(&deflate_context->defstream, deflate_context->deflate_mask))) {
+            case Z_OK:
+            case Z_STREAM_END:
+            case Z_BUF_ERROR:
+              break;
+            default:
+              y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_message_out_deflate - Error deflate");
+              ret = U_ERROR;
+              break;
+          }
+          (*data_len_out) += _U_W_BUFF_LEN - deflate_context->defstream.avail_out;
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_message_out_deflate - Error allocating resources for data_in_suffix");
+          ret = U_ERROR;
+        }
+      } while (U_OK == ret && deflate_context->defstream.avail_out == 0);
+      
+      // https://github.com/madler/zlib/issues/149
+      if (U_OK == ret && Z_BLOCK == deflate_context->deflate_mask) {
+        if ((*data_out = o_realloc(*data_out, (*data_len_out)+_U_W_BUFF_LEN)) != NULL) {
+          deflate_context->defstream.avail_out = _U_W_BUFF_LEN;
+          deflate_context->defstream.next_out = ((Bytef *)*data_out)+(*data_len_out);
+          switch (deflate(&deflate_context->defstream, Z_FULL_FLUSH)) {
+            case Z_OK:
+            case Z_STREAM_END:
+            case Z_BUF_ERROR:
+              break;
+            default:
+              y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_message_out_deflate - Error inflate (2)");
+              ret = U_ERROR;
+              break;
+          }
+          (*data_len_out) += _U_W_BUFF_LEN - deflate_context->defstream.avail_out;
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_message_out_deflate - Error allocating resources for data_in_suffix (2)");
+          ret = U_ERROR;
+        }
+      }
+
+      if (U_OK != ret) {
+        o_free(*data_out);
+        *data_out = NULL;
+        *data_len_out = 0;
+      } else {
+        if ((*(unsigned char **)data_out)[*data_len_out-1] == 0xff && (*(unsigned char **)data_out)[*data_len_out-2] == 0xff && (*(unsigned char **)data_out)[*data_len_out-3] == 0x00 && (*(unsigned char **)data_out)[*data_len_out-4] == 0x00) {
+          *data_len_out -= 4;
+        } else {
+          (*(unsigned char **)data_out)[*data_len_out] = '\0';
+          (*data_len_out)++;
+        }
+        *rsv |= U_WEBSOCKET_RSV1;
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_message_out_deflate - Error context is NULL");
+      ret = U_ERROR;
+    }
+  } else {
+    *data_len_out = 0;
+    ret = U_OK;
+  }
+  return ret;
+}
+
+int websocket_extension_message_in_inflate(const uint8_t opcode,
+                                           uint8_t rsv,
+                                           const uint64_t data_len_in,
+                                           const char * data_in,
+                                           uint64_t * data_len_out,
+                                           char ** data_out,
+                                           const uint64_t fragment_len,
+                                           void * user_data,
+                                           void * context) {
+  struct _websocket_deflate_context * deflate_context = (struct _websocket_deflate_context *)context;
+  unsigned char * data_in_suffix;
+  unsigned char suffix[4] = {0x00, 0x00, 0xff, 0xff};
+  int ret;
+  (void)opcode;
+  (void)fragment_len;
+  (void)user_data;
+
+  if (data_len_in && rsv&U_WEBSOCKET_RSV1) {
+    if (deflate_context != NULL) {
+      *data_out = NULL;
+      *data_len_out = 0;
+      if ((data_in_suffix = o_malloc(data_len_in+4)) != NULL) {
+        memcpy(data_in_suffix, data_in, data_len_in);
+        memcpy(data_in_suffix+data_len_in, suffix, 4);
+        
+        deflate_context->infstream.avail_in = (uInt)data_len_in+4;
+        deflate_context->infstream.next_in = (Bytef *)data_in_suffix;
+        
+        ret = U_OK;
+        do {
+          if ((*data_out = o_realloc(*data_out, (*data_len_out)+_U_W_BUFF_LEN)) != NULL) {
+            deflate_context->infstream.avail_out = _U_W_BUFF_LEN;
+            deflate_context->infstream.next_out = ((Bytef *)*data_out)+(*data_len_out);
+            switch (inflate(&deflate_context->infstream, deflate_context->inflate_mask)) {
+              case Z_OK:
+              case Z_STREAM_END:
+              case Z_BUF_ERROR:
+                break;
+              default:
+                y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_message_in_inflate - Error inflate");
+                ret = U_ERROR;
+                break;
+            }
+            (*data_len_out) += _U_W_BUFF_LEN - deflate_context->infstream.avail_out;
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_message_in_inflate - Error allocating resources for data_in_suffix");
+            ret = U_ERROR;
+          }
+        } while (U_OK == ret && deflate_context->infstream.avail_out == 0);
+        
+        o_free(data_in_suffix);
+        if (U_OK != ret) {
+          o_free(*data_out);
+          *data_out = NULL;
+          *data_len_out = 0;
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_message_in_inflate - Error allocating resources for data_in_suffix");
+        ret = U_ERROR;
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_message_in_inflate - Error context is NULL");
+      ret = U_ERROR;
+    }
+  } else {
+    // If RSV1 flag isn't set, copy data as is (as seen in firefox)
+    *data_len_out = data_len_in;
+    *data_out = o_malloc(data_len_in);
+    if (*data_out != NULL) {
+      memcpy(*data_out, data_in, data_len_in);
+      ret = U_OK;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_message_in_inflate - Error allocating resources for data_out");
+      ret = U_ERROR;
+    }
+  }
+  return ret;
+}
+
+int websocket_extension_server_match_deflate(const char * extension_client, const char ** extension_client_list, char ** extension_server, void * user_data, void ** context) {
+  (void)user_data;
+  size_t i;
+  int first_param = 0, ret, server_bits_changed = 0, client_bits_changed = 0;
+  char ** parameters = NULL, ** param_value = NULL;
+  long int window_bits;
+  
+  if (0 == o_strncmp(extension_client, _U_W_EXT_DEFLATE, o_strlen(_U_W_EXT_DEFLATE))) {
+    // Check if the current extension is the first extension permessage-deflate
+    for (i=0; extension_client_list[i] != NULL; i++) {
+      if (0 == o_strncmp(extension_client_list[i], _U_W_EXT_DEFLATE, o_strlen(_U_W_EXT_DEFLATE))) {
+        if (0 == o_strcmp(extension_client, extension_client_list[i])) {
+          first_param = 1;
+        }
+        break;
+      }
+    }
+    if (first_param) {
+      if ((*context = o_malloc(sizeof(struct _websocket_deflate_context))) != NULL) {
+        ((struct _websocket_deflate_context *)*context)->server_no_context_takeover = 0;
+        ((struct _websocket_deflate_context *)*context)->client_no_context_takeover = 0;
+        ((struct _websocket_deflate_context *)*context)->server_max_window_bits = WEBSOCKET_DEFLATE_WINDOWS_BITS;
+        ((struct _websocket_deflate_context *)*context)->client_max_window_bits = WEBSOCKET_DEFLATE_WINDOWS_BITS;
+        ((struct _websocket_deflate_context *)*context)->deflate_mask = Z_SYNC_FLUSH;
+        ((struct _websocket_deflate_context *)*context)->inflate_mask = Z_SYNC_FLUSH;
+        // Parse extension parameters
+        ret = U_OK;
+        if (o_strlen(extension_client) > o_strlen(_U_W_EXT_DEFLATE)) {
+          if (split_string(extension_client+o_strlen(_U_W_EXT_DEFLATE), ";", &parameters)) {
+            for (i=0; parameters[i] != NULL; i++) {
+              if (0 == o_strcmp("server_no_context_takeover", trimwhitespace(parameters[i]))) {
+                ((struct _websocket_deflate_context *)*context)->server_no_context_takeover = 1;
+                ((struct _websocket_deflate_context *)*context)->deflate_mask = Z_FULL_FLUSH;
+              } else if (0 == o_strcmp("client_no_context_takeover", trimwhitespace(parameters[i]))) {
+                ((struct _websocket_deflate_context *)*context)->client_no_context_takeover = 1;
+                ((struct _websocket_deflate_context *)*context)->inflate_mask = Z_FULL_FLUSH;
+              } else if (0 == o_strncmp("server_max_window_bits", trimwhitespace(parameters[i]), o_strlen("server_max_window_bits"))) {
+                if (split_string(trimwhitespace(parameters[i]), "=", &param_value) == 2) {
+                  window_bits = strtol(param_value[1], NULL, 10);
+                  if (window_bits >= 8 && window_bits <= 15) {
+                    if (window_bits == 8) {
+                      window_bits = 9; // Is really 8, but zlib does not support value 8 so increase to 9 - Morten Houmøller Nygaard
+                    }
+                    ((struct _websocket_deflate_context *)*context)->server_max_window_bits = (uint)window_bits;
+                    server_bits_changed = 1;
+                  } else {
+                    y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_extension_server_match_deflate - Error server_max_window_bits value");
+                    ret = U_ERROR;
+                  }
+                  free_string_array(param_value);
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_server_match_deflate - Error split_string param_value server_max_window_bits");
+                  ret = U_ERROR;
+                }
+              } else if (0 == o_strncmp("client_max_window_bits", trimwhitespace(parameters[i]), o_strlen("client_max_window_bits"))) {
+                if (split_string(trimwhitespace(parameters[i]), "=", &param_value) == 2) {
+                  window_bits = strtol(param_value[1], NULL, 10);
+                  if (window_bits >= 8 && window_bits <= 15) {
+                    if (window_bits == 8) {
+                      window_bits = 9; // Is really 8, but zlib does not support value 8 so increase to 9 - Morten Houmøller Nygaard
+                    }
+                    ((struct _websocket_deflate_context *)*context)->client_max_window_bits = (uint)window_bits;
+                    client_bits_changed = 1;
+                  } else {
+                    y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_extension_server_match_deflate - Error client_max_window_bits value");
+                    ret = U_ERROR;
+                  }
+                  free_string_array(param_value);
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_server_match_deflate - Error split_string param_value client_max_window_bits");
+                  ret = U_ERROR;
+                }
+              } else if (o_strlen(trimwhitespace(parameters[i]))) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_server_match_deflate - Invalid parameter");
+                ret = U_ERROR;
+              }
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_server_match_deflate - Error split_string parameters");
+            ret = U_ERROR;
+          }
+          free_string_array(parameters);
+        }
+        if (ret == U_OK) {
+          ((struct _websocket_deflate_context *)*context)->defstream.zalloc = u_zalloc;
+          ((struct _websocket_deflate_context *)*context)->defstream.zfree = u_zfree;
+          ((struct _websocket_deflate_context *)*context)->defstream.opaque = Z_NULL;
+          ((struct _websocket_deflate_context *)*context)->infstream.zalloc = u_zalloc;
+          ((struct _websocket_deflate_context *)*context)->infstream.zfree = u_zfree;
+          ((struct _websocket_deflate_context *)*context)->infstream.opaque = Z_NULL;
+          
+          if (deflateInit2(&((struct _websocket_deflate_context *)*context)->defstream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, -((struct _websocket_deflate_context *)*context)->server_max_window_bits, U_WEBSOCKET_DEFAULT_MEMORY_LEVEL, Z_DEFAULT_STRATEGY) != Z_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_server_match_deflate - Error deflateInit2");
+            deflateEnd(&((struct _websocket_deflate_context *)*context)->defstream);
+            o_free(*context);
+            *context = NULL;
+            ret = U_ERROR;
+          } else if (inflateInit2(&((struct _websocket_deflate_context *)*context)->infstream, -((struct _websocket_deflate_context *)*context)->client_max_window_bits) != Z_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_server_match_deflate - Error inflateInit2");
+            inflateEnd(&((struct _websocket_deflate_context *)*context)->infstream);
+            deflateEnd(&((struct _websocket_deflate_context *)*context)->defstream);
+            o_free(*context);
+            *context = NULL;
+            ret = U_ERROR;
+          }
+          if (ret == U_OK) {
+            *extension_server = o_strdup(_U_W_EXT_DEFLATE);
+            if (((struct _websocket_deflate_context *)*context)->server_no_context_takeover) {
+              *extension_server = mstrcatf(*extension_server, "; server_no_context_takeover");
+            }
+            if (((struct _websocket_deflate_context *)*context)->client_no_context_takeover) {
+              *extension_server = mstrcatf(*extension_server, "; client_no_context_takeover");
+            }
+            if (server_bits_changed) {
+              *extension_server = mstrcatf(*extension_server, "; server_max_window_bits=%u", ((struct _websocket_deflate_context *)*context)->server_max_window_bits);
+            }
+            if (client_bits_changed) {
+              *extension_server = mstrcatf(*extension_server, "; client_max_window_bits=%u", ((struct _websocket_deflate_context *)*context)->client_max_window_bits);
+            }
+          }
+        } else {
+          o_free(*context);
+          *context = NULL;
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_server_match_deflate - Error allocating resources for context");
+        ret = U_ERROR;
+      }
+    } else {
+      ret = U_ERROR;
+    }
+  } else {
+    ret = U_ERROR;
+  }
+  return ret;
+}
+
+void websocket_extension_deflate_free_context(void * user_data, void * context) {
+  (void)user_data;
+  inflateEnd(&((struct _websocket_deflate_context *)context)->infstream);
+  deflateEnd(&((struct _websocket_deflate_context *)context)->defstream);
+  o_free(context);
+}
+
+int ulfius_add_websocket_deflate_extension(struct _u_response * response) {
+  return ulfius_add_websocket_extension_message_perform(response, _U_W_EXT_DEFLATE, websocket_extension_message_out_deflate, NULL, websocket_extension_message_in_inflate, NULL, &websocket_extension_server_match_deflate, NULL, websocket_extension_deflate_free_context, NULL);
 }
 
 /**
@@ -1742,12 +2140,33 @@ int ulfius_set_websocket_request(struct _u_request * request,
 
 int ulfius_add_websocket_client_extension_message_perform(struct _websocket_client_handler * websocket_client_handler,
                                                           const char * extension,
-                                                          int (* websocket_extension_message_out_perform)(const uint8_t opcode, uint8_t * rsv, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data),
+                                                          int (* websocket_extension_message_out_perform)(const uint8_t opcode,
+                                                                                                          uint8_t * rsv,
+                                                                                                          const uint64_t data_len_in,
+                                                                                                          const char * data_in,
+                                                                                                          uint64_t * data_len_out,
+                                                                                                          char ** data_out,
+                                                                                                          const uint64_t fragment_len,
+                                                                                                          void * user_data,
+                                                                                                          void * context),
                                                           void * websocket_extension_message_out_perform_user_data,
-                                                          int (* websocket_extension_message_in_perform)(const uint8_t opcode, uint8_t rsv, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data),
+                                                          int (* websocket_extension_message_in_perform)(const uint8_t opcode,
+                                                                                                         uint8_t rsv,
+                                                                                                         const uint64_t data_len_in,
+                                                                                                         const char * data_in,
+                                                                                                         uint64_t * data_len_out,
+                                                                                                         char ** data_out,
+                                                                                                         const uint64_t fragment_len,
+                                                                                                         void * user_data,
+                                                                                                         void * context),
                                                           void * websocket_extension_message_in_perform_user_data,
-                                                          int (* websocket_extension_client_match)(const char * extension_server, void * user_data),
-                                                          void * websocket_extension_client_match_user_data) {
+                                                          int (* websocket_extension_client_match)(const char * extension_server,
+                                                                                                   void * user_data,
+                                                                                                   void ** context),
+                                                          void * websocket_extension_client_match_user_data,
+                                                          void (* websocket_extension_free_context)(void * user_data,
+                                                                                                    void * context),
+                                                          void  * websocket_extension_free_context_user_data) {
   int ret;
   struct _websocket_extension * w_extension;
   
@@ -1768,6 +2187,8 @@ int ulfius_add_websocket_client_extension_message_perform(struct _websocket_clie
         w_extension->websocket_extension_message_in_perform_user_data = websocket_extension_message_in_perform_user_data;
         w_extension->websocket_extension_client_match = websocket_extension_client_match;
         w_extension->websocket_extension_client_match_user_data = websocket_extension_client_match_user_data;
+        w_extension->websocket_extension_free_context = websocket_extension_free_context;
+        w_extension->websocket_extension_free_context_user_data = websocket_extension_free_context_user_data;
         if (websocket_client_handler->websocket->websocket_manager->websocket_extension_list == NULL) {
           websocket_client_handler->websocket->websocket_manager->websocket_extension_list = o_malloc(sizeof(struct _pointer_list));
           if (websocket_client_handler->websocket->websocket_manager->websocket_extension_list != NULL) {
@@ -1922,6 +2343,117 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
   return ret;
 }
 
+int websocket_extension_client_match_deflate(const char * extension_server, void * user_data, void ** context) {
+  (void)user_data;
+  size_t i;
+  int ret;
+  char ** parameters = NULL, ** param_value = NULL;
+  long int window_bits;
+  
+  if (0 == o_strncmp(extension_server, _U_W_EXT_DEFLATE, o_strlen(_U_W_EXT_DEFLATE))) {
+    if ((*context = o_malloc(sizeof(struct _websocket_deflate_context))) != NULL) {
+      ((struct _websocket_deflate_context *)*context)->server_no_context_takeover = 0;
+      ((struct _websocket_deflate_context *)*context)->client_no_context_takeover = 0;
+      ((struct _websocket_deflate_context *)*context)->server_max_window_bits = WEBSOCKET_DEFLATE_WINDOWS_BITS;
+      ((struct _websocket_deflate_context *)*context)->client_max_window_bits = WEBSOCKET_DEFLATE_WINDOWS_BITS;
+      ((struct _websocket_deflate_context *)*context)->deflate_mask = Z_SYNC_FLUSH;
+      ((struct _websocket_deflate_context *)*context)->inflate_mask = Z_SYNC_FLUSH;
+      // Parse extension parameters
+      ret = U_OK;
+      if (o_strlen(extension_server) > o_strlen(_U_W_EXT_DEFLATE)) {
+        if (split_string(extension_server+o_strlen(_U_W_EXT_DEFLATE), ";", &parameters)) {
+          for (i=0; parameters[i] != NULL; i++) {
+            if (0 == o_strcmp("server_no_context_takeover", trimwhitespace(parameters[i]))) {
+              ((struct _websocket_deflate_context *)*context)->server_no_context_takeover = 1;
+              ((struct _websocket_deflate_context *)*context)->inflate_mask = Z_FULL_FLUSH;
+            } else if (0 == o_strcmp("client_no_context_takeover", trimwhitespace(parameters[i]))) {
+              ((struct _websocket_deflate_context *)*context)->client_no_context_takeover = 1;
+              ((struct _websocket_deflate_context *)*context)->deflate_mask = Z_FULL_FLUSH;
+            } else if (0 == o_strncmp("server_max_window_bits", trimwhitespace(parameters[i]), o_strlen("server_max_window_bits"))) {
+              if (split_string(trimwhitespace(parameters[i]), "=", &param_value) == 2) {
+                window_bits = strtol(param_value[1], NULL, 10);
+                if (window_bits >= 8 && window_bits <= 15) {
+                  if (window_bits == 8) {
+                    window_bits = 9; // Is really 8, but zlib does not support value 8 so increase to 9 - Morten Houmøller Nygaard
+                  }
+                  ((struct _websocket_deflate_context *)*context)->server_max_window_bits = (uint)window_bits;
+                } else {
+                  y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_extension_client_match_deflate - Error server_max_window_bits value");
+                  ret = U_ERROR;
+                }
+                free_string_array(param_value);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_client_match_deflate - Error split_string param_value server_max_window_bits");
+                ret = U_ERROR;
+              }
+            } else if (0 == o_strncmp("client_max_window_bits", trimwhitespace(parameters[i]), o_strlen("client_max_window_bits"))) {
+              if (split_string(trimwhitespace(parameters[i]), "=", &param_value) == 2) {
+                window_bits = strtol(param_value[1], NULL, 10);
+                if (window_bits >= 8 && window_bits <= 15) {
+                  if (window_bits == 8) {
+                    window_bits = 9; // Is really 8, but zlib does not support value 8 so increase to 9 - Morten Houmøller Nygaard
+                  }
+                  ((struct _websocket_deflate_context *)*context)->client_max_window_bits = (uint)window_bits;
+                } else {
+                  y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_extension_client_match_deflate - Error client_max_window_bits value");
+                  ret = U_ERROR;
+                }
+                free_string_array(param_value);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_client_match_deflate - Error split_string param_value client_max_window_bits");
+                ret = U_ERROR;
+              }
+            } else if (o_strlen(trimwhitespace(parameters[i]))) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_client_match_deflate - Invalid parameter");
+              ret = U_ERROR;
+            }
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_client_match_deflate - Error split_string parameters");
+          ret = U_ERROR;
+        }
+        free_string_array(parameters);
+      }
+      if (ret == U_OK) {
+        ((struct _websocket_deflate_context *)*context)->defstream.zalloc = u_zalloc;
+        ((struct _websocket_deflate_context *)*context)->defstream.zfree = u_zfree;
+        ((struct _websocket_deflate_context *)*context)->defstream.opaque = Z_NULL;
+        ((struct _websocket_deflate_context *)*context)->infstream.zalloc = u_zalloc;
+        ((struct _websocket_deflate_context *)*context)->infstream.zfree = u_zfree;
+        ((struct _websocket_deflate_context *)*context)->infstream.opaque = Z_NULL;
+        
+        if (deflateInit2(&((struct _websocket_deflate_context *)*context)->defstream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, -((struct _websocket_deflate_context *)*context)->client_max_window_bits, U_WEBSOCKET_DEFAULT_MEMORY_LEVEL, Z_DEFAULT_STRATEGY) != Z_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_client_match_deflate - Error deflateInit2");
+          deflateEnd(&((struct _websocket_deflate_context *)*context)->defstream);
+          o_free(*context);
+          *context = NULL;
+          ret = U_ERROR;
+        } else if (inflateInit2(&((struct _websocket_deflate_context *)*context)->infstream, -((struct _websocket_deflate_context *)*context)->server_max_window_bits) != Z_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_client_match_deflate - Error inflateInit2");
+          inflateEnd(&((struct _websocket_deflate_context *)*context)->infstream);
+          deflateEnd(&((struct _websocket_deflate_context *)*context)->defstream);
+          o_free(*context);
+          *context = NULL;
+          ret = U_ERROR;
+        }
+      } else {
+        o_free(*context);
+        *context = NULL;
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_client_match_deflate - Error allocating resources for context");
+      ret = U_ERROR;
+    }
+  } else {
+    ret = U_ERROR;
+  }
+  return ret;
+}
+
+int ulfius_add_websocket_client_deflate_extension(struct _websocket_client_handler * websocket_client_handler) {
+  return ulfius_add_websocket_client_extension_message_perform(websocket_client_handler, _U_W_EXT_DEFLATE, websocket_extension_message_out_deflate, NULL, websocket_extension_message_in_inflate, NULL, websocket_extension_client_match_deflate, NULL, websocket_extension_deflate_free_context, NULL);
+}
+
 /**
  * Send a close signal to the websocket
  * return U_OK when the signal is sent
@@ -1942,16 +2474,20 @@ int ulfius_websocket_client_connection_send_close_signal(struct _websocket_clien
  */
 int ulfius_websocket_client_connection_close(struct _websocket_client_handler * websocket_client_handler) {
   if (websocket_client_handler != NULL) {
-    if (ulfius_websocket_send_close_signal(websocket_client_handler->websocket->websocket_manager) == U_OK) {
-      if (ulfius_websocket_wait_close(websocket_client_handler->websocket->websocket_manager, 0) != U_WEBSOCKET_STATUS_CLOSE) {
+    if (websocket_client_handler->websocket != NULL) {
+      if (ulfius_websocket_send_close_signal(websocket_client_handler->websocket->websocket_manager) == U_OK) {
+        if (ulfius_websocket_wait_close(websocket_client_handler->websocket->websocket_manager, 0) != U_WEBSOCKET_STATUS_CLOSE) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_websocket_send_close_signal");
+          return U_ERROR;
+        }
+        ulfius_clear_websocket(websocket_client_handler->websocket);
+        return U_OK;
+      } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_websocket_send_close_signal");
         return U_ERROR;
       }
-      ulfius_clear_websocket(websocket_client_handler->websocket);
-      return U_OK;
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_websocket_send_close_signal");
-      return U_ERROR;
+      return U_OK;
     }
   } else {
     return U_ERROR_PARAMS;

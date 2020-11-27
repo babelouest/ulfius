@@ -287,8 +287,8 @@ int main (int argc, char ** argv) {
     {"help", no_argument, NULL, 'h'},                   // print help
     {NULL, 0, NULL, 0}
   };
-  char * url = NULL;
-  struct _websocket_client_handler websocket_client_handler;
+  char * url = NULL, * extensions = NULL;
+  struct _websocket_client_handler websocket_client_handler = {NULL, NULL};
   
   config = o_malloc(sizeof(struct _config));
   if (config == NULL || !init_config(config)) {
@@ -375,21 +375,32 @@ int main (int argc, char ** argv) {
     exit_program(&config, 1);
   }
   
-  if (ulfius_set_websocket_request(config->request, url, config->protocol, config->extensions) == U_OK) {
-    if (ulfius_open_websocket_client_connection(config->request, &uwsc_manager_callback, config, &uwsc_manager_incoming, config, NULL, NULL, &websocket_client_handler, config->response) == U_OK) {
-      fprintf(stdout, "Websocket connected, you can send text messages of maximum 256 characters.\nTo exit uwsc, type !q<enter>\n> ");
-      fflush(stdout);
-      ulfius_websocket_client_connection_wait_close(&websocket_client_handler, 0);
-      fprintf(stdout, "Websocket closed\n");
-      ulfius_websocket_client_connection_close(&websocket_client_handler);
+  if (!o_strlen(config->extensions)) {
+    extensions = o_strdup("permessage-deflate");
+  } else {
+    extensions = msprintf("%s,permessage-deflate", config->extensions);
+  }
+  if (ulfius_set_websocket_request(config->request, url, config->protocol, extensions) == U_OK) {
+    if (ulfius_add_websocket_client_deflate_extension(&websocket_client_handler) == U_OK) {
+      if (ulfius_open_websocket_client_connection(config->request, &uwsc_manager_callback, config, &uwsc_manager_incoming, config, NULL, NULL, &websocket_client_handler, config->response) == U_OK) {
+        fprintf(stdout, "Websocket connected, you can send text messages of maximum 256 characters.\nTo exit uwsc, type !q<enter>\n> ");
+        fflush(stdout);
+        ulfius_websocket_client_connection_wait_close(&websocket_client_handler, 0);
+        fprintf(stdout, "Websocket closed\n");
+        ulfius_websocket_client_connection_close(&websocket_client_handler);
+      } else {
+        fprintf(stderr, "Error connecting to websocket\n");
+        y_log_message(Y_LOG_LEVEL_ERROR, "Error connecting to websocket");
+      }
     } else {
-      fprintf(stderr, "Error connecting to websocket\n");
-      y_log_message(Y_LOG_LEVEL_ERROR, "Error connecting to websocket");
+      fprintf(stderr, "Error initializing websocket request\n");
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error initializing websocket request");
     }
   } else {
-    fprintf(stderr, "Error initializing websocket request\n");
+    fprintf(stderr, "Error ulfius_add_websocket_client_deflate_extension\n");
     y_log_message(Y_LOG_LEVEL_ERROR, "Error initializing websocket request");
   }
+  o_free(extensions);
   
   if (config->log_path != NULL) {
     y_close_logs();

@@ -617,7 +617,7 @@ static int ulfius_webservice_dispatcher (void * cls,
                         struct _websocket_extension * ws_ext = (struct _websocket_extension *)pointer_list_get_at(((struct _websocket_handle *)response->websocket_handle)->websocket_extension_list, y);
                         if (ws_ext != NULL && !ws_ext->enabled) {
                           if (ws_ext->websocket_extension_server_match != NULL) {
-                            if (ws_ext->websocket_extension_server_match(trimwhitespace(extension_list[x]), &ws_ext->extension_client, ws_ext->websocket_extension_server_match_user_data) == U_OK) {
+                            if (ws_ext->websocket_extension_server_match(trimwhitespace(extension_list[x]), (const char **)extension_list, &ws_ext->extension_client, ws_ext->websocket_extension_server_match_user_data, &ws_ext->context) == U_OK) {
                               ws_ext->enabled = 1;
                               if (extension != NULL) {
                                 extension = mstrcatf(extension, ", %s", ws_ext->extension_client);
@@ -646,7 +646,7 @@ static int ulfius_webservice_dispatcher (void * cls,
                   }
                   free_string_array(extension_list);
                 } else {
-                  ret_extensions = ulfius_check_list_match(u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Extensions"), ((struct _websocket_handle *)response->websocket_handle)->websocket_extensions, ";", &extension);
+                  ret_extensions = ulfius_check_list_match(u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Extensions"), ((struct _websocket_handle *)response->websocket_handle)->websocket_extensions, ",", &extension);
                 }
                 if (ret_extensions == U_OK && 
                     (ret_protocol = ulfius_check_first_match(u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Protocol"), ((struct _websocket_handle *)response->websocket_handle)->websocket_protocol, ",", &protocol)) == U_OK) {
@@ -677,9 +677,11 @@ static int ulfius_webservice_dispatcher (void * cls,
                         MHD_add_response_header (mhd_response,
                                                  "Sec-WebSocket-Protocol",
                                                  protocol);
-                        MHD_add_response_header (mhd_response,
-                                                 "Sec-WebSocket-Extensions",
-                                                 extension);
+                        if (o_strlen(extension)) {
+                          MHD_add_response_header (mhd_response,
+                                                   "Sec-WebSocket-Extensions",
+                                                   extension);
+                        }
                         if (ulfius_set_response_header(mhd_response, response->map_header) == -1 || ulfius_set_response_cookie(mhd_response, response) == -1) {
                           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
                           mhd_ret = MHD_NO;
