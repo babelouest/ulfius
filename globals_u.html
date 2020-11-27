@@ -336,6 +336,12 @@ $(function() {
 <li>U_USE_IPV6
 : <a class="el" href="group__const.html#ga4e94fc1660f9680a701246bd5e7c8078">ulfius.h</a>
 </li>
+<li>U_WEBSOCKET_DEFAULT_MEMORY_LEVEL
+: <a class="el" href="u__websocket_8c.html#a97fda19a093a1846de1698e14d1b0c5e">u_websocket.c</a>
+</li>
+<li>U_WEBSOCKET_DEFAULT_WINDOWS_BITS
+: <a class="el" href="u__websocket_8c.html#ab61b7ad872ea17944db8d0d6b1d9b1bd">u_websocket.c</a>
+</li>
 <li>ulfius_add_cookie_to_response()
 : <a class="el" href="group__cookie.html#ga10454efe596e0d570ae54bb5bb6cf34e">u_response.c</a>
 , <a class="el" href="group__cookie.html#ga10454efe596e0d570ae54bb5bb6cf34e">ulfius.h</a>
@@ -360,11 +366,17 @@ $(function() {
 : <a class="el" href="group__cookie.html#ga682fd6c087b9b5bcff3698c6fe3f7eae">u_response.c</a>
 , <a class="el" href="group__cookie.html#ga682fd6c087b9b5bcff3698c6fe3f7eae">ulfius.h</a>
 </li>
+<li>ulfius_add_websocket_client_deflate_extension()
+: <a class="el" href="u__websocket_8c.html#a39a45acdf26dea488007ca4417fea0c8">u_websocket.c</a>
+</li>
 <li>ulfius_add_websocket_client_extension_message_perform()
-: <a class="el" href="u__websocket_8c.html#aefba3d2f528de7fb9e203eea9e63ed86">u_websocket.c</a>
+: <a class="el" href="u__websocket_8c.html#a7489c0ac26394e23b78a54d2e2a636bc">u_websocket.c</a>
+</li>
+<li>ulfius_add_websocket_deflate_extension()
+: <a class="el" href="u__websocket_8c.html#aae44bce07195bd06816b0425bbb13005">u_websocket.c</a>
 </li>
 <li>ulfius_add_websocket_extension_message_perform()
-: <a class="el" href="u__websocket_8c.html#aefa867b0ea982b4c2a5a4936767e3a67">u_websocket.c</a>
+: <a class="el" href="u__websocket_8c.html#a5fb6c62590de9bc536f3dea9bb30ef4f">u_websocket.c</a>
 </li>
 <li>ulfius_check_first_match()
 : <a class="el" href="u__websocket_8c.html#a8f173170cbe743d963f9d63e4075dcbc">u_websocket.c</a>
@@ -441,8 +453,8 @@ $(function() {
 : <a class="el" href="group__websocket.html#gad2a36bf2e7e6218781ed278ca1e305d9">ulfius.h</a>
 </li>
 <li>ulfius_copy_cookie()
-: <a class="el" href="group__request__response__cookie.html#ga0cd968c631646cfcdc241fbef480a70e">u_response.c</a>
-, <a class="el" href="group__request__response__cookie.html#ga0cd968c631646cfcdc241fbef480a70e">ulfius.h</a>
+: <a class="el" href="group__request__response__cookie.html#ga0cd968c631646cfcdc241fbef480a70e">ulfius.h</a>
+, <a class="el" href="group__request__response__cookie.html#ga0cd968c631646cfcdc241fbef480a70e">u_response.c</a>
 </li>
 <li>ulfius_copy_endpoint()
 : <a class="el" href="group__endpoints.html#gaa9c4e482290e556b8679e8fa67659548">ulfius.c</a>
@@ -502,8 +514,8 @@ $(function() {
 , <a class="el" href="group__request__response__cookie.html#ga41177752a15dc4248707be238c7e98e4">ulfius.h</a>
 </li>
 <li>ulfius_global_close()
-: <a class="el" href="group__memory.html#gaa68e996538b679adffb8ab7d9481ab0a">ulfius.h</a>
-, <a class="el" href="group__memory.html#gaa68e996538b679adffb8ab7d9481ab0a">ulfius.c</a>
+: <a class="el" href="group__memory.html#gaa68e996538b679adffb8ab7d9481ab0a">ulfius.c</a>
+, <a class="el" href="group__memory.html#gaa68e996538b679adffb8ab7d9481ab0a">ulfius.h</a>
 </li>
 <li>ulfius_global_init()
 : <a class="el" href="group__memory.html#gabc7ee60459c6d4d570175d965a97dde1">ulfius.c</a>
@@ -522,8 +534,8 @@ $(function() {
 : <a class="el" href="group__websocket.html#gae90043ba208bc5ba34bdecc0e87f93d1">ulfius.h</a>
 </li>
 <li>ulfius_import_client_certificate_pem()
-: <a class="el" href="group__cert.html#gadc96832130bee9e976851c09d0db5f1a">u_request.c</a>
-, <a class="el" href="group__cert.html#gadc96832130bee9e976851c09d0db5f1a">ulfius.h</a>
+: <a class="el" href="group__cert.html#gadc96832130bee9e976851c09d0db5f1a">ulfius.h</a>
+, <a class="el" href="group__cert.html#gadc96832130bee9e976851c09d0db5f1a">u_request.c</a>
 </li>
 <li>ulfius_init_instance()
 : <a class="el" href="group__instance.html#ga2d14cdd9291b8b8e9d46b1af8fd3b4a8">ulfius.c</a>
@@ -534,8 +546,8 @@ $(function() {
 , <a class="el" href="group__request__response__cookie.html#ga2c4c4b41dab8d5b5ad6493a37fd9e69e">u_request.c</a>
 </li>
 <li>ulfius_init_response()
-: <a class="el" href="group__request__response__cookie.html#ga2e191d61b05b69030f4d496d15b6088d">u_response.c</a>
-, <a class="el" href="group__request__response__cookie.html#ga2e191d61b05b69030f4d496d15b6088d">ulfius.h</a>
+: <a class="el" href="group__request__response__cookie.html#ga2e191d61b05b69030f4d496d15b6088d">ulfius.h</a>
+, <a class="el" href="group__request__response__cookie.html#ga2e191d61b05b69030f4d496d15b6088d">u_response.c</a>
 </li>
 <li>ulfius_init_websocket()
 : <a class="el" href="u__websocket_8c.html#a80bd0517bd879f75d7ed31afd0ab0585">u_websocket.c</a>
@@ -569,20 +581,20 @@ $(function() {
 : <a class="el" href="u__websocket_8c.html#af8b5553c389a1f63a45ed700dadd1273">u_websocket.c</a>
 </li>
 <li>ulfius_remove_endpoint()
-: <a class="el" href="group__endpoints.html#ga94167a8e931abfb4f9ca7f28d99f5781">ulfius.h</a>
-, <a class="el" href="group__endpoints.html#ga94167a8e931abfb4f9ca7f28d99f5781">ulfius.c</a>
+: <a class="el" href="group__endpoints.html#ga94167a8e931abfb4f9ca7f28d99f5781">ulfius.c</a>
+, <a class="el" href="group__endpoints.html#ga94167a8e931abfb4f9ca7f28d99f5781">ulfius.h</a>
 </li>
 <li>ulfius_remove_endpoint_by_val()
-: <a class="el" href="group__endpoints.html#gae0353385da0c41ea33ba830ea271da44">ulfius.h</a>
-, <a class="el" href="group__endpoints.html#gae0353385da0c41ea33ba830ea271da44">ulfius.c</a>
+: <a class="el" href="group__endpoints.html#gae0353385da0c41ea33ba830ea271da44">ulfius.c</a>
+, <a class="el" href="group__endpoints.html#gae0353385da0c41ea33ba830ea271da44">ulfius.h</a>
 </li>
 <li>ulfius_send_http_request()
-: <a class="el" href="group__http__smtp__client.html#gac63db90a4e78f6c86b559c8fb96251e4">u_send_request.c</a>
-, <a class="el" href="group__http__smtp__client.html#gac63db90a4e78f6c86b559c8fb96251e4">ulfius.h</a>
+: <a class="el" href="group__http__smtp__client.html#gac63db90a4e78f6c86b559c8fb96251e4">ulfius.h</a>
+, <a class="el" href="group__http__smtp__client.html#gac63db90a4e78f6c86b559c8fb96251e4">u_send_request.c</a>
 </li>
 <li>ulfius_send_http_streaming_request()
-: <a class="el" href="group__http__smtp__client.html#ga42a42793722765c3bc2848eecf884198">u_send_request.c</a>
-, <a class="el" href="group__http__smtp__client.html#ga42a42793722765c3bc2848eecf884198">ulfius.h</a>
+: <a class="el" href="group__http__smtp__client.html#ga42a42793722765c3bc2848eecf884198">ulfius.h</a>
+, <a class="el" href="group__http__smtp__client.html#ga42a42793722765c3bc2848eecf884198">u_send_request.c</a>
 </li>
 <li>ulfius_send_smtp_email()
 : <a class="el" href="group__http__smtp__client.html#ga2403cd5bffb26626a9911f34806aa3e5">ulfius.h</a>
@@ -613,8 +625,8 @@ $(function() {
 , <a class="el" href="group__parameters.html#gae84451bdf7856760aaf7b096690f5f3f">u_response.c</a>
 </li>
 <li>ulfius_set_json_body_request()
-: <a class="el" href="group__request__response__cookie.html#gade63875f40cb95ff87cde09221ff6410">u_request.c</a>
-, <a class="el" href="group__request__response__cookie.html#gade63875f40cb95ff87cde09221ff6410">ulfius.h</a>
+: <a class="el" href="group__request__response__cookie.html#gade63875f40cb95ff87cde09221ff6410">ulfius.h</a>
+, <a class="el" href="group__request__response__cookie.html#gade63875f40cb95ff87cde09221ff6410">u_request.c</a>
 </li>
 <li>ulfius_set_json_body_response()
 : <a class="el" href="group__request__response__cookie.html#gab8e28e99208b630ee6327e21da22fc9a">ulfius.h</a>
@@ -641,8 +653,8 @@ $(function() {
 , <a class="el" href="group__stream.html#gaf8116c28aa07ef66563a1979eb7b34e4">ulfius.h</a>
 </li>
 <li>ulfius_set_string_body_request()
-: <a class="el" href="group__parameters.html#ga9da30fb0692ae2adfa0bdbebae85e3fd">u_request.c</a>
-, <a class="el" href="group__parameters.html#ga9da30fb0692ae2adfa0bdbebae85e3fd">ulfius.h</a>
+: <a class="el" href="group__parameters.html#ga9da30fb0692ae2adfa0bdbebae85e3fd">ulfius.h</a>
+, <a class="el" href="group__parameters.html#ga9da30fb0692ae2adfa0bdbebae85e3fd">u_request.c</a>
 </li>
 <li>ulfius_set_string_body_response()
 : <a class="el" href="group__parameters.html#ga71d2fe9c1f110be0dfa07c5ba41680a6">u_response.c</a>
@@ -663,12 +675,12 @@ $(function() {
 , <a class="el" href="group__instance.html#ga61e97f85ccc5381e4683794de16fbb96">ulfius.h</a>
 </li>
 <li>ulfius_start_framework_with_mhd_options()
-: <a class="el" href="group__instance.html#gad324765edbddd737672cbd9d547ebcb2">ulfius.h</a>
-, <a class="el" href="group__instance.html#gad324765edbddd737672cbd9d547ebcb2">ulfius.c</a>
+: <a class="el" href="group__instance.html#gad324765edbddd737672cbd9d547ebcb2">ulfius.c</a>
+, <a class="el" href="group__instance.html#gad324765edbddd737672cbd9d547ebcb2">ulfius.h</a>
 </li>
 <li>ulfius_start_secure_ca_trust_framework()
-: <a class="el" href="group__instance.html#ga586db642834bb82a598b1f58c1304fd0">ulfius.c</a>
-, <a class="el" href="group__instance.html#ga586db642834bb82a598b1f58c1304fd0">ulfius.h</a>
+: <a class="el" href="group__instance.html#ga586db642834bb82a598b1f58c1304fd0">ulfius.h</a>
+, <a class="el" href="group__instance.html#ga586db642834bb82a598b1f58c1304fd0">ulfius.c</a>
 </li>
 <li>ulfius_start_secure_framework()
 : <a class="el" href="group__instance.html#gad8cc6194306edcc0697fc57507941556">ulfius.h</a>
@@ -689,8 +701,8 @@ $(function() {
 , <a class="el" href="group__instance.html#ga2f9c5e058ee6122f9340293238ab9379">ulfius.h</a>
 </li>
 <li>ulfius_url_decode()
-: <a class="el" href="group__url__encode.html#gaee0c27433bba6b1b015c3ce17012d81e">ulfius.h</a>
-, <a class="el" href="group__url__encode.html#gaee0c27433bba6b1b015c3ce17012d81e">ulfius.c</a>
+: <a class="el" href="group__url__encode.html#gaee0c27433bba6b1b015c3ce17012d81e">ulfius.c</a>
+, <a class="el" href="group__url__encode.html#gaee0c27433bba6b1b015c3ce17012d81e">ulfius.h</a>
 </li>
 <li>ulfius_url_encode()
 : <a class="el" href="group__url__encode.html#ga04b4082687a4ee377d9d53bdf9838a69">ulfius.h</a>
