@@ -1709,6 +1709,8 @@ int ulfius_set_websocket_response(struct _u_response * response,
  * @param websocket_extension_server_match a callback function called on handshake response to match an extensions value with the given callback message perform extensions
  *        if NULL, then extension_client and the extension sent by the server will be compared for an exact match to enable this extension
  * @param websocket_extension_server_match_user_data a user-defined pointer passed to websocket_extension_server_match
+ * @param websocket_extension_free_context a callback function called during the websocket close to free the context created in websocket_extension_server_match
+ * @param websocket_extension_free_context_user_data a user-defined pointer passed to websocket_extension_free_context
  * @return U_OK on success
  */
 int ulfius_add_websocket_extension_message_perform(struct _u_response * response,
@@ -1746,6 +1748,17 @@ int ulfius_add_websocket_extension_message_perform(struct _u_response * response
 /**
  * websocket_extension_message_out_perform used in
  * ulfius_add_websocket_deflate_extension and ulfius_add_websocket_client_deflate_extension
+ * will compress the message in data_in and set the result in *data_out
+ * @param opcode the opcode of the message to send
+ * @param rsv the extension flags
+ * @param data_len_in length of data_in
+ * @param data_in payload data to transform
+ * @param data_len_out length of *data_out to be set by the function
+ * @param data_out result of the transformed data_in
+ * @param fragment_len fragmentation length of the message
+ * @param user_data user-defined data
+ * @param context context of the extension
+ * @return U_OK on success
  */
 int websocket_extension_message_out_deflate(const uint8_t opcode,
                                             uint8_t * rsv,
@@ -1760,6 +1773,16 @@ int websocket_extension_message_out_deflate(const uint8_t opcode,
 /**
  * websocket_extension_message_in_perform used in
  * ulfius_add_websocket_deflate_extension and ulfius_add_websocket_client_deflate_extension
+ * @param opcode the opcode of the message to send
+ * @param rsv the extension flags
+ * @param data_len_in length of data_in
+ * @param data_in payload data to transform
+ * @param data_len_out length of *data_out to be set by the function
+ * @param data_out result of the transformed data_in
+ * @param fragment_len fragmentation length of the message
+ * @param user_data user-defined data
+ * @param context context of the extension
+ * @return U_OK on success
  */
 int websocket_extension_message_in_inflate(const uint8_t opcode,
                                            uint8_t rsv,
@@ -1773,11 +1796,20 @@ int websocket_extension_message_in_inflate(const uint8_t opcode,
 
 /**
  * Free deflate extension context
+ * @param user_data user-defined data
+ * @param context context of the extension
+ * @return U_OK on success
  */
 void websocket_extension_deflate_free_context(void * user_data, void * context);
 
 /**
  * websocket_extension_server_match used in ulfius_add_websocket_deflate_extension
+ * @param extension_client the extension value to check
+ * @param extension_client_list the list of all extension_client to match
+ * @param extension_server the extension value to return to the client
+ * @param user_data user-defined data
+ * @param context context to allocate
+ * @return U_OK on success
  */
 int websocket_extension_server_match_deflate(const char * extension_client, const char ** extension_client_list, char ** extension_server, void * user_data, void ** context);
 
@@ -1864,8 +1896,10 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
  * @param websocket_extension_message_in_perform a callback function called after a message is received from the client
  * @param websocket_extension_message_in_perform_user_data a user-defined pointer passed to websocket_extension_message_in_perform
  * @param websocket_extension_client_match a callback function called on handshake response to match an extensions value with the given callback message perform extensions
- *        if NULL, then extension and the extension sent by the client will be compared for an exact match to enable this extension
+ * if NULL, then extension and the extension sent by the client will be compared for an exact match to enable this extension
  * @param websocket_extension_client_match_user_data a user-defined pointer passed to websocket_extension_client_match
+ * @param websocket_extension_free_context a callback function called during the websocket close to free the context created in websocket_extension_server_match
+ * @param websocket_extension_free_context_user_data a user-defined pointer passed to websocket_extension_free_context
  * @return U_OK on success
  */
 int ulfius_add_websocket_client_extension_message_perform(struct _websocket_client_handler * websocket_client_handler,
@@ -1900,6 +1934,10 @@ int ulfius_add_websocket_client_extension_message_perform(struct _websocket_clie
 
 /**
  * websocket_extension_client_match used in ulfius_add_websocket_deflate_extension
+ * @param extension_server the extension value to check
+ * @param user_data user-defined data
+ * @param context context to allocate
+ * @return U_OK on success
  */
 int websocket_extension_client_match_deflate(const char * extension_server, void * user_data, void ** context);
 
