@@ -1,12 +1,13 @@
 # Ulfius Changelog
 
-## 2.6.10
+## 2.7.0
 
 - Allow `Content-Enconding` header with `ulfius_send_http_request` to compress the response body
 - Add http_compression callback example
 - Add static_compressed_inmemory_website callback example
 - Add callback return value `U_CALLBACK_IGNORE` to igore incrementation of `request->callback_position`
 - Add `ulfius_add_websocket_extension_message_perform` and `ulfius_add_websocket_client_extension_message_perform` for advanced websocket extensions management
+- Add [Compression Extensions for WebSocket](https://tools.ietf.org/html/rfc7692)
 
 ## 2.6.9
 
