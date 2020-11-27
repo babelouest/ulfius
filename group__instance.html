@@ -111,15 +111,14 @@ Functions</h2></td></tr>
 <p>ulfius_init_instance</p>
 <p>Initialize a struct <a class="el" href="struct__u__instance.html" title="Contains the needed data for an ulfius instance to work. ">_u_instance</a> * with default values Binds to IPV4 addresses only </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
+    <tr><td class="paramname">u_instance</td><td>the ulfius instance to initialize </td></tr>
     <tr><td class="paramname">port</td><td>tcp port to bind to, must be between 1 and 65535 </td></tr>
     <tr><td class="paramname">bind_address</td><td>IPv4 address to listen to, optional, the reference is borrowed, the structure isn't copied </td></tr>
     <tr><td class="paramname">default_auth_realm</td><td>default realm to send to the client on authentication error </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>U_OK on success</dd></dl>
-<p>ulfius_init_instance</p>
-<p>Initialize a struct <a class="el" href="struct__u__instance.html" title="Contains the needed data for an ulfius instance to work. ">_u_instance</a> * with default values Binds to IPV4 addresses only port: tcp port to bind to, must be between 1 and 65535 bind_address: IPv4 address to listen to, optional, the reference is borrowed, the structure isn't copied default_auth_realm: default realm to send to the client on authentication error return U_OK on success </p>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success </dd></dl>
 
 </div>
 </div>
@@ -141,12 +140,10 @@ Functions</h2></td></tr>
 <p>ulfius_clean_instance</p>
 <p>Clean memory allocated by a struct <a class="el" href="struct__u__instance.html" title="Contains the needed data for an ulfius instance to work. ">_u_instance</a> * </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">u_instance</td><td>an Ulfius instance</td></tr>
+    <tr><td class="paramname">u_instance</td><td>an Ulfius instance </td></tr>
   </table>
   </dd>
 </dl>
-<p>ulfius_clean_instance</p>
-<p>Clean memory allocated by a struct <a class="el" href="struct__u__instance.html" title="Contains the needed data for an ulfius instance to work. ">_u_instance</a> * </p>
 
 </div>
 </div>
@@ -481,12 +478,7 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>U_OK on success</dd></dl>
-<p>ulfius_set_upload_file_callback_function</p>
-<p>Set the callback function to handle file upload Used to facilitate large files upload management The callback function file_upload_callback will be called multiple times, with the uploaded file in striped in parts</p>
-<p>Warning: If this function is used, all the uploaded files for the instance will be managed via this function, and they will no longer be available in the struct <a class="el" href="struct__u__request.html" title="definition of the parameters available in a struct _u_request ">_u_request</a> in the ulfius callback function afterwards.</p>
-<p>Thanks to Thad Phetteplace for the help on this feature</p>
-<p>u_instance: pointer to a struct <a class="el" href="struct__u__instance.html" title="Contains the needed data for an ulfius instance to work. ">_u_instance</a> that describe its port and bind address file_upload_callback: Pointer to a callback function that will handle all file uploads cls: a pointer that will be passed to file_upload_callback each tim it's called </p>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success </dd></dl>
 
 </div>
 </div>

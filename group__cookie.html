@@ -130,14 +130,13 @@ Functions</h2></td></tr>
     <tr><td class="paramname">expires</td><td>the expiration date of the ccokie in ISO format (optional) </td></tr>
     <tr><td class="paramname">max_age</td><td>the maximum age of the cookie in seconds (optional) </td></tr>
     <tr><td class="paramname">domain</td><td>the domain of the cookie (optional) </td></tr>
-    <tr><td class="paramname">pat</td><td>the path of the cookie (optional) </td></tr>
+    <tr><td class="paramname">path</td><td>the path of the cookie (optional) </td></tr>
     <tr><td class="paramname">secure</td><td>wether the cookie must be secure or not (optional) </td></tr>
     <tr><td class="paramname">http_only</td><td>wether the cookie must be used only for http requests or not (optional) </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>U_OK on success</dd></dl>
-<p>ulfius_add_cookie_to_response add a cookie to the cookie map return U_OK on success </p>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success </dd></dl>
 
 </div>
 </div>
@@ -222,7 +221,7 @@ Functions</h2></td></tr>
     <tr><td class="paramname">expires</td><td>the expiration date of the ccokie in ISO format (optional) </td></tr>
     <tr><td class="paramname">max_age</td><td>the maximum age of the cookie in seconds (optional) </td></tr>
     <tr><td class="paramname">domain</td><td>the domain of the cookie (optional) </td></tr>
-    <tr><td class="paramname">pat</td><td>the path of the cookie (optional) </td></tr>
+    <tr><td class="paramname">path</td><td>the path of the cookie (optional) </td></tr>
     <tr><td class="paramname">secure</td><td>wether the cookie must be secure or not (optional) </td></tr>
     <tr><td class="paramname">http_only</td><td>wether the cookie must be used only for http requests or not (optional) </td></tr>
     <tr><td class="paramname">same_site</td><td>parameter must have one of the following values:<ul>
@@ -234,12 +233,7 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>U_OK on success</dd></dl>
-<p>ulfius_add_same_site_cookie_to_response add a cookie to the cookie map with a SameSite attribute the same_site parameter must have one of the following values:</p><ul>
-<li>U_COOKIE_SAME_SITE_NONE - No SameSite attribute</li>
-<li>U_COOKIE_SAME_SITE_STRICT - SameSite attribute set to 'Strict'</li>
-<li>U_COOKIE_SAME_SITE_LAX - SameSite attribute set to 'Lax' return U_OK on success </li>
-</ul>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success </dd></dl>
 
 </div>
 </div>

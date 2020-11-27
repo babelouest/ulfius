@@ -252,8 +252,7 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>U_OK on success</dd></dl>
-<p>ulfius_init_response Initialize a response structure by allocating inner elements return U_OK on success </p>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success </dd></dl>
 
 </div>
 </div>
@@ -278,8 +277,7 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>U_OK on success</dd></dl>
-<p>ulfius_clean_response clean the specified response's inner elements user must free the parent pointer if needed after clean or use ulfius_clean_response_full return U_OK on success </p>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success </dd></dl>
 
 </div>
 </div>
@@ -304,8 +302,7 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>U_OK on success</dd></dl>
-<p>ulfius_clean_response_full clean the specified response and all its elements return U_OK on success </p>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success </dd></dl>
 
 </div>
 </div>
@@ -341,8 +338,7 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>U_OK on success</dd></dl>
-<p>ulfius_copy_response Copy the source response elements into the des response return U_OK on success </p>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success </dd></dl>
 
 </div>
 </div>
@@ -367,8 +363,7 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>U_OK on success</dd></dl>
-<p>ulfius_clean_cookie clean the cookie's elements return U_OK on success </p>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success </dd></dl>
 
 </div>
 </div>
@@ -404,8 +399,7 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>U_OK on success</dd></dl>
-<p>Copy the cookie source elements into dest elements return U_OK on success </p>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success </dd></dl>
 
 </div>
 </div>
@@ -456,8 +450,7 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>a heap-allocated response</dd></dl>
-<p>create a new response based on the source elements return value must be free'd after use </p>
+<dl class="section return"><dt>Returns</dt><dd>a heap-allocated response </dd></dl>
 
 </div>
 </div>
@@ -635,6 +628,7 @@ Functions</h2></td></tr>
 <p>ulfius_set_json_body_response Add a json_t j_body to a response </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">response</td><td>the response to retrieve the JSON data </td></tr>
+    <tr><td class="paramname">status</td><td>the HTTP status for the response </td></tr>
     <tr><td class="paramname">j_body</td><td>a json_t to stringify in the body </td></tr>
   </table>
   </dd>
