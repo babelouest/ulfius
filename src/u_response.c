@@ -27,10 +27,6 @@
 #include "u_private.h"
 #include "ulfius.h"
 
-/**
- * Add a cookie in the cookie map as defined in the RFC 6265
- * Returned value must be free'd after use
- */
 static char * ulfius_generate_cookie_header(const struct _u_cookie * cookie) {
   char * attr_expires = NULL, * attr_max_age = NULL, * attr_domain = NULL, * attr_path = NULL;
   char * attr_secure = NULL, * attr_http_only = NULL, * cookie_header_value = NULL, * same_site = NULL;
@@ -157,11 +153,6 @@ static char * ulfius_generate_cookie_header(const struct _u_cookie * cookie) {
   }
 }
 
-/**
- * ulfius_set_response_header
- * adds headers defined in the response_map_header to the response
- * return the number of added headers, -1 on error
- */
 int ulfius_set_response_header(struct MHD_Response * response, const struct _u_map * response_map_header) {
   const char ** header_keys = u_map_enum_keys(response_map_header);
   const char * header_value;
@@ -181,11 +172,6 @@ int ulfius_set_response_header(struct MHD_Response * response, const struct _u_m
   return i;
 }
 
-/**
- * ulfius_set_response_cookie
- * adds cookies defined in the response_map_cookie
- * return the number of added headers, -1 on error
- */
 int ulfius_set_response_cookie(struct MHD_Response * mhd_response, const struct _u_response * response) {
   int ret;
   unsigned int i;
@@ -211,25 +197,11 @@ int ulfius_set_response_cookie(struct MHD_Response * mhd_response, const struct 
   }
 }
 
-/**
- * ulfius_add_cookie_to_response
- * add a cookie to the cookie map
- * return U_OK on success
- */
 int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age, 
                                   const char * domain, const char * path, const int secure, const int http_only) {
   return ulfius_add_same_site_cookie_to_response(response, key, value, expires, max_age, domain, path, secure, http_only, U_COOKIE_SAME_SITE_NONE);
 }
 
-/**
- * ulfius_add_same_site_cookie_to_response
- * add a cookie to the cookie map with a SameSite attribute
- * the same_site parameter must have one of the following values:
- * - U_COOKIE_SAME_SITE_NONE   - No SameSite attribute
- * - U_COOKIE_SAME_SITE_STRICT - SameSite attribute set to 'Strict'
- * - U_COOKIE_SAME_SITE_LAX    - SameSite attribute set to 'Lax'
- * return U_OK on success
- */
 int ulfius_add_same_site_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age, 
                                             const char * domain, const char * path, const int secure, const int http_only, const int same_site) {
   unsigned int i;
@@ -308,11 +280,6 @@ int ulfius_add_same_site_cookie_to_response(struct _u_response * response, const
   }
 }
 
-/**
- * ulfius_clean_cookie
- * clean the cookie's elements
- * return U_OK on success
- */
 int ulfius_clean_cookie(struct _u_cookie * cookie) {
   if (cookie != NULL) {
     o_free(cookie->key);
@@ -331,10 +298,6 @@ int ulfius_clean_cookie(struct _u_cookie * cookie) {
   }
 }
 
-/**
- * Copy the cookie source elements into dest elements
- * return U_OK on success
- */
 int ulfius_copy_cookie(struct _u_cookie * dest, const struct _u_cookie * source) {
   if (source != NULL && dest != NULL) {
     dest->key = o_strdup(source->key);
@@ -360,13 +323,6 @@ int ulfius_copy_cookie(struct _u_cookie * dest, const struct _u_cookie * source)
   return U_ERROR_PARAMS;
 }
 
-/**
- * ulfius_clean_response
- * clean the specified response's inner elements
- * user must free the parent pointer if needed after clean
- * or use ulfius_clean_response_full
- * return U_OK on success
- */
 int ulfius_clean_response(struct _u_response * response) {
   unsigned int i;
   if (response != NULL) {
@@ -399,11 +355,6 @@ int ulfius_clean_response(struct _u_response * response) {
   }
 }
 
-/**
- * ulfius_clean_response_full
- * clean the specified response and all its elements
- * return U_OK on success
- */
 int ulfius_clean_response_full(struct _u_response * response) {
   if (ulfius_clean_response(response) == U_OK) {
     o_free(response);
@@ -413,11 +364,6 @@ int ulfius_clean_response_full(struct _u_response * response) {
   }
 }
 
-/**
- * ulfius_init_response
- * Initialize a response structure by allocating inner elements
- * return U_OK on success
- */
 int ulfius_init_response(struct _u_response * response) {
   if (response != NULL) {
     response->status = 200;
@@ -469,11 +415,6 @@ int ulfius_init_response(struct _u_response * response) {
   }
 }
 
-/**
- * ulfius_copy_response
- * Copy the source response elements into the des response
- * return U_OK on success
- */
 int ulfius_copy_response(struct _u_response * dest, const struct _u_response * source) {
   unsigned int i;
   if (dest != NULL && source != NULL) {
@@ -541,10 +482,6 @@ int ulfius_copy_response(struct _u_response * dest, const struct _u_response * s
   }
 }
 
-/**
- * create a new response based on the source elements
- * return value must be free'd after use
- */
 struct _u_response * ulfius_duplicate_response(const struct _u_response * response) {
   struct _u_response * new_response = NULL;
   if (response != NULL) {
@@ -568,12 +505,6 @@ struct _u_response * ulfius_duplicate_response(const struct _u_response * respon
   return new_response;
 }
 
-/**
- * ulfius_set_string_body_response
- * Set a string string_body to a response
- * string_body must end with a '\0' character
- * return U_OK on success
- */
 int ulfius_set_string_body_response(struct _u_response * response, const unsigned int status, const char * string_body) {
   if (response != NULL && string_body != NULL) {
     // Free all the bodies available
@@ -592,11 +523,6 @@ int ulfius_set_string_body_response(struct _u_response * response, const unsigne
   }
 }
 
-/**
- * ulfius_set_binary_body_response
- * Add a binary binary_body to a response
- * return U_OK on success
- */
 int ulfius_set_binary_body_response(struct _u_response * response, const unsigned int status, const char * binary_body, const size_t length) {
   if (response != NULL && binary_body != NULL && length > 0) {
     // Free all the bodies available
@@ -618,11 +544,6 @@ int ulfius_set_binary_body_response(struct _u_response * response, const unsigne
   }
 }
 
-/**
- * ulfius_set_empty_body_response
- * Set an empty response with only a status
- * return U_OK on success
- */
 int ulfius_set_empty_body_response(struct _u_response * response, const unsigned int status) {
   if (response != NULL) {
     // Free all the bodies available
@@ -637,13 +558,6 @@ int ulfius_set_empty_body_response(struct _u_response * response, const unsigned
   }
 }
 
-/**
- * ulfius_set_stream_response
- * Set an stream response with a status
- * set stream_size to -1 if unknown
- * set stream_block_size to a proper value based on the system
- * return U_OK on success
- */
 int ulfius_set_stream_response(struct _u_response * response, 
                                 const unsigned int status,
                                 ssize_t (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max),
@@ -669,11 +583,6 @@ int ulfius_set_stream_response(struct _u_response * response,
   }
 }
 
-/**
- * ulfius_set_response_properties
- * Set a list of properties to a response
- * return U_OK on success
- */
 int ulfius_set_response_properties(struct _u_response * response, ...) {
   u_option option;
   int ret = U_OK;
@@ -784,11 +693,6 @@ json_t * ulfius_get_json_body_response(struct _u_response * response, json_error
 }
 #endif
 
-/**
- * ulfius_add_header_to_response
- * add a header to the response
- * return U_OK on success
- */
 int ulfius_add_header_to_response(struct _u_response * response, const char * key, const char * value) {
   if (response != NULL && key != NULL && value != NULL) {
     return u_map_put(response->map_header, key, value);

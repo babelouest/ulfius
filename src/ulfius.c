@@ -1346,13 +1346,6 @@ void ulfius_clean_endpoint_list(struct _u_endpoint * endpoint_list) {
   }
 }
 
-/**
- * Add a struct _u_endpoint * to the specified u_instance
- * Can be done during the execution of the webservice for injection
- * u_instance: pointer to a struct _u_instance that describe its port and bind address
- * u_endpoint: pointer to a struct _u_endpoint that will be copied in the u_instance endpoint_list
- * return U_OK on success
- */
 int ulfius_add_endpoint(struct _u_instance * u_instance, const struct _u_endpoint * u_endpoint) {
   int res;
   
@@ -1393,13 +1386,6 @@ int ulfius_add_endpoint(struct _u_instance * u_instance, const struct _u_endpoin
   return U_ERROR;
 }
 
-/**
- * Add a struct _u_endpoint * list to the specified u_instance
- * Can be done during the execution of the webservice for injection
- * u_instance: pointer to a struct _u_instance that describe its port and bind address
- * u_endpoint_list: pointer to a struct _u_endpoint that will be copied in the u_instance endpoint_list
- * return U_OK on success
- */
 int ulfius_add_endpoint_list(struct _u_instance * u_instance, const struct _u_endpoint ** u_endpoint_list) {
   int i, res;
   if (u_instance != NULL && u_endpoint_list != NULL) {
@@ -1417,15 +1403,6 @@ int ulfius_add_endpoint_list(struct _u_instance * u_instance, const struct _u_en
   return U_ERROR;
 }
 
-/**
- * Remove a struct _u_endpoint * from the specified u_instance
- * Can be done during the execution of the webservice for injection
- * u_instance: pointer to a struct _u_instance that describe its port and bind address
- * u_endpoint: pointer to a struct _u_endpoint that will be removed in the u_instance endpoint_list
- * The parameters _u_endpoint.http_method, _u_endpoint.url_prefix and _u_endpoint.url_format are strictly compared for the match
- * If no endpoint is found, return U_ERROR_NOT_FOUND
- * return U_OK on success
- */
 int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endpoint * u_endpoint) {
   int i, j, found = 0, ret = U_OK;
   char * trim_prefix = NULL, * trim_prefix_save = NULL, * trim_format = NULL, * trim_format_save = NULL,
@@ -1480,10 +1457,6 @@ int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endp
   return ret;
 }
 
-/**
- * ulfius_empty_endpoint
- * return an empty endpoint that goes at the end of an endpoint list
- */
 const struct _u_endpoint * ulfius_empty_endpoint() {
   static struct _u_endpoint empty_endpoint;
   
@@ -1495,10 +1468,6 @@ const struct _u_endpoint * ulfius_empty_endpoint() {
   return &empty_endpoint;
 }
 
-/**
- * ulfius_equals_endpoints
- * Compare 2 endpoints and return true if their method, prefix and format are the same or if both are NULL
- */
 int ulfius_equals_endpoints(const struct _u_endpoint * endpoint1, const struct _u_endpoint * endpoint2) {
   if (endpoint1 != NULL && endpoint2 != NULL) {
     if (endpoint1 == endpoint2) {
@@ -1517,23 +1486,6 @@ int ulfius_equals_endpoints(const struct _u_endpoint * endpoint1, const struct _
   }
 }
 
-/**
- * Add a struct _u_endpoint * to the specified u_instance with its values specified
- * Can be done during the execution of the webservice for injection
- * u_instance: pointer to a struct _u_instance that describe its port and bind address
- * http_method:       http verb (GET, POST, PUT, etc.) in upper case
- * url_prefix:        prefix for the url (optional)
- * url_format:        string used to define the endpoint format
- *                    separate words with /
- *                    to define a variable in the url, prefix it with @ or :
- *                    example: /test/resource/:name/elements
- *                    on an url_format that ends with '*', the rest of the url will not be tested
- * priority:          endpoint priority in descending order (0 is the higher priority)
- * callback_function: a pointer to a function that will be executed each time the endpoint is called
- *                    you must declare the function as described.
- * user_data:         a pointer to a data or a structure that will be available in callback_function
- * return U_OK on success
- */
 int ulfius_add_endpoint_by_val(struct _u_instance * u_instance,
                                const char * http_method,
                                const char * url_prefix,
@@ -1557,18 +1509,6 @@ int ulfius_add_endpoint_by_val(struct _u_instance * u_instance,
   }
 }
 
-/**
- * Remove a struct _u_endpoint * from the specified u_instance
- * using the specified values used to identify an endpoint
- * Can be done during the execution of the webservice for injection
- * u_instance: pointer to a struct _u_instance that describe its port and bind address
- * http_method: http_method used by the endpoint
- * url_prefix: url_prefix used by the endpoint
- * url_format: url_format used by the endpoint
- * The parameters _u_endpoint.http_method, _u_endpoint.url_prefix and _u_endpoint.url_format are strictly compared for the match
- * If no endpoint is found, return U_ERROR_NOT_FOUND
- * return U_OK on success
- */
 int ulfius_remove_endpoint_by_val(struct _u_instance * u_instance, const char * http_method, const char * url_prefix, const char * url_format) {
   struct _u_endpoint endpoint;
   if (u_instance != NULL) {
@@ -1582,16 +1522,6 @@ int ulfius_remove_endpoint_by_val(struct _u_instance * u_instance, const char * 
   }
 }
 
-/**
- * ulfius_set_default_endpoint
- * Set the default endpoint
- * This endpoint will be called if no endpoint match the url called
- * callback_function: a pointer to a function that will be executed each time the endpoint is called
- *                    you must declare the function as described.
- * user_data:         a pointer to a data or a structure that will be available in callback_function
- * to remove a default endpoint function, call ulfius_set_default_endpoint with NULL parameter for callback_function
- * return U_OK on success
- */
 int ulfius_set_default_endpoint(struct _u_instance * u_instance,
                                          int (* callback_function)(const struct _u_request * request, struct _u_response * response, void * user_data),
                                          void * user_data) {
@@ -1615,25 +1545,6 @@ int ulfius_set_default_endpoint(struct _u_instance * u_instance,
   }
 }
 
-/**
- * ulfius_set_upload_file_callback_function
- * 
- * Set the callback function to handle file upload
- * Used to facilitate large files upload management
- * The callback function file_upload_callback will be called
- * multiple times, with the uploaded file in striped in parts
- * 
- * Warning: If this function is used, all the uploaded files
- * for the instance will be managed via this function, and they
- * will no longer be available in the struct _u_request in the
- * ulfius callback function afterwards.
- * 
- * Thanks to Thad Phetteplace for the help on this feature
- * 
- * u_instance:    pointer to a struct _u_instance that describe its port and bind address
- * file_upload_callback: Pointer to a callback function that will handle all file uploads
- * cls: a pointer that will be passed to file_upload_callback each tim it's called
- */
 int ulfius_set_upload_file_callback_function(struct _u_instance * u_instance,
                                              int (* file_upload_callback) (const struct _u_request * request, 
                                                                            const char * key, 
@@ -1654,11 +1565,6 @@ int ulfius_set_upload_file_callback_function(struct _u_instance * u_instance,
   }
 }
 
-/**
- * ulfius_clean_instance
- * 
- * Clean memory allocated by a struct _u_instance *
- */
 void ulfius_clean_instance(struct _u_instance * u_instance) {
   if (u_instance != NULL) {
     ulfius_clean_endpoint_list(u_instance->endpoint_list);
@@ -1685,18 +1591,6 @@ void ulfius_clean_instance(struct _u_instance * u_instance) {
   }
 }
 
-/**
- * internal_ulfius_init_instance
- * 
- * Initialize a struct _u_instance * with default values
- * internal function used by both ulfius_init_instance and ulfius_init_instance_ipv6
- * port:               tcp port to bind to, must be between 1 and 65535
- * bind_address4:      IPv4 address to listen to, optional, the reference is borrowed, the structure isn't copied
- * bind_address6:      IPv6 address to listen to, optional, the reference is borrowed, the structure isn't copied
- * network_type:       Type of network to listen to, values available are U_USE_IPV4, U_USE_IPV6 or U_USE_ALL
- * default_auth_realm: default realm to send to the client on authentication error
- * return U_OK on success
- */
 static int internal_ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, struct sockaddr_in * bind_address4, struct sockaddr_in6 * bind_address6, unsigned short network_type, const char * default_auth_realm) {
 #if MHD_VERSION >= 0x00095208
   if (u_instance != NULL && port > 0 && port < 65536 && (bind_address4 == NULL || bind_address6 == NULL) && (network_type & U_USE_ALL)) {
@@ -1759,32 +1653,11 @@ UNUSED(network_type);
   }
 }
 
-/**
- * ulfius_init_instance
- * 
- * Initialize a struct _u_instance * with default values
- * Binds to IPV4 addresses only
- * port:               tcp port to bind to, must be between 1 and 65535
- * bind_address:       IPv4 address to listen to, optional, the reference is borrowed, the structure isn't copied
- * default_auth_realm: default realm to send to the client on authentication error
- * return U_OK on success
- */
 int ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, struct sockaddr_in * bind_address, const char * default_auth_realm) {
   return internal_ulfius_init_instance(u_instance, port, bind_address, NULL, U_USE_IPV4, default_auth_realm);
 }
 
 #if MHD_VERSION >= 0x00095208
-/**
- * ulfius_init_instance_ipv6
- * 
- * Initialize a struct _u_instance * with default values
- * Binds to IPV6 and IPV4 or IPV6 addresses only
- * port:               tcp port to bind to, must be between 1 and 65535
- * bind_address:       IPv6 address to listen to, optional, the reference is borrowed, the structure isn't copied
- * network_type:       Type of network to listen to, values available are U_USE_IPV6 or U_USE_ALL
- * default_auth_realm: default realm to send to the client on authentication error
- * return U_OK on success
- */
 int ulfius_init_instance_ipv6(struct _u_instance * u_instance, unsigned int port, struct sockaddr_in6 * bind_address, unsigned short network_type, const char * default_auth_realm) {
   if (network_type & U_USE_IPV6) {
     return internal_ulfius_init_instance(u_instance, port, NULL, bind_address, bind_address!=NULL?U_USE_IPV6:network_type, default_auth_realm);
@@ -1794,9 +1667,6 @@ int ulfius_init_instance_ipv6(struct _u_instance * u_instance, unsigned int port
 }
 #endif
 
-/**
- * free data allocated by ulfius functions
- */
 void u_free(void * data) {
   o_free(data);
 }

@@ -219,7 +219,7 @@ struct _u_cookie {
 
 /**
  * 
- * @struct _u_request request parameters
+ * @struct _u_request
  * @brief definition of the parameters available in a struct _u_request
  *                                 
  */
@@ -259,7 +259,7 @@ struct _u_request {
 
 /**
  * 
- * @struct _u_response response parameters
+ * @struct _u_response
  * @brief definition of the parameters available in a struct _u_response
  * 
  */
@@ -284,7 +284,7 @@ struct _u_response {
 
 /**
  * 
- * @struct _u_endpoint endpoint definition
+ * @struct _u_endpoint
  * @brief Contains all informations needed for an endpoint
  * 
  */
@@ -301,7 +301,7 @@ struct _u_endpoint {
 
 /**
  * 
- * @struct _u_instance Ulfius instance definition
+ * @struct _u_instance
  * @brief Contains the needed data for an ulfius instance to work
  * 
  */
@@ -362,7 +362,7 @@ struct connection_info_struct {
  **********************************/
 
 /**
- * @defgroup memory
+ * @defgroup mem memory
  * memory management function
  * @{
  */
@@ -402,6 +402,7 @@ void ulfius_global_close();
  * 
  * Initialize a struct _u_instance * with default values
  * Binds to IPV4 addresses only
+ * @param u_instance the ulfius instance to initialize
  * @param port tcp port to bind to, must be between 1 and 65535
  * @param bind_address IPv4 address to listen to, optional, the reference is borrowed, the structure isn't copied
  * @param default_auth_realm default realm to send to the client on authentication error
@@ -553,7 +554,7 @@ int ulfius_set_upload_file_callback_function(struct _u_instance * u_instance,
  * Can be done during the execution of the webservice for injection
  * @param u_instance pointer to a struct _u_instance that describe its port and bind address
  * @param u_endpoint pointer to a struct _u_endpoint that will be copied in the u_instance endpoint_list
- * @param return U_OK on success
+ * @return U_OK on success
  */
 int ulfius_add_endpoint(struct _u_instance * u_instance, const struct _u_endpoint * u_endpoint);
 
@@ -609,12 +610,8 @@ int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endp
  * Set the default endpoint
  * This endpoint will be called if no endpoint match the url called
  * @param u_instance pointer to a struct _u_instance that describe its port and bind address
- * @param auth_function     a pointer to a function that will be executed prior to the callback for authentication
- *                    you must declare the function as described.
- * @param auth_data a pointer to a data or a structure that will be available in auth_function
- * @param auth_realm realm value for authentication
- * callback_function a pointer to a function that will be executed each time the endpoint is called
- *                    you must declare the function as described.
+ * @param callback_function a pointer to a function that will be executed each time the endpoint is called
+ * you must declare the function as described.
  * @param user_data a pointer to a data or a structure that will be available in callback_function
  * to remove a default endpoint, call ulfius_set_default_endpoint with NULL parameter for callback_function
  * @return U_OK on success
@@ -804,7 +801,7 @@ int ulfius_send_smtp_rich_email(const char * host,
  * @param expires the expiration date of the ccokie in ISO format (optional)
  * @param max_age the maximum age of the cookie in seconds (optional)
  * @param domain the domain of the cookie (optional)
- * @param pat the path of the cookie (optional)
+ * @param path the path of the cookie (optional)
  * @param secure wether the cookie must be secure or not (optional)
  * @param http_only wether the cookie must be used only for http requests or not (optional)
  * @return U_OK on success
@@ -821,7 +818,7 @@ int ulfius_add_cookie_to_response(struct _u_response * response, const char * ke
  * @param expires the expiration date of the ccokie in ISO format (optional)
  * @param max_age the maximum age of the cookie in seconds (optional)
  * @param domain the domain of the cookie (optional)
- * @param pat the path of the cookie (optional)
+ * @param path the path of the cookie (optional)
  * @param secure wether the cookie must be secure or not (optional)
  * @param http_only wether the cookie must be used only for http requests or not (optional)
  * @param same_site parameter must have one of the following values:
@@ -1144,6 +1141,7 @@ json_t * ulfius_get_json_body_response(struct _u_response * response, json_error
  * ulfius_set_json_body_response
  * Add a json_t j_body to a response
  * @param response the response to retrieve the JSON data
+ * @param status the HTTP status for the response
  * @param j_body a json_t to stringify in the body
  * @return U_OK on success
  */
@@ -1408,7 +1406,7 @@ int u_map_empty(struct _u_map * u_map);
  */
 
 /**
- * @defgroup websocket
+ * @defgroup websocket Websockets
  * Websocket management functions
  * @{
  */

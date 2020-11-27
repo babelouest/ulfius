@@ -30,11 +30,6 @@
 #include "u_private.h"
 #include "ulfius.h"
 
-/**
- * initialize a struct _u_map
- * this function MUST be called after a declaration or allocation
- * return U_OK on success
- */
 int u_map_init(struct _u_map * u_map) {
   if (u_map != NULL) {
     u_map->nb_values = 0;
@@ -68,10 +63,6 @@ int u_map_init(struct _u_map * u_map) {
   }
 }
 
-/**
- * free the struct _u_map's inner components
- * return U_OK on success
- */
 int u_map_clean(struct _u_map * u_map) {
   int i;
   if (u_map != NULL) {
@@ -88,10 +79,6 @@ int u_map_clean(struct _u_map * u_map) {
   }
 }
 
-/**
- * free the struct _u_map and its components
- * return U_OK on success
- */
 int u_map_clean_full(struct _u_map * u_map) {
   if (u_map_clean(u_map) == U_OK) {
     o_free(u_map);
@@ -101,10 +88,6 @@ int u_map_clean_full(struct _u_map * u_map) {
   }
 }
 
-/**
- * free an enum return by functions u_map_enum_keys or u_map_enum_values
- * return U_OK on success
- */
 int u_map_clean_enum(char ** array) {
   int i;
   if (array != NULL) {
@@ -119,27 +102,14 @@ int u_map_clean_enum(char ** array) {
   }
 }
 
-/**
- * returns an array containing all the keys in the struct _u_map
- * return an array of char * ending with a NULL element
- */
 const char ** u_map_enum_keys(const struct _u_map * u_map) {
   return (const char **)u_map->keys;
 }
 
-/**
- * returns an array containing all the values in the struct _u_map
- * return an array of char * ending with a NULL element
- */
 const char ** u_map_enum_values(const struct _u_map * u_map) {
   return (const char **)u_map->values;
 }
 
-/**
- * return true if the sprcified u_map contains the specified key
- * false otherwise
- * search is case sensitive
- */
 int u_map_has_key(const struct _u_map * u_map, const char * key) {
   int i;
   if (u_map != NULL && key != NULL) {
@@ -152,20 +122,10 @@ int u_map_has_key(const struct _u_map * u_map, const char * key) {
   return 0;
 }
 
-/**
- * return true if the sprcified u_map contains the specified value
- * false otherwise
- * search is case sensitive
- */
 int u_map_has_value(const struct _u_map * u_map, const char * value) {
   return u_map_has_value_binary(u_map, value, o_strlen(value));
 }
 
-/**
- * return true if the sprcified u_map contains the specified value
- * false otherwise
- * search is case sensitive
- */
 int u_map_has_value_binary(const struct _u_map * u_map, const char * value, size_t length) {
   int i;
   if (u_map != NULL && value != NULL) {
@@ -178,11 +138,6 @@ int u_map_has_value_binary(const struct _u_map * u_map, const char * value, size
   return 0;
 }
 
-/**
- * add the specified key/value pair into the specified u_map
- * if the u_map already contains a pair with the same key, replace the value
- * return U_OK on success
- */
 int u_map_put(struct _u_map * u_map, const char * key, const char * value) {
   if (value != NULL) {
     return u_map_put_binary(u_map, key, value, 0, o_strlen(value)+1);
@@ -191,12 +146,6 @@ int u_map_put(struct _u_map * u_map, const char * key, const char * value) {
   }
 }
 
-/**
- * add the specified key/binary value pair into the specified u_map
- * if the u_map already contains a pair with the same key,
- * replace the value at the specified offset with the specified length
- * return U_OK on success
- */
 int u_map_put_binary(struct _u_map * u_map, const char * key, const char * value, uint64_t offset, size_t length) {
   int i;
   char * dup_key, * dup_value;
@@ -285,10 +234,6 @@ int u_map_put_binary(struct _u_map * u_map, const char * key, const char * value
   }
 }
 
-/**
- * remove an pair key/value that has the specified key
- * return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
- */
 int u_map_remove_from_key(struct _u_map * u_map, const char * key) {
   int i, res, found = 0;
   
@@ -312,10 +257,6 @@ int u_map_remove_from_key(struct _u_map * u_map, const char * key) {
   }
 }
 
-/**
- * remove all pairs key/value that has the specified key (case insensitive search)
- * return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
- */
 int u_map_remove_from_key_case(struct _u_map * u_map, const char * key) {
   int i, res, found = 0;
   
@@ -339,18 +280,10 @@ int u_map_remove_from_key_case(struct _u_map * u_map, const char * key) {
   }
 }
 
-/**
- * remove all pairs key/value that has the specified value
- * return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
- */
 int u_map_remove_from_value(struct _u_map * u_map, const char * value) {
   return u_map_remove_from_value_binary(u_map, value, o_strlen(value));
 }
 
-/**
- * remove all pairs key/value that has the specified value up until the specified length
- * return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
- */
 int u_map_remove_from_value_binary(struct _u_map * u_map, const char * value, size_t length) {
   int i, res, found = 0;
   
@@ -374,10 +307,6 @@ int u_map_remove_from_value_binary(struct _u_map * u_map, const char * value, si
   }
 }
 
-/**
- * remove all pairs key/value that has the specified value (case insensitive search)
- * return U_OK on success, U_NOT_FOUND if key was not found, error otherwise
- */
 int u_map_remove_from_value_case(struct _u_map * u_map, const char * value) {
   int i, res, found = 0;
   
@@ -401,10 +330,6 @@ int u_map_remove_from_value_case(struct _u_map * u_map, const char * value) {
   }
 }
 
-/**
- * remove the pair key/value at the specified index
- * return U_OK on success, U_NOT_FOUND if index is out of bound, error otherwise
- */
 int u_map_remove_at(struct _u_map * u_map, const int index) {
   int i;
   if (u_map == NULL || index < 0) {
@@ -440,11 +365,6 @@ int u_map_remove_at(struct _u_map * u_map, const int index) {
   }
 }
 
-/**
- * get the value corresponding to the specified key in the u_map
- * return NULL if no match found
- * search is case sensitive
- */
 const char * u_map_get(const struct _u_map * u_map, const char * key) {
   int i;
   if (u_map != NULL && key != NULL) {
@@ -463,11 +383,6 @@ const char * u_map_get(const struct _u_map * u_map, const char * key) {
   }
 }
 
-/**
- * return true if the sprcified u_map contains the specified key
- * false otherwise
- * search is case insensitive
- */
 int u_map_has_key_case(const struct _u_map * u_map, const char * key) {
   int i;
   if (u_map != NULL && key != NULL) {
@@ -480,11 +395,6 @@ int u_map_has_key_case(const struct _u_map * u_map, const char * key) {
   return 0;
 }
 
-/**
- * return true if the sprcified u_map contains the specified value
- * false otherwise
- * search is case insensitive
- */
 int u_map_has_value_case(const struct _u_map * u_map, const char * value) {
   int i;
   if (u_map != NULL && value != NULL) {
@@ -497,11 +407,6 @@ int u_map_has_value_case(const struct _u_map * u_map, const char * value) {
   return 0;
 }
 
-/**
- * get the value corresponding to the specified key in the u_map
- * return NULL if no match found
- * search is case insensitive
- */
 const char * u_map_get_case(const struct _u_map * u_map, const char * key) {
   int i;
   if (u_map != NULL && key != NULL) {
@@ -516,11 +421,6 @@ const char * u_map_get_case(const struct _u_map * u_map, const char * key) {
   }
 }
 
-/**
- * get the value length corresponding to the specified key in the u_map
- * return -1 if no match found
- * search is case sensitive
- */
 ssize_t u_map_get_length(const struct _u_map * u_map, const char * key) {
   int i;
   if (u_map != NULL && key != NULL) {
@@ -535,11 +435,6 @@ ssize_t u_map_get_length(const struct _u_map * u_map, const char * key) {
   }
 }
 
-/**
- * get the value length corresponding to the specified key in the u_map
- * return -1 if no match found
- * search is case insensitive
- */
 ssize_t u_map_get_case_length(const struct _u_map * u_map, const char * key) {
   int i;
   if (u_map != NULL && key != NULL) {
@@ -554,11 +449,6 @@ ssize_t u_map_get_case_length(const struct _u_map * u_map, const char * key) {
   }
 }
 
-/**
- * Create an exact copy of the specified struct _u_map
- * return a reference to the copy, NULL otherwise
- * returned value must be cleaned after use
- */
 struct _u_map * u_map_copy(const struct _u_map * source) {
   struct _u_map * copy = NULL;
   const char ** keys, * value;
@@ -584,11 +474,6 @@ struct _u_map * u_map_copy(const struct _u_map * source) {
   return copy;
 }
 
-/**
- * Copy all key/values pairs of source into dest
- * If key is already present in dest, it's overwritten
- * return U_OK on success, error otherwise
- */
 int u_map_copy_into(struct _u_map * dest, const struct _u_map * source) {
   const char ** keys;
   int i, res;
@@ -607,10 +492,6 @@ int u_map_copy_into(struct _u_map * dest, const struct _u_map * source) {
   }
 }
 
-/**
- * Return the number of key/values pair in the specified struct _u_map
- * Return -1 on error
- */
 int u_map_count(const struct _u_map * source) {
   if (source != NULL) {
     if (source->nb_values >= 0) {
@@ -620,10 +501,6 @@ int u_map_count(const struct _u_map * source) {
   return -1;
 }
 
-/**
- * Empty a struct u_map of all its elements
- * return U_OK on success, error otherwise
- */
 int u_map_empty(struct _u_map * u_map) {
   int ret = u_map_clean(u_map);
   if (ret == U_OK) {

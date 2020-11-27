@@ -1540,21 +1540,6 @@ void ulfius_clear_websocket_manager(struct _websocket_manager * websocket_manage
 /** Server websocket functions **/
 /********************************/
 
-/**
- * Set a websocket in the response
- * You must set at least websocket_manager_callback or websocket_incoming_message_callback
- * @Parameters
- * response: struct _u_response to send back the websocket initialization, mandatory
- * websocket_protocol: list of protocols, separated by a comma, or NULL if all protocols are accepted
- * websocket_extensions: list of extensions, separated by a comma, or NULL if all extensions are accepted
- * websocket_manager_callback: callback function called right after the handshake acceptance, optional
- * websocket_manager_user_data: any data that will be given to the websocket_manager_callback, optional
- * websocket_incoming_message_callback: callback function called on each incoming complete message, optional
- * websocket_incoming_user_data: any data that will be given to the websocket_incoming_message_callback, optional
- * websocket_onclose_callback: callback function called right before closing the websocket, must be complete for the websocket to close
- * websocket_onclose_user_data: any data that will be given to the websocket_onclose_callback, optional
- * @Return value: U_OK on success
- */
 int ulfius_set_websocket_response(struct _u_response * response,
                                    const char * websocket_protocol,
                                    const char * websocket_extensions, 
