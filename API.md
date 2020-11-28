@@ -43,6 +43,7 @@
   - [Send HTTP request API](#send-http-request-api)
   - [Send SMTP request API](#send-http-request-api)
 - [struct _u_map API](#struct-_u_map-api)
+- [What's new in Ulfius 2.7?](#whats-new-in-ulfius-27)
 - [What's new in Ulfius 2.6?](#whats-new-in-ulfius-26)
 - [What's new in Ulfius 2.5?](#whats-new-in-ulfius-25)
 - [What's new in Ulfius 2.4?](#whats-new-in-ulfius-24)
@@ -1980,6 +1981,23 @@ int u_map_copy_into(const struct _u_map * source, struct _u_map * target);
  * Return -1 on error
  */
 int u_map_count(const struct _u_map * source);
+```
+
+## What's new in Ulfius 2.7? <a name="whats-new-in-ulfius-27"></a>
+
+Allow `Content-Enconding` header with `ulfius_send_http_request` to compress the response body
+Add http_compression callback example
+Add static_compressed_inmemory_website callback example
+Add callback return value `U_CALLBACK_IGNORE` to igore incrementation of `request->callback_position`
+Add `ulfius_add_websocket_extension_message_perform` and `ulfius_add_websocket_client_extension_message_perform` for advanced websocket extensions management
+Add [Compression Extensions for WebSocket](https://tools.ietf.org/html/rfc7692)
+
+### Breaking change with struct _websocket_client_handler
+
+When declaring a `struct _websocket_client_handler` for websocket client API, you must initialize its members content to `NULL` before using it:
+
+```C
+struct _websocket_client_handler websocket_client_handler = {NULL, NULL};
 ```
 
 ## What's new in Ulfius 2.6? <a name="whats-new-in-ulfius-26"></a>
