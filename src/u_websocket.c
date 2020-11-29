@@ -248,13 +248,13 @@ static struct _websocket_message * ulfius_build_message (const uint8_t opcode,
                                                          const char * data,
                                                          const uint64_t data_len) {
   struct _websocket_message * new_message = NULL;
-  if ((
+  if (
        opcode == U_WEBSOCKET_OPCODE_TEXT ||
        opcode == U_WEBSOCKET_OPCODE_BINARY ||
        opcode == U_WEBSOCKET_OPCODE_CLOSE ||
        opcode == U_WEBSOCKET_OPCODE_PING ||
        opcode == U_WEBSOCKET_OPCODE_PONG
-     )) {
+     ) {
     new_message = o_malloc(sizeof(struct _websocket_message));
     if (new_message != NULL) {
       if (data_len) {
@@ -285,6 +285,8 @@ static struct _websocket_message * ulfius_build_message (const uint8_t opcode,
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for new_message");
     }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error invalid opcode");
   }
   return new_message;
 }
@@ -374,7 +376,9 @@ static int ulfius_read_incoming_message(struct _websocket_manager * websocket_ma
       if (ret == U_OK) {
         // Read header
         if ((len = read_data_from_socket(websocket_manager, header, 2)) == 2) {
-          (*message)->opcode = header[0] & 0x0F;
+          if (header[0] & 0x0F) {
+            (*message)->opcode = header[0] & 0x0F;
+          }
           (*message)->rsv = header[0] & 0x70;
           fin = (header[0] & U_WEBSOCKET_BIT_FIN);
           if ((header[1] & U_WEBSOCKET_LEN_MASK) <= 125) {
