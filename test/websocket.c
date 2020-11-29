@@ -51,7 +51,7 @@ void websocket_echo_message_callback (const struct _u_request * request,
                                          const struct _websocket_message * last_message,
                                          void * websocket_incoming_message_user_data) {
   if (last_message->opcode == U_WEBSOCKET_OPCODE_TEXT) {
-    ck_assert_int_eq(ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, last_message->data_len, last_message->data), U_OK);
+    ck_assert_int_eq(ulfius_websocket_send_fragmented_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, last_message->data_len, last_message->data, last_message->fragment_len), U_OK);
   }
 }
 
@@ -111,7 +111,6 @@ void websocket_incoming_extension_callback (const struct _u_request * request,
                                             void * user_data) {
   int * rsv = (int *)user_data;
   
-  y_log_message(Y_LOG_LEVEL_DEBUG, "rsv received 0x%02x", last_message->rsv);
   ck_assert_ptr_ne(NULL, o_strnstr(last_message->data, MESSAGE, last_message->data_len));
   if ((*rsv)&U_WEBSOCKET_RSV1) {
     ck_assert_int_ne(last_message->rsv&U_WEBSOCKET_RSV1, 0);
