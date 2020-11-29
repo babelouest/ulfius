@@ -446,25 +446,30 @@ static int ulfius_read_incoming_message(struct _websocket_manager * websocket_ma
         }
         if (ret == U_OK) {
           payload_data = o_malloc(msg_len*sizeof(uint8_t));
-          len = read_data_from_socket(websocket_manager, payload_data, msg_len);
-          if (len < 0) {
-            ret = U_ERROR_DISCONNECTED;
-          } else if ((unsigned int)len != msg_len) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error reading websocket for payload_data");
-            ret = U_ERROR;
-          } else {
-            // If mask, decode message
-            (*message)->data = o_realloc((*message)->data, (msg_len+(*message)->data_len)*sizeof(uint8_t));
-            if ((*message)->has_mask) {
-              for (i = (*message)->data_len; (unsigned int)i < (*message)->data_len + msg_len; i++) {
-                (*message)->data[i] = payload_data[i-(*message)->data_len] ^ masking_key[(i-(*message)->data_len)%4];
-              }
+          if (payload_data != NULL) {
+            len = read_data_from_socket(websocket_manager, payload_data, msg_len);
+            if (len < 0) {
+              ret = U_ERROR_DISCONNECTED;
+            } else if ((unsigned int)len != msg_len) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error reading websocket for payload_data");
+              ret = U_ERROR;
             } else {
-              memcpy((*message)->data+(*message)->data_len, payload_data, msg_len);
+              // If mask, decode message
+              (*message)->data = o_realloc((*message)->data, (msg_len+(*message)->data_len)*sizeof(uint8_t));
+              if ((*message)->has_mask) {
+                for (i = (*message)->data_len; (unsigned int)i < (*message)->data_len + msg_len; i++) {
+                  (*message)->data[i] = payload_data[i-(*message)->data_len] ^ masking_key[(i-(*message)->data_len)%4];
+                }
+              } else {
+                memcpy((*message)->data+(*message)->data_len, payload_data, msg_len);
+              }
+              (*message)->data_len += msg_len;
             }
-            (*message)->data_len += msg_len;
+            o_free(payload_data);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for payload_data, exiting");
+            ret = U_ERROR;
           }
-          o_free(payload_data);
         }
         if (!fin) {
           while (!is_websocket_data_available(websocket_manager));
@@ -574,12 +579,21 @@ static void * ulfius_thread_websocket(void * data) {
                   if ((len = pointer_list_size(websocket->websocket_manager->websocket_extension_list))) {
                     for (i=0; i<len && ret == U_OK; i++) {
                       extension = pointer_list_get_at(websocket->websocket_manager->websocket_extension_list, (len-i-1));
-                      if (extension != NULL && extension->enabled && extension->websocket_extension_message_in_perform != NULL && message->rsv & extension->rsv) {
-                        if ((ret = extension->websocket_extension_message_in_perform(message->opcode, data_in_len, data_in, &data_out_len, &data_out, 0, extension->websocket_extension_message_out_perform_user_data, extension->context)) != U_OK) {
+                      if (extension != NULL &&
+                          extension->enabled &&
+                          extension->websocket_extension_message_in_perform != NULL &&
+                          (message->rsv & extension->rsv)) {
+                        if (extension->websocket_extension_message_in_perform(message->opcode,
+                                                                              data_in_len,
+                                                                              data_in,
+                                                                              &data_out_len,
+                                                                              &data_out,
+                                                                              0,
+                                                                              extension->websocket_extension_message_out_perform_user_data,
+                                                                              extension->context) != U_OK) {
                           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error performing websocket_extension_message_in_perform at index %zu", i);
                           ret = U_ERROR;
                         } else {
-                          message->rsv |= extension->rsv;
                           o_free(data_in);
                           data_in = NULL;
                           data_in_len = 0;
