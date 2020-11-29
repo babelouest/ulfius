@@ -1560,6 +1560,7 @@ struct _websocket_message {
   uint8_t mask[4]; /* !< mask used if any */
   size_t  data_len; /* !< length of the data */
   char *  data; /* !< message data */
+  size_t  fragment_len; /* !< length of the fragment, 0 if not fragmented */
 };
 
 /**

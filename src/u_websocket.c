@@ -367,6 +367,7 @@ static int ulfius_read_incoming_message(struct _websocket_manager * websocket_ma
     (*message)->data_len = 0;
     (*message)->has_mask = 0;
     (*message)->data = NULL;
+    (*message)->fragment_len = 0;
     time(&(*message)->datestamp);
     
     do {
@@ -411,6 +412,9 @@ static int ulfius_read_incoming_message(struct _websocket_manager * websocket_ma
           ret = U_ERROR;
         } else {
           ret = U_ERROR_DISCONNECTED;
+        }
+        if (!fin) {
+          (*message)->fragment_len = msg_len;
         }
         
         if (ret == U_OK) {
