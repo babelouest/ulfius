@@ -773,7 +773,7 @@ START_TEST(test_ulfius_websocket_extension_deflate_with_all_params)
 }
 END_TEST
 
-START_TEST(test_ulfius_websocket_extension_deflate_error_params_1)
+START_TEST(test_ulfius_websocket_extension_deflate_error_params)
 {
   struct _u_instance instance;
   struct _u_request request;
@@ -790,35 +790,6 @@ START_TEST(test_ulfius_websocket_extension_deflate_error_params_1)
   ulfius_init_request(&request);
   ulfius_init_response(&response);
   ck_assert_int_eq(ulfius_set_websocket_request(&request, url, NULL, "permessage-deflate; server_max_window_bits=1; client_max_window_bits=12; server_no_context_takeover; client_no_context_takeover"), U_OK);
-  ck_assert_int_eq(ulfius_add_websocket_client_deflate_extension(&websocket_client_handler), U_OK);
-  ck_assert_int_eq(ulfius_open_websocket_client_connection(&request, &websocket_extension_callback_client, NULL, &websocket_incoming_extension_deflate_client_callback_disabled, NULL, NULL, NULL, &websocket_client_handler, &response), U_OK);
-  ck_assert_int_eq(ulfius_websocket_client_connection_wait_close(&websocket_client_handler, 0), U_WEBSOCKET_STATUS_CLOSE);
-  ulfius_clean_request(&request);
-  ulfius_clean_response(&response);
-  
-  ck_assert_int_eq(ulfius_stop_framework(&instance), U_OK);
-
-  ulfius_clean_instance(&instance);
-}
-END_TEST
-
-START_TEST(test_ulfius_websocket_extension_deflate_error_params_2)
-{
-  struct _u_instance instance;
-  struct _u_request request;
-  struct _u_response response;
-  struct _websocket_client_handler websocket_client_handler = {NULL, NULL};
-  char url[64];
-
-  ck_assert_int_eq(ulfius_init_instance(&instance, PORT_8, NULL, NULL), U_OK);
-  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", PREFIX_WEBSOCKET, NULL, 0, &callback_websocket_extension_deflate_disabled, NULL), U_OK);
-  ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
-
-  sprintf(url, "ws://localhost:%d/%s", PORT_8, PREFIX_WEBSOCKET);
-
-  ulfius_init_request(&request);
-  ulfius_init_response(&response);
-  ck_assert_int_eq(ulfius_set_websocket_request(&request, url, NULL, "permessage-deflate; server_max_window_bits=10; client_max_window_bits=12; server_no_context_takeovere; client_no_context_takeover"), U_OK);
   ck_assert_int_eq(ulfius_add_websocket_client_deflate_extension(&websocket_client_handler), U_OK);
   ck_assert_int_eq(ulfius_open_websocket_client_connection(&request, &websocket_extension_callback_client, NULL, &websocket_incoming_extension_deflate_client_callback_disabled, NULL, NULL, NULL, &websocket_client_handler, &response), U_OK);
   ck_assert_int_eq(ulfius_websocket_client_connection_wait_close(&websocket_client_handler, 0), U_WEBSOCKET_STATUS_CLOSE);
@@ -850,8 +821,7 @@ static Suite *ulfius_suite(void)
 	tcase_add_test(tc_websocket, test_ulfius_websocket_extension_match_function);
 	tcase_add_test(tc_websocket, test_ulfius_websocket_extension_deflate);
 	tcase_add_test(tc_websocket, test_ulfius_websocket_extension_deflate_with_all_params);
-	tcase_add_test(tc_websocket, test_ulfius_websocket_extension_deflate_error_params_1);
-	tcase_add_test(tc_websocket, test_ulfius_websocket_extension_deflate_error_params_2);
+	tcase_add_test(tc_websocket, test_ulfius_websocket_extension_deflate_error_params);
 #endif
 	tcase_set_timeout(tc_websocket, 30);
 	suite_add_tcase(s, tc_websocket);
