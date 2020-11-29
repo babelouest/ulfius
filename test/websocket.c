@@ -16,9 +16,14 @@
 #define DEFAULT_PROTOCOL "proto"
 #define DEFAULT_EXTENSION "ext"
 #define DEFAULT_MESSAGE "message content with a few characters"
-#define PORT 9275
+#define PORT_1 9275
 #define PORT_2 9276
 #define PORT_3 9277
+#define PORT_4 9278
+#define PORT_5 9279
+#define PORT_6 9280
+#define PORT_7 9281
+#define PORT_8 9282
 #define PREFIX_WEBSOCKET "/websocket"
 #define MESSAGE "HelloFrom"
 #define MESSAGE_CLIENT "HelloFromClient"
@@ -75,9 +80,9 @@ void websocket_manager_callback_client (const struct _u_request * request, struc
 
 void websocket_extension_callback_client (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_manager_user_data) {
   ck_assert_int_eq(ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(MESSAGE_CLIENT), MESSAGE_CLIENT), U_OK);
-  y_log_message(Y_LOG_LEVEL_DEBUG, "client message 1 sent");
+  y_log_message(Y_LOG_LEVEL_DEBUG, "client message 1 '%s' sent", MESSAGE_CLIENT);
   ck_assert_int_eq(ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(MESSAGE_CLIENT), MESSAGE_CLIENT), U_OK);
-  y_log_message(Y_LOG_LEVEL_DEBUG, "client message 2 sent");
+  y_log_message(Y_LOG_LEVEL_DEBUG, "client message 2 '%s' sent", MESSAGE_CLIENT);
   if (ulfius_websocket_wait_close(websocket_manager, 50) == U_WEBSOCKET_STATUS_OPEN) {
     ck_assert_int_eq(ulfius_websocket_send_close_signal(websocket_manager), U_OK);
   }
@@ -88,8 +93,8 @@ void websocket_incoming_message_callback_client (const struct _u_request * reque
 }
 
 void websocket_manager_extension_callback (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_manager_user_data) {
+  y_log_message(Y_LOG_LEVEL_DEBUG, "server message '%s' sent", MESSAGE_SERVER);
   ck_assert_int_eq(ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(MESSAGE_SERVER), MESSAGE_SERVER), U_OK);
-  y_log_message(Y_LOG_LEVEL_DEBUG, "server message sent");
   if (ulfius_websocket_wait_close(websocket_manager, 50) == U_WEBSOCKET_STATUS_OPEN) {
     ck_assert_int_eq(ulfius_websocket_send_close_signal(websocket_manager), U_OK);
   }
@@ -111,6 +116,7 @@ void websocket_incoming_extension_callback (const struct _u_request * request,
                                             void * user_data) {
   int * rsv = (int *)user_data;
   
+  y_log_message(Y_LOG_LEVEL_DEBUG, "message %.*s", (size_t)last_message->data_len, last_message->data);
   ck_assert_ptr_ne(NULL, o_strnstr(last_message->data, MESSAGE, last_message->data_len));
   if ((*rsv)&U_WEBSOCKET_RSV1) {
     ck_assert_int_ne(last_message->rsv&U_WEBSOCKET_RSV1, 0);
@@ -163,7 +169,8 @@ int websocket_extension1_message_out_perform(const uint8_t opcode, const uint64_
   if (((uintptr_t)user_data)&U_W_FLAG_CONTEXT) {
     ck_assert_ptr_ne(context, NULL);
   }
-  *data_out = msprintf("%.*s%s", data_len_in, data_in, MESSAGE_EXT1);
+  *data_out = msprintf("%.*s%s", (size_t)data_len_in, data_in, MESSAGE_EXT1);
+  ck_assert_ptr_ne(*data_out, NULL);
   *data_len_out = o_strlen(*data_out);
   y_log_message(Y_LOG_LEVEL_DEBUG, "inside websocket_extension1_message_out_perform");
   return U_OK;
@@ -174,9 +181,9 @@ int websocket_extension1_message_in_perform(const uint8_t opcode, const uint64_t
   if (((uintptr_t)user_data)&U_W_FLAG_CONTEXT) {
     ck_assert_ptr_ne(context, NULL);
   }
-  *data_out = msprintf("%.*s%s", data_len_in, data_in, MESSAGE_EXT1);
+  *data_out = msprintf("%.*s%s", (size_t)data_len_in, data_in, MESSAGE_EXT1);
   *data_len_out = o_strlen(*data_out);
-  y_log_message(Y_LOG_LEVEL_DEBUG, "inside websocket_extension1_message_in_perform");
+  y_log_message(Y_LOG_LEVEL_DEBUG, "inside websocket_extension1_message_in_perform: '%.*s'", (size_t)data_len_in, data_in);
   return U_OK;
 }
 
@@ -185,7 +192,7 @@ int websocket_extension2_message_out_perform(const uint8_t opcode, const uint64_
   if (((uintptr_t)user_data)&U_W_FLAG_CONTEXT) {
     ck_assert_ptr_ne(context, NULL);
   }
-  *data_out = msprintf("%.*s%s", data_len_in, data_in, MESSAGE_EXT2);
+  *data_out = msprintf("%.*s%s", (size_t)data_len_in, data_in, MESSAGE_EXT2);
   *data_len_out = o_strlen(*data_out);
   y_log_message(Y_LOG_LEVEL_DEBUG, "inside websocket_extension2_message_out_perform");
   return U_OK;
@@ -196,7 +203,7 @@ int websocket_extension2_message_in_perform(const uint8_t opcode, const uint64_t
   if (((uintptr_t)user_data)&U_W_FLAG_CONTEXT) {
     ck_assert_ptr_ne(context, NULL);
   }
-  *data_out = msprintf("%.*s%s", data_len_in, data_in, MESSAGE_EXT2);
+  *data_out = msprintf("%.*s%s", (size_t)data_len_in, data_in, MESSAGE_EXT2);
   *data_len_out = o_strlen(*data_out);
   y_log_message(Y_LOG_LEVEL_DEBUG, "inside websocket_extension2_message_in_perform");
   return U_OK;
@@ -564,13 +571,13 @@ START_TEST(test_ulfius_websocket_client)
   struct _websocket_client_handler websocket_client_handler = {NULL, NULL};
   char url[64], * allocated_data = o_strdup("plop");
 
-  ck_assert_int_eq(ulfius_init_instance(&instance, PORT, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_init_instance(&instance, PORT_1, NULL, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", PREFIX_WEBSOCKET, NULL, 0, &callback_websocket, allocated_data), U_OK);
   ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
 
   ulfius_init_request(&request);
   ulfius_init_response(&response);
-  sprintf(url, "ws://localhost:%d/%s", PORT, PREFIX_WEBSOCKET);
+  sprintf(url, "ws://localhost:%d/%s", PORT_1, PREFIX_WEBSOCKET);
   
   // Test correct websocket connection on correct websocket service
   ck_assert_int_eq(ulfius_set_websocket_request(&request, url, DEFAULT_PROTOCOL, DEFAULT_EXTENSION), U_OK);
@@ -610,13 +617,13 @@ START_TEST(test_ulfius_websocket_client_no_onclose)
   struct _u_response response;
   struct _websocket_client_handler websocket_client_handler = {NULL, NULL};
   char url[64];
-  ck_assert_int_eq(ulfius_init_instance(&instance, PORT, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_init_instance(&instance, PORT_2, NULL, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", PREFIX_WEBSOCKET, NULL, 0, &callback_websocket_onclose, NULL), U_OK);
   ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
 
   ulfius_init_request(&request);
   ulfius_init_response(&response);
-  sprintf(url, "ws://localhost:%d/%s", PORT, PREFIX_WEBSOCKET);
+  sprintf(url, "ws://localhost:%d/%s", PORT_2, PREFIX_WEBSOCKET);
   
   // Test correct websocket connection on correct websocket service
   ck_assert_int_eq(ulfius_set_websocket_request(&request, url, DEFAULT_PROTOCOL, DEFAULT_EXTENSION), U_OK);
@@ -657,13 +664,13 @@ START_TEST(test_ulfius_websocket_extension_no_match_function)
   char url[64];
   int user_data = U_WEBSOCKET_RSV1;
 
-  ck_assert_int_eq(ulfius_init_instance(&instance, PORT, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_init_instance(&instance, PORT_3, NULL, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", PREFIX_WEBSOCKET, NULL, 0, &callback_websocket_extension_no_match, &user_data), U_OK);
   ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
 
   ulfius_init_request(&request);
   ulfius_init_response(&response);
-  sprintf(url, "ws://localhost:%d/%s", PORT, PREFIX_WEBSOCKET);
+  sprintf(url, "ws://localhost:%d/%s", PORT_3, PREFIX_WEBSOCKET);
 
   ck_assert_int_eq(ulfius_set_websocket_request(&request, url, NULL, MESSAGE_EXT1), U_OK);
   ck_assert_int_eq(ulfius_add_websocket_client_extension_message_perform(&websocket_client_handler, MESSAGE_EXT1, U_WEBSOCKET_RSV1, &websocket_extension1_message_out_perform, NULL, &websocket_extension1_message_in_perform, NULL, NULL, NULL, NULL, NULL), U_OK);
@@ -687,13 +694,13 @@ START_TEST(test_ulfius_websocket_extension_match_function)
   char url[64];
   int user_data = U_WEBSOCKET_RSV1|U_WEBSOCKET_RSV2;
 
-  ck_assert_int_eq(ulfius_init_instance(&instance, PORT, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_init_instance(&instance, PORT_4, NULL, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", PREFIX_WEBSOCKET, NULL, 0, &callback_websocket_extension_match, &user_data), U_OK);
   ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
 
   ulfius_init_request(&request);
   ulfius_init_response(&response);
-  sprintf(url, "ws://localhost:%d/%s", PORT, PREFIX_WEBSOCKET);
+  sprintf(url, "ws://localhost:%d/%s", PORT_4, PREFIX_WEBSOCKET);
 
   ck_assert_int_eq(ulfius_set_websocket_request(&request, url, NULL, MESSAGE_EXT1 ", " MESSAGE_EXT2), U_OK);
   ck_assert_int_eq(ulfius_add_websocket_client_extension_message_perform(&websocket_client_handler, MESSAGE_EXT1, U_WEBSOCKET_RSV1, &websocket_extension1_message_out_perform, (void *)U_W_FLAG_CONTEXT, &websocket_extension1_message_in_perform, (void *)U_W_FLAG_CONTEXT, &websocket_extension_client_match_ext1, NULL, &websocket_extension_match_free_context, NULL), U_OK);
@@ -716,13 +723,13 @@ START_TEST(test_ulfius_websocket_extension_deflate)
   struct _websocket_client_handler websocket_client_handler = {NULL, NULL};
   char url[64];
 
-  ck_assert_int_eq(ulfius_init_instance(&instance, PORT, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_init_instance(&instance, PORT_5, NULL, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", PREFIX_WEBSOCKET, NULL, 0, &callback_websocket_extension_deflate, NULL), U_OK);
   ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
 
   ulfius_init_request(&request);
   ulfius_init_response(&response);
-  sprintf(url, "ws://localhost:%d/%s", PORT, PREFIX_WEBSOCKET);
+  sprintf(url, "ws://localhost:%d/%s", PORT_5, PREFIX_WEBSOCKET);
 
   ck_assert_int_eq(ulfius_set_websocket_request(&request, url, NULL, "permessage-deflate,"MESSAGE_EXT3), U_OK);
   ck_assert_int_eq(ulfius_add_websocket_client_deflate_extension(&websocket_client_handler), U_OK);
@@ -745,13 +752,13 @@ START_TEST(test_ulfius_websocket_extension_deflate_with_all_params)
   struct _websocket_client_handler websocket_client_handler = {NULL, NULL};
   char url[64];
 
-  ck_assert_int_eq(ulfius_init_instance(&instance, PORT, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_init_instance(&instance, PORT_6, NULL, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", PREFIX_WEBSOCKET, NULL, 0, &callback_websocket_extension_deflate, NULL), U_OK);
   ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
 
   ulfius_init_request(&request);
   ulfius_init_response(&response);
-  sprintf(url, "ws://localhost:%d/%s", PORT, PREFIX_WEBSOCKET);
+  sprintf(url, "ws://localhost:%d/%s", PORT_6, PREFIX_WEBSOCKET);
 
   ck_assert_int_eq(ulfius_set_websocket_request(&request, url, NULL, "permessage-deflate; server_max_window_bits=10; client_max_window_bits=12; server_no_context_takeover; client_no_context_takeover, "MESSAGE_EXT3), U_OK);
   ck_assert_int_eq(ulfius_add_websocket_client_deflate_extension(&websocket_client_handler), U_OK);
@@ -774,11 +781,11 @@ START_TEST(test_ulfius_websocket_extension_deflate_error_params_1)
   struct _websocket_client_handler websocket_client_handler = {NULL, NULL};
   char url[64];
 
-  ck_assert_int_eq(ulfius_init_instance(&instance, PORT_2, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_init_instance(&instance, PORT_7, NULL, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", PREFIX_WEBSOCKET, NULL, 0, &callback_websocket_extension_deflate_disabled, NULL), U_OK);
   ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
 
-  sprintf(url, "ws://localhost:%d/%s", PORT_2, PREFIX_WEBSOCKET);
+  sprintf(url, "ws://localhost:%d/%s", PORT_7, PREFIX_WEBSOCKET);
 
   ulfius_init_request(&request);
   ulfius_init_response(&response);
@@ -803,11 +810,11 @@ START_TEST(test_ulfius_websocket_extension_deflate_error_params_2)
   struct _websocket_client_handler websocket_client_handler = {NULL, NULL};
   char url[64];
 
-  ck_assert_int_eq(ulfius_init_instance(&instance, PORT_3, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_init_instance(&instance, PORT_8, NULL, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", PREFIX_WEBSOCKET, NULL, 0, &callback_websocket_extension_deflate_disabled, NULL), U_OK);
   ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
 
-  sprintf(url, "ws://localhost:%d/%s", PORT_3, PREFIX_WEBSOCKET);
+  sprintf(url, "ws://localhost:%d/%s", PORT_8, PREFIX_WEBSOCKET);
 
   ulfius_init_request(&request);
   ulfius_init_response(&response);
@@ -857,7 +864,7 @@ int main(int argc, char *argv[])
   int number_failed;
   Suite *s;
   SRunner *sr;
-  y_init_logs("Ulfius", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Ulfius websocket tests");
+  //y_init_logs("Ulfius", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Ulfius websocket tests");
   ulfius_global_init();
   s = ulfius_suite();
   sr = srunner_create(s);
@@ -867,6 +874,6 @@ int main(int argc, char *argv[])
   srunner_free(sr);
   
   ulfius_global_close();
-  y_close_logs();
+  //y_close_logs();
 	return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
