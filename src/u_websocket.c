@@ -414,7 +414,11 @@ static int ulfius_read_incoming_message(struct _websocket_manager * websocket_ma
           ret = U_ERROR_DISCONNECTED;
         }
         if (!fin) {
-          (*message)->fragment_len = msg_len;
+          if (!(*message)->fragment_len) {
+            (*message)->fragment_len = msg_len;
+          } else if ((*message)->fragment_len != msg_len) {
+            ret = U_ERROR;
+          }
         }
         
         if (ret == U_OK) {
@@ -603,7 +607,7 @@ static void * ulfius_thread_websocket(void * data) {
                 message->data = data_in;
                 message->data_len = data_in_len;
               }
-              if (!message->rsv || (websocket->websocket_manager->rsv_expected & message->rsv)) {
+              if (!(websocket->websocket_manager->rsv_expected | message->rsv) || (websocket->websocket_manager->rsv_expected & message->rsv)) {
                 if (websocket->websocket_incoming_message_callback != NULL) {
                   websocket->websocket_incoming_message_callback(websocket->request, websocket->websocket_manager, message, websocket->websocket_incoming_user_data);
                 }
