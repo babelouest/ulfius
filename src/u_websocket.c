@@ -254,8 +254,7 @@ static struct _websocket_message * ulfius_build_message (const uint8_t opcode,
        opcode == U_WEBSOCKET_OPCODE_CLOSE ||
        opcode == U_WEBSOCKET_OPCODE_PING ||
        opcode == U_WEBSOCKET_OPCODE_PONG
-     ) &&
-     (data_len == 0 || data != NULL)) {
+     )) {
     new_message = o_malloc(sizeof(struct _websocket_message));
     if (new_message != NULL) {
       if (data_len) {
@@ -308,15 +307,15 @@ static int ulfius_send_websocket_message_managed(struct _websocket_manager * web
   size_t frame_len = 0;
   int ret = U_OK;
   
-  if (data != NULL || data_len == 0) {
-    if (pthread_mutex_lock(&websocket_manager->write_lock)) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error locking write lock");
-    } else {
-      message = ulfius_build_message(opcode, rsv, (websocket_manager->type == U_WEBSOCKET_CLIENT), data, data_len);
-      if (message != NULL) {
-        if (ulfius_push_websocket_message(websocket_manager->message_list_outcoming, message) != U_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error pushing new websocket message in list");
-        }
+  if (pthread_mutex_lock(&websocket_manager->write_lock)) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error locking write lock");
+  } else {
+    message = ulfius_build_message(opcode, rsv, (websocket_manager->type == U_WEBSOCKET_CLIENT), data, data_len);
+    if (message != NULL) {
+      if (ulfius_push_websocket_message(websocket_manager->message_list_outcoming, message) != U_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error pushing new websocket message in list");
+      }
+      if (data_len) {
         while (offset < data_len) {
           if (!fragment_len) {
             cur_len = data_len<(data_len - offset)?data_len:(data_len - offset);
@@ -335,14 +334,18 @@ static int ulfius_send_websocket_message_managed(struct _websocket_manager * web
           }
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_build_message");
-        ret = U_ERROR;
+        if (ulfius_build_frame(message, 0, 0, &frame, &frame_len) == U_OK) {
+          ulfius_websocket_send_frame(websocket_manager, frame, frame_len);
+        }
       }
-      pthread_mutex_unlock(&websocket_manager->write_lock);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_build_message");
+      ret = U_ERROR;
     }
-  } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_send_websocket_message_managed params");
-    ret = U_ERROR_PARAMS;
+    if (opcode == U_WEBSOCKET_OPCODE_PONG) {
+      websocket_manager->ping_received = 0;
+    }
+    pthread_mutex_unlock(&websocket_manager->write_lock);
   }
   return ret;
 }
@@ -525,15 +528,31 @@ static void * ulfius_thread_websocket(void * data) {
             if (ulfius_read_incoming_message(websocket->websocket_manager, &message) == U_OK) {
               if (message->opcode == U_WEBSOCKET_OPCODE_CLOSE) {
                 // Send close command back, then close the socket
-                if (ulfius_send_websocket_message_managed(websocket->websocket_manager, U_WEBSOCKET_OPCODE_CLOSE, 0, 0, NULL, 0) != U_OK) {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error sending close command");
+                if (message->data_len <= 125) {
+                  if (ulfius_send_websocket_message_managed(websocket->websocket_manager, U_WEBSOCKET_OPCODE_CLOSE, 0, 0, NULL, 0) != U_OK) {
+                    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error sending close command");
+                  }
                 }
                 websocket->websocket_manager->connected = 0;
               } else if (message->opcode == U_WEBSOCKET_OPCODE_PING) {
-                // Send pong command
-                if (ulfius_websocket_send_message(websocket->websocket_manager, U_WEBSOCKET_OPCODE_PONG, 0, NULL) != U_OK) {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error sending pong command");
-                  websocket->websocket_manager->connected = 0;
+                if (pthread_mutex_lock(&websocket->websocket_manager->write_lock)) {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error locking write lock");
+                } else {
+                  websocket->websocket_manager->ping_received = 1;
+                  pthread_mutex_unlock(&websocket->websocket_manager->write_lock);
+                  // Send pong command
+                  if (message->data_len <= 125) {
+                    if (ulfius_websocket_send_message(websocket->websocket_manager, U_WEBSOCKET_OPCODE_PONG, message->data_len, message->data) != U_OK) {
+                      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error sending pong command");
+                      websocket->websocket_manager->connected = 0;
+                    }
+                  } else {
+                    websocket->websocket_manager->connected = 0;
+                  }
+                }
+              } else if (message->opcode == U_WEBSOCKET_OPCODE_PONG) {
+                if (websocket->websocket_manager->ping_sent) {
+                  websocket->websocket_manager->ping_sent = 0;
                 }
               } else {
                 ret = U_OK;
@@ -547,11 +566,12 @@ static void * ulfius_thread_websocket(void * data) {
                   if ((len = pointer_list_size(websocket->websocket_manager->websocket_extension_list))) {
                     for (i=0; i<len && ret == U_OK; i++) {
                       extension = pointer_list_get_at(websocket->websocket_manager->websocket_extension_list, (len-i-1));
-                      if (extension != NULL && extension->enabled && extension->websocket_extension_message_in_perform != NULL) {
-                        if ((ret = extension->websocket_extension_message_in_perform(message->opcode, message->rsv, data_in_len, data_in, &data_out_len, &data_out, 0, extension->websocket_extension_message_out_perform_user_data, extension->context)) != U_OK) {
+                      if (extension != NULL && extension->enabled && extension->websocket_extension_message_in_perform != NULL && message->rsv & extension->rsv) {
+                        if ((ret = extension->websocket_extension_message_in_perform(message->opcode, data_in_len, data_in, &data_out_len, &data_out, 0, extension->websocket_extension_message_out_perform_user_data, extension->context)) != U_OK) {
                           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error performing websocket_extension_message_in_perform at index %zu", i);
                           ret = U_ERROR;
                         } else {
+                          message->rsv |= extension->rsv;
                           o_free(data_in);
                           data_in = NULL;
                           data_in_len = 0;
@@ -579,11 +599,16 @@ static void * ulfius_thread_websocket(void * data) {
                 message->data = data_in;
                 message->data_len = data_in_len;
               }
-              if (websocket->websocket_incoming_message_callback != NULL) {
-                websocket->websocket_incoming_message_callback(websocket->request, websocket->websocket_manager, message, websocket->websocket_incoming_user_data);
-              }
-              if (ulfius_push_websocket_message(websocket->websocket_manager->message_list_incoming, message) != U_OK) {
-                y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error pushing new websocket message in list");
+              if (!message->rsv || (websocket->websocket_manager->rsv_expected & message->rsv)) {
+                if (websocket->websocket_incoming_message_callback != NULL) {
+                  websocket->websocket_incoming_message_callback(websocket->request, websocket->websocket_manager, message, websocket->websocket_incoming_user_data);
+                }
+                if (ulfius_push_websocket_message(websocket->websocket_manager->message_list_incoming, message) != U_OK) {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error pushing new websocket message in list");
+                  websocket->websocket_manager->connected = 0;
+                }
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Unexpected rsv message");
                 websocket->websocket_manager->connected = 0;
               }
             } else {
@@ -776,16 +801,22 @@ static int ulfius_websocket_connection_handshake(struct _u_request * request, st
               if (w_extension != NULL && !w_extension->enabled) {
                 if (w_extension->websocket_extension_client_match != NULL) {
                   if (w_extension->websocket_extension_client_match(trimwhitespace(extension_list[i]), w_extension->websocket_extension_client_match_user_data, &w_extension->context) == U_OK) {
-                    w_extension->extension_server = o_strdup(extension_list[i]);
-                    w_extension->enabled = 1;
-                    extension_enabled = 1;
+                    if (!(w_extension->rsv & websocket->websocket_manager->rsv_expected)) {
+                      websocket->websocket_manager->rsv_expected |= w_extension->rsv;
+                      w_extension->extension_server = o_strdup(extension_list[i]);
+                      w_extension->enabled = 1;
+                      extension_enabled = 1;
+                    }
                     break;
                   }
                 } else {
                   if (0 == o_strcmp(trimwhitespace(extension_list[i]), w_extension->extension_client)) {
-                    w_extension->extension_server = o_strdup(extension_list[i]);
-                    w_extension->enabled = 1;
-                    extension_enabled = 1;
+                    if (!(w_extension->rsv & websocket->websocket_manager->rsv_expected)) {
+                      websocket->websocket_manager->rsv_expected |= w_extension->rsv;
+                      w_extension->extension_server = o_strdup(extension_list[i]);
+                      w_extension->enabled = 1;
+                      extension_enabled = 1;
+                    }
                     break;
                   }
                 }
@@ -1278,9 +1309,12 @@ int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websock
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error sending U_WEBSOCKET_OPCODE_CLOSE message");
       }
       websocket_manager->connected = 0;
+    } else if (opcode == U_WEBSOCKET_OPCODE_PING && websocket_manager->ping_sent) {
+      // Ignore sending a second ping before the pong has arrived
+      ret = U_OK;
     } else {
       ret = U_OK;
-      if ((data_len && (data_in = o_malloc(data_len*sizeof(char))) != NULL) || (!data_len && (data_in = NULL))) {
+      if ((data_len && (data_in = o_malloc(data_len*sizeof(char))) != NULL) || !data_len) {
         if (data != NULL) {
           memcpy(data_in, data, data_len);
         } else {
@@ -1290,10 +1324,10 @@ int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websock
         if ((len = pointer_list_size(websocket_manager->websocket_extension_list)) && (opcode == U_WEBSOCKET_OPCODE_BINARY || opcode == U_WEBSOCKET_OPCODE_TEXT)) {
           for (i=0; ret == U_OK && i<len && (extension = (struct _websocket_extension *)pointer_list_get_at(websocket_manager->websocket_extension_list, i)) != NULL; i++) {
             if (extension->enabled && extension->websocket_extension_message_out_perform != NULL) {
-              if ((ret = extension->websocket_extension_message_out_perform(opcode, &rsv, data_in_len, data_in, &data_out_len, &data_out, fragment_len, extension->websocket_extension_message_out_perform_user_data, extension->context)) != U_OK) {
+              if ((ret = extension->websocket_extension_message_out_perform(opcode, data_in_len, data_in, &data_out_len, &data_out, fragment_len, extension->websocket_extension_message_out_perform_user_data, extension->context)) != U_OK) {
                 y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error performing websocket_extension_message_out_perform at index %zu", i);
-                ret = U_ERROR;
               } else {
+                rsv |= extension->rsv;
                 o_free(data_in);
                 if ((data_in = o_malloc(data_out_len*sizeof(char))) != NULL) {
                   memcpy(data_in, data_out, data_out_len);
@@ -1471,6 +1505,8 @@ int ulfius_init_websocket_manager(struct _websocket_manager * websocket_manager)
   if (websocket_manager != NULL) {
     websocket_manager->connected = 0;
     websocket_manager->close_flag = 0;
+    websocket_manager->ping_sent = 0;
+    websocket_manager->ping_received = 0;
     websocket_manager->mhd_sock = 0;
     websocket_manager->tcp_sock = 0;
     websocket_manager->protocol = NULL;
@@ -1580,6 +1616,7 @@ int ulfius_set_websocket_response(struct _u_response * response,
     ((struct _websocket_handle *)response->websocket_handle)->websocket_incoming_user_data = websocket_incoming_user_data;
     ((struct _websocket_handle *)response->websocket_handle)->websocket_onclose_callback = websocket_onclose_callback;
     ((struct _websocket_handle *)response->websocket_handle)->websocket_onclose_user_data = websocket_onclose_user_data;
+    ((struct _websocket_handle *)response->websocket_handle)->rsv_expected = 0;
     return U_OK;
   } else {
     return U_ERROR_PARAMS;
@@ -1588,8 +1625,8 @@ int ulfius_set_websocket_response(struct _u_response * response,
 
 int ulfius_add_websocket_extension_message_perform(struct _u_response * response,
                                                    const char * extension_server,
+                                                   uint8_t rsv,
                                                    int (* websocket_extension_message_out_perform)(const uint8_t opcode,
-                                                                                                   uint8_t * rsv,
                                                                                                    const uint64_t data_len_in,
                                                                                                    const char * data_in,
                                                                                                    uint64_t * data_len_out,
@@ -1599,7 +1636,6 @@ int ulfius_add_websocket_extension_message_perform(struct _u_response * response
                                                                                                    void * context),
                                                    void * websocket_extension_message_out_perform_user_data,
                                                    int (* websocket_extension_message_in_perform)(const uint8_t opcode,
-                                                                                                  uint8_t rsv,
                                                                                                   const uint64_t data_len_in,
                                                                                                   const char * data_in,
                                                                                                   uint64_t * data_len_out,
@@ -1620,10 +1656,13 @@ int ulfius_add_websocket_extension_message_perform(struct _u_response * response
   int ret;
   struct _websocket_extension * extension;
   
-  if (response != NULL && o_strlen(extension_server) && (websocket_extension_message_out_perform != NULL || websocket_extension_message_in_perform != NULL)) {
+  if (response != NULL && o_strlen(extension_server) &&
+     (websocket_extension_message_out_perform != NULL || websocket_extension_message_in_perform != NULL) &&
+     (rsv == U_WEBSOCKET_RSV1 || rsv == U_WEBSOCKET_RSV2 || rsv == U_WEBSOCKET_RSV3)) {
     if ((extension = o_malloc(sizeof(struct _websocket_extension))) != NULL) {
       if (ulfius_init_websocket_extension(extension) == U_OK) {
         extension->extension_server = o_strdup(extension_server);
+        extension->rsv = rsv;
         extension->websocket_extension_message_out_perform = websocket_extension_message_out_perform;
         extension->websocket_extension_message_out_perform_user_data = websocket_extension_message_out_perform_user_data;
         extension->websocket_extension_message_in_perform = websocket_extension_message_in_perform;
@@ -1654,7 +1693,6 @@ int ulfius_add_websocket_extension_message_perform(struct _u_response * response
 }
 
 int websocket_extension_message_out_deflate(const uint8_t opcode,
-                                            uint8_t * rsv,
                                             const uint64_t data_len_in,
                                             const char * data_in,
                                             uint64_t * data_len_out,
@@ -1732,7 +1770,6 @@ int websocket_extension_message_out_deflate(const uint8_t opcode,
           (*(unsigned char **)data_out)[*data_len_out] = '\0';
           (*data_len_out)++;
         }
-        *rsv |= U_WEBSOCKET_RSV1;
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_message_out_deflate - Error context is NULL");
@@ -1746,7 +1783,6 @@ int websocket_extension_message_out_deflate(const uint8_t opcode,
 }
 
 int websocket_extension_message_in_inflate(const uint8_t opcode,
-                                           uint8_t rsv,
                                            const uint64_t data_len_in,
                                            const char * data_in,
                                            uint64_t * data_len_out,
@@ -1762,7 +1798,7 @@ int websocket_extension_message_in_inflate(const uint8_t opcode,
   (void)fragment_len;
   (void)user_data;
 
-  if (data_len_in && rsv&U_WEBSOCKET_RSV1) {
+  if (data_len_in) {
     if (deflate_context != NULL) {
       *data_out = NULL;
       *data_len_out = 0;
@@ -1969,7 +2005,7 @@ void websocket_extension_deflate_free_context(void * user_data, void * context) 
 }
 
 int ulfius_add_websocket_deflate_extension(struct _u_response * response) {
-  return ulfius_add_websocket_extension_message_perform(response, _U_W_EXT_DEFLATE, websocket_extension_message_out_deflate, NULL, websocket_extension_message_in_inflate, NULL, &websocket_extension_server_match_deflate, NULL, websocket_extension_deflate_free_context, NULL);
+  return ulfius_add_websocket_extension_message_perform(response, _U_W_EXT_DEFLATE, U_WEBSOCKET_RSV1, websocket_extension_message_out_deflate, NULL, websocket_extension_message_in_inflate, NULL, &websocket_extension_server_match_deflate, NULL, websocket_extension_deflate_free_context, NULL);
 }
 
 /**
@@ -2125,8 +2161,8 @@ int ulfius_set_websocket_request(struct _u_request * request,
 
 int ulfius_add_websocket_client_extension_message_perform(struct _websocket_client_handler * websocket_client_handler,
                                                           const char * extension,
+                                                          uint8_t rsv,
                                                           int (* websocket_extension_message_out_perform)(const uint8_t opcode,
-                                                                                                          uint8_t * rsv,
                                                                                                           const uint64_t data_len_in,
                                                                                                           const char * data_in,
                                                                                                           uint64_t * data_len_out,
@@ -2136,7 +2172,6 @@ int ulfius_add_websocket_client_extension_message_perform(struct _websocket_clie
                                                                                                           void * context),
                                                           void * websocket_extension_message_out_perform_user_data,
                                                           int (* websocket_extension_message_in_perform)(const uint8_t opcode,
-                                                                                                         uint8_t rsv,
                                                                                                          const uint64_t data_len_in,
                                                                                                          const char * data_in,
                                                                                                          uint64_t * data_len_out,
@@ -2155,7 +2190,9 @@ int ulfius_add_websocket_client_extension_message_perform(struct _websocket_clie
   int ret;
   struct _websocket_extension * w_extension;
   
-  if (websocket_client_handler != NULL && o_strlen(extension) && (websocket_extension_message_out_perform != NULL || websocket_extension_message_in_perform != NULL)) {
+  if (websocket_client_handler != NULL && o_strlen(extension) &&
+     (websocket_extension_message_out_perform != NULL || websocket_extension_message_in_perform != NULL) &&
+     (rsv == U_WEBSOCKET_RSV1 || rsv == U_WEBSOCKET_RSV2 || rsv == U_WEBSOCKET_RSV3)) {
     if (websocket_client_handler->websocket == NULL) {
       websocket_client_handler->websocket = o_malloc(sizeof(struct _websocket));
       if (websocket_client_handler->websocket == NULL || ulfius_init_websocket(websocket_client_handler->websocket) != U_OK) {
@@ -2166,6 +2203,7 @@ int ulfius_add_websocket_client_extension_message_perform(struct _websocket_clie
     if ((w_extension = o_malloc(sizeof(struct _websocket_extension))) != NULL) {
       if (ulfius_init_websocket_extension(w_extension) == U_OK) {
         w_extension->extension_client = o_strdup(extension);
+        w_extension->rsv = rsv;
         w_extension->websocket_extension_message_out_perform = websocket_extension_message_out_perform;
         w_extension->websocket_extension_message_out_perform_user_data = websocket_extension_message_out_perform_user_data;
         w_extension->websocket_extension_message_in_perform = websocket_extension_message_in_perform;
@@ -2436,7 +2474,7 @@ int websocket_extension_client_match_deflate(const char * extension_server, void
 }
 
 int ulfius_add_websocket_client_deflate_extension(struct _websocket_client_handler * websocket_client_handler) {
-  return ulfius_add_websocket_client_extension_message_perform(websocket_client_handler, _U_W_EXT_DEFLATE, websocket_extension_message_out_deflate, NULL, websocket_extension_message_in_inflate, NULL, websocket_extension_client_match_deflate, NULL, websocket_extension_deflate_free_context, NULL);
+  return ulfius_add_websocket_client_extension_message_perform(websocket_client_handler, _U_W_EXT_DEFLATE, U_WEBSOCKET_RSV1, websocket_extension_message_out_deflate, NULL, websocket_extension_message_in_inflate, NULL, websocket_extension_client_match_deflate, NULL, websocket_extension_deflate_free_context, NULL);
 }
 
 /**

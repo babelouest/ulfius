@@ -402,6 +402,7 @@ int ulfius_init_response(struct _u_response * response) {
     ((struct _websocket_handle *)response->websocket_handle)->websocket_incoming_user_data = NULL;
     ((struct _websocket_handle *)response->websocket_handle)->websocket_onclose_callback = NULL;
     ((struct _websocket_handle *)response->websocket_handle)->websocket_onclose_user_data = NULL;
+    ((struct _websocket_handle *)response->websocket_handle)->rsv_expected = 0;
     if ((((struct _websocket_handle *)response->websocket_handle)->websocket_extension_list = o_malloc(sizeof(struct _pointer_list))) == NULL) {
       o_free(response->websocket_handle);
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->websocket_handle->websocket_extension_list");

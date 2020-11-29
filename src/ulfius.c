@@ -618,24 +618,30 @@ static int ulfius_webservice_dispatcher (void * cls,
                         if (ws_ext != NULL && !ws_ext->enabled) {
                           if (ws_ext->websocket_extension_server_match != NULL) {
                             if (ws_ext->websocket_extension_server_match(trimwhitespace(extension_list[x]), (const char **)extension_list, &ws_ext->extension_client, ws_ext->websocket_extension_server_match_user_data, &ws_ext->context) == U_OK) {
-                              ws_ext->enabled = 1;
-                              if (extension != NULL) {
-                                extension = mstrcatf(extension, ", %s", ws_ext->extension_client);
-                              } else {
-                                extension = o_strdup(ws_ext->extension_client);
+                              if (!(ws_ext->rsv & ((struct _websocket_handle *)response->websocket_handle)->rsv_expected)) {
+                                ((struct _websocket_handle *)response->websocket_handle)->rsv_expected |= ws_ext->rsv;
+                                ws_ext->enabled = 1;
+                                if (extension != NULL) {
+                                  extension = mstrcatf(extension, ", %s", ws_ext->extension_client);
+                                } else {
+                                  extension = o_strdup(ws_ext->extension_client);
+                                }
                               }
                               break;
                             }
                           } else {
                             if (0 == o_strcmp(extension_list[x], ws_ext->extension_server)) {
-                              ws_ext->extension_client = o_strdup(extension_list[x]);
-                              ws_ext->enabled = 1;
-                              if (extension != NULL) {
-                                extension = mstrcatf(extension, ", %s", ws_ext->extension_client);
-                              } else {
-                                extension = o_strdup(ws_ext->extension_client);
+                              if (!(ws_ext->rsv & ((struct _websocket_handle *)response->websocket_handle)->rsv_expected)) {
+                                ws_ext->extension_client = o_strdup(extension_list[x]);
+                                ((struct _websocket_handle *)response->websocket_handle)->rsv_expected |= ws_ext->rsv;
+                                ws_ext->enabled = 1;
+                                if (extension != NULL) {
+                                  extension = mstrcatf(extension, ", %s", ws_ext->extension_client);
+                                } else {
+                                  extension = o_strdup(ws_ext->extension_client);
+                                }
+                                break;
                               }
-                              break;
                             }
                           }
                         }

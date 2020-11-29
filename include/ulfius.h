@@ -1481,8 +1481,8 @@ struct _websocket_deflate_context {
 struct _websocket_extension {
   char  * extension_server;
   char  * extension_client;
+  uint8_t rsv;
   int  (* websocket_extension_message_out_perform)(const uint8_t opcode,
-                                                   uint8_t * rsv,
                                                    const uint64_t data_len_in,
                                                    const char * data_in,
                                                    uint64_t * data_len_out,
@@ -1492,7 +1492,6 @@ struct _websocket_extension {
                                                    void * context);
   void  * websocket_extension_message_out_perform_user_data;
   int  (* websocket_extension_message_in_perform)(const uint8_t opcode,
-                                                  uint8_t rsv,
                                                   const uint64_t data_len_in,
                                                   const char * data_in,
                                                   uint64_t * data_len_out,
@@ -1528,6 +1527,8 @@ struct _websocket_manager {
   struct _websocket_message_list * message_list_incoming; /* !< list of incoming messages */
   struct _websocket_message_list * message_list_outcoming; /* !< list of outcoming messages */
   int                              connected; /* !< flag to know if the websocket is connected or not */
+  int                              ping_sent; /* !< flag to know if the websocket has sent a ping frame or not, before receiving a pong */
+  int                              ping_received; /* !< flag to know if the websocket has received a ping frame or not, before sending a pong */
   int                              close_flag; /* !< flag to set before closing a websocket */
   MHD_socket                       mhd_sock; /* !< reference to libmicrohttpd's socket for websocket server */
   int                              tcp_sock; /* !< tcp socket for websocket client */
@@ -1542,6 +1543,7 @@ struct _websocket_manager {
   pthread_cond_t                   status_cond; /* !< condition to broadcast new status */
   struct pollfd                    fds;
   int                              type;
+  int                              rsv_expected;
   struct _pointer_list           * websocket_extension_list;
 };
 
@@ -1701,7 +1703,8 @@ int ulfius_set_websocket_response(struct _u_response * response,
 /**
  * Adds a set of callback functions to perform a message transformation via an extension
  * @param response struct _u_response to send back the websocket initialization, mandatory
- * @param extension the expected extension value
+ * @param extension_server the expected extension value
+ * @param rsv the expected rsv flag attached to this extension
  * @param websocket_extension_message_out_perform a callback function called before a message is sent to the server
  * @param websocket_extension_message_out_perform_user_data a user-defined pointer passed to websocket_extension_message_out_perform
  * @param websocket_extension_message_in_perform a callback function called after a message is received from the server
@@ -1715,8 +1718,8 @@ int ulfius_set_websocket_response(struct _u_response * response,
  */
 int ulfius_add_websocket_extension_message_perform(struct _u_response * response,
                                                    const char * extension_server,
+                                                   uint8_t rsv,
                                                    int (* websocket_extension_message_out_perform)(const uint8_t opcode,
-                                                                                                   uint8_t * rsv,
                                                                                                    const uint64_t data_len_in,
                                                                                                    const char * data_in,
                                                                                                    uint64_t * data_len_out,
@@ -1726,7 +1729,6 @@ int ulfius_add_websocket_extension_message_perform(struct _u_response * response
                                                                                                    void * context),
                                                    void * websocket_extension_message_out_perform_user_data,
                                                    int (* websocket_extension_message_in_perform)(const uint8_t opcode,
-                                                                                                  uint8_t rsv,
                                                                                                   const uint64_t data_len_in,
                                                                                                   const char * data_in,
                                                                                                   uint64_t * data_len_out,
@@ -1750,7 +1752,6 @@ int ulfius_add_websocket_extension_message_perform(struct _u_response * response
  * ulfius_add_websocket_deflate_extension and ulfius_add_websocket_client_deflate_extension
  * will compress the message in data_in and set the result in *data_out
  * @param opcode the opcode of the message to send
- * @param rsv the extension flags
  * @param data_len_in length of data_in
  * @param data_in payload data to transform
  * @param data_len_out length of *data_out to be set by the function
@@ -1761,7 +1762,6 @@ int ulfius_add_websocket_extension_message_perform(struct _u_response * response
  * @return U_OK on success
  */
 int websocket_extension_message_out_deflate(const uint8_t opcode,
-                                            uint8_t * rsv,
                                             const uint64_t data_len_in,
                                             const char * data_in,
                                             uint64_t * data_len_out,
@@ -1774,7 +1774,6 @@ int websocket_extension_message_out_deflate(const uint8_t opcode,
  * websocket_extension_message_in_perform used in
  * ulfius_add_websocket_deflate_extension and ulfius_add_websocket_client_deflate_extension
  * @param opcode the opcode of the message to send
- * @param rsv the extension flags
  * @param data_len_in length of data_in
  * @param data_in payload data to transform
  * @param data_len_out length of *data_out to be set by the function
@@ -1785,7 +1784,6 @@ int websocket_extension_message_out_deflate(const uint8_t opcode,
  * @return U_OK on success
  */
 int websocket_extension_message_in_inflate(const uint8_t opcode,
-                                           uint8_t rsv,
                                            const uint64_t data_len_in,
                                            const char * data_in,
                                            uint64_t * data_len_out,
@@ -1904,8 +1902,8 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
  */
 int ulfius_add_websocket_client_extension_message_perform(struct _websocket_client_handler * websocket_client_handler,
                                                           const char * extension,
+                                                          uint8_t rsv,
                                                           int (* websocket_extension_message_out_perform)(const uint8_t opcode,
-                                                                                                          uint8_t * rsv,
                                                                                                           const uint64_t data_len_in,
                                                                                                           const char * data_in,
                                                                                                           uint64_t * data_len_out,
@@ -1915,7 +1913,6 @@ int ulfius_add_websocket_client_extension_message_perform(struct _websocket_clie
                                                                                                           void * context),
                                                           void * websocket_extension_message_out_perform_user_data,
                                                           int (* websocket_extension_message_in_perform)(const uint8_t opcode,
-                                                                                                         uint8_t rsv,
                                                                                                          const uint64_t data_len_in,
                                                                                                          const char * data_in,
                                                                                                          uint64_t * data_len_out,
@@ -2039,6 +2036,7 @@ struct _websocket_handle {
                                                       struct _websocket_manager * websocket_manager,
                                                       void * websocket_onclose_user_data);
   void                 * websocket_onclose_user_data; /* !< user-defined data that will be handled to websocket_onclose_callback */
+  int                    rsv_expected;
   struct _pointer_list * websocket_extension_list;
 };
 
