@@ -116,19 +116,20 @@ void websocket_incoming_extension_callback (const struct _u_request * request,
                                             void * user_data) {
   int * rsv = (int *)user_data;
   
-  y_log_message(Y_LOG_LEVEL_DEBUG, "message %.*s", (size_t)last_message->data_len, last_message->data);
-  ck_assert_ptr_ne(NULL, o_strnstr(last_message->data, MESSAGE, last_message->data_len));
-  if ((*rsv)&U_WEBSOCKET_RSV1) {
-    ck_assert_int_ne(last_message->rsv&U_WEBSOCKET_RSV1, 0);
-    ck_assert_ptr_ne(NULL, o_strnstr(last_message->data, MESSAGE_EXT1, last_message->data_len));
-  }
-  if ((*rsv)&U_WEBSOCKET_RSV2) {
-    ck_assert_int_ne(last_message->rsv&U_WEBSOCKET_RSV2, 0);
-    ck_assert_ptr_ne(NULL, o_strnstr(last_message->data, MESSAGE_EXT2, last_message->data_len));
-  }
-  if ((*rsv)&U_WEBSOCKET_RSV3) {
-    ck_assert_int_ne(last_message->rsv&U_WEBSOCKET_RSV3, 0);
-    ck_assert_ptr_ne(NULL, o_strnstr(last_message->data, MESSAGE_EXT3, last_message->data_len));
+  if (last_message->opcode == U_WEBSOCKET_OPCODE_TEXT || last_message->opcode == U_WEBSOCKET_OPCODE_BINARY) {
+    ck_assert_ptr_ne(NULL, o_strnstr(last_message->data, MESSAGE, last_message->data_len));
+    if ((*rsv)&U_WEBSOCKET_RSV1) {
+      ck_assert_int_ne(last_message->rsv&U_WEBSOCKET_RSV1, 0);
+      ck_assert_ptr_ne(NULL, o_strnstr(last_message->data, MESSAGE_EXT1, last_message->data_len));
+    }
+    if ((*rsv)&U_WEBSOCKET_RSV2) {
+      ck_assert_int_ne(last_message->rsv&U_WEBSOCKET_RSV2, 0);
+      ck_assert_ptr_ne(NULL, o_strnstr(last_message->data, MESSAGE_EXT2, last_message->data_len));
+    }
+    if ((*rsv)&U_WEBSOCKET_RSV3) {
+      ck_assert_int_ne(last_message->rsv&U_WEBSOCKET_RSV3, 0);
+      ck_assert_ptr_ne(NULL, o_strnstr(last_message->data, MESSAGE_EXT3, last_message->data_len));
+    }
   }
 }
 
@@ -137,7 +138,9 @@ void websocket_incoming_extension_deflate_client_callback (const struct _u_reque
                                                     const struct _websocket_message * last_message,
                                                     void * user_data) {
   ck_assert_int_eq(0, o_strncmp(last_message->data, MESSAGE_SERVER, last_message->data_len));
-  ck_assert_int_ne(last_message->rsv&U_WEBSOCKET_RSV1, 0);
+  if (last_message->opcode == U_WEBSOCKET_OPCODE_TEXT || last_message->opcode == U_WEBSOCKET_OPCODE_BINARY) {
+    ck_assert_int_ne(last_message->rsv&U_WEBSOCKET_RSV1, 0);
+  }
 }
 
 void websocket_incoming_extension_deflate_client_callback_disabled (const struct _u_request * request,
@@ -153,7 +156,9 @@ void websocket_incoming_extension_deflate_server_callback (const struct _u_reque
                                                     const struct _websocket_message * last_message,
                                                     void * user_data) {
   ck_assert_int_eq(0, o_strncmp(last_message->data, MESSAGE_CLIENT, last_message->data_len));
-  ck_assert_int_ne(last_message->rsv&U_WEBSOCKET_RSV1, 0);
+  if (last_message->opcode == U_WEBSOCKET_OPCODE_TEXT || last_message->opcode == U_WEBSOCKET_OPCODE_BINARY) {
+    ck_assert_int_ne(last_message->rsv&U_WEBSOCKET_RSV1, 0);
+  }
 }
 
 void websocket_incoming_extension_deflate_server_callback_disabled (const struct _u_request * request,
