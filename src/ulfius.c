@@ -667,6 +667,7 @@ static int ulfius_webservice_dispatcher (void * cls,
                       websocket->websocket_incoming_user_data = ((struct _websocket_handle *)response->websocket_handle)->websocket_incoming_user_data;
                       websocket->websocket_onclose_callback = ((struct _websocket_handle *)response->websocket_handle)->websocket_onclose_callback;
                       websocket->websocket_onclose_user_data = ((struct _websocket_handle *)response->websocket_handle)->websocket_onclose_user_data;
+                      websocket->websocket_manager->rsv_expected = ((struct _websocket_handle *)response->websocket_handle)->rsv_expected;
                       websocket->websocket_manager->websocket_extension_list = ((struct _websocket_handle *)response->websocket_handle)->websocket_extension_list;
                       ((struct _websocket_handle *)response->websocket_handle)->websocket_extension_list = NULL;
                       mhd_response = MHD_create_response_for_upgrade(ulfius_start_websocket_cb, websocket);
