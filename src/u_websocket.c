@@ -334,6 +334,7 @@ static int ulfius_send_websocket_message_managed(struct _websocket_manager * web
             frame = NULL;
             frame_len = 0;
           }
+          message->opcode = U_WEBSOCKET_OPCODE_CONTINUE;
         }
       } else {
         if (ulfius_build_frame(message, 0, 0, &frame, &frame_len) == U_OK) {
@@ -370,6 +371,7 @@ static int ulfius_read_incoming_message(struct _websocket_manager * websocket_ma
     (*message)->has_mask = 0;
     (*message)->data = NULL;
     (*message)->fragment_len = 0;
+    (*message)->rsv = 0;
     time(&(*message)->datestamp);
     
     do {
@@ -378,8 +380,8 @@ static int ulfius_read_incoming_message(struct _websocket_manager * websocket_ma
         if ((len = read_data_from_socket(websocket_manager, header, 2)) == 2) {
           if (header[0] & 0x0F) {
             (*message)->opcode = header[0] & 0x0F;
+            (*message)->rsv = header[0] & 0x70;
           }
-          (*message)->rsv = header[0] & 0x70;
           fin = (header[0] & U_WEBSOCKET_BIT_FIN);
           if ((header[1] & U_WEBSOCKET_LEN_MASK) <= 125) {
             msg_len = (header[1] & U_WEBSOCKET_LEN_MASK);
@@ -448,7 +450,7 @@ static int ulfius_read_incoming_message(struct _websocket_manager * websocket_ma
             }
           }
         }
-        if (ret == U_OK) {
+        if (ret == U_OK && msg_len) {
           payload_data = o_malloc(msg_len*sizeof(uint8_t));
           if (payload_data != NULL) {
             len = read_data_from_socket(websocket_manager, payload_data, msg_len);
@@ -625,7 +627,7 @@ static void * ulfius_thread_websocket(void * data) {
                 message->data = data_in;
                 message->data_len = data_in_len;
               }
-              if (!(websocket->websocket_manager->rsv_expected | message->rsv) || (websocket->websocket_manager->rsv_expected & message->rsv)) {
+              if (!message->rsv || (websocket->websocket_manager->rsv_expected & message->rsv)) {
                 if (websocket->websocket_incoming_message_callback != NULL) {
                   websocket->websocket_incoming_message_callback(websocket->request, websocket->websocket_manager, message, websocket->websocket_incoming_user_data);
                 }
