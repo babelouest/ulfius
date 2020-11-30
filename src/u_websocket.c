@@ -340,6 +340,7 @@ static int ulfius_send_websocket_message_managed(struct _websocket_manager * web
         if (ulfius_build_frame(message, 0, 0, &frame, &frame_len) == U_OK) {
           ulfius_websocket_send_frame(websocket_manager, frame, frame_len);
         }
+        o_free(frame);
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_build_message");
@@ -360,7 +361,7 @@ static int ulfius_send_websocket_message_managed(struct _websocket_manager * web
  */
 static int ulfius_read_incoming_message(struct _websocket_manager * websocket_manager, struct _websocket_message ** message) {
   int ret = U_OK, fin = 0, i;
-  uint8_t header[2] = {0}, payload_len[8] = {0}, masking_key[4] = {0};
+  uint8_t header[2] = {0}, payload_len[8] = {0}, masking_key[4] = {0}, opcode = 0;
   uint8_t * payload_data = NULL;
   size_t msg_len = 0;
   ssize_t len = 0;
@@ -371,6 +372,7 @@ static int ulfius_read_incoming_message(struct _websocket_manager * websocket_ma
     (*message)->has_mask = 0;
     (*message)->data = NULL;
     (*message)->fragment_len = 0;
+    (*message)->opcode = 0;
     (*message)->rsv = 0;
     time(&(*message)->datestamp);
     
@@ -378,8 +380,9 @@ static int ulfius_read_incoming_message(struct _websocket_manager * websocket_ma
       if (ret == U_OK) {
         // Read header
         if ((len = read_data_from_socket(websocket_manager, header, 2)) == 2) {
-          if (header[0] & 0x0F) {
-            (*message)->opcode = header[0] & 0x0F;
+          opcode = header[0] & 0x0F;
+          if (opcode) {
+            (*message)->opcode = opcode;
             (*message)->rsv = header[0] & 0x70;
           }
           fin = (header[0] & U_WEBSOCKET_BIT_FIN);
@@ -1245,9 +1248,15 @@ int ulfius_instance_add_websocket_active(struct _u_instance * instance, struct _
   if (instance != NULL && websocket != NULL) {
     ((struct _websocket_handler *)instance->websocket_handler)->websocket_active = o_realloc(((struct _websocket_handler *)instance->websocket_handler)->websocket_active, (((struct _websocket_handler *)instance->websocket_handler)->nb_websocket_active+1)*sizeof(struct _websocket *));
     if (((struct _websocket_handler *)instance->websocket_handler)->websocket_active != NULL) {
-      ((struct _websocket_handler *)instance->websocket_handler)->websocket_active[((struct _websocket_handler *)instance->websocket_handler)->nb_websocket_active] = websocket;
-      ((struct _websocket_handler *)instance->websocket_handler)->nb_websocket_active++;
-      return U_OK;
+      if (pthread_mutex_lock(&((struct _websocket_handler *)instance->websocket_handler)->websocket_active_lock)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error locking websocket_active_lock");
+        return U_ERROR;
+      } else {
+        ((struct _websocket_handler *)instance->websocket_handler)->websocket_active[((struct _websocket_handler *)instance->websocket_handler)->nb_websocket_active] = websocket;
+        ((struct _websocket_handler *)instance->websocket_handler)->nb_websocket_active++;
+        pthread_mutex_unlock(&((struct _websocket_handler *)instance->websocket_handler)->websocket_active_lock);
+        return U_OK;
+      }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for instance->websocket_handler->websocket_active");
       return U_ERROR_MEMORY;
@@ -1262,33 +1271,41 @@ int ulfius_instance_add_websocket_active(struct _u_instance * instance, struct _
  */
 int ulfius_instance_remove_websocket_active(struct _u_instance * instance, struct _websocket * websocket) {
   size_t i, j;
+  int ret;
   if (instance != NULL && ((struct _websocket_handler *)instance->websocket_handler)->websocket_active != NULL && websocket != NULL) {
-    for (i=0; i<((struct _websocket_handler *)instance->websocket_handler)->nb_websocket_active; i++) {
-      if (((struct _websocket_handler *)instance->websocket_handler)->websocket_active[i] == websocket) {
-        if (((struct _websocket_handler *)instance->websocket_handler)->nb_websocket_active > 1) {
-          for (j=i; j<((struct _websocket_handler *)instance->websocket_handler)->nb_websocket_active-1; j++) {
-            ((struct _websocket_handler *)instance->websocket_handler)->websocket_active[j] = ((struct _websocket_handler *)instance->websocket_handler)->websocket_active[j+1];
+    if (pthread_mutex_lock(&((struct _websocket_handler *)instance->websocket_handler)->websocket_active_lock)) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error locking websocket_active_lock");
+      ret = U_ERROR;
+    } else {
+      ret = U_ERROR_NOT_FOUND;
+      for (i=0; i<((struct _websocket_handler *)instance->websocket_handler)->nb_websocket_active && ret == U_ERROR_NOT_FOUND; i++) {
+        if (((struct _websocket_handler *)instance->websocket_handler)->websocket_active[i] == websocket) {
+          if (((struct _websocket_handler *)instance->websocket_handler)->nb_websocket_active > 1) {
+            for (j=i; j<((struct _websocket_handler *)instance->websocket_handler)->nb_websocket_active-1; j++) {
+              ((struct _websocket_handler *)instance->websocket_handler)->websocket_active[j] = ((struct _websocket_handler *)instance->websocket_handler)->websocket_active[j+1];
+            }
+            ((struct _websocket_handler *)instance->websocket_handler)->websocket_active = o_realloc(((struct _websocket_handler *)instance->websocket_handler)->websocket_active, (((struct _websocket_handler *)instance->websocket_handler)->nb_websocket_active-1)*sizeof(struct _websocket *));
+            if (((struct _websocket_handler *)instance->websocket_handler)->websocket_active == NULL) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for instance->websocket_active");
+              ret = U_ERROR_MEMORY;
+            }
+          } else {
+            o_free(((struct _websocket_handler *)instance->websocket_handler)->websocket_active);
+            ((struct _websocket_handler *)instance->websocket_handler)->websocket_active = NULL;
           }
-          ((struct _websocket_handler *)instance->websocket_handler)->websocket_active = o_realloc(((struct _websocket_handler *)instance->websocket_handler)->websocket_active, (((struct _websocket_handler *)instance->websocket_handler)->nb_websocket_active-1)*sizeof(struct _websocket *));
-          if (((struct _websocket_handler *)instance->websocket_handler)->websocket_active == NULL) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for instance->websocket_active");
-            return U_ERROR_MEMORY;
-          }
-        } else {
-          o_free(((struct _websocket_handler *)instance->websocket_handler)->websocket_active);
-          ((struct _websocket_handler *)instance->websocket_handler)->websocket_active = NULL;
+          ((struct _websocket_handler *)instance->websocket_handler)->nb_websocket_active--;
+          pthread_mutex_lock(&((struct _websocket_handler *)instance->websocket_handler)->websocket_close_lock);
+          pthread_cond_broadcast(&((struct _websocket_handler *)instance->websocket_handler)->websocket_close_cond);
+          pthread_mutex_unlock(&((struct _websocket_handler *)instance->websocket_handler)->websocket_close_lock);
+          ret = U_OK;
         }
-        ((struct _websocket_handler *)instance->websocket_handler)->nb_websocket_active--;
-        pthread_mutex_lock(&((struct _websocket_handler *)instance->websocket_handler)->websocket_close_lock);
-        pthread_cond_broadcast(&((struct _websocket_handler *)instance->websocket_handler)->websocket_close_cond);
-        pthread_mutex_unlock(&((struct _websocket_handler *)instance->websocket_handler)->websocket_close_lock);
-        return U_OK;
       }
+      pthread_mutex_unlock(&((struct _websocket_handler *)instance->websocket_handler)->websocket_active_lock);
     }
-    return U_ERROR_NOT_FOUND;
   } else {
-    return U_ERROR_PARAMS;
+    ret = U_ERROR_PARAMS;
   }
+  return ret;
 }
 
 /********************************/
@@ -1539,6 +1556,7 @@ int ulfius_init_websocket_manager(struct _websocket_manager * websocket_manager)
     websocket_manager->tcp_sock = 0;
     websocket_manager->protocol = NULL;
     websocket_manager->extensions = NULL;
+    websocket_manager->rsv_expected = 0;
     pthread_mutexattr_init ( &mutexattr );
     pthread_mutexattr_settype( &mutexattr, PTHREAD_MUTEX_RECURSIVE );
     if (pthread_mutex_init(&(websocket_manager->read_lock), &mutexattr) != 0 || pthread_mutex_init(&(websocket_manager->write_lock), &mutexattr) != 0) {

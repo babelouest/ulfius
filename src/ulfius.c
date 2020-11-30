@@ -1586,19 +1586,26 @@ void ulfius_clean_instance(struct _u_instance * u_instance) {
 #ifndef U_DISABLE_WEBSOCKET
     /* ulfius_clean_instance might be called without websocket_handler being initialized */
     if ((struct _websocket_handler *)u_instance->websocket_handler) {
-        if (((struct _websocket_handler *)u_instance->websocket_handler)->pthread_init && 
-            (pthread_mutex_destroy(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_lock) ||
-            pthread_cond_destroy(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_cond))) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error destroying websocket_close_lock or websocket_close_cond");
-        }
-        o_free(u_instance->websocket_handler);
-        u_instance->websocket_handler = NULL;
+      if (((struct _websocket_handler *)u_instance->websocket_handler)->pthread_init && 
+          (pthread_mutex_destroy(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_lock) ||
+          pthread_cond_destroy(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_cond) ||
+          pthread_mutex_destroy(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_active_lock))) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error destroying websocket_close_lock or websocket_close_cond or websocket_active_lock");
+      }
+      o_free(u_instance->websocket_handler);
+      u_instance->websocket_handler = NULL;
     }
 #endif
   }
 }
 
-static int internal_ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, struct sockaddr_in * bind_address4, struct sockaddr_in6 * bind_address6, unsigned short network_type, const char * default_auth_realm) {
+static int internal_ulfius_init_instance(struct _u_instance * u_instance,
+                                         unsigned int port,
+                                         struct sockaddr_in * bind_address4,
+                                         struct sockaddr_in6 * bind_address6,
+                                         unsigned short network_type,
+                                         const char * default_auth_realm) {
+  pthread_mutexattr_t mutexattr;
 #if MHD_VERSION >= 0x00095208
   if (u_instance != NULL && port > 0 && port < 65536 && (bind_address4 == NULL || bind_address6 == NULL) && (network_type & U_USE_ALL)) {
 #else
@@ -1641,6 +1648,14 @@ UNUSED(network_type);
       ulfius_clean_instance(u_instance);
       return U_ERROR_MEMORY;
     }
+    pthread_mutexattr_init ( &mutexattr );
+    pthread_mutexattr_settype( &mutexattr, PTHREAD_MUTEX_RECURSIVE );
+    if (pthread_mutex_init(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_active_lock, &mutexattr) != 0) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error initializing websocket_active_lock");
+      ulfius_clean_instance(u_instance);
+      return U_ERROR;
+    }
+    pthread_mutexattr_destroy(&mutexattr);
     ((struct _websocket_handler *)u_instance->websocket_handler)->pthread_init = 0;
     ((struct _websocket_handler *)u_instance->websocket_handler)->nb_websocket_active = 0;
     ((struct _websocket_handler *)u_instance->websocket_handler)->websocket_active = NULL;

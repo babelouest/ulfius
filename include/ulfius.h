@@ -2045,6 +2045,7 @@ struct _websocket_handle {
  * @struct _websocket_handler handler for the websockets list
  */
 struct _websocket_handler {
+  pthread_mutex_t               websocket_active_lock; /* !< mutex to change nb_websocket_active value */
   size_t                        nb_websocket_active; /* !< number of active websocket */
   struct _websocket          ** websocket_active; /* !< array of active websocket */
   pthread_mutex_t               websocket_close_lock; /* !< mutex to broadcast close signal */
