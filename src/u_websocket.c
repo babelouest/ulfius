@@ -365,6 +365,7 @@ static int ulfius_merge_fragmented_message(struct _websocket_message * message_o
         if ((message_orig->data = o_realloc(message_orig->data, message_orig->data_len+message_next_fragment->data_len)) != NULL) {
           memcpy(message_orig->data+message_orig->data_len, message_next_fragment->data, message_next_fragment->data_len);
           message_orig->data_len += message_next_fragment->data_len;
+          ret = U_OK;
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error reallocating resources for data");
           ret = U_ERROR_PARAMS;
