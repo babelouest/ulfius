@@ -1259,8 +1259,13 @@ int ulfius_stop_framework(struct _u_instance * u_instance) {
 #ifndef U_DISABLE_WEBSOCKET
     int i;
     // Loop in all active websockets and send close signal
-    for (i=((struct _websocket_handler *)u_instance->websocket_handler)->nb_websocket_active-1; i>=0; i--) {
-      ((struct _websocket_handler *)u_instance->websocket_handler)->websocket_active[i]->websocket_manager->close_flag = 1;
+    if (pthread_mutex_lock(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_active_lock)) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error locking websocket read lock messages");
+    } else {
+      for (i=((struct _websocket_handler *)u_instance->websocket_handler)->nb_websocket_active-1; i>=0; i--) {
+        ((struct _websocket_handler *)u_instance->websocket_handler)->websocket_active[i]->websocket_manager->close_flag = 1;
+      }
+      pthread_mutex_unlock(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_active_lock);
     }
     pthread_mutex_lock(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_lock);
     while (((struct _websocket_handler *)u_instance->websocket_handler)->nb_websocket_active > 0) {

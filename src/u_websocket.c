@@ -504,7 +504,12 @@ static void * ulfius_thread_websocket_manager_run(void * args) {
     
     // Send close message if the websocket is still open
     if (websocket->websocket_manager->connected) {
-      websocket->websocket_manager->close_flag = 1;
+      if (pthread_mutex_lock(&websocket->websocket_manager->read_lock)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error locking websocket read lock messages");
+      } else {
+        websocket->websocket_manager->close_flag = 1;
+        pthread_mutex_unlock(&websocket->websocket_manager->read_lock);
+      }
     }
   }
   return NULL;
@@ -561,7 +566,6 @@ static void * ulfius_thread_websocket(void * data) {
                   y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error locking write lock");
                 } else {
                   websocket->websocket_manager->ping_received = 1;
-                  pthread_mutex_unlock(&websocket->websocket_manager->write_lock);
                   // Send pong command
                   if (message->data_len <= 125) {
                     if (ulfius_websocket_send_message(websocket->websocket_manager, U_WEBSOCKET_OPCODE_PONG, message->data_len, message->data) != U_OK) {
@@ -571,6 +575,7 @@ static void * ulfius_thread_websocket(void * data) {
                   } else {
                     websocket->websocket_manager->connected = 0;
                   }
+                  pthread_mutex_unlock(&websocket->websocket_manager->write_lock);
                 }
               } else if (message->opcode == U_WEBSOCKET_OPCODE_PONG) {
                 if (websocket->websocket_manager->ping_sent) {
@@ -1272,7 +1277,7 @@ int ulfius_instance_add_websocket_active(struct _u_instance * instance, struct _
 int ulfius_instance_remove_websocket_active(struct _u_instance * instance, struct _websocket * websocket) {
   size_t i, j;
   int ret;
-  if (instance != NULL && ((struct _websocket_handler *)instance->websocket_handler)->websocket_active != NULL && websocket != NULL) {
+  if (instance != NULL && instance->websocket_handler != NULL && ((struct _websocket_handler *)instance->websocket_handler)->websocket_active != NULL && websocket != NULL) {
     if (pthread_mutex_lock(&((struct _websocket_handler *)instance->websocket_handler)->websocket_active_lock)) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error locking websocket_active_lock");
       ret = U_ERROR;
@@ -2064,6 +2069,7 @@ int ulfius_add_websocket_deflate_extension(struct _u_response * response) {
  */
 int ulfius_websocket_send_close_signal(struct _websocket_manager * websocket_manager) {
   if (websocket_manager != NULL) {
+    
     websocket_manager->close_flag = 1;
     return U_OK;
   } else {
