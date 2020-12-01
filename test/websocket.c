@@ -609,7 +609,9 @@ START_TEST(test_ulfius_websocket_client)
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
   
+  usleep(50);
   ck_assert_int_eq(ulfius_stop_framework(&instance), U_OK);
+
   ulfius_clean_instance(&instance);
   o_free(allocated_data);
 }
@@ -655,7 +657,9 @@ START_TEST(test_ulfius_websocket_client_no_onclose)
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
   
+  usleep(50);
   ck_assert_int_eq(ulfius_stop_framework(&instance), U_OK);
+
   ulfius_clean_instance(&instance);
 }
 END_TEST
@@ -684,6 +688,8 @@ START_TEST(test_ulfius_websocket_extension_no_match_function)
   ck_assert_int_eq(ulfius_websocket_client_connection_wait_close(&websocket_client_handler, 0), U_WEBSOCKET_STATUS_CLOSE);
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
+  
+  usleep(50);
   ck_assert_int_eq(ulfius_stop_framework(&instance), U_OK);
   
   ulfius_clean_instance(&instance);
@@ -714,6 +720,8 @@ START_TEST(test_ulfius_websocket_extension_match_function)
   ck_assert_int_eq(ulfius_websocket_client_connection_wait_close(&websocket_client_handler, 0), U_WEBSOCKET_STATUS_CLOSE);
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
+  
+  usleep(50);
   ck_assert_int_eq(ulfius_stop_framework(&instance), U_OK);
 
   ulfius_clean_instance(&instance);
@@ -743,6 +751,8 @@ START_TEST(test_ulfius_websocket_extension_deflate)
   ck_assert_int_eq(ulfius_websocket_client_connection_wait_close(&websocket_client_handler, 0), U_WEBSOCKET_STATUS_CLOSE);
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
+  
+  usleep(50);
   ck_assert_int_eq(ulfius_stop_framework(&instance), U_OK);
 
   ulfius_clean_instance(&instance);
@@ -772,6 +782,8 @@ START_TEST(test_ulfius_websocket_extension_deflate_with_all_params)
   ck_assert_int_eq(ulfius_websocket_client_connection_wait_close(&websocket_client_handler, 0), U_WEBSOCKET_STATUS_CLOSE);
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
+  
+  usleep(50);
   ck_assert_int_eq(ulfius_stop_framework(&instance), U_OK);
 
   ulfius_clean_instance(&instance);
@@ -801,6 +813,7 @@ START_TEST(test_ulfius_websocket_extension_deflate_error_params)
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
   
+  usleep(50);
   ck_assert_int_eq(ulfius_stop_framework(&instance), U_OK);
 
   ulfius_clean_instance(&instance);
@@ -839,7 +852,7 @@ int main(int argc, char *argv[])
   int number_failed;
   Suite *s;
   SRunner *sr;
-  y_init_logs("Ulfius", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Ulfius websocket tests");
+  //y_init_logs("Ulfius", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Ulfius websocket tests");
   ulfius_global_init();
   s = ulfius_suite();
   sr = srunner_create(s);
@@ -849,6 +862,6 @@ int main(int argc, char *argv[])
   srunner_free(sr);
   
   ulfius_global_close();
-  y_close_logs();
+  //y_close_logs();
 	return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
