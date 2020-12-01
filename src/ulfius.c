@@ -1610,7 +1610,9 @@ static int internal_ulfius_init_instance(struct _u_instance * u_instance,
                                          struct sockaddr_in6 * bind_address6,
                                          unsigned short network_type,
                                          const char * default_auth_realm) {
+#ifndef U_DISABLE_WEBSOCKET
   pthread_mutexattr_t mutexattr;
+#endif
 #if MHD_VERSION >= 0x00095208
   if (u_instance != NULL && port > 0 && port < 65536 && (bind_address4 == NULL || bind_address6 == NULL) && (network_type & U_USE_ALL)) {
 #else
