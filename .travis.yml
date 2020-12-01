@@ -12,7 +12,7 @@ jobs:
   include:
     - env: LABEL=gcc
       compiler: gcc
-    - env: LABEL=cland
+    - env: LABEL=clang
       compiler: clang
     - env: LABEL=cppcheck
       script:
@@ -21,7 +21,7 @@ jobs:
     - env: LABEL=gcc
       arch: ppc64le
       compiler: gcc
-    - env: LABEL=cland
+    - env: LABEL=clang
       arch: ppc64le
       compiler: clang
     - env: LABEL=cppcheck
