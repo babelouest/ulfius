@@ -394,4 +394,4 @@ jobs:
 
         # run tests with Makefile
         sudo ldconfig
-        make clean debug check
+        make clean debug
