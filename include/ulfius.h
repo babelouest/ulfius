@@ -1528,7 +1528,6 @@ struct _websocket_manager {
   struct _websocket_message_list * message_list_outcoming; /* !< list of outcoming messages */
   int                              connected; /* !< flag to know if the websocket is connected or not */
   int                              ping_sent; /* !< flag to know if the websocket has sent a ping frame or not, before receiving a pong */
-  int                              ping_received; /* !< flag to know if the websocket has received a ping frame or not, before sending a pong */
   int                              close_flag; /* !< flag to set before closing a websocket */
   MHD_socket                       mhd_sock; /* !< reference to libmicrohttpd's socket for websocket server */
   int                              tcp_sock; /* !< tcp socket for websocket client */
@@ -1561,6 +1560,7 @@ struct _websocket_message {
   size_t  data_len; /* !< length of the data */
   char *  data; /* !< message data */
   size_t  fragment_len; /* !< length of the fragment, 0 if not fragmented */
+  uint8_t fin;  /* !< flag fin (end of fragmented message) */
 };
 
 /**
