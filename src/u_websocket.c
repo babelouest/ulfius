@@ -538,6 +538,67 @@ static void * ulfius_thread_websocket_manager_run(void * args) {
   return NULL;
 }
 
+static int ulfius_websocket_extension_message_in_perform_apply(struct _websocket * websocket, struct _websocket_message * message) {
+  uint64_t data_out_len = 0, data_in_len = 0;
+  char * data_out = NULL, * data_in = NULL;
+  int ret = U_OK;
+  size_t len, i;
+  struct _websocket_extension * extension;
+  
+  if ((len = pointer_list_size(websocket->websocket_manager->websocket_extension_list))) {
+    if ((message->data_len && (data_in = o_malloc(message->data_len*sizeof(char))) != NULL) || (!message->data_len && (data_in = NULL))) {
+      if (message->data != NULL) {
+        memcpy(data_in, message->data, message->data_len);
+      } else {
+        memset(data_in, 0, message->data_len);
+      }
+      data_in_len = message->data_len;
+      for (i=0; i<len && ret == U_OK; i++) {
+        extension = pointer_list_get_at(websocket->websocket_manager->websocket_extension_list, (len-i-1));
+        if (extension != NULL &&
+            extension->enabled &&
+            extension->websocket_extension_message_in_perform != NULL &&
+            (message->rsv & extension->rsv)) {
+          if (extension->websocket_extension_message_in_perform(message->opcode,
+                                                                data_in_len,
+                                                                data_in,
+                                                                &data_out_len,
+                                                                &data_out,
+                                                                0,
+                                                                extension->websocket_extension_message_out_perform_user_data,
+                                                                extension->context) != U_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error performing websocket_extension_message_in_perform at index %zu", i);
+            ret = U_ERROR;
+          } else {
+            o_free(data_in);
+            data_in = NULL;
+            data_in_len = 0;
+            if (data_out_len) {
+              if ((data_in = o_malloc(data_out_len*sizeof(char))) != NULL) {
+                memcpy(data_in, data_out, data_out_len);
+                data_in_len = data_out_len;
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for data_in (%zu) (incoming)", i);
+                ret = U_ERROR_MEMORY;
+              }
+            }
+            o_free(data_out);
+            data_out = NULL;
+            data_out_len = 0;
+          }
+        }
+      }
+      o_free(message->data);
+      message->data = data_in;
+      message->data_len = data_in_len;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for data_in (incoming)");
+      ret = U_ERROR_MEMORY;
+    }
+  }
+  return ret;
+}
+
 /**
  * Run websocket in a separate thread
  * then sets a listening message loop
@@ -549,10 +610,6 @@ static void * ulfius_thread_websocket(void * data) {
   struct _websocket_message * message = NULL, * message_previous = NULL;
   pthread_t thread_websocket_manager;
   int thread_ret_websocket_manager = 1, ret = U_OK;
-  uint64_t data_out_len = 0, data_in_len = 0;
-  char * data_out = NULL, * data_in = NULL;
-  struct _websocket_extension * extension;
-  size_t len, i;
 
   if (websocket != NULL && websocket->websocket_manager != NULL) {
     if (websocket->websocket_manager_callback != NULL) {
@@ -563,7 +620,6 @@ static void * ulfius_thread_websocket(void * data) {
       }
     }
     while (websocket->websocket_manager->connected && ret == U_OK) {
-      message = NULL;
       if (websocket->websocket_manager->close_flag) {
         if (ulfius_websocket_send_message(websocket->websocket_manager, U_WEBSOCKET_OPCODE_CLOSE, 0, NULL) != U_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error sending close message on close_flag");
@@ -571,6 +627,7 @@ static void * ulfius_thread_websocket(void * data) {
         websocket->websocket_manager->connected = 0;
       } else {
         if (is_websocket_data_available(websocket->websocket_manager)) {
+          message = NULL;
           if (ulfius_read_incoming_message(websocket->websocket_manager, &message) == U_OK) {
             y_log_message(Y_LOG_LEVEL_DEBUG, "got message opcode %02x, length %zu", message->opcode, message->data_len);
             if (message->opcode == U_WEBSOCKET_OPCODE_CLOSE && message->fin) {
@@ -600,7 +657,7 @@ static void * ulfius_thread_websocket(void * data) {
               if (websocket->websocket_manager->ping_sent) {
                 websocket->websocket_manager->ping_sent = 0;
               }
-            } else {
+            } else if (message->opcode == U_WEBSOCKET_OPCODE_TEXT || message->opcode == U_WEBSOCKET_OPCODE_BINARY) {
               if (message->fin) {
                 if (message_previous != NULL) {
                   if (ulfius_merge_fragmented_message(message_previous, message) != U_OK) {
@@ -613,73 +670,30 @@ static void * ulfius_thread_websocket(void * data) {
                   }
                 }
                 if (ret == U_OK) {
-                  if ((message->data_len && (data_in = o_malloc(message->data_len*sizeof(char))) != NULL) || (!message->data_len && (data_in = NULL))) {
-                    if (message->data != NULL) {
-                      memcpy(data_in, message->data, message->data_len);
-                    } else {
-                      memset(data_in, 0, message->data_len);
-                    }
-                    data_in_len = message->data_len;
-                    if ((len = pointer_list_size(websocket->websocket_manager->websocket_extension_list))) {
-                      for (i=0; i<len && ret == U_OK; i++) {
-                        extension = pointer_list_get_at(websocket->websocket_manager->websocket_extension_list, (len-i-1));
-                        if (extension != NULL &&
-                            extension->enabled &&
-                            extension->websocket_extension_message_in_perform != NULL &&
-                            (message->rsv & extension->rsv)) {
-                          if (extension->websocket_extension_message_in_perform(message->opcode,
-                                                                                data_in_len,
-                                                                                data_in,
-                                                                                &data_out_len,
-                                                                                &data_out,
-                                                                                0,
-                                                                                extension->websocket_extension_message_out_perform_user_data,
-                                                                                extension->context) != U_OK) {
-                            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error performing websocket_extension_message_in_perform at index %zu", i);
-                            ret = U_ERROR;
-                          } else {
-                            o_free(data_in);
-                            data_in = NULL;
-                            data_in_len = 0;
-                            if (data_out_len) {
-                              if ((data_in = o_malloc(data_out_len*sizeof(char))) != NULL) {
-                                memcpy(data_in, data_out, data_out_len);
-                                data_in_len = data_out_len;
-                              } else {
-                                y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for data_in (%zu) (incoming)", i);
-                                ret = U_ERROR_MEMORY;
-                              }
-                            }
-                            o_free(data_out);
-                            data_out = NULL;
-                            data_out_len = 0;
-                          }
-                        }
+                  if (ulfius_websocket_extension_message_in_perform_apply(websocket, message) == U_OK) {
+                    if (!message->rsv || (websocket->websocket_manager->rsv_expected & message->rsv)) {
+                      if (websocket->websocket_incoming_message_callback != NULL) {
+                        websocket->websocket_incoming_message_callback(websocket->request, websocket->websocket_manager, message, websocket->websocket_incoming_user_data);
                       }
-                    }
-                  } else {
-                    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for data_in (incoming)");
-                    ret = U_ERROR_MEMORY;
-                  }
-                  o_free(message->data);
-                  message->data = data_in;
-                  message->data_len = data_in_len;
-                  if (!message->rsv || (websocket->websocket_manager->rsv_expected & message->rsv)) {
-                    if (websocket->websocket_incoming_message_callback != NULL) {
-                      websocket->websocket_incoming_message_callback(websocket->request, websocket->websocket_manager, message, websocket->websocket_incoming_user_data);
-                    }
-                    if (ulfius_push_websocket_message(websocket->websocket_manager->message_list_incoming, message) != U_OK) {
-                      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error pushing new websocket message in list");
+                      if (ulfius_push_websocket_message(websocket->websocket_manager->message_list_incoming, message) != U_OK) {
+                        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error pushing new websocket message in list");
+                        websocket->websocket_manager->connected = 0;
+                      } else {
+                        message = NULL;
+                      }
+                    } else {
+                      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Unexpected rsv message");
                       websocket->websocket_manager->connected = 0;
                     }
                   } else {
-                    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Unexpected rsv message");
+                    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_websocket_extension_message_in_perform_apply");
                     websocket->websocket_manager->connected = 0;
                   }
                 }
               } else if (message->opcode == U_WEBSOCKET_OPCODE_TEXT || message->opcode == U_WEBSOCKET_OPCODE_BINARY || message->opcode == U_WEBSOCKET_OPCODE_CONTINUE) {
                 if (message_previous == NULL) {
                   message_previous = message;
+                  message = NULL;
                 } else {
                   if (ulfius_merge_fragmented_message(message_previous, message) != U_OK) {
                     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error merging fragmented messages");
@@ -690,14 +704,20 @@ static void * ulfius_thread_websocket(void * data) {
                 y_log_message(Y_LOG_LEVEL_DEBUG, "Ulfius - Invalid fragmented message");
                 websocket->websocket_manager->connected = 0;
               }
+            } else {
+              // Invalid opcode
+              y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error invalid opcode");
+              websocket->websocket_manager->connected = 0;
             }
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_read_incoming_message");
             websocket->websocket_manager->connected = 0;
           }
+          ulfius_clear_websocket_message(message);
         }
       }
     }
+    ulfius_clear_websocket_message(message_previous);
     // Wait for thread manager to close if exists
     if (!thread_ret_websocket_manager) {
       pthread_join(thread_websocket_manager, NULL);
