@@ -257,7 +257,7 @@ int ulfius_parse_url(const char * url, const struct _u_endpoint * endpoint, stru
       cur_word_format = strtok_r( url_format_cpy, ULFIUS_URL_SEPARATOR, &saveptr_format );
     }
     while (cur_word_format != NULL && cur_word != NULL) {
-      if ((cur_word_format[0] == ':' || cur_word_format[0] == '@') && (!check_utf8 || utf8_check(cur_word) == NULL)) {
+      if ((cur_word_format[0] == ':' || cur_word_format[0] == '@') && (!check_utf8 || utf8_check(cur_word, o_strlen(cur_word)) == NULL)) {
         if (u_map_has_key(map, cur_word_format+1)) {
           concat_url_param = msprintf("%s,%s", u_map_get(map, cur_word_format+1), cur_word);
           if (concat_url_param == NULL) {

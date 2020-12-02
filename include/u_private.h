@@ -80,7 +80,7 @@ int ulfius_set_response_header(struct MHD_Response * response, const struct _u_m
 int ulfius_set_response_cookie(struct MHD_Response * mhd_response, const struct _u_response * response);
 
 /**
- * The utf8_check() function scans the '\0'-terminated string starting
+ * The utf8_check() function scans the string starting
  * at s. It returns a pointer to the first byte of the first malformed
  * or overlong UTF-8 sequence found, or NULL if the string contains
  * only correct UTF-8. It also spots UTF-8 sequences that could cause
@@ -97,7 +97,7 @@ int ulfius_set_response_cookie(struct MHD_Response * mhd_response, const struct 
  * Markus Kuhn <http://www.cl.cam.ac.uk/~mgk25/> -- 2005-03-30
  * License: http://www.cl.cam.ac.uk/~mgk25/short-license.html
  */
-const unsigned char * utf8_check(const char * s_orig);
+const unsigned char * utf8_check(const char * s_orig, size_t len);
 
 #ifndef U_DISABLE_WEBSOCKET
 

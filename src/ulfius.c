@@ -78,7 +78,7 @@ static int ulfius_fill_map_check_utf8(void * cls, enum MHD_ValueKind kind, const
     // Invalid parameters
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error invalid parameters for ulfius_fill_map_check_utf8");
     return MHD_NO;
-  } else if (utf8_check(key) == NULL && (value == NULL || utf8_check(value) == NULL)) {
+  } else if (utf8_check(key, o_strlen(key)) == NULL && (value == NULL || utf8_check(value, o_strlen(value)) == NULL)) {
     if (u_map_get(((struct _u_map *)cls), key) != NULL) {
       // u_map already has a value with this this key, appending value separated with a comma ',')
       tmp = msprintf("%s,%s", u_map_get(((struct _u_map *)cls), key), (value==NULL?"":value));
@@ -328,7 +328,7 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
     }
   } else {
     if (con_info->u_instance) {
-      if (con_info->u_instance->check_utf8 && (utf8_check(key) != NULL || data == NULL || utf8_check(data) != NULL || (filename != NULL && utf8_check(filename) != NULL))) {
+      if (con_info->u_instance->check_utf8 && (utf8_check(key, o_strlen(key)) != NULL || data == NULL || utf8_check(data, o_strlen(data)) != NULL || (filename != NULL && utf8_check(filename, o_strlen(filename)) != NULL))) {
         return MHD_YES;
       } else {
         data_dup = o_strndup(data, size); // Force value to end with a NULL character
@@ -1260,7 +1260,7 @@ int ulfius_stop_framework(struct _u_instance * u_instance) {
     int i;
     // Loop in all active websockets and send close signal
     if (pthread_mutex_lock(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_active_lock)) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error locking websocket read lock messages");
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error locking websocket websocket_active_lock");
     } else {
       for (i=((struct _websocket_handler *)u_instance->websocket_handler)->nb_websocket_active-1; i>=0; i--) {
         ((struct _websocket_handler *)u_instance->websocket_handler)->websocket_active[i]->websocket_manager->close_flag = 1;
@@ -1701,7 +1701,7 @@ void u_free(void * data) {
 }
 
 /**
- * The utf8_check() function scans the '\0'-terminated string starting
+ * The utf8_check() function scans the string starting
  * at s. It returns a pointer to the first byte of the first malformed
  * or overlong UTF-8 sequence found, or NULL if the string contains
  * only correct UTF-8. It also spots UTF-8 sequences that could cause
@@ -1718,12 +1718,15 @@ void u_free(void * data) {
  * Markus Kuhn <http://www.cl.cam.ac.uk/~mgk25/> -- 2005-03-30
  * License: http://www.cl.cam.ac.uk/~mgk25/short-license.html
  */
-const unsigned char * utf8_check(const char * s_orig) {
+const unsigned char * utf8_check(const char * s_orig, size_t len) {
   const unsigned char * s = (unsigned char *)s_orig;
-  while (*s) {
+  size_t i = 0;
+  
+  while (i<len) {
     if (*s < 0x80) {
       /* 0xxxxxxx */
       s++;
+      i++;
     } else if ((s[0] & 0xe0) == 0xc0) {
       /* 110XXXXx 10xxxxxx */
       if ((s[1] & 0xc0) != 0x80 ||
@@ -1731,6 +1734,7 @@ const unsigned char * utf8_check(const char * s_orig) {
         return s;
       } else {
         s += 2;
+        i += 2;
       }
     } else if ((s[0] & 0xf0) == 0xe0) {
       /* 1110XXXX 10Xxxxxx 10xxxxxx */
@@ -1743,6 +1747,7 @@ const unsigned char * utf8_check(const char * s_orig) {
         return s;
       } else {
         s += 3;
+        i += 3;
       }
     } else if ((s[0] & 0xf8) == 0xf0) {
       /* 11110XXX 10XXxxxx 10xxxxxx 10xxxxxx */
@@ -1754,6 +1759,7 @@ const unsigned char * utf8_check(const char * s_orig) {
         return s;
       } else {
         s += 4;
+        i += 4;
       }
     } else {
       return s;
