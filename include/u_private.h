@@ -95,6 +95,7 @@ int ulfius_set_response_cookie(struct MHD_Response * mhd_response, const struct 
  * are no doubt performance optimizations possible for certain CPUs.
  *
  * Markus Kuhn <http://www.cl.cam.ac.uk/~mgk25/> -- 2005-03-30
+ * Nicolas Mora <mail@babelouest.org>
  * License: http://www.cl.cam.ac.uk/~mgk25/short-license.html
  */
 const unsigned char * utf8_check(const char * s_orig, size_t len);

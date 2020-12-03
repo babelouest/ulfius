@@ -1716,6 +1716,7 @@ void u_free(void * data) {
  * are no doubt performance optimizations possible for certain CPUs.
  *
  * Markus Kuhn <http://www.cl.cam.ac.uk/~mgk25/> -- 2005-03-30
+ * Nicolas Mora <mail@babelouest.org>
  * License: http://www.cl.cam.ac.uk/~mgk25/short-license.html
  */
 const unsigned char * utf8_check(const char * s_orig, size_t len) {
@@ -1729,7 +1730,8 @@ const unsigned char * utf8_check(const char * s_orig, size_t len) {
       i++;
     } else if ((s[0] & 0xe0) == 0xc0) {
       /* 110XXXXx 10xxxxxx */
-      if ((s[1] & 0xc0) != 0x80 ||
+      if ((i+1 >= len) || 
+          (s[1] & 0xc0) != 0x80 ||
           (s[0] & 0xfe) == 0xc0) {                  /* overlong? */
         return s;
       } else {
@@ -1738,12 +1740,12 @@ const unsigned char * utf8_check(const char * s_orig, size_t len) {
       }
     } else if ((s[0] & 0xf0) == 0xe0) {
       /* 1110XXXX 10Xxxxxx 10xxxxxx */
-      if ((s[1] & 0xc0) != 0x80 ||
-	  (s[2] & 0xc0) != 0x80 ||
-	  (s[0] == 0xe0 && (s[1] & 0xe0) == 0x80) ||      /* overlong? */
-	  (s[0] == 0xed && (s[1] & 0xe0) == 0xa0) ||      /* surrogate? */
-	  (s[0] == 0xef && s[1] == 0xbf &&
-	   (s[2] & 0xfe) == 0xbe)) {                      /* U+FFFE or U+FFFF? */
+      if ((i+2 >= len) || 
+          (s[1] & 0xc0) != 0x80 ||
+          (s[2] & 0xc0) != 0x80 ||
+          (s[0] == 0xe0 && (s[1] & 0xe0) == 0x80) ||                 /* overlong? */
+          (s[0] == 0xed && (s[1] & 0xe0) == 0xa0) ||                 /* surrogate? */
+          (s[0] == 0xef && s[1] == 0xbf && (s[2] & 0xfe) == 0xbe)) { /* U+FFFE or U+FFFF? */
         return s;
       } else {
         s += 3;
@@ -1751,11 +1753,12 @@ const unsigned char * utf8_check(const char * s_orig, size_t len) {
       }
     } else if ((s[0] & 0xf8) == 0xf0) {
       /* 11110XXX 10XXxxxx 10xxxxxx 10xxxxxx */
-      if ((s[1] & 0xc0) != 0x80 ||
-	  (s[2] & 0xc0) != 0x80 ||
-	  (s[3] & 0xc0) != 0x80 ||
-	  (s[0] == 0xf0 && (s[1] & 0xf0) == 0x80) ||      /* overlong? */
-	  (s[0] == 0xf4 && s[1] > 0x8f) || s[0] > 0xf4) { /* > U+10FFFF? */
+      if ((i+3 >= len) || 
+          (s[1] & 0xc0) != 0x80 ||
+          (s[2] & 0xc0) != 0x80 ||
+          (s[3] & 0xc0) != 0x80 ||
+          (s[0] == 0xf0 && (s[1] & 0xf0) == 0x80) ||      /* overlong? */
+          (s[0] == 0xf4 && s[1] > 0x8f) || s[0] > 0xf4) { /* > U+10FFFF? */
         return s;
       } else {
         s += 4;
@@ -1765,7 +1768,6 @@ const unsigned char * utf8_check(const char * s_orig, size_t len) {
       return s;
     }
   }
-
   return NULL;
 }
 

@@ -1540,7 +1540,8 @@ struct _websocket_manager {
   pthread_mutex_t                  write_lock; /* !< mutex to write data in the socket */
   pthread_mutex_t                  status_lock; /* !< mutex to broadcast new status */
   pthread_cond_t                   status_cond; /* !< condition to broadcast new status */
-  struct pollfd                    fds;
+  struct pollfd                    fds_in;
+  struct pollfd                    fds_out;
   int                              type;
   int                              rsv_expected;
   struct _pointer_list           * websocket_extension_list;
