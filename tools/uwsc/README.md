@@ -37,6 +37,10 @@ Options available:
 	Specify the Websocket extensions values, default none
 -s --non-secure
 	Do not check server certificate
+-s --non-secure
+	Do not check server certificate
+-q --quiet
+	Quiet mode, show only websocket messages
 -v --version
 	Print Glewlwyd's current version
 
