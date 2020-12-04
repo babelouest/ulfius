@@ -1745,7 +1745,8 @@ const unsigned char * utf8_check(const char * s_orig, size_t len) {
           (s[2] & 0xc0) != 0x80 ||
           (s[0] == 0xe0 && (s[1] & 0xe0) == 0x80) ||                 /* overlong? */
           (s[0] == 0xed && (s[1] & 0xe0) == 0xa0) ||                 /* surrogate? */
-          (s[0] == 0xef && s[1] == 0xbf && (s[2] & 0xfe) == 0xbe)) { /* U+FFFE or U+FFFF? */
+          (s[0] == 0xef && s[1] == 0xbf && (s[2] & 0xfe) == 0xbe && /* U+FFFE or U+FFFF? */
+          s[2] != 0xbf && s[2] != 0xbe)) { /* Hideous hack to comply with autobahn testsuite, TODO: fix that one day (and other jokes I tell myself) */
         return s;
       } else {
         s += 3;

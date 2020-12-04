@@ -148,7 +148,7 @@ static ssize_t read_data_from_socket(struct _websocket_manager * websocket_manag
           break;
         }
       }
-    } while (ret < (ssize_t)len);
+    } while (websocket_manager->connected && ret < (ssize_t)len);
   }
   return ret;
 }
@@ -803,7 +803,13 @@ static int ulfius_get_next_line_from_http_response(struct _websocket * websocket
     }
 
     offset++;
-  } while (!eol && offset < buffer_len);
+  } while (websocket->websocket_manager->connected && !eol && offset < buffer_len);
+  
+  if (!websocket->websocket_manager->connected && !eol && offset < buffer_len) {
+    read_data_from_socket(websocket->websocket_manager, (uint8_t *)buffer+offset, (buffer_len-offset-1));
+    buffer[buffer_len-1] = '\0';
+    *line_len = buffer_len;
+  }
   return ret;
 }
 
@@ -827,7 +833,11 @@ static int ulfius_websocket_connection_handshake(struct _u_request * request, st
   ulfius_websocket_send_frame(websocket->websocket_manager, (uint8_t *)http_line, o_strlen(http_line));
   o_free(http_line);
 
-  http_line = msprintf("Host: %s\r\n", y_url->host);
+  if (y_url->port) {
+    http_line = msprintf("Host: %s:%d\r\n", y_url->host, y_url->port);
+  } else {
+    http_line = msprintf("Host: %s\r\n", y_url->host);
+  }
   ulfius_websocket_send_frame(websocket->websocket_manager, (uint8_t *)http_line, o_strlen(http_line));
   o_free(http_line);
 
@@ -863,14 +873,14 @@ static int ulfius_websocket_connection_handshake(struct _u_request * request, st
 
   // Read and parse response
   if (ulfius_get_next_line_from_http_response(websocket, buffer, buffer_len, &line_len) == U_OK) {
-    if (split_string(buffer, " ", &split_line) >= 2 && 0 == o_strcmp(split_line[0], "HTTP/1.1") && 0 == o_strcmp(split_line[1], "101")) {
+    if (split_string(buffer, " ", &split_line) >= 2 && 0 == o_strcmp(split_line[0], "HTTP/1.1")) {
       websocket_response_http = 1;
       response->status = strtol(split_line[1], NULL, 10);
       response->protocol = o_strdup("1.1");
     }
     free_string_array(split_line);
   }
-  if (websocket_response_http) {
+  if (websocket_response_http && response->status == 101) {
     do {
       if (ulfius_get_next_line_from_http_response(websocket, buffer, buffer_len, &line_len) == U_OK) {
         if (o_strlen(buffer) && (separator = o_strchr(buffer, ':')) != NULL) {
