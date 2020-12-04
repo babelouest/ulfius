@@ -569,7 +569,7 @@ static int ulfius_websocket_extension_message_in_perform_apply(struct _websocket
   int ret = U_OK;
   size_t len, i;
   struct _websocket_extension * extension;
-  
+
   if ((len = pointer_list_size(websocket->websocket_manager->websocket_extension_list))) {
     data_in = NULL;
     if (!message->data_len || (message->data_len && (data_in = o_malloc(message->data_len*sizeof(char))) != NULL)) {
@@ -804,7 +804,7 @@ static int ulfius_get_next_line_from_http_response(struct _websocket * websocket
 
     offset++;
   } while (websocket->websocket_manager->connected && !eol && offset < buffer_len);
-  
+
   if (!websocket->websocket_manager->connected && !eol && offset < buffer_len) {
     read_data_from_socket(websocket->websocket_manager, (uint8_t *)buffer+offset, (buffer_len-offset-1));
     buffer[buffer_len-1] = '\0';

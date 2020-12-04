@@ -1,12 +1,12 @@
 /**
- * 
+ *
  * @file ulfius.h
  * @brief Ulfius framework
- * 
+ *
  * REST framework library
- * 
+ *
  * ulfius.h: public structures and functions declarations
- * 
+ *
  * Copyright 2015-2020 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
  *
  * You should have received a copy of the GNU General Public
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #ifndef __ULFIUS_H__
@@ -218,10 +218,10 @@ struct _u_cookie {
 };
 
 /**
- * 
+ *
  * @struct _u_request
  * @brief definition of the parameters available in a struct _u_request
- *                                 
+ *
  */
 struct _u_request {
   char *               http_protocol; /* !< http protocol used (1.0 or 1.1) */
@@ -258,10 +258,10 @@ struct _u_request {
 };
 
 /**
- * 
+ *
  * @struct _u_response
  * @brief definition of the parameters available in a struct _u_response
- * 
+ *
  */
 struct _u_response {
   long               status; /* !< HTTP status code (200, 404, 500, etc) */
@@ -283,10 +283,10 @@ struct _u_response {
 };
 
 /**
- * 
+ *
  * @struct _u_endpoint
  * @brief Contains all informations needed for an endpoint
- * 
+ *
  */
 struct _u_endpoint {
   char       * http_method; /* !< http verb (GET, POST, PUT, etc.) in upper case */
@@ -300,10 +300,10 @@ struct _u_endpoint {
 };
 
 /**
- * 
+ *
  * @struct _u_instance
  * @brief Contains the needed data for an ulfius instance to work
- * 
+ *
  */
 struct _u_instance {
   struct MHD_Daemon          *  mhd_daemon; /* !< pointer to the libmicrohttpd daemon */
@@ -324,13 +324,13 @@ struct _u_instance {
   size_t                        max_post_body_size; /* !< maximum size for the entire post body, 0 means no limit, default 0 */
   void                        * websocket_handler; /* !< handler for the websocket structure */
   int                        (* file_upload_callback) (const struct _u_request * request,  /* !< callback function to manage file upload by blocks */
-                                                       const char * key, 
-                                                       const char * filename, 
-                                                       const char * content_type, 
-                                                       const char * transfer_encoding, 
-                                                       const char * data, 
-                                                       uint64_t off, 
-                                                       size_t size, 
+                                                       const char * key,
+                                                       const char * filename,
+                                                       const char * content_type,
+                                                       const char * transfer_encoding,
+                                                       const char * data,
+                                                       uint64_t off,
+                                                       size_t size,
                                                        void * cls);
   void                        * file_upload_cls; /* !< any pointer to pass to the file_upload_callback function */
   int                           mhd_response_copy_data; /* !< to choose between MHD_RESPMEM_MUST_COPY and MHD_RESPMEM_MUST_FREE, only if you use MHD < 0.9.61, otherwise this option is skipped because it's useless */
@@ -399,7 +399,7 @@ void ulfius_global_close();
 
 /**
  * ulfius_init_instance
- * 
+ *
  * Initialize a struct _u_instance * with default values
  * Binds to IPV4 addresses only
  * @param u_instance the ulfius instance to initialize
@@ -413,7 +413,7 @@ int ulfius_init_instance(struct _u_instance * u_instance, unsigned int port, str
 #if MHD_VERSION >= 0x00095208
 /**
  * ulfius_init_instance_ipv6
- * 
+ *
  * Initialize a struct _u_instance * with default values
  * Binds to IPV6 and IPV4 addresses or IPV6 addresses only
  * @param port tcp port to bind to, must be between 1 and 65535
@@ -427,7 +427,7 @@ int ulfius_init_instance_ipv6(struct _u_instance * u_instance, unsigned int port
 
 /**
  * ulfius_clean_instance
- * 
+ *
  * Clean memory allocated by a struct _u_instance *
  * @param u_instance an Ulfius instance
  */
@@ -436,7 +436,7 @@ void ulfius_clean_instance(struct _u_instance * u_instance);
 /**
  * ulfius_start_framework
  * Initializes the framework and run the webservice based on the parameters given
- * 
+ *
  * @param u_instance pointer to a struct _u_instance that describe its port and bind address
  * @return U_OK on success
  */
@@ -445,7 +445,7 @@ int ulfius_start_framework(struct _u_instance * u_instance);
 /**
  * ulfius_start_secure_framework
  * Initializes the framework and run the webservice based on the parameters given using an HTTPS connection
- * 
+ *
  * @param u_instance pointer to a struct _u_instance that describe its port and bind address
  * @param key_pem private key for the server
  * @param cert_pem server certificate
@@ -458,7 +458,7 @@ int ulfius_start_secure_framework(struct _u_instance * u_instance, const char * 
  * ulfius_start_secure_ca_trust_framework
  * Initializes the framework and run the webservice based on the parameters given using an HTTPS connection
  * And using a root server to authenticate client connections
- * 
+ *
  * @param u_instance pointer to a struct _u_instance that describe its port and bind address
  * @param key_pem private key for the server
  * @param cert_pem server certificate
@@ -480,7 +480,7 @@ int ulfius_start_secure_ca_trust_framework(struct _u_instance * u_instance, cons
  * i.e.: you're on your own
  * @param u_instance pointer to a struct _u_instance that describe its port and bind address
  * @param mhd_flags OR-ed combination of MHD_FLAG values
- * @param mhd_ops struct MHD_OptionItem * options table, 
+ * @param mhd_ops struct MHD_OptionItem * options table,
  * - MUST contain an option with the fllowing value: {.option = MHD_OPTION_NOTIFY_COMPLETED; .value = (intptr_t)mhd_request_completed; .ptr_value = NULL;}
  * - MUST contain an option with the fllowing value: {.option = MHD_OPTION_URI_LOG_CALLBACK; .value = (intptr_t)ulfius_uri_logger; .ptr_value = NULL;}
  * - MUST end with a terminal struct MHD_OptionItem: {.option = MHD_OPTION_END; .value = 0; .ptr_value = NULL;}
@@ -496,7 +496,7 @@ void * ulfius_uri_logger (void * cls, const char * uri);
 
 /**
  * ulfius_stop_framework
- * 
+ *
  * Stop the webservice
  * @param u_instance pointer to a struct _u_instance that describe its port and bind address
  * @return U_OK on success
@@ -505,33 +505,33 @@ int ulfius_stop_framework(struct _u_instance * u_instance);
 
 /**
  * ulfius_set_upload_file_callback_function
- * 
+ *
  * Set the callback function to handle file upload
  * Used to facilitate large files upload management
  * The callback function file_upload_callback will be called
  * multiple times, with the uploaded file in striped in parts
- * 
+ *
  * Warning: If this function is used, all the uploaded files
  * for the instance will be managed via this function, and they
  * will no longer be available in the struct _u_request in the
  * ulfius callback function afterwards.
- * 
+ *
  * Thanks to Thad Phetteplace for the help on this feature
- * 
+ *
  * @param u_instance pointer to a struct _u_instance that describe its port and bind address
  * @param file_upload_callback Pointer to a callback function that will handle all file uploads
  * @param cls a pointer that will be passed to file_upload_callback each tim it's called
  * @return U_OK on success
  */
 int ulfius_set_upload_file_callback_function(struct _u_instance * u_instance,
-                                             int (* file_upload_callback) (const struct _u_request * request, 
-                                                                           const char * key, 
-                                                                           const char * filename, 
-                                                                           const char * content_type, 
-                                                                           const char * transfer_encoding, 
-                                                                           const char * data, 
-                                                                           uint64_t off, 
-                                                                           size_t size, 
+                                             int (* file_upload_callback) (const struct _u_request * request,
+                                                                           const char * key,
+                                                                           const char * filename,
+                                                                           const char * content_type,
+                                                                           const char * transfer_encoding,
+                                                                           const char * data,
+                                                                           uint64_t off,
+                                                                           size_t size,
                                                                            void * cls),
                                              void * cls);
 
@@ -735,17 +735,17 @@ int ulfius_send_http_streaming_request(const struct _u_request * request, struct
  * @param mail_body email body (mandatory)
  * @return U_OK on success
  */
-int ulfius_send_smtp_email(const char * host, 
-                            const int port, 
-                            const int use_tls, 
-                            const int verify_certificate, 
-                            const char * user, 
-                            const char * password, 
-                            const char * from, 
-                            const char * to, 
-                            const char * cc, 
-                            const char * bcc, 
-                            const char * subject, 
+int ulfius_send_smtp_email(const char * host,
+                            const int port,
+                            const int use_tls,
+                            const int verify_certificate,
+                            const char * user,
+                            const char * password,
+                            const char * from,
+                            const char * to,
+                            const char * cc,
+                            const char * bcc,
+                            const char * subject,
                             const char * mail_body);
 
 /**
@@ -767,18 +767,18 @@ int ulfius_send_smtp_email(const char * host,
  * @return U_OK on success
  */
 
-int ulfius_send_smtp_rich_email(const char * host, 
-                                const int port, 
-                                const int use_tls, 
-                                const int verify_certificate, 
-                                const char * user, 
-                                const char * password, 
-                                const char * from, 
-                                const char * to, 
-                                const char * cc, 
-                                const char * bcc, 
+int ulfius_send_smtp_rich_email(const char * host,
+                                const int port,
+                                const int use_tls,
+                                const int verify_certificate,
+                                const char * user,
+                                const char * password,
+                                const char * from,
+                                const char * to,
+                                const char * cc,
+                                const char * bcc,
                                 const char * content_type,
-                                const char * subject, 
+                                const char * subject,
                                 const char * mail_body);
 #endif
 
@@ -806,7 +806,7 @@ int ulfius_send_smtp_rich_email(const char * host,
  * @param http_only wether the cookie must be used only for http requests or not (optional)
  * @return U_OK on success
  */
-int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age, 
+int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age,
                                   const char * domain, const char * path, const int secure, const int http_only);
 
 /**
@@ -827,7 +827,7 @@ int ulfius_add_cookie_to_response(struct _u_response * response, const char * ke
  * - U_COOKIE_SAME_SITE_LAX    - SameSite attribute set to 'Lax'
  * @return U_OK on success
  */
-int ulfius_add_same_site_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age, 
+int ulfius_add_same_site_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age,
                                             const char * domain, const char * path, const int secure, const int http_only, const int same_site);
 
 /**
@@ -929,7 +929,7 @@ int ulfius_set_empty_body_response(struct _u_response * response, const unsigned
  * @param stream_user_data a user-defined pointer that will be available in stream_callback and stream_callback_free
  * @return U_OK on success
  */
-int ulfius_set_stream_response(struct _u_response * response, 
+int ulfius_set_stream_response(struct _u_response * response,
                                 const unsigned int status,
                                 ssize_t (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max),
                                 void (* stream_callback_free) (void * stream_user_data),
@@ -1159,7 +1159,7 @@ int ulfius_set_json_body_response(struct _u_response * response, const unsigned 
  */
 
 /************************************************************************
- * _u_map declarations                                                  *  
+ * _u_map declarations                                                  *
  * _u_map is a simple map structure that handles sets of key/value maps *
  ************************************************************************/
 
@@ -1687,7 +1687,7 @@ void ulfius_clear_websocket_message(struct _websocket_message * message);
  */
 int ulfius_set_websocket_response(struct _u_response * response,
                                    const char * websocket_protocol,
-                                   const char * websocket_extensions, 
+                                   const char * websocket_extensions,
                                    void (* websocket_manager_callback) (const struct _u_request * request,
                                                                         struct _websocket_manager * websocket_manager,
                                                                         void * websocket_manager_user_data),

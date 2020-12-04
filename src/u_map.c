@@ -1,12 +1,12 @@
 /**
- * 
+ *
  * Ulfius Framework
- * 
+ *
  * REST framework library
- * 
+ *
  * u_umap.c: Simple map structure functions definitions
  * not memory friendly, all pointer returned must be freed after use
- * 
+ *
  * Copyright 2015-2020 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
  *
  * You should have received a copy of the GNU General Public
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include <stdio.h>
@@ -47,7 +47,7 @@ int u_map_init(struct _u_map * u_map) {
       return U_ERROR_MEMORY;
     }
     u_map->values[0] = NULL;
-    
+
     u_map->lengths = o_malloc(sizeof(size_t));
     if (u_map->lengths == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for u_map->lengths");
@@ -191,7 +191,7 @@ int u_map_put_binary(struct _u_map * u_map, const char * key, const char * value
       } else {
         dup_value = o_strdup("");
       }
-      
+
       // Append key
       for (i = 0; u_map->keys[i] != NULL; i++);
       u_map->keys = o_realloc(u_map->keys, (i + 2)*sizeof(char *));
@@ -203,7 +203,7 @@ int u_map_put_binary(struct _u_map * u_map, const char * key, const char * value
       }
       u_map->keys[i] = (char *)dup_key;
       u_map->keys[i+1] = NULL;
-      
+
       // Append value
       u_map->values = o_realloc(u_map->values, (i + 2)*sizeof(char *));
       if (u_map->values == NULL) {
@@ -214,7 +214,7 @@ int u_map_put_binary(struct _u_map * u_map, const char * key, const char * value
       }
       u_map->values[i] = (char *)dup_value;
       u_map->values[i+1] = NULL;
-      
+
       // Append length
       u_map->lengths = o_realloc(u_map->lengths, (i + 2)*sizeof(size_t));
       if (u_map->lengths == NULL) {
@@ -225,7 +225,7 @@ int u_map_put_binary(struct _u_map * u_map, const char * key, const char * value
       }
       u_map->lengths[i] = (offset + length);
       u_map->lengths[i+1] = 0;
-      
+
       u_map->nb_values++;
     }
     return U_OK;
@@ -236,7 +236,7 @@ int u_map_put_binary(struct _u_map * u_map, const char * key, const char * value
 
 int u_map_remove_from_key(struct _u_map * u_map, const char * key) {
   int i, res, found = 0;
-  
+
   if (u_map == NULL || key == NULL) {
     return U_ERROR_PARAMS;
   } else {
@@ -259,7 +259,7 @@ int u_map_remove_from_key(struct _u_map * u_map, const char * key) {
 
 int u_map_remove_from_key_case(struct _u_map * u_map, const char * key) {
   int i, res, found = 0;
-  
+
   if (u_map == NULL || key == NULL) {
     return U_ERROR_PARAMS;
   } else {
@@ -286,7 +286,7 @@ int u_map_remove_from_value(struct _u_map * u_map, const char * value) {
 
 int u_map_remove_from_value_binary(struct _u_map * u_map, const char * value, size_t length) {
   int i, res, found = 0;
-  
+
   if (u_map == NULL || value == NULL) {
     return U_ERROR_PARAMS;
   } else {
@@ -309,7 +309,7 @@ int u_map_remove_from_value_binary(struct _u_map * u_map, const char * value, si
 
 int u_map_remove_from_value_case(struct _u_map * u_map, const char * value) {
   int i, res, found = 0;
-  
+
   if (u_map == NULL || value == NULL) {
     return U_ERROR_PARAMS;
   } else {
@@ -359,7 +359,7 @@ int u_map_remove_at(struct _u_map * u_map, const int index) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for u_map->lengths");
       return U_ERROR_MEMORY;
     }
-    
+
     u_map->nb_values--;
     return U_OK;
   }
@@ -477,7 +477,7 @@ struct _u_map * u_map_copy(const struct _u_map * source) {
 int u_map_copy_into(struct _u_map * dest, const struct _u_map * source) {
   const char ** keys;
   int i, res;
-  
+
   if (source != NULL && dest != NULL) {
     keys = u_map_enum_keys(source);
     for (i=0; keys != NULL && keys[i] != NULL; i++) {

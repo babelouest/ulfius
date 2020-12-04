@@ -1,11 +1,11 @@
 /**
- * 
+ *
  * Ulfius Framework
- * 
+ *
  * REST framework library
- * 
+ *
  * u_response.c: response related functions defintions
- * 
+ *
  * Copyright 2015-2020 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 #include <string.h>
 
@@ -124,7 +124,7 @@ static char * ulfius_generate_cookie_header(const struct _u_cookie * cookie) {
     } else {
       same_site = o_strdup("");
     }
-    
+
     if (attr_expires == NULL || attr_max_age == NULL || attr_domain == NULL || attr_path == NULL || attr_secure == NULL || attr_http_only == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for ulfius_generate_cookie_header");
     } else {
@@ -197,12 +197,12 @@ int ulfius_set_response_cookie(struct MHD_Response * mhd_response, const struct 
   }
 }
 
-int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age, 
+int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age,
                                   const char * domain, const char * path, const int secure, const int http_only) {
   return ulfius_add_same_site_cookie_to_response(response, key, value, expires, max_age, domain, path, secure, http_only, U_COOKIE_SAME_SITE_NONE);
 }
 
-int ulfius_add_same_site_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age, 
+int ulfius_add_same_site_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age,
                                             const char * domain, const char * path, const int secure, const int http_only, const int same_site) {
   unsigned int i;
   if (response != NULL && key != NULL && (same_site == U_COOKIE_SAME_SITE_NONE || same_site == U_COOKIE_SAME_SITE_STRICT || same_site == U_COOKIE_SAME_SITE_LAX)) {
@@ -237,7 +237,7 @@ int ulfius_add_same_site_cookie_to_response(struct _u_response * response, const
         }
       }
     }
-    
+
     // Key not found, inserting a new cookie
     if (response->nb_cookies == 0) {
       response->map_cookie = o_malloc(sizeof(struct _u_cookie));
@@ -261,7 +261,7 @@ int ulfius_add_same_site_cookie_to_response(struct _u_response * response, const
     response->map_cookie[response->nb_cookies].secure = secure;
     response->map_cookie[response->nb_cookies].http_only = http_only;
     response->map_cookie[response->nb_cookies].same_site = same_site;
-    if ((key != NULL && response->map_cookie[response->nb_cookies].key == NULL) || (value != NULL && response->map_cookie[response->nb_cookies].value == NULL) || 
+    if ((key != NULL && response->map_cookie[response->nb_cookies].key == NULL) || (value != NULL && response->map_cookie[response->nb_cookies].value == NULL) ||
         (expires != NULL && response->map_cookie[response->nb_cookies].expires == NULL) || (domain != NULL && response->map_cookie[response->nb_cookies].domain == NULL) ||
         (path != NULL && response->map_cookie[response->nb_cookies].path == NULL)) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for ulfius_add_cookie_to_response");
@@ -444,7 +444,7 @@ int ulfius_copy_response(struct _u_response * dest, const struct _u_response * s
     } else {
       dest->map_cookie = NULL;
     }
-    
+
     if (source->binary_body != NULL && source->binary_body_length > 0) {
       dest->binary_body = o_malloc(source->binary_body_length);
       if (dest->binary_body == NULL) {
@@ -454,7 +454,7 @@ int ulfius_copy_response(struct _u_response * dest, const struct _u_response * s
       dest->binary_body_length = source->binary_body_length;
       memcpy(dest->binary_body, source->binary_body, source->binary_body_length);
     }
-    
+
     if (source->stream_callback != NULL) {
       dest->stream_callback = source->stream_callback;
       dest->stream_callback_free = source->stream_callback_free;
@@ -462,7 +462,7 @@ int ulfius_copy_response(struct _u_response * dest, const struct _u_response * s
       dest->stream_block_size = source->stream_block_size;
       dest->stream_user_data = source->stream_user_data;
     }
-    
+
     dest->shared_data = source->shared_data;
     dest->timeout = source->timeout;
 #ifndef U_DISABLE_WEBSOCKET
@@ -551,7 +551,7 @@ int ulfius_set_empty_body_response(struct _u_response * response, const unsigned
     o_free(response->binary_body);
     response->binary_body = NULL;
     response->binary_body_length = 0;
-    
+
     response->status = status;
     return U_OK;
   } else {
@@ -559,7 +559,7 @@ int ulfius_set_empty_body_response(struct _u_response * response, const unsigned
   }
 }
 
-int ulfius_set_stream_response(struct _u_response * response, 
+int ulfius_set_stream_response(struct _u_response * response,
                                 const unsigned int status,
                                 ssize_t (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max),
                                 void (* stream_callback_free) (void * stream_user_data),
@@ -571,7 +571,7 @@ int ulfius_set_stream_response(struct _u_response * response,
     o_free(response->binary_body);
     response->binary_body = NULL;
     response->binary_body_length = 0;
-    
+
     response->status = status;
     response->stream_callback = stream_callback;
     response->stream_callback_free = stream_callback_free;

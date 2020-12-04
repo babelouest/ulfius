@@ -1,11 +1,11 @@
 /**
- * 
+ *
  * Ulfius Framework
- * 
+ *
  * REST framework library
- * 
+ *
  * u_send_request.c: send request related functions defintions
- * 
+ *
  * Copyright 2015-2020 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
@@ -82,17 +82,17 @@ struct _u_smtp_payload {
 static size_t ulfius_write_body(void * contents, size_t size, size_t nmemb, void * user_data) {
   size_t realsize = size * nmemb;
   struct _u_body * body_data = (struct _u_body *) user_data;
- 
+
   body_data->data = o_realloc(body_data->data, body_data->size + realsize + 1);
   if(body_data->data == NULL) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for body_data->data");
     return 0;
   }
-  
+
   memcpy(&(body_data->data[body_data->size]), contents, realsize);
   body_data->size += realsize;
   body_data->data[body_data->size] = 0;
- 
+
   return realsize;
 }
 
@@ -102,16 +102,16 @@ static size_t ulfius_write_body(void * contents, size_t size, size_t nmemb, void
  * return the size_t of the header written
  */
 static size_t write_header(void * buffer, size_t size, size_t nitems, void * user_data) {
-  
+
   struct _u_response * response = (struct _u_response *) user_data;
   char * header = (char *)buffer, * key, * value, * saveptr, * tmp;
-  
+
   if (o_strchr(header, ':') != NULL) {
     if (response->map_header != NULL) {
       // Expecting a header (key: value)
       key = trimwhitespace(strtok_r(header, ":", &saveptr));
       value = trimwhitespace(strtok_r(NULL, "", &saveptr));
-      
+
       if (!u_map_has_key_case(response->map_header, key)) {
         u_map_put(response->map_header, key, value);
       } else {
@@ -133,14 +133,14 @@ static size_t write_header(void * buffer, size_t size, size_t nitems, void * use
       return 0;
     }
   }
-  
+
   return nitems * size;
 }
 
 static size_t smtp_payload_source(void * ptr, size_t size, size_t nmemb, void * userp) {
   struct _u_smtp_payload *upload_ctx = (struct _u_smtp_payload *)userp;
   size_t len;
-  
+
   if ((size * nmemb) < (upload_ctx->len - upload_ctx->offset)) {
     len = size*nmemb;
   } else {
@@ -161,7 +161,7 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
   body_data.size = 0;
   body_data.data = NULL;
   int res;
-  
+
   res = ulfius_send_http_streaming_request(request, response, ulfius_write_body, (void *)&body_data);
   if (res == U_OK && response != NULL) {
     if (body_data.data != NULL && body_data.size > 0) {
@@ -189,8 +189,8 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
  * return U_OK on success
  */
 int ulfius_send_http_streaming_request(const struct _u_request * request,
-                                       struct _u_response * response, 
-                                       size_t (* write_body_function)(void * contents, size_t size, size_t nmemb, void * user_data), 
+                                       struct _u_response * response,
+                                       size_t (* write_body_function)(void * contents, size_t size, size_t nmemb, void * user_data),
                                        void * write_body_data) {
   CURLcode res;
   CURL * curl_handle = NULL;
@@ -203,7 +203,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
   if (request != NULL) {
     // Duplicate the request and work on it
     if ((copy_request = ulfius_duplicate_request(request)) != NULL) {
-      
+
       if ((curl_handle = curl_easy_init()) != NULL) {
         ret = U_OK;
 
@@ -217,7 +217,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
               break;
             }
           }
-          
+
           // Set basic auth if defined
           if (copy_request->auth_basic_user != NULL && copy_request->auth_basic_password != NULL) {
             if (curl_easy_setopt(curl_handle, CURLOPT_HTTPAUTH, CURLAUTH_BASIC) == CURLE_OK) {
@@ -258,7 +258,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
             ret = U_ERROR_LIBCURL;
             break;
           }
-          
+
           // Set proxy if defined
           if (copy_request->proxy != NULL) {
             if (curl_easy_setopt(curl_handle, CURLOPT_PROXY, copy_request->proxy) != CURLE_OK) {
@@ -700,18 +700,18 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
  * mail_body: email body (mandatory)
  * return U_OK on success
  */
-int ulfius_send_smtp_rich_email(const char * host, 
-                                const int port, 
-                                const int use_tls, 
-                                const int verify_certificate, 
-                                const char * user, 
-                                const char * password, 
-                                const char * from, 
-                                const char * to, 
-                                const char * cc, 
-                                const char * bcc, 
+int ulfius_send_smtp_rich_email(const char * host,
+                                const int port,
+                                const int use_tls,
+                                const int verify_certificate,
+                                const char * user,
+                                const char * password,
+                                const char * from,
+                                const char * to,
+                                const char * cc,
+                                const char * bcc,
                                 const char * content_type,
-                                const char * subject, 
+                                const char * subject,
                                 const char * mail_body) {
   CURL * curl_handle;
   CURLcode res = CURLE_OK;
@@ -903,17 +903,17 @@ int ulfius_send_smtp_rich_email(const char * host,
  * mail_body: email body (mandatory)
  * return U_OK on success
  */
-int ulfius_send_smtp_email(const char * host, 
-                           const int port, 
-                           const int use_tls, 
-                           const int verify_certificate, 
-                           const char * user, 
-                           const char * password, 
-                           const char * from, 
-                           const char * to, 
-                           const char * cc, 
-                           const char * bcc, 
-                           const char * subject, 
+int ulfius_send_smtp_email(const char * host,
+                           const int port,
+                           const int use_tls,
+                           const int verify_certificate,
+                           const char * user,
+                           const char * password,
+                           const char * from,
+                           const char * to,
+                           const char * cc,
+                           const char * bcc,
+                           const char * subject,
                            const char * mail_body) {
   return ulfius_send_smtp_rich_email(host, port, use_tls, verify_certificate, user, password, from, to, cc, bcc, "text/plain; charset=utf-8", subject, mail_body);
 }

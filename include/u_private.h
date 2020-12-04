@@ -1,11 +1,11 @@
 /**
- * 
+ *
  * Ulfius Framework
- * 
+ *
  * REST framework library
- * 
+ *
  * u_private.h: private structures and functions declarations
- * 
+ *
  * Copyright 2015-2017 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #ifndef __U_PRIVATE_H__
@@ -187,7 +187,7 @@ int ulfius_instance_add_websocket_active(struct _u_instance * instance, struct _
 /**
  * Remove a websocket from the list of active websockets of the instance
  */
-int ulfius_instance_remove_websocket_active(struct _u_instance * instance, struct _websocket * websocket); 
+int ulfius_instance_remove_websocket_active(struct _u_instance * instance, struct _websocket * websocket);
 
 /**
  * Initialize a struct _websocket

@@ -1,11 +1,11 @@
 /**
- * 
+ *
  * Ulfius Framework
- * 
+ *
  * REST framework library
- * 
+ *
  * ulfius-cfg.h.in: configuration file
- * 
+ *
  * Copyright 2018-2020 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 #ifndef _ULFIUS_CFG_H_
 #define _ULFIUS_CFG_H_

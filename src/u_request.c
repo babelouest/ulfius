@@ -1,11 +1,11 @@
 /**
- * 
+ *
  * Ulfius Framework
- * 
+ *
  * REST framework library
- * 
+ *
  * u_request.c: request related functions defintions
- * 
+ *
  * Copyright 2015-2020 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 #include <stdlib.h>
 #include <stdarg.h>
@@ -40,7 +40,7 @@
 static char ** ulfius_split_url(const char * prefix, const char * url) {
   char * saveptr = NULL, * cur_word = NULL, ** to_return = o_malloc(sizeof(char*)), * url_cpy = NULL, * url_cpy_addr = NULL;
   int counter = 1;
-  
+
   if (to_return != NULL) {
     to_return[0] = NULL;
     if (prefix != NULL) {
@@ -99,7 +99,7 @@ static char ** ulfius_split_url(const char * prefix, const char * url) {
  */
 static int compare_endpoint_priorities(const void * a, const void * b) {
   struct _u_endpoint * e1 = *(struct _u_endpoint **)a, * e2 = *(struct _u_endpoint **)b;
-  
+
   if (e1->priority < e2->priority) {
     return -1;
   } else if (e1->priority > e2->priority) {
@@ -116,7 +116,7 @@ static int compare_endpoint_priorities(const void * a, const void * b) {
  */
 static int ulfius_url_format_match(const char ** splitted_url, const char ** splitted_url_format) {
   int i;
-  
+
   for (i=0; splitted_url_format[i] != NULL; i++) {
     if (splitted_url_format[i][0] == '*' && splitted_url_format[i+1] == NULL) {
       return 1;
@@ -150,7 +150,7 @@ static char * url_decode(const char * str) {
           * pbuf++ = from_hex(pstr[1]) << 4 | from_hex(pstr[2]);
           pstr += 2;
         }
-      } else if (* pstr == '+') { 
+      } else if (* pstr == '+') {
         * pbuf++ = ' ';
       } else {
         * pbuf++ = * pstr;
@@ -176,7 +176,7 @@ struct _u_endpoint ** ulfius_endpoint_match(const char * method, const char * ur
   struct _u_endpoint ** endpoint_returned = o_malloc(sizeof(struct _u_endpoint *));
   int i;
   size_t count = 0;
-  
+
   if (endpoint_returned == NULL) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for endpoint_returned");
   } else {
@@ -213,7 +213,7 @@ struct _u_endpoint ** ulfius_endpoint_match(const char * method, const char * ur
       splitted_url = NULL;
     }
   }
-  /* 
+  /*
    * only sort if endpoint_returned is != NULL
    * can be NULL either after initial o_malloc() or after o_realloc()
    */
@@ -248,7 +248,7 @@ int ulfius_parse_url(const char * url, const struct _u_endpoint * endpoint, stru
       cur_word_format = strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr_prefix );
     }
     o_free(url_format_cpy_addr);
-    
+
     url_format_cpy = url_format_cpy_addr = o_strdup(endpoint->url_format);
     if (endpoint->url_format != NULL && url_format_cpy == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for url_format_cpy");
@@ -307,7 +307,7 @@ int ulfius_init_request(struct _u_request * request) {
     request->map_header = o_malloc(sizeof(struct _u_map));
     request->map_cookie = o_malloc(sizeof(struct _u_map));
     request->map_post_body = o_malloc(sizeof(struct _u_map));
-    if (request->map_post_body == NULL || request->map_cookie == NULL || 
+    if (request->map_post_body == NULL || request->map_cookie == NULL ||
         request->map_url == NULL || request->map_header == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for request->map*");
       ulfius_clean_request(request);
@@ -433,7 +433,7 @@ int ulfius_copy_request(struct _u_request * dest, const struct _u_request * sour
     dest->auth_basic_user = o_strdup(source->auth_basic_user);
     dest->auth_basic_password = o_strdup(source->auth_basic_password);
     dest->callback_position = source->callback_position;
-    
+
     if (source->client_address != NULL) {
       dest->client_address = o_malloc(sizeof(struct sockaddr));
       if (dest->client_address != NULL) {
@@ -443,7 +443,7 @@ int ulfius_copy_request(struct _u_request * dest, const struct _u_request * sour
         ret = U_ERROR_MEMORY;
       }
     }
-    
+
     if (ret == U_OK && u_map_clean(dest->map_url) == U_OK && u_map_init(dest->map_url) == U_OK) {
       if (u_map_copy_into(dest->map_url, source->map_url) != U_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error u_map_copy_into dest->map_url");
@@ -453,7 +453,7 @@ int ulfius_copy_request(struct _u_request * dest, const struct _u_request * sour
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error reinit dest->map_url");
       ret = U_ERROR_MEMORY;
     }
-    
+
     if (ret == U_OK && u_map_clean(dest->map_header) == U_OK && u_map_init(dest->map_header) == U_OK) {
       if (u_map_copy_into(dest->map_header, source->map_header) != U_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error u_map_copy_into dest->map_header");
@@ -463,7 +463,7 @@ int ulfius_copy_request(struct _u_request * dest, const struct _u_request * sour
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error reinit dest->map_header");
       ret = U_ERROR_MEMORY;
     }
-    
+
     if (ret == U_OK && u_map_clean(dest->map_cookie) == U_OK && u_map_init(dest->map_cookie) == U_OK) {
       if (u_map_copy_into(dest->map_cookie, source->map_cookie) != U_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error u_map_copy_into dest->map_cookie");
@@ -473,7 +473,7 @@ int ulfius_copy_request(struct _u_request * dest, const struct _u_request * sour
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error reinit dest->map_cookie");
       ret = U_ERROR_MEMORY;
     }
-    
+
     if (ret == U_OK && u_map_clean(dest->map_post_body) == U_OK && u_map_init(dest->map_post_body) == U_OK) {
       if (u_map_copy_into(dest->map_post_body, source->map_post_body) != U_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error u_map_copy_into dest->map_post_body");
@@ -483,7 +483,7 @@ int ulfius_copy_request(struct _u_request * dest, const struct _u_request * sour
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error reinit dest->map_post_body");
       ret = U_ERROR_MEMORY;
     }
-    
+
     if (ret == U_OK) {
       if (source->binary_body_length) {
         dest->binary_body_length = source->binary_body_length;
@@ -835,7 +835,7 @@ int ulfius_set_json_body_request(struct _u_request * request, json_t * j_body) {
  * Get JSON structure from the request body if the request is valid
  * request: struct _u_request used
  * json_error: structure to store json_error_t if specified
- */  
+ */
 json_t * ulfius_get_json_body_request(const struct _u_request * request, json_error_t * json_error) {
   if (request != NULL && request->map_header != NULL && NULL != o_strstr(u_map_get_case(request->map_header, ULFIUS_HTTP_HEADER_CONTENT), ULFIUS_HTTP_ENCODING_JSON)) {
     return json_loadb(request->binary_body, request->binary_body_length, JSON_DECODE_ANY, json_error);
