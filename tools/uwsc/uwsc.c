@@ -54,7 +54,7 @@ int y_close_logs() {
 }
 #endif
 
-#define _UWSC_VERSION_ "0.10"
+#define _UWSC_VERSION_ "0.11"
 
 #ifndef U_DISABLE_WEBSOCKET
 
@@ -64,6 +64,7 @@ struct _config {
   char       * text_file_send;
   int          non_interactive;
   int          non_listening;
+  int          quiet;
   unsigned int fragmentation;
   char       * protocol;
   char       * extensions;
@@ -104,7 +105,7 @@ static void uwsc_manager_callback (const struct _u_request * request, struct _we
   struct _config * config = (struct _config *)websocket_manager_user_data;
   char * file_content;
   size_t file_len;
-  
+
   if (config->text_file_send != NULL) {
     file_content = read_file(config->text_file_send, &file_len);
     if (file_content != NULL && file_len > 0) {
@@ -141,13 +142,17 @@ static void uwsc_manager_callback (const struct _u_request * request, struct _we
       if (fgets(message, 256, stdin) != NULL) {
         if (o_strlen(message)) {
           if (0 == o_strncmp(message, "!q", o_strlen("!q"))) {
-            fprintf(stdout, "\b\bQuit uwsc\n");
+            if (!config->quiet) {
+              fprintf(stdout, "\b\bQuit uwsc\n");
+            }
             if (ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_CLOSE, 0, NULL) != U_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "Error sending close message");
             }
           } else {
-            fprintf(stdout, "\b\bSend '%.*s'\n> ", (int)(o_strlen(message)-1), message);
-            fflush(stdout);
+            if (!config->quiet) {
+              fprintf(stdout, "\b\bSend '%.*s'\n> ", (int)(o_strlen(message)-1), message);
+              fflush(stdout);
+            }
             if (ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(message)-1, message) != U_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "Error sending message '%.*s'", (int)(o_strlen(message)-1), message);
             } else {
@@ -166,18 +171,22 @@ static void uwsc_manager_callback (const struct _u_request * request, struct _we
 static void uwsc_manager_incoming (const struct _u_request * request, struct _websocket_manager * websocket_manager, const struct _websocket_message * message, void * websocket_incoming_user_data) {
   struct _websocket_message * last_message;
   struct _config * config = (struct _config *)websocket_incoming_user_data;
-  
-  if (message->opcode == U_WEBSOCKET_OPCODE_CLOSE) {
-    fprintf(stdout, "\b\bConnection closed by the server, press <enter> to exit\n> ");
-    fflush(stdout);
-  }
+
   if (!config->non_listening) {
     if (message->opcode == U_WEBSOCKET_OPCODE_TEXT) {
-      fprintf(stdout, "\b\bServer message: '%.*s'\n> ", (int)message->data_len, message->data);
-      fflush(stdout);
+      if (!config->quiet) {
+        fprintf(stdout, "\b\bServer message: '%.*s'\n> ", (int)message->data_len, message->data);
+        fflush(stdout);
+      } else {
+        fprintf(stdout, "\b\b%.*s\n", (int)message->data_len, message->data);
+      }
     } else if (message->opcode == U_WEBSOCKET_OPCODE_BINARY) {
-      fprintf(stdout, "\b\bServer sent binary message, length %zu\n> ", message->data_len);
-      fflush(stdout);
+      if (!config->quiet) {
+        fprintf(stdout, "\b\bServer sent binary message, length %zu\n> ", message->data_len);
+        fflush(stdout);
+      } else {
+        fprintf(stdout, "\b\bServer sent binary message, length %zu\n", message->data_len);
+      }
     }
   }
   last_message = ulfius_websocket_pop_first_message(websocket_manager->message_list_incoming);
@@ -218,6 +227,8 @@ static void print_help(FILE * output) {
   fprintf(output, "\tSpecify the Websocket extensions values, default none\n");
   fprintf(output, "-s --non-secure\n");
   fprintf(output, "\tDo not check server certificate\n");
+  fprintf(output, "-q --quiet\n");
+  fprintf(output, "\tQuiet mode, show only websocket messages\n");
   fprintf(output, "-v --version\n");
   fprintf(output, "\tPrint uwsc's current version\n\n");
   fprintf(output, "-h --help\n");
@@ -231,6 +242,7 @@ static int init_config(struct _config * config) {
     config->text_file_send = NULL;
     config->non_interactive = 0;
     config->non_listening = 0;
+    config->quiet = 0;
     config->fragmentation = 0;
     config->protocol = NULL;
     config->extensions = NULL;
@@ -271,7 +283,7 @@ static void exit_program(struct _config ** config, int exit_value) {
 int main (int argc, char ** argv) {
   struct _config * config;
   int next_option;
-  const char * short_options = "o:x:b:t:i::l::f:p:e::s::v::h::";
+  const char * short_options = "o:x:b:t:i::l::f:p:e::s::q::v::h::";
   static const struct option long_options[]= {
     {"output-log-file", required_argument, NULL, 'o'},  // Sets an output file for logging messages
     {"add-header", required_argument, NULL, 'x'},       // Add the specified header of the form 'key:value'
@@ -283,13 +295,14 @@ int main (int argc, char ** argv) {
     {"protocol", required_argument, NULL, 'p'},         // Websocket protocol
     {"extensions", required_argument, NULL, 'e'},       // Websocket extensions
     {"non-secure", no_argument, NULL, 's'},             // Do not check server certificate
+    {"quiet", no_argument, NULL, 'v'},                  // Quiet mode
     {"version", no_argument, NULL, 'v'},                // Show version
     {"help", no_argument, NULL, 'h'},                   // print help
     {NULL, 0, NULL, 0}
   };
   char * url = NULL, * extensions = NULL;
   struct _websocket_client_handler websocket_client_handler = {NULL, NULL};
-  
+
   config = o_malloc(sizeof(struct _config));
   if (config == NULL || !init_config(config)) {
     fprintf(stderr, "Error initialize configuration\n");
@@ -300,7 +313,7 @@ int main (int argc, char ** argv) {
   do {
     char * key, * value;
     next_option = getopt_long(argc, argv, short_options, long_options, NULL);
-    
+
     switch (next_option) {
       case 'o':
         config->log_path = o_strdup(optarg);
@@ -348,6 +361,9 @@ int main (int argc, char ** argv) {
       case 's':
         config->request->check_server_certificate = 0;
         break;
+      case 'q':
+        config->quiet = 1;
+        break;
       case 'v':
         // Print version and exit
         fprintf(stdout, "%s\n", _UWSC_VERSION_);
@@ -362,7 +378,7 @@ int main (int argc, char ** argv) {
         break;
     }
   } while (next_option != -1);
-  
+
   if (config->log_path != NULL) {
     y_init_logs("Ulfius Websocket Client", Y_LOG_MODE_FILE, Y_LOG_LEVEL_DEBUG, config->log_path, "Start uwsc");
   }
@@ -374,7 +390,7 @@ int main (int argc, char ** argv) {
     print_help(stderr);
     exit_program(&config, 1);
   }
-  
+
   if (!o_strlen(config->extensions)) {
     extensions = o_strdup("permessage-deflate");
   } else {
@@ -383,10 +399,14 @@ int main (int argc, char ** argv) {
   if (ulfius_set_websocket_request(config->request, url, config->protocol, extensions) == U_OK) {
     if (ulfius_add_websocket_client_deflate_extension(&websocket_client_handler) == U_OK) {
       if (ulfius_open_websocket_client_connection(config->request, &uwsc_manager_callback, config, &uwsc_manager_incoming, config, NULL, NULL, &websocket_client_handler, config->response) == U_OK) {
-        fprintf(stdout, "Websocket connected, you can send text messages of maximum 256 characters.\nTo exit uwsc, type !q<enter>\n> ");
-        fflush(stdout);
+        if (!config->quiet) {
+          fprintf(stdout, "Websocket connected, you can send text messages of maximum 256 characters.\nTo exit uwsc, type !q<enter>\n> ");
+          fflush(stdout);
+        }
         ulfius_websocket_client_connection_wait_close(&websocket_client_handler, 0);
-        fprintf(stdout, "Websocket closed\n");
+        if (!config->quiet) {
+          fprintf(stdout, "Websocket closed\n");
+        }
         ulfius_websocket_client_connection_close(&websocket_client_handler);
       } else {
         fprintf(stderr, "Error connecting to websocket\n");
@@ -401,7 +421,7 @@ int main (int argc, char ** argv) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error initializing websocket request");
   }
   o_free(extensions);
-  
+
   if (config->log_path != NULL) {
     y_close_logs();
   }
