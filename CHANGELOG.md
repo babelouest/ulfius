@@ -8,6 +8,7 @@
 - Add callback return value `U_CALLBACK_IGNORE` to igore incrementation of `request->callback_position`
 - Add `ulfius_add_websocket_extension_message_perform` and `ulfius_add_websocket_client_extension_message_perform` for advanced websocket extensions management
 - Add [Compression Extensions for WebSocket](https://tools.ietf.org/html/rfc7692)
+- Fix lots of websocket bugs thanks to [Autobahn|Testsuite](https://github.com/crossbario/autobahn-testsuite).
 
 ## 2.6.9
 
