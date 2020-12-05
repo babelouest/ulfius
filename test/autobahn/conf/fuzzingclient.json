@@ -1,0 +1,22 @@
+{
+    "outdir": "./generated/server",
+    "servers": [
+        {
+            "agent": "WSServer (HTTP)",
+            "url": "ws://127.0.0.1:9010",
+            "desc" : "WSServer through the HTTP protocol",
+            "options": {"version": 18}
+        },
+        {
+            "agent": "WSServer (HTTPS)",
+            "url": "wss://127.0.0.1:9011",
+            "desc" : "WSServer through the HTTPS protocol",
+            "options": {"version": 18}
+        }
+    ],
+    "cases": [
+        "*"
+    ],
+    "exclude-cases": [],
+    "exclude-agent-cases": {}
+}
