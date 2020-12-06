@@ -95,9 +95,7 @@ void websocket_incoming_message_callback_client (const struct _u_request * reque
 void websocket_manager_extension_callback (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_manager_user_data) {
   y_log_message(Y_LOG_LEVEL_DEBUG, "server message '%s' sent", MESSAGE_SERVER);
   ck_assert_int_eq(ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(MESSAGE_SERVER), MESSAGE_SERVER), U_OK);
-  if (ulfius_websocket_wait_close(websocket_manager, 50) == U_WEBSOCKET_STATUS_OPEN) {
-    ck_assert_int_eq(ulfius_websocket_send_close_signal(websocket_manager), U_OK);
-  }
+  while (ulfius_websocket_wait_close(websocket_manager, 50) == U_WEBSOCKET_STATUS_OPEN);
 }
 
 void websocket_manager_extension_deflate_callback (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_manager_user_data) {
@@ -105,9 +103,7 @@ void websocket_manager_extension_deflate_callback (const struct _u_request * req
   y_log_message(Y_LOG_LEVEL_DEBUG, "server message 1 sent");
   ck_assert_int_eq(ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(MESSAGE_SERVER), MESSAGE_SERVER), U_OK);
   y_log_message(Y_LOG_LEVEL_DEBUG, "server message 2 sent");
-  if (ulfius_websocket_wait_close(websocket_manager, 50) == U_WEBSOCKET_STATUS_OPEN) {
-    ck_assert_int_eq(ulfius_websocket_send_close_signal(websocket_manager), U_OK);
-  }
+  while (ulfius_websocket_wait_close(websocket_manager, 50) == U_WEBSOCKET_STATUS_OPEN);
 }
 
 void websocket_incoming_extension_callback (const struct _u_request * request,
