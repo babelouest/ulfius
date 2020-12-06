@@ -15,7 +15,7 @@ CFLAGS+=-Wall -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS) $(CPPFLAGS)
 LIBS=-lc -lulfius -lorcania -lyder -lpthread $(LYDER) -L$(ULFIUS_LOCATION)
 
 clean:
-	rm -f ulfius_ws_echo_server ulfius_ws_echo_client ulfius_ws_echo_server.log ulfius_ws_echo_client.log $(CONF_FOLDER)/$(KEY_FILE) $(CONF_FOLDER)/$(CERT_FILE)
+	rm -f ulfius_ws_echo_server ulfius_ws_echo_client ulfius_ws_echo_server.log ulfius_ws_echo_client.log $(CONF_FOLDER)/$(KEY_FILE) $(CONF_FOLDER)/$(CERT_FILE) $(GEN_FOLDER)/server $(GEN_FOLDER)/client-http $(GEN_FOLDER)/client-https
 	-docker rmi -f pypy:2 crossbario/autobahn-testsuite:latest ulfius/autobahn:base ulfius/autobahn:server ulfius/autobahn:client-http ulfius/autobahn:client-https
 	-docker system prune -f
 
@@ -45,7 +45,7 @@ docker-autobahn-client-https: docker-autobahn
 	docker build -t ulfius/autobahn:client-https -f Dockerfile.client-https .
 
 autobahn-server: docker-autobahn-server ulfius_ws_echo_server
-	#rm -rf $(GEN_FOLDER)/autobahn/server
+	#rm -rf $(GEN_FOLDER)/server
 	#./ulfius_ws_echo_server $(CERT_LOCATION)/$(KEY_FILE) $(CERT_LOCATION)/$(CERT_FILE) & echo $$! > ulfius_ws_echo_server.pid
 	#sleep 2
 	#docker run -it --rm \
@@ -68,7 +68,7 @@ autobahn-server: docker-autobahn-server ulfius_ws_echo_server
 	@echo '$$ docker run -it --rm --network="host" -v $${PWD}/conf:/config -v $${PWD}/generated:/generated -p 9001:9001 --name fuzzingclient ulfius/autobahn:server'
 
 autobahn-client-http: docker-autobahn-client-http ulfius_ws_echo_client
-	#rm -rf $(GEN_FOLDER)/autobahn/client-http
+	#rm -rf $(GEN_FOLDER)/client-http
 	#docker run -d --rm \
 	#  -v ${CONF_FOLDER}:/config \
 	#  -v ${GEN_FOLDER}:/generated \
@@ -100,7 +100,7 @@ autobahn-client-http: docker-autobahn-client-http ulfius_ws_echo_client
 	@echo "docker kill client_http"
 
 autobahn-client-https: docker-autobahn-client-https ulfius_ws_echo_client
-	#rm -rf $(GEN_FOLDER)/autobahn/client-https
+	#rm -rf $(GEN_FOLDER)/client-https
 	#if [[ ! -f $(CONF_FOLDER)/$(KEY_FILE) ]]; then \
 	#	cp $(CERT_LOCATION)/$(KEY_FILE) $(CONF_FOLDER); \
 	#fi
