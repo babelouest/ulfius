@@ -37,7 +37,8 @@ clean:
 	cd $(EXAMPLES_LOCATION) && $(MAKE) clean
 	cd $(UWSC_LOCATION) && $(MAKE) clean
 	cd $(TESTS_LOCATION) && $(MAKE) clean
-	rm -rf doc/html
+	cd $(TESTS_LOCATION)/autobahn && $(MAKE) clean
+	rm -rf doc/html $(TESTS_LOCATION)/cert/server.* $(TESTS_LOCATION)/cert/root* $(TESTS_LOCATION)/cert/client*
 
 examples:
 	cd $(EXAMPLES_LOCATION) && $(MAKE) $*
