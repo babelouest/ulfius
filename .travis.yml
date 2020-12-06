@@ -14,13 +14,6 @@ jobs:
       compiler: gcc
     - env: LABEL=clang
       compiler: clang
-      script:
-        - cd build
-        - cmake -DBUILD_ULFIUS_TESTING=on ..
-        - ln -s ../test/cert/ .
-        - ./cert/create-cert.sh || (cat ../test/cert/certtool.log && false)
-        - make test || (cat Testing/Temporary/LastTest.log && false)
-        - make package
     - env: LABEL=cppcheck
       script:
         - cppcheck --force --enable=warning,missingInclude --error-exitcode=1 . >build.log 2>&1 || (cat build.log && exit 1)
@@ -28,23 +21,9 @@ jobs:
     - env: LABEL=gcc
       arch: ppc64le
       compiler: gcc
-      script:
-        - cd build
-        - cmake -DBUILD_ULFIUS_TESTING=on ..
-        - ln -s ../test/cert/ .
-        - ./cert/create-cert.sh || (cat ../test/cert/certtool.log && false)
-        - make test || (cat Testing/Temporary/LastTest.log && false)
-        - make package
     - env: LABEL=clang
       arch: ppc64le
       compiler: clang
-      script:
-        - cd build
-        - cmake -DBUILD_ULFIUS_TESTING=on ..
-        - ln -s ../test/cert/ .
-        - ./cert/create-cert.sh || (cat ../test/cert/certtool.log && false)
-        - make test || (cat Testing/Temporary/LastTest.log && false)
-        - make package
     - env: LABEL=cppcheck
       arch: ppc64le
       script:
