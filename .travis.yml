@@ -15,7 +15,6 @@ jobs:
     - env: LABEL=clang
       compiler: clang
       script:
-      compiler: clang
         - cd build
         - cmake -DBUILD_ULFIUS_TESTING=on ..
         - ln -s ../test/cert/ .
@@ -30,7 +29,6 @@ jobs:
       arch: ppc64le
       compiler: gcc
       script:
-      compiler: clang
         - cd build
         - cmake -DBUILD_ULFIUS_TESTING=on ..
         - ln -s ../test/cert/ .
@@ -39,8 +37,8 @@ jobs:
         - make package
     - env: LABEL=clang
       arch: ppc64le
-      script:
       compiler: clang
+      script:
         - cd build
         - cmake -DBUILD_ULFIUS_TESTING=on ..
         - ln -s ../test/cert/ .
@@ -751,7 +749,3 @@ script:
   - make clean debug GNUTLSFLAG=1 CURLFLAG=1 JANSSONFLAG=1
   - make clean debug GNUTLSFLAG=1 CURLFLAG=1 WEBSOCKETFLAG=1
   - make clean debug GNUTLSFLAG=1 CURLFLAG=1
-
-# run tests with Makefile
-  - sudo ldconfig
-  - make clean debug
