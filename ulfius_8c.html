@@ -110,8 +110,8 @@ Functions</h2></td></tr>
 <tr class="separator:ga2d14cdd9291b8b8e9d46b1af8fd3b4a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaac16030b0f6866d51a65015b9fe96f0c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__mem.html#gaac16030b0f6866d51a65015b9fe96f0c">u_free</a> (void *data)</td></tr>
 <tr class="separator:gaac16030b0f6866d51a65015b9fe96f0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab9d8c9be31d8369ddd41ead48706f523"><td class="memItemLeft" align="right" valign="top">const unsigned char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ulfius_8c.html#ab9d8c9be31d8369ddd41ead48706f523">utf8_check</a> (const char *s_orig)</td></tr>
-<tr class="separator:ab9d8c9be31d8369ddd41ead48706f523"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0559f9d3cee53cbbd1c175853d50c262"><td class="memItemLeft" align="right" valign="top">const unsigned char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ulfius_8c.html#a0559f9d3cee53cbbd1c175853d50c262">utf8_check</a> (const char *s_orig, size_t len)</td></tr>
+<tr class="separator:a0559f9d3cee53cbbd1c175853d50c262"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga04b4082687a4ee377d9d53bdf9838a69"><td class="memItemLeft" align="right" valign="top">char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__url__encode.html#ga04b4082687a4ee377d9d53bdf9838a69">ulfius_url_encode</a> (const char *str)</td></tr>
 <tr class="separator:ga04b4082687a4ee377d9d53bdf9838a69"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaee0c27433bba6b1b015c3ce17012d81e"><td class="memItemLeft" align="right" valign="top">char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__url__encode.html#gaee0c27433bba6b1b015c3ce17012d81e">ulfius_url_decode</a> (const char *str)</td></tr>
@@ -157,8 +157,8 @@ Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
-<a id="ab9d8c9be31d8369ddd41ead48706f523"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab9d8c9be31d8369ddd41ead48706f523">&#9670;&nbsp;</a></span>utf8_check()</h2>
+<a id="a0559f9d3cee53cbbd1c175853d50c262"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0559f9d3cee53cbbd1c175853d50c262">&#9670;&nbsp;</a></span>utf8_check()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -167,14 +167,24 @@ Functions</h2></td></tr>
           <td class="memname">const unsigned char* utf8_check </td>
           <td>(</td>
           <td class="paramtype">const char *&#160;</td>
-          <td class="paramname"><em>s_orig</em></td><td>)</td>
+          <td class="paramname"><em>s_orig</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>len</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>The <a class="el" href="ulfius_8c.html#ab9d8c9be31d8369ddd41ead48706f523">utf8_check()</a> function scans the '\0'-terminated string starting at s. It returns a pointer to the first byte of the first malformed or overlong UTF-8 sequence found, or NULL if the string contains only correct UTF-8. It also spots UTF-8 sequences that could cause trouble if converted to UTF-16, namely surrogate characters (U+D800..U+DFFF) and non-Unicode positions (U+FFFE..U+FFFF). This routine is very likely to find a malformed sequence if the input uses any other encoding than UTF-8. It therefore can be used as a very effective heuristic for distinguishing between UTF-8 and other encodings.</p>
+<p>The <a class="el" href="ulfius_8c.html#a0559f9d3cee53cbbd1c175853d50c262">utf8_check()</a> function scans the string starting at s. It returns a pointer to the first byte of the first malformed or overlong UTF-8 sequence found, or NULL if the string contains only correct UTF-8. It also spots UTF-8 sequences that could cause trouble if converted to UTF-16, namely surrogate characters (U+D800..U+DFFF) and non-Unicode positions (U+FFFE..U+FFFF). This routine is very likely to find a malformed sequence if the input uses any other encoding than UTF-8. It therefore can be used as a very effective heuristic for distinguishing between UTF-8 and other encodings.</p>
 <p>I wrote this code mainly as a specification of functionality; there are no doubt performance optimizations possible for certain CPUs.</p>
-<p>Markus Kuhn <a href="http://www.cl.cam.ac.uk/~mgk25/">http://www.cl.cam.ac.uk/~mgk25/</a> &ndash; 2005-03-30 License: <a href="http://www.cl.cam.ac.uk/~mgk25/short-license.html">http://www.cl.cam.ac.uk/~mgk25/short-license.html</a> </p>
+<p>Markus Kuhn <a href="http://www.cl.cam.ac.uk/~mgk25/">http://www.cl.cam.ac.uk/~mgk25/</a> &ndash; 2005-03-30 Nicolas Mora <a href="#" onclick="location.href='mai'+'lto:'+'mai'+'l@'+'bab'+'el'+'oue'+'st'+'.or'+'g'; return false;">mail@<span style="display: none;">.nosp@m.</span>babe<span style="display: none;">.nosp@m.</span>loues<span style="display: none;">.nosp@m.</span>t.or<span style="display: none;">.nosp@m.</span>g</a> License: <a href="http://www.cl.cam.ac.uk/~mgk25/short-license.html">http://www.cl.cam.ac.uk/~mgk25/short-license.html</a> </p>
 
 </div>
 </div>
