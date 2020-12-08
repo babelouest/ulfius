@@ -1,3 +1,5 @@
+/* Public domain, no copyright. Use at your own risk. */
+
 #include <signal.h>
 #include <string.h>
 #include <ulfius.h>

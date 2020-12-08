@@ -1,7 +1,8 @@
+/* Public domain, no copyright. Use at your own risk. */
+
 #include <ulfius.h>
 
 #define PORT "9001"
-#define MESSAGE "Message without fragmentation from client"
 
 static void websocket_echo_message_callback (const struct _u_request * request,
                                              struct _websocket_manager * websocket_manager,

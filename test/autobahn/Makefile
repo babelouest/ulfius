@@ -1,3 +1,7 @@
+#
+# Public domain, no copyright. Use at your own risk.
+#
+
 SHELL := /bin/bash # Use bash syntax
 CC=gcc
 ROOT = $(shell pwd)
