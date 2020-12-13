@@ -17,7 +17,7 @@ You can create webservices in HTTP or HTTPS mode, stream data, or implement serv
 
 The source code of a hello world using Ulfius is the following:
 
-```c
+```C
 /**
  * test.c
  * Small Hello World! example
