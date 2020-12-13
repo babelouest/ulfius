@@ -4,7 +4,7 @@
  *
  * Copyright 2020 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20201101
+ * Version 20201213
  * 
  * The MIT License (MIT)
  * 
@@ -90,6 +90,8 @@
 
 #ifndef _U_STATIC_COMPRESSED_INMEMORY_WEBSITE
 #define _U_STATIC_COMPRESSED_INMEMORY_WEBSITE
+
+#define _U_W_BLOCK_SIZE 256
 
 struct _u_compressed_inmemory_website_config {
   char          * files_path;

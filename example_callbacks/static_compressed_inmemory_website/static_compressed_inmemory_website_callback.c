@@ -4,7 +4,7 @@
  *
  * Copyright 2020 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20201101
+ * Version 20201213
  * 
  * The MIT License (MIT)
  * 
@@ -293,7 +293,7 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
   int ret = U_CALLBACK_CONTINUE, compress_mode = U_COMPRESS_NONE, res;
   z_stream defstream;
   unsigned char * file_content, * file_content_orig = NULL;
-  size_t length, read_length, offset;
+  size_t length, read_length, offset, data_zip_len = 0;
   FILE * f;
   char * file_requested, * file_path, * url_dup_save, * data_zip = NULL;
   const char * content_type;
@@ -372,8 +372,6 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
                     defstream.opaque = Z_NULL;
                     defstream.avail_in = (uInt)length;
                     defstream.next_in = (Bytef *)file_content;
-                    defstream.avail_out = length;
-                    defstream.next_out = (Bytef *)data_zip;
                     while ((read_length = fread(file_content, sizeof(char), offset, f))) {
                       file_content += read_length;
                       offset -= read_length;
@@ -396,8 +394,28 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
                       }
                     }
                     if (ret == U_CALLBACK_CONTINUE) {
-                      res = deflate(&defstream, Z_FINISH);
-                      if (res == Z_STREAM_END) {
+                      do {
+                        if ((data_zip = o_realloc(data_zip, data_zip_len+_U_W_BLOCK_SIZE)) != NULL) {
+                          defstream.avail_out = _U_W_BLOCK_SIZE;
+                          defstream.next_out = ((Bytef *)data_zip)+data_zip_len;
+                          switch ((res = deflate(&defstream, Z_FINISH))) {
+                            case Z_OK:
+                            case Z_STREAM_END:
+                            case Z_BUF_ERROR:
+                              break;
+                            default:
+                              y_log_message(Y_LOG_LEVEL_ERROR, "callback_static_compressed_inmemory_website - Error deflate %d", res);
+                              ret = U_CALLBACK_ERROR;
+                              break;
+                          }
+                          data_zip_len += _U_W_BLOCK_SIZE - defstream.avail_out;
+                        } else {
+                          y_log_message(Y_LOG_LEVEL_ERROR, "callback_static_compressed_inmemory_website - Error allocating resources for data_zip");
+                          ret = U_CALLBACK_ERROR;
+                        }
+                      } while (U_CALLBACK_CONTINUE == ret && defstream.avail_out == 0);
+                      
+                      if (ret == U_CALLBACK_CONTINUE) {
                         if (compress_mode == U_COMPRESS_GZIP) {
                           if (config->allow_cache_compressed) {
                             u_map_put_binary(&config->gzip_files, file_requested, data_zip, 0, defstream.total_out);
@@ -410,18 +428,15 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
                           ulfius_set_binary_body_response(response, 200, u_map_get(&config->deflate_files, file_requested), u_map_get_length(&config->deflate_files, file_requested));
                         }
                         u_map_put(response->map_header, U_CONTENT_HEADER, compress_mode==U_COMPRESS_GZIP?U_ACCEPT_GZIP:U_ACCEPT_DEFLATE);
-                      } else {
-                        y_log_message(Y_LOG_LEVEL_ERROR, "callback_static_compressed_inmemory_website - Error deflate file url %s: %d", file_requested, res);
-                        ret = callback_static_file_uncompressed(request, response, user_data);
                       }
                     }
                     deflateEnd(&defstream);
+                    o_free(data_zip);
                   } else {
                     y_log_message(Y_LOG_LEVEL_ERROR, "callback_static_compressed_inmemory_website - Error allocating resource for file_content or data_zip");
                     ret = U_CALLBACK_ERROR;
                   }
                   o_free(file_content_orig);
-                  o_free(data_zip);
                   fclose(f);
                 }
                 pthread_mutex_unlock(&config->lock);

@@ -4,7 +4,7 @@
  *
  * Copyright 2020 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20201101
+ * Version 20201213
  *
  * Compress the response body using `deflate` or `gzip` depending on the request header `Accept-Encoding` and the callback configuration.
  * The rest of the response, status, headers, cookies won't change.
@@ -34,6 +34,8 @@
 
 #ifndef _U_HTTP_COMPRESSION
 #define _U_HTTP_COMPRESSION
+
+#define _U_C_BLOCK_SIZE 256
 
 /**
  * If both values are set to true, the first compression algorithm used will be gzip

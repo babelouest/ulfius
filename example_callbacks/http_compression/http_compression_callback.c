@@ -4,7 +4,7 @@
  *
  * Copyright 2020 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20201101
+ * Version 20201213
  *
  * Compress the response body using `deflate` or `gzip` depending on the request header `Accept-Encoding` and the callback configuration.
  * The rest of the response, status, headers, cookies won't change.
@@ -69,7 +69,7 @@ int callback_http_compression (const struct _u_request * request, struct _u_resp
   int ret = U_CALLBACK_IGNORE, compress_mode = U_COMPRESS_NONE, res;
   z_stream defstream;
   char * data_zip = NULL;
-  size_t data_zip_len;
+  size_t data_zip_len = 0;
 
   if (response->binary_body_length && u_map_has_key_case(request->map_header, U_ACCEPT_HEADER)) {
     if (split_string(u_map_get_case(request->map_header, U_ACCEPT_HEADER), ",", &accept_list)) {
@@ -80,47 +80,57 @@ int callback_http_compression (const struct _u_request * request, struct _u_resp
       }
 
       if (compress_mode != U_COMPRESS_NONE) {
-        data_zip_len = (2*response->binary_body_length)+20;
-        if ((data_zip = o_malloc(data_zip_len)) != NULL) {
-          defstream.zalloc = u_zalloc;
-          defstream.zfree = u_zfree;
-          defstream.opaque = Z_NULL;
-          defstream.avail_in = (uInt)response->binary_body_length;
-          defstream.next_in = (Bytef *)response->binary_body;
-          defstream.next_out = (Bytef *)data_zip;
-          defstream.avail_out = (uInt)data_zip_len;
+        defstream.zalloc = u_zalloc;
+        defstream.zfree = u_zfree;
+        defstream.opaque = Z_NULL;
+        defstream.avail_in = (uInt)response->binary_body_length;
+        defstream.next_in = (Bytef *)response->binary_body;
 
-          if (compress_mode == U_COMPRESS_GZIP) {
-            if (deflateInit2(&defstream, 
-                             Z_BEST_COMPRESSION, 
-                             Z_DEFLATED,
-                             U_GZIP_WINDOW_BITS | U_GZIP_ENCODING,
-                             8,
-                             Z_DEFAULT_STRATEGY) != Z_OK) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "callback_http_compression - Error deflateInit (gzip)");
-              ret = U_CALLBACK_ERROR;
-            }
-          } else {
-            if (deflateInit(&defstream, Z_BEST_COMPRESSION) != Z_OK) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "callback_http_compression - Error deflateInit (deflate)");
-              ret = U_CALLBACK_ERROR;
-            }
-          }
-          if (ret == U_CALLBACK_IGNORE) {
-            res = deflate(&defstream, Z_FINISH);
-            if (res == Z_STREAM_END) {
-              ulfius_set_binary_body_response(response, response->status, (const char *)data_zip, defstream.total_out);
-              u_map_put(response->map_header, U_CONTENT_HEADER, compress_mode==U_COMPRESS_GZIP?U_ACCEPT_GZIP:U_ACCEPT_DEFLATE);
-            } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "callback_http_compression - Error deflate API url %s: %d", request->http_url, res);
-            }
-            deflateEnd(&defstream);
+        if (compress_mode == U_COMPRESS_GZIP) {
+          if (deflateInit2(&defstream, 
+                           Z_BEST_COMPRESSION, 
+                           Z_DEFLATED,
+                           U_GZIP_WINDOW_BITS | U_GZIP_ENCODING,
+                           8,
+                           Z_DEFAULT_STRATEGY) != Z_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "callback_http_compression - Error deflateInit (gzip)");
+            ret = U_CALLBACK_ERROR;
           }
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "callback_http_compression - Error allocating resources for data_zip");
-          ret = U_CALLBACK_ERROR;
+          if (deflateInit(&defstream, Z_BEST_COMPRESSION) != Z_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "callback_http_compression - Error deflateInit (deflate)");
+            ret = U_CALLBACK_ERROR;
+          }
         }
-        o_free(data_zip);
+        if (ret == U_CALLBACK_IGNORE) {
+          do {
+            if ((data_zip = o_realloc(data_zip, data_zip_len+_U_C_BLOCK_SIZE)) != NULL) {
+              defstream.avail_out = _U_C_BLOCK_SIZE;
+              defstream.next_out = ((Bytef *)data_zip)+data_zip_len;
+              switch ((res = deflate(&defstream, Z_FINISH))) {
+                case Z_OK:
+                case Z_STREAM_END:
+                case Z_BUF_ERROR:
+                  break;
+                default:
+                  y_log_message(Y_LOG_LEVEL_ERROR, "callback_http_compression - Error deflate %d", res);
+                  ret = U_CALLBACK_ERROR;
+                  break;
+              }
+              data_zip_len += _U_C_BLOCK_SIZE - defstream.avail_out;
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "callback_http_compression - Error allocating resources for data_zip");
+              ret = U_CALLBACK_ERROR;
+            }
+          } while (U_CALLBACK_IGNORE == ret && defstream.avail_out == 0);
+
+          if (ret == U_CALLBACK_IGNORE) {
+            ulfius_set_binary_body_response(response, response->status, (const char *)data_zip, defstream.total_out);
+            u_map_put(response->map_header, U_CONTENT_HEADER, compress_mode==U_COMPRESS_GZIP?U_ACCEPT_GZIP:U_ACCEPT_DEFLATE);
+          }
+          deflateEnd(&defstream);
+          o_free(data_zip);
+        }
       }
     }
     free_string_array(accept_list);
