@@ -59,7 +59,7 @@ struct tm * gmtime_r(const time_t* t, struct tm* r) {
 #endif
 
 /**
- * Internal structure used to store temporarly the response body
+ * Internal structure used to store temporarily the response body
  */
 struct _u_body {
   char * data;
