@@ -1,5 +1,9 @@
 # Ulfius Changelog
 
+## 2.7.1
+
+- Fix websocket protocol and extension management bug, thanks to Olivier Girondel
+
 ## 2.7.0
 
 - Allow `Content-Enconding` header with `ulfius_send_http_request` to compress the response body
