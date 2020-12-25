@@ -1675,8 +1675,8 @@ void ulfius_clear_websocket_message(struct _websocket_message * message);
  * Set a websocket in the response
  * You must set at least websocket_manager_callback or websocket_incoming_message_callback
  * @param response struct _u_response to send back the websocket initialization, mandatory
- * @param websocket_protocol list of protocols, separated by a comma, or NULL if all protocols are accepted
- * @param websocket_extensions list of extensions, separated by a comma, or NULL if all extensions are accepted
+ * @param websocket_protocol list of protocols, separated by a comma, or NULL if no protocols are accepted
+ * @param websocket_extensions list of extensions, separated by a comma, or NULL if no extensions are accepted
  * @param websocket_manager_callback callback function called right after the handshake acceptance, optional
  * @param websocket_manager_user_data any data that will be given to the websocket_manager_callback, optional
  * @param websocket_incoming_message_callback callback function called on each incoming complete message, optional
