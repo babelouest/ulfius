@@ -1334,10 +1334,10 @@ int ulfius_set_websocket_response(struct _u_response * response,
 According to the Websockets RFC, parameters `websocket_protocol` and `websocket_extensions` are specific for your application.
 
 In Ulfius Implementation, if you specify a list of protocols as a string of protocol names, separated by a comma (`,`), Ulfius framework will check each one and see if they match the list of protocols specified by the client. The resulting protocol list will be sent back to the client.
-Likewise, the websocket extension is specific to your application, you can specify a list of websocket extension separated by a semicolon (`;`).
+Likewise, the websocket extension is specific to your application, you can specify a list of websocket extension separated by a comma (`,`).
 
 If no protocol match your list, the connection will be closed by the framework and will return an error 400 to the client.
-If you set a `NULL` value for the protocol and/or the extension, Ulfius will accept any protocols and/or extension sent by the client.
+If you set a `NULL` value for the protocol and/or the extension, Ulfius will not accept any protocols and/or extension sent by the client, but the websocket connexion will be opened.
 
 3 callback functions are available for the websocket implementation:
 
@@ -1999,6 +1999,10 @@ When declaring a `struct _websocket_client_handler` for websocket client API, yo
 ```C
 struct _websocket_client_handler websocket_client_handler = {NULL, NULL};
 ```
+
+### Breaking change with ulfius_set_websocket_response
+
+When using `ulfius_set_websocket_response` with parameters `websocket_protocol` or `websocket_extensions` set to `NULL`, Ulfius will no longer accept any protocol or extension sent by the client, but will return no extension nor protocol to the client, and the websocket connexion will be "raw".
 
 ## What's new in Ulfius 2.6? <a name="whats-new-in-ulfius-26"></a>
 
