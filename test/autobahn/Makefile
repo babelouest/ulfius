@@ -20,8 +20,8 @@ LIBS=-lc -lulfius -lorcania -lyder -lpthread $(LYDER) -L$(ULFIUS_LOCATION)
 
 clean:
 	rm -f ulfius_ws_echo_server ulfius_ws_echo_client ulfius_ws_echo_server.log ulfius_ws_echo_client.log $(CONF_FOLDER)/$(KEY_FILE) $(CONF_FOLDER)/$(CERT_FILE) $(GEN_FOLDER)/server $(GEN_FOLDER)/client-http $(GEN_FOLDER)/client-https
-	-docker rmi -f pypy:2 crossbario/autobahn-testsuite:latest ulfius/autobahn:base ulfius/autobahn:server ulfius/autobahn:client-http ulfius/autobahn:client-https
-	-docker system prune -f
+	#-docker rmi -f pypy:2 crossbario/autobahn-testsuite:latest ulfius/autobahn:base ulfius/autobahn:server ulfius/autobahn:client-http ulfius/autobahn:client-https
+	#-docker system prune -f
 
 test: autobahn-server autobahn-client-http
 
