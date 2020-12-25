@@ -1255,8 +1255,8 @@ int ulfius_push_websocket_message(struct _websocket_message_list * message_list,
 
 /**
  * Return a match list between two list of items
- * If match is NULL, then return source duplicate
- * Returned value must be u_free'd after use
+ * If match is NULL, then result will be NULL and returned value will be U_OK
+ * *result value must be u_free'd after use
  */
 int ulfius_check_list_match(const char * source, const char * match, const char * separator, char ** result) {
   char ** source_list = NULL, ** match_list = NULL;
@@ -1264,28 +1264,24 @@ int ulfius_check_list_match(const char * source, const char * match, const char 
 
   if (result != NULL) {
     *result = NULL;
-    if (match == NULL) {
-      *result = o_strdup(source);
-    } else {
-      if (source != NULL) {
-        if (split_string(source, separator, &source_list) > 0 && split_string(match, separator, &match_list) > 0) {
-          for (i=0; source_list[i] != NULL; i++) {
-            if (string_array_has_trimmed_value((const char **)match_list, source_list[i])) {
-              if (*result == NULL) {
-                *result = o_strdup(trimwhitespace(source_list[i]));
-              } else {
-                char * tmp = msprintf("%s%s%s", *result, separator, trimwhitespace(source_list[i]));
-                o_free(*result);
-                *result = tmp;
-              }
+    if (match != NULL && source != NULL) {
+      if (split_string(source, separator, &source_list) > 0 && split_string(match, separator, &match_list) > 0) {
+        for (i=0; source_list[i] != NULL; i++) {
+          if (string_array_has_trimmed_value((const char **)match_list, source_list[i])) {
+            if (*result == NULL) {
+              *result = o_strdup(trimwhitespace(source_list[i]));
+            } else {
+              char * tmp = msprintf("%s%s%s", *result, separator, trimwhitespace(source_list[i]));
+              o_free(*result);
+              *result = tmp;
             }
           }
-          free_string_array(source_list);
-          free_string_array(match_list);
         }
-        if (*result == NULL) {
-          ret = U_ERROR;
-        }
+        free_string_array(source_list);
+        free_string_array(match_list);
+      }
+      if (*result == NULL) {
+        ret = U_ERROR;
       }
     }
   } else {
