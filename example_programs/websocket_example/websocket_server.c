@@ -236,7 +236,7 @@ void websocket_incoming_message_callback (const struct _u_request * request,
   if (websocket_incoming_message_user_data != NULL) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_incoming_message_user_data is %s", websocket_incoming_message_user_data);
   }
-  y_log_message(Y_LOG_LEVEL_DEBUG, "Incoming message, opcode: 0x%02x, mask: %d, len: %zu", last_message->opcode, last_message->has_mask, last_message->data_len);
+  y_log_message(Y_LOG_LEVEL_DEBUG, "Incoming message, rsv: 0x%02x, opcode: 0x%02x, mask: %d, len: %zu", last_message->rsv, last_message->opcode, last_message->has_mask, last_message->data_len);
   if (last_message->opcode == U_WEBSOCKET_OPCODE_TEXT) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "text payload '%.*s'", last_message->data_len, last_message->data);
   } else if (last_message->opcode == U_WEBSOCKET_OPCODE_BINARY) {
@@ -248,7 +248,7 @@ void websocket_echo_message_callback (const struct _u_request * request,
                                          struct _websocket_manager * websocket_manager,
                                          const struct _websocket_message * last_message,
                                          void * websocket_incoming_message_user_data) {
-  y_log_message(Y_LOG_LEVEL_DEBUG, "Incoming message, opcode: 0x%02x, mask: %d, len: %zu, text payload '%.*s'", last_message->opcode, last_message->has_mask, last_message->data_len, last_message->data_len, last_message->data);
+  y_log_message(Y_LOG_LEVEL_DEBUG, "Incoming message, rsv: 0x%02x, opcode: 0x%02x, mask: %d, len: %zu, text payload '%.*s'", last_message->rsv, last_message->opcode, last_message->has_mask, last_message->data_len, last_message->data_len, last_message->data);
   if (ulfius_websocket_send_message(websocket_manager, last_message->opcode, last_message->data_len, last_message->data) != U_OK) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_websocket_send_message");
   }
@@ -258,7 +258,7 @@ void websocket_incoming_file_callback (const struct _u_request * request,
                                          struct _websocket_manager * websocket_manager,
                                          const struct _websocket_message * last_message,
                                          void * websocket_incoming_message_user_data) {
-  char * my_message = msprintf("Incoming file %p, opcode: 0x%02x, mask: %d, len: %zu", last_message, last_message->opcode, last_message->has_mask, last_message->data_len);
+  char * my_message = msprintf("Incoming file %p, rsv: 0x%02x, opcode: 0x%02x, mask: %d, len: %zu", last_message, last_message->rsv, last_message->opcode, last_message->has_mask, last_message->data_len);
   y_log_message(Y_LOG_LEVEL_DEBUG, my_message);
   ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(my_message), my_message);
   o_free(my_message);
