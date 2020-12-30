@@ -21,21 +21,29 @@
 
 LIBULFIUS_LOCATION=./src
 EXAMPLES_LOCATION=./example_programs
+ifndef UWSCFLAG
 UWSC_LOCATION=./tools/uwsc
+endif
 TESTS_LOCATION=./test
 
 all:
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) $*
+ifndef UWSCFLAG
 	cd $(UWSC_LOCATION) && $(MAKE) $*
+endif
 
 debug:
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) debug $*
+ifndef UWSCFLAG
 	cd $(UWSC_LOCATION) && $(MAKE) debug $*
+endif
 
 clean:
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) clean
 	cd $(EXAMPLES_LOCATION) && $(MAKE) clean
+ifndef UWSCFLAG
 	cd $(UWSC_LOCATION) && $(MAKE) clean
+endif
 	cd $(TESTS_LOCATION) && $(MAKE) clean
 	rm -rf doc/html
 
@@ -44,7 +52,9 @@ examples:
 
 install:
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) install
+ifndef UWSCFLAG
 	cd $(UWSC_LOCATION) && $(MAKE) install
+endif
 
 uninstall:
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) uninstall
