@@ -112,6 +112,12 @@ To disable Yder library (you will no longer have log messages available!), appen
 $ make YDERFLAG=1
 ```
 
+To disable uwsc build, append the option `UWSCFLAG=1` to the make command when you build Ulfius:
+
+```shell
+$ make UWSCFLAG=1
+```
+
 To disable two or more libraries, append options, example:
 
 ```shell

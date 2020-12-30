@@ -391,6 +391,11 @@ jobs:
         make clean debug GNUTLSFLAG=1 CURLFLAG=1 JANSSONFLAG=1
         make clean debug GNUTLSFLAG=1 CURLFLAG=1 WEBSOCKETFLAG=1
         make clean debug GNUTLSFLAG=1 CURLFLAG=1
+        make clean debug UWSCFLAG=1
+        make clean debug UWSCFLAG=1 CURLFLAG=1
+        make clean debug UWSCFLAG=1 CURLFLAG=1 WEBSOCKETFLAG=1
+        make clean debug UWSCFLAG=1 CURLFLAG=1 JANSSONFLAG=1
+        make clean debug UWSCFLAG=1 CURLFLAG=1 YDERFLAG=1
 
         # run tests with Makefile
         sudo ldconfig
