@@ -58,6 +58,9 @@ endif
 
 uninstall:
 	cd $(LIBULFIUS_LOCATION) && $(MAKE) uninstall
+ifndef UWSCFLAG
+	cd $(UWSC_LOCATION) && $(MAKE) uninstall
+endif
 
 check:
 	cd $(TESTS_LOCATION) && $(MAKE)
