@@ -3,6 +3,7 @@
 ## 2.7.1
 
 - Fix websocket protocol and extension management bug, thanks to Olivier Girondel
+- Remove Travis CI tests
 
 ## 2.7.0
 

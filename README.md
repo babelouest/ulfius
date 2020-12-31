@@ -1,6 +1,5 @@
 # Ulfius HTTP Framework
 
-[![Build Status](https://travis-ci.org/babelouest/ulfius.svg?branch=master)](https://travis-ci.org/babelouest/ulfius)
 ![.github/workflows/ccpp.yml](https://github.com/babelouest/ulfius/workflows/.github/workflows/ccpp.yml/badge.svg)
 ![CodeQL](https://github.com/babelouest/ulfius/workflows/CodeQL/badge.svg)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3195/badge)](https://bestpractices.coreinfrastructure.org/projects/3195)
