@@ -4,6 +4,7 @@
 
 - Fix websocket protocol and extension management bug, thanks to Olivier Girondel
 - Remove Travis CI tests
+- Add Makefile flag `UWSCFLAG` to disable uwsc build
 
 ## 2.7.0
 
