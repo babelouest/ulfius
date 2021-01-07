@@ -116,7 +116,7 @@ Example callback functions are available in the folder [example_callbacks](https
 ## Projects using Ulfius framework
 
 - [Glewlwyd](https://github.com/babelouest/glewlwyd), a lightweight SSO server that provides OAuth2 and OpenID Connect authentication protocols
-- [Le Biniou](https://biniou.net/), displays images that evolve with sound
+- [Le Biniou](https://biniou.net/), user-friendly yet powerful music visualization / VJing tool
 - [Angharad](https://github.com/babelouest/angharad), House automation system for ZWave and other types of devices
 - [Hutch](https://github.com/babelouest/hutch), a safe locker for passwords and other secrets, using JavaScript client side encryption only
 - [Taliesin](https://github.com/babelouest/taliesin), a lightweight audio streaming server
