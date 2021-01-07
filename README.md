@@ -115,8 +115,9 @@ Example callback functions are available in the folder [example_callbacks](https
 
 ## Projects using Ulfius framework
 
-- [Angharad](https://github.com/babelouest/angharad), House automation system for ZWave and other types of devices
 - [Glewlwyd](https://github.com/babelouest/glewlwyd), a lightweight SSO server that provides OAuth2 and OpenID Connect authentication protocols
+- [Le Biniou](https://biniou.net/), displays images that evolve with sound
+- [Angharad](https://github.com/babelouest/angharad), House automation system for ZWave and other types of devices
 - [Hutch](https://github.com/babelouest/hutch), a safe locker for passwords and other secrets, using JavaScript client side encryption only
 - [Taliesin](https://github.com/babelouest/taliesin), a lightweight audio streaming server
 - [Taulas Raspberry Pi Serial interface](https://github.com/babelouest/taulas/tree/master/taulas_raspberrypi_serial), an interface for Arduino devices that implement [Taulas](https://github.com/babelouest/taulas/) protocol, a house automation protocol for Angharad
