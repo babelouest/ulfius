@@ -318,6 +318,12 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
   struct connection_info_struct * con_info = coninfo_cls;
   size_t cur_size = size;
   char * data_dup, * filename_param;
+  const char * cur_data;
+#if MHD_VERSION >= 0x00097002
+  enum MHD_Result ret;
+#else
+  int ret;
+#endif
   UNUSED(kind);
 
   if (filename != NULL && con_info->u_instance != NULL && con_info->u_instance->file_upload_callback != NULL) {
@@ -352,13 +358,27 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
       o_free(filename_param);
     }
 
-    if (cur_size > 0 && data_dup != NULL && u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data_dup, off, cur_size + 1) == U_OK) {
+    if (cur_size > 0 && data_dup != NULL) {
+      cur_data = u_map_get((struct _u_map *)con_info->request->map_post_body, key);
+      if (cur_data != NULL) {
+        if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, ",", off+o_strlen(cur_data), 1) == U_OK &&
+            u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data_dup, off+o_strlen(cur_data), cur_size + 1) == U_OK) {
+          ret = MHD_YES;
+        } else {
+          ret = MHD_NO;
+        }
+      } else {
+        if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data_dup, off, cur_size + 1) == U_OK) {
+          ret = MHD_YES;
+        } else {
+          ret = MHD_NO;
+        }
+      }
       o_free(data_dup);
-      return MHD_YES;
     } else {
-      o_free(data_dup);
-      return MHD_NO;
+      ret = MHD_NO;
     }
+    return ret;
   }
 }
 
