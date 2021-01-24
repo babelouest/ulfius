@@ -27,3 +27,11 @@ Open in your browser the url [http://localhost:7437/upload.html](http://localhos
 The API endpoint is the following:
 
 - `http://localhost:7437/upload`: upload a file and show informations about it in the response.
+
+### Form POST
+
+Open in your browser the url [http://localhost:7437/form.html](http://localhost:7437/form.html), there enter values in the input, then click on the `send form` button. The console will display the form parameters.
+
+The API endpoint is the following:
+
+- `http://localhost:7437/static/submit`: submit a form and show informations about it in the response.

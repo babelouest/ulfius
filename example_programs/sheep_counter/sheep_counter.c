@@ -123,16 +123,29 @@ static int callback_sheep_counter_add (const struct _u_request * request, struct
  */
 static int callback_upload_file (const struct _u_request * request, struct _u_response * response, void * user_data) {
   char * url_params = print_map(request->map_url), * headers = print_map(request->map_header), * cookies = print_map(request->map_cookie), 
-        * post_params = print_map(request->map_post_body);
+       * post_params = print_map(request->map_post_body);
 
   char * string_body = msprintf("Upload file\n\n  method is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n",
                                   request->http_verb, request->http_url, url_params, cookies, headers, post_params);
-  ulfius_set_string_body_response(response, 200, string_body);
   o_free(url_params);
   o_free(headers);
   o_free(cookies);
   o_free(post_params);
   o_free(string_body);
+  return U_CALLBACK_CONTINUE;
+}
+
+/**
+ * Submit a form
+ */
+static int callback_form_submit (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  char * post_params = print_map(request->map_post_body),
+       * url_params = print_map(request->map_url);
+  y_log_message(Y_LOG_LEVEL_DEBUG, "Post parameters:\n%s", post_params);
+  y_log_message(Y_LOG_LEVEL_DEBUG, "URL parameters:\n%s", url_params);
+  o_free(post_params);
+  o_free(url_params);
+  ulfius_set_string_body_response(response, 200, "Form submitted");
   return U_CALLBACK_CONTINUE;
 }
 
@@ -201,6 +214,7 @@ int main (int argc, char **argv) {
     ulfius_add_endpoint_by_val(&instance, "DELETE", PREFIX, NULL, 1, &callback_sheep_counter_reset, &nb_sheep);
     ulfius_add_endpoint_by_val(&instance, "*", PREFIX, NULL, 2, &callback_http_compression, NULL);
     ulfius_add_endpoint_by_val(&instance, "*", FILE_PREFIX, NULL, 1, &callback_upload_file, NULL);
+    ulfius_add_endpoint_by_val(&instance, "*", STATIC_FOLDER, "/submit", 1, &callback_form_submit, NULL);
     ulfius_add_endpoint_by_val(&instance, "GET", "*", NULL, 1, &callback_static_compressed_inmemory_website, &file_config);
     
     // Start the framework
