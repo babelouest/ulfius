@@ -316,70 +316,91 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
                                   const char * transfer_encoding, const char * data, uint64_t off, size_t size) {
 #endif
   struct connection_info_struct * con_info = coninfo_cls;
-  size_t cur_size = size;
-  char * data_dup, * filename_param;
+  size_t data_size = size, cur_size;
+  char * filename_param = NULL, * data_concat = NULL;
   const char * cur_data;
 #if MHD_VERSION >= 0x00097002
-  enum MHD_Result ret;
+  enum MHD_Result ret = MHD_YES;
 #else
-  int ret;
+  int ret = MHD_YES;
 #endif
   UNUSED(kind);
 
-  if (filename != NULL && con_info->u_instance != NULL && con_info->u_instance->file_upload_callback != NULL) {
-    if (con_info->u_instance->file_upload_callback(con_info->request, key, filename, content_type, transfer_encoding, data, off, size, con_info->u_instance->file_upload_cls) == U_OK) {
-      return MHD_YES;
-    } else {
-      return MHD_NO;
+  if (con_info->u_instance == NULL) {
+    ret = MHD_NO;
+  } else if (filename != NULL && con_info->u_instance->file_upload_callback != NULL) {
+    if (con_info->u_instance->file_upload_callback(con_info->request, key, filename, content_type, transfer_encoding, data, off, size, con_info->u_instance->file_upload_cls) != U_OK) {
+      ret = MHD_NO;
     }
   } else {
-    if (con_info->u_instance) {
-      if (con_info->u_instance->check_utf8 && (utf8_check(key, o_strlen(key)) != NULL || data == NULL || utf8_check(data, o_strlen(data)) != NULL || (filename != NULL && utf8_check(filename, o_strlen(filename)) != NULL))) {
-        return MHD_YES;
+    
+    do {
+      if (con_info->u_instance->check_utf8) {
+        if (utf8_check(key, o_strlen(key)) != NULL || data == NULL || utf8_check(data, o_strlen(data)) != NULL || (filename != NULL && utf8_check(filename, o_strlen(filename)) != NULL)) {
+          break;
+        }
+      }
+      
+      if (con_info->max_post_param_size && off > con_info->max_post_param_size) {
+        break;
+      }
+      
+      if (off + size > con_info->max_post_param_size) {
+        data_size = con_info->max_post_param_size - off;
+      }
+      
+      if (filename != NULL) {
+        filename_param = msprintf("%s_filename", key);
+        if (!u_map_has_key((struct _u_map *)con_info->request->map_post_body, filename_param) && u_map_put((struct _u_map *)con_info->request->map_post_body, filename_param, filename) != U_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error u_map_put filename value");
+        }
+        cur_data = u_map_get((struct _u_map *)con_info->request->map_post_body, key);
+        cur_size = u_map_get_length((struct _u_map *)con_info->request->map_post_body, key);
+        if (cur_data != NULL) {
+          if (off) {
+            if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data, cur_size, data_size) != U_OK) {
+              ret = MHD_NO;
+              break;
+            }
+          } else {
+            if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, ",", cur_size, 1) != U_OK ||
+                u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data, cur_size+1, 1) != U_OK) {
+              ret = MHD_NO;
+              break;
+            }
+          }
+        } else {
+          if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data, 0, data_size) != U_OK) {
+            ret = MHD_NO;
+            break;
+          }
+        }
       } else {
-        data_dup = o_strndup(data, size); // Force value to end with a NULL character
-        if (con_info->max_post_param_size > 0) {
-          if (off > con_info->max_post_param_size) {
-            return MHD_YES;
-          } else if (off + size > con_info->max_post_param_size) {
-            cur_size = con_info->max_post_param_size - off;
+        cur_data = u_map_get((struct _u_map *)con_info->request->map_post_body, key);
+        cur_size = u_map_get_length((struct _u_map *)con_info->request->map_post_body, key);
+        if (cur_data != NULL) {
+          if (off) {
+            data_concat = msprintf("%s%s", cur_data, data);
+          } else {
+            data_concat = msprintf("%s,%s", cur_data, data);
+          }
+          if (u_map_put((struct _u_map *)con_info->request->map_post_body, key, data_concat) != U_OK) {
+            ret = MHD_NO;
+            break;
+          }
+        } else {
+          if (u_map_put((struct _u_map *)con_info->request->map_post_body, key, data) != U_OK) {
+            ret = MHD_NO;
+            break;
           }
         }
       }
-    } else {
-      return MHD_NO;
-    }
-
-    if (filename != NULL) {
-      filename_param = msprintf("%s_filename", key);
-      if (!u_map_has_key((struct _u_map *)con_info->request->map_post_body, filename_param) && u_map_put((struct _u_map *)con_info->request->map_post_body, filename_param, filename) != U_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error u_map_put filename value");
-      }
-      o_free(filename_param);
-    }
-
-    if (cur_size > 0 && data_dup != NULL) {
-      cur_data = u_map_get((struct _u_map *)con_info->request->map_post_body, key);
-      if (cur_data != NULL) {
-        if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, ",", off+o_strlen(cur_data), 1) == U_OK &&
-            u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data_dup, off+o_strlen(cur_data), cur_size + 1) == U_OK) {
-          ret = MHD_YES;
-        } else {
-          ret = MHD_NO;
-        }
-      } else {
-        if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data_dup, off, cur_size + 1) == U_OK) {
-          ret = MHD_YES;
-        } else {
-          ret = MHD_NO;
-        }
-      }
-      o_free(data_dup);
-    } else {
-      ret = MHD_NO;
-    }
-    return ret;
+      
+    } while (0);
+    o_free(data_concat);
+    o_free(filename_param);
   }
+  return ret;
 }
 
 #if MHD_VERSION >= 0x00096100
@@ -499,7 +520,8 @@ static int ulfius_webservice_dispatcher (void * cls,
     content_type = (char*)u_map_get_case(con_info->request->map_header, ULFIUS_HTTP_HEADER_CONTENT);
 
     // Set POST Processor if content-type is properly set
-    if (content_type != NULL && (0 == o_strncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, o_strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) ||
+    if (content_type != NULL && 
+       (0 == o_strncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, o_strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) ||
         0 == o_strncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, o_strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA)))) {
       con_info->has_post_processor = 1;
       con_info->post_processor = MHD_create_post_processor (connection, ULFIUS_POSTBUFFERSIZE, mhd_iterate_post_data, (void *) con_info);
@@ -877,7 +899,7 @@ static int ulfius_webservice_dispatcher (void * cls,
           }
         }
 
-        if (!con_info->request->callback_position && ((struct _u_instance *)cls)->default_endpoint != NULL && ((struct _u_instance *)cls)->default_endpoint->callback_function != NULL) {
+        if (!con_info->request->callback_position && ((struct _u_instance *)cls)->default_endpoint != NULL && ((struct _u_instance *)cls)->default_endpoint->callback_function != NULL && mhd_response == NULL) {
           callback_ret = ((struct _u_instance *)cls)->default_endpoint->callback_function(con_info->request, response, ((struct _u_instance *)cls)->default_endpoint->user_data);
           // Test callback_ret to know what to do
           switch (callback_ret) {
