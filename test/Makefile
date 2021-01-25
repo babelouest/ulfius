@@ -5,6 +5,7 @@
 ULFIUS_INCLUDE=../include
 ULFIUS_LOCATION=../src
 ULFIUS_LIBRARY=$(ULFIUS_LOCATION)/libulfius.so
+ULFIUS_SCRUTINIZE=$(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h $(ULFIUS_INCLUDE)/yuarel.h $(ULFIUS_LOCATION)/ulfius.c $(ULFIUS_LOCATION)/u_map.c $(ULFIUS_LOCATION)/u_request.c $(ULFIUS_LOCATION)/u_response.c $(ULFIUS_LOCATION)/u_send_request.c $(ULFIUS_LOCATION)/u_websocket.c $(ULFIUS_LOCATION)/yuarel.c
 CC=gcc
 CFLAGS+=-Wall -D_REENTRANT -I$(ULFIUS_INCLUDE) -DDEBUG -g -O0 $(CPPFLAGS)
 LIBS=-lc -lorcania -lulfius -lyder -ljansson -lgnutls -lz $(shell pkg-config --libs check) -L$(ULFIUS_LOCATION)
@@ -13,45 +14,39 @@ LIBS=-lc -lorcania -lulfius -lyder -ljansson -lgnutls -lz $(shell pkg-config --l
 # Use this LIBS below if you use yder logs
 #LIBS=-lc -lorcania -lyder -lulfius -lgnutls -lcheck -lpthread -lm -lrt -lsubunit -L$(ULFIUS_LOCATION)
 VALGRIND_COMMAND=valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all
+TARGET=u_map core framework websocket
+VERBOSE=0
+MEMCHECK=0
+
 all: test
 
 clean:
 	rm -f *.o u_map core framework websocket valgrind-*.txt
 
-$(ULFIUS_LIBRARY):
+$(ULFIUS_LIBRARY): $(ULFIUS_SCRUTINIZE)
 	cd $(ULFIUS_LOCATION) && $(MAKE) debug
 
 u_map: u_map.c
 	$(CC) $(CFLAGS) u_map.c -o u_map $(LIBS)
 
-test_u_map: $(ULFIUS_LIBRARY) u_map
-	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./u_map
-
 core: core.c
 	$(CC) $(CFLAGS) core.c -o core $(LIBS)
-
-test_core: $(ULFIUS_LIBRARY) core
-	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./core
 
 framework: framework.c
 	$(CC) $(CFLAGS) framework.c -o framework $(LIBS)
 
-test_framework: $(ULFIUS_LIBRARY) framework
-	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./framework
-
 websocket: websocket.c
 	$(CC) $(CFLAGS) websocket.c -o websocket $(LIBS)
 
-test_websocket: $(ULFIUS_LIBRARY) websocket
-	LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./websocket
+test: $(ULFIUS_LIBRARY) $(TARGET) test_u_map test_core test_framework test_websocket
 
-test: test_u_map test_core test_framework test_websocket
+test_%: % $(ULFIUS_LIBRARY)
+	@if [ "$(VERBOSE)" = "0" ] && [ "$(MEMCHECK)" = "0" ]; then \
+		LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./run_test.sh ./$^; \
+	elif [ "$(MEMCHECK)" = "0" ]; then \
+		LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} ./$^ ; \
+	else \
+		LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} $(VALGRIND_COMMAND) ./$^ 2>valgrind-$@.txt; \
+	fi
 
 check: test
-
-memcheck: $(ULFIUS_LIBRARY) u_map core framework websocket
-	-CK_FORK=no LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} $(VALGRIND_COMMAND) ./u_map 2>valgrind-u_map.txt
-	-CK_FORK=no LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} $(VALGRIND_COMMAND) ./core 2>valgrind-core.txt
-	# framework ans websocket don't work properly when CK_FORK=no is used, so using them old school with forks then
-	-LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} $(VALGRIND_COMMAND) ./framework 2>valgrind-framework.txt
-	-LD_LIBRARY_PATH=$(ULFIUS_LOCATION):${LD_LIBRARY_PATH} $(VALGRIND_COMMAND) ./websocket 2>valgrind-websocket.txt
