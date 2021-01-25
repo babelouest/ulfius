@@ -12,7 +12,7 @@ $ make test
 
 ### Sheep counter
 
-Open in your browser the url [http://localhost:7437/index.html](http://localhost:7437/index.html), it's a jquery application that will count and display sheeps to help you fall asleep. There click on the buttons available to call the underline API.
+Open in your browser the url [http://localhost:7437/static/index.html](http://localhost:7437/static/index.html), it's a jquery application that will count and display sheeps to help you fall asleep. There click on the buttons available to call the underline API.
 
 The API endpoints are the following:
 
@@ -22,7 +22,7 @@ The API endpoints are the following:
 
 ### File upload
 
-Open in your browser the url [http://localhost:7437/upload.html](http://localhost:7437/upload.html), there upload a file, preferably not a big one, then click on the `Upload File` button.
+Open in your browser the url [http://localhost:7437/static/upload.html](http://localhost:7437/static/upload.html), there upload a file, preferably not a big one, then click on the `Upload File` button.
 
 The API endpoint is the following:
 
@@ -30,7 +30,7 @@ The API endpoint is the following:
 
 ### Form POST
 
-Open in your browser the url [http://localhost:7437/form.html](http://localhost:7437/form.html), there enter values in the input, then click on the `send form` button. The console will display the form parameters.
+Open in your browser the url [http://localhost:7437/static/form.html](http://localhost:7437/static/form.html), there enter values in the input, then click on the `send form` button. The console will display the form parameters.
 
 The API endpoint is the following:
 
