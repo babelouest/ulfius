@@ -114,6 +114,7 @@ if (WITH_GNUTLS)
     find_package(GnuTLS REQUIRED)
     if (GNUTLS_FOUND)
         set(LIBS ${LIBS} ${GNUTLS_LIBRARIES})
+        include_directories(${GNUTLS_INCLUDE_DIRS})
     endif ()
 endif ()
 
