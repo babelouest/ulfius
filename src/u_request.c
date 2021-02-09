@@ -558,6 +558,10 @@ int ulfius_set_request_properties(struct _u_request * request, ...) {
             request->http_url = NULL;
           }
           break;
+        case U_OPT_HTTP_URL_APPEND:
+          str_value = va_arg(vl, const char *);
+          request->http_url = mstrcatf(request->http_url, "%s", str_value);
+          break;
         case U_OPT_HTTP_PROXY:
           str_value = va_arg(vl, const char *);
           o_free(request->proxy);

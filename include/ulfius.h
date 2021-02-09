@@ -174,7 +174,8 @@ typedef enum {
 #endif
   U_OPT_STATUS                        = 28, ///< HTTP response status code (200, 404, 500, etc), expected option value type: long
   U_OPT_AUTH_REALM                    = 29, ///< realm to send to the client response on authenticationb failed, expected option value type: const char *
-  U_OPT_SHARED_DATA                   = 30  ///< any data shared between callback functions, must be allocated and freed by the callback functions, expected option value type: void *
+  U_OPT_SHARED_DATA                   = 30, ///< any data shared between callback functions, must be allocated and freed by the callback functions, expected option value type: void *
+  U_OPT_HTTP_URL_APPEND               = 31  ///< append char * value to the current url, expected option value type: const char *
 } u_option;
 
 /**
