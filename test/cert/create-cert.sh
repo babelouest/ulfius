@@ -3,13 +3,14 @@
 DEST=./cert
 RET=0
 
-if [[ "$OSTYPE" == "darwin"* ]]; then
+case "$OSTYPE" in
+*"darwin"*)
   # Apple has its own certtool which is incompatible. GnuTLS' certtool is renamed as
   # gnutls-certtool in MacPorts/homebrew.
-  CERTTOOL=gnutls-certtool
-else
-  CERTTOOL=certtool
-fi
+  CERTTOOL=gnutls-certtool;;
+         *)
+  CERTTOOL=certtool;;
+esac
 
 # clean old certs
 rm -f $DEST/server.* $DEST/root* $DEST/client*
