@@ -16,6 +16,7 @@
 #define HTTP_PROTOCOL "http_protocol"
 #define HTTP_VERB "http_verb"
 #define HTTP_URL "http_url"
+#define HTTP_URL_APPEND "http_url_append"
 #define URL_PATH "url_path"
 #define PROXY "proxy"
 #define CA_PATH "ca_path"
@@ -328,6 +329,7 @@ START_TEST(test_ulfius_set_request_properties)
   ck_assert_int_eq(ulfius_set_request_properties(&req,
                                                  U_OPT_HTTP_VERB, HTTP_VERB,
                                                  U_OPT_HTTP_URL, HTTP_URL,
+                                                 U_OPT_HTTP_URL_APPEND, HTTP_URL_APPEND,
                                                  U_OPT_HTTP_PROXY, PROXY,
 #if MHD_VERSION >= 0x00095208
                                                  U_OPT_NETWORK_TYPE, U_USE_IPV4,
@@ -354,7 +356,7 @@ START_TEST(test_ulfius_set_request_properties)
                                                  U_OPT_NONE), U_OK);
 
   ck_assert_str_eq(req.http_verb, HTTP_VERB);
-  ck_assert_str_eq(req.http_url, HTTP_URL);
+  ck_assert_str_eq(req.http_url, HTTP_URL HTTP_URL_APPEND);
   ck_assert_str_eq(req.proxy, PROXY);
 #if MHD_VERSION >= 0x00095208
   ck_assert_int_eq(req.network_type, U_USE_IPV4);
@@ -409,6 +411,7 @@ START_TEST(test_ulfius_set_request_properties)
   ck_assert_int_eq(ulfius_set_request_properties(&req,
                                                  U_OPT_HTTP_VERB, HTTP_VERB,
                                                  U_OPT_HTTP_URL, HTTP_URL,
+                                                 U_OPT_HTTP_URL_APPEND, HTTP_URL_APPEND,
                                                  U_OPT_HTTP_PROXY, PROXY,
 #if MHD_VERSION >= 0x00095208
                                                  U_OPT_NETWORK_TYPE, U_USE_IPV4,
@@ -435,7 +438,7 @@ START_TEST(test_ulfius_set_request_properties)
                                                  U_OPT_NONE), U_OK);
 
   ck_assert_str_eq(req.http_verb, HTTP_VERB);
-  ck_assert_str_eq(req.http_url, HTTP_URL);
+  ck_assert_str_eq(req.http_url, HTTP_URL HTTP_URL_APPEND);
   ck_assert_str_eq(req.proxy, PROXY);
 #if MHD_VERSION >= 0x00095208
   ck_assert_int_eq(req.network_type, U_USE_IPV4);
