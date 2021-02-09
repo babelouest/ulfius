@@ -663,6 +663,7 @@ Options available:
 | U_OPT_NONE | Empty option to complete a ulfius_set_request_properties or ulfius_set_request_properties |
 | U_OPT_HTTP_VERB | http method (GET, POST, PUT, DELETE, etc.), expected option value type: const char * |
 | U_OPT_HTTP_URL | full URL used to call this callback function or full URL to call when used in a ulfius_send_http_request, expected option value type: const char * |
+| U_OPT_HTTP_URL_APPEND | append char * value to the current url, expected option value type: const char * |
 | U_OPT_HTTP_PROXY | proxy address to use for outgoing connections, used by ulfius_send_http_request, expected option value type: const char * |
 | U_OPT_NETWORK_TYPE | Force connect to IPv4, IPv6 addresses or both, values available are U_USE_ALL, U_USE_IPV4 or U_USE_IPV6, expected option value type: unsigned short |
 | U_OPT_CHECK_SERVER_CERTIFICATE | check server certificate and hostname, default true, used by ulfius_send_http_request, expected option value type: int |
