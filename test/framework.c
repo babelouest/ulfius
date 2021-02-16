@@ -316,17 +316,23 @@ int callback_function_check_auth(const struct _u_request * request, struct _u_re
 }
 
 int callback_function_param(const struct _u_request * request, struct _u_response * response, void * user_data) {
-  char * param3, * body;
+  char * param3, * param4, * body;
   
   if (u_map_has_key(request->map_url, "param3")) {
     param3 = msprintf(", param3 is %s", u_map_get(request->map_url, "param3"));
   } else {
     param3 = o_strdup("");
   }
-  body = msprintf("param1 is %s, param2 is %s%s", u_map_get(request->map_url, "param1"), u_map_get(request->map_url, "param2"), param3);
+  if (u_map_has_key(request->map_url, "param4")) {
+    param4 = msprintf(", param4 is %s", u_map_get(request->map_url, "param4"));
+  } else {
+    param4 = o_strdup("");
+  }
+  body = msprintf("param1 is %s, param2 is %s%s%s", u_map_get(request->map_url, "param1"), u_map_get(request->map_url, "param2"), param3, param4);
   ulfius_set_string_body_response(response, 200, body);
   o_free(body);
   o_free(param3);
+  o_free(param4);
   return U_CALLBACK_CONTINUE;
 }
 
@@ -815,6 +821,35 @@ START_TEST(test_ulfius_endpoint_parameters)
   ck_assert_int_eq(o_strncmp(response.binary_body, "param1 is value1, param2 is value2", o_strlen("param1 is value1, param2 is value2")), 0);
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
+  
+  ulfius_init_request(&request);
+  request.http_url = o_strdup("http://localhost:8080/param/value1/value2?param4=value4");
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 200);
+  ck_assert_int_eq(o_strncmp(response.binary_body, "param1 is value1, param2 is value2, param4 is value4", o_strlen("param1 is value1, param2 is value2, param4 is value4")), 0);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+  
+  ulfius_init_request(&request);
+  request.http_url = o_strdup("http://localhost:8080/param/value1/value2?param4=value4&param2=additional_value2&param4=additional_value4");
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 200);
+  ck_assert_int_eq(o_strncmp(response.binary_body, "param1 is value1, param2 is additional_value2,value2, param4 is value4,additional_value4", o_strlen("param1 is value1, param2 is additional_value2,value2, param4 is value4,additional_value4")), 0);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+  
+#if MHD_VERSION >= 0x00097200
+  ulfius_init_request(&request);
+  request.http_url = o_strdup("http://localhost:8080/param/value1/value2?param4=val%26ue4");
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 200);
+  ck_assert_int_eq(o_strncmp(response.binary_body, "param1 is value1, param2 is value2, param4 is val&ue4", o_strlen("param1 is value1, param2 is value2, param4 is val&ue4")), 0);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+#endif
   
   ulfius_init_request(&request);
   request.http_url = o_strdup("http://localhost:8080/param/value1/value2/value3.1/value3.2");
