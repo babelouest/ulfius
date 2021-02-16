@@ -5,7 +5,7 @@
  * This example program send several requests to describe
  * the function ulfius_request_http behaviour
  *  
- * Copyright 2015-2017 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2015-2021 Nicolas Mora <mail@babelouest.org>
  * 
  * License MIT
  *
