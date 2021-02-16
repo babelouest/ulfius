@@ -4,7 +4,7 @@
  * 
  * This example program get a stream data from the server
  * 
- * Copyright 2016 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2021 Nicolas Mora <mail@babelouest.org>
  * 
  * License MIT
  *
@@ -39,8 +39,11 @@ int main(void) {
   
   ulfius_init_response(&response);
   ulfius_init_request(&request);
-  request.http_verb = o_strdup("GET");
-  request.http_url = o_strdup(URL);
+  
+  ulfius_set_request_properties(&request,
+                                U_OPT_HTTP_VERB, "GET",
+                                U_OPT_HTTP_URL, URL,
+                                U_OPT_NONE); // Required to close the parameters list
   
   y_log_message(Y_LOG_LEVEL_DEBUG, "Press <enter> to run stream test");
   getchar();
@@ -54,8 +57,8 @@ int main(void) {
   
   y_log_message(Y_LOG_LEVEL_DEBUG, "Press <enter> to run stream audio test");
   ulfius_init_response(&response);
-  o_free(request.http_url);
-  request.http_url = o_strdup(URL "/audio");
+  ulfius_set_request_properties(&request, U_OPT_HTTP_VERB, "GET", U_OPT_HTTP_URL, URL, U_OPT_HTTP_URL_APPEND, "/audio", U_OPT_NONE);
+  
   getchar();
   res = ulfius_send_http_streaming_request(&request, &response, my_write_meta_body, NULL);
   if (res == U_OK) {
@@ -67,8 +70,8 @@ int main(void) {
   
   y_log_message(Y_LOG_LEVEL_DEBUG, "Press <enter> to run no stream test");
   ulfius_init_response(&response);
-  o_free(request.http_url);
-  request.http_url = o_strdup("http://www.w3.org/");
+  ulfius_set_request_properties(&request, U_OPT_HTTP_VERB, "GET", U_OPT_HTTP_URL, "http://www.w3.org/", U_OPT_NONE);
+
   getchar();
   res = ulfius_send_http_request(&request, &response);
   if (res == U_OK) {

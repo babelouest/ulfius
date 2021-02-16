@@ -5,7 +5,7 @@
  * This example program send several requests to describe
  * the function ulfius_request_http behaviour
  *  
- * Copyright 2015-2017 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2015-2021 Nicolas Mora <mail@babelouest.org>
  * 
  * License MIT
  *
@@ -63,36 +63,49 @@ int main (int argc, char **argv) {
   if (argc <= 2) {
 #endif
     ulfius_init_request(&req_list[0]);
-    req_list[0].http_verb = o_strdup("GET");
-    req_list[0].http_url = o_strdup(SERVER_URL);
+    ulfius_set_request_properties(&req_list[0],
+                                  U_OPT_HTTP_VERB, "GET",
+                                  U_OPT_HTTP_URL, SERVER_URL,
+                                  U_OPT_NONE); // Required to close the parameters list
   
     ulfius_init_request(&req_list[1]);
-    req_list[1].http_verb = o_strdup("GET");
-    req_list[1].http_url = o_strdup(SERVER_URL);
-    req_list[1].auth_basic_user = o_strdup("test");
-    req_list[1].auth_basic_password = o_strdup("testpassword");
+    ulfius_set_request_properties(&req_list[1],
+                                  U_OPT_HTTP_VERB, "GET",
+                                  U_OPT_HTTP_URL, SERVER_URL,
+                                  U_OPT_AUTH_BASIC_USER, "test",
+                                  U_OPT_AUTH_BASIC_PASSWORD, "testpassword",
+                                  U_OPT_NONE); // Required to close the parameters list
   
     ulfius_init_request(&req_list[2]);
-    req_list[2].http_verb = o_strdup("GET");
-    req_list[2].http_url = o_strdup(SERVER_URL);
-    req_list[2].auth_basic_user = o_strdup("test");
-    req_list[2].auth_basic_password = o_strdup("wrongpassword");
+    ulfius_set_request_properties(&req_list[2],
+                                  U_OPT_HTTP_VERB, "GET",
+                                  U_OPT_HTTP_URL, SERVER_URL,
+                                  U_OPT_AUTH_BASIC_USER, "test",
+                                  U_OPT_AUTH_BASIC_PASSWORD, "wrongpassword",
+                                  U_OPT_NONE); // Required to close the parameters list
   
     ulfius_init_request(&req_list[3]);
-    req_list[3].http_verb = o_strdup("GET");
-    req_list[3].http_url = o_strdup(SERVER_URL "/404");
+    ulfius_set_request_properties(&req_list[3],
+                                  U_OPT_HTTP_VERB, "GET",
+                                  U_OPT_HTTP_URL, SERVER_URL,
+                                  U_OPT_HTTP_URL_APPEND, "/404",
+                                  U_OPT_NONE); // Required to close the parameters list
 
     ulfius_init_request(&req_list[4]);
-    req_list[4].http_verb = o_strdup("GET");
-    req_list[4].http_url = o_strdup(SERVER_URL_DEFAULT);
-    req_list[4].auth_basic_user = o_strdup("test");
-    req_list[4].auth_basic_password = o_strdup("testpassword");
+    ulfius_set_request_properties(&req_list[4],
+                                  U_OPT_HTTP_VERB, "GET",
+                                  U_OPT_HTTP_URL, SERVER_URL_DEFAULT,
+                                  U_OPT_AUTH_BASIC_USER, "test",
+                                  U_OPT_AUTH_BASIC_PASSWORD, "testpassword",
+                                  U_OPT_NONE); // Required to close the parameters list
   
     ulfius_init_request(&req_list[5]);
-    req_list[5].http_verb = o_strdup("GET");
-    req_list[5].http_url = o_strdup(SERVER_URL_DEFAULT);
-    req_list[5].auth_basic_user = o_strdup("test");
-    req_list[5].auth_basic_password = o_strdup("wrongpassword");
+    ulfius_set_request_properties(&req_list[5],
+                                  U_OPT_HTTP_VERB, "GET",
+                                  U_OPT_HTTP_URL, SERVER_URL_DEFAULT,
+                                  U_OPT_AUTH_BASIC_USER, "test",
+                                  U_OPT_AUTH_BASIC_PASSWORD, "wrongpassword",
+                                  U_OPT_NONE); // Required to close the parameters list
     
     printf("Press <enter> to run auth tests no authentication\n");
     getchar();
@@ -168,12 +181,14 @@ int main (int argc, char **argv) {
 #ifndef U_DISABLE_GNUTLS
   } else {
     ulfius_init_request(&req_list[0]);
-    req_list[0].http_verb = o_strdup("GET");
-    req_list[0].http_url = o_strdup(SERVER_URL_CLIENT_CERT);
-    req_list[0].check_server_certificate = 0;
-    req_list[0].client_cert_file = o_strdup(argv[1]);
-    req_list[0].client_key_file = o_strdup(argv[2]);
-    req_list[0].client_key_password = argc>=4?o_strdup(argv[3]):NULL;
+    ulfius_set_request_properties(&req_list[0],
+                                  U_OPT_HTTP_VERB, "GET",
+                                  U_OPT_HTTP_URL, SERVER_URL_CLIENT_CERT,
+                                  U_OPT_CHECK_SERVER_CERTIFICATE, 0,
+                                  U_OPT_CLIENT_CERT_FILE, argv[1],
+                                  U_OPT_CLIENT_KEY_FILE, argv[2],
+                                  U_OPT_CLIENT_KEY_PASSWORD, argc>=4?argv[3]:NULL,
+                                  U_OPT_NONE); // Required to close the parameters list
 
     printf("Press <enter> to run client certificate authentication test\n");
     getchar();

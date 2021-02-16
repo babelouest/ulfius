@@ -62,25 +62,10 @@ void print_response(struct _u_response * response) {
 
 int main (int argc, char **argv) {
   
-  struct _u_map headers, url_params, post_params, req_headers;
   char * string_body = "param1=one&param2=two";
   json_t * json_body = json_object();
   struct _u_response response;
   int res;
-  
-  u_map_init(&headers);
-  
-  u_map_init(&url_params);
-  u_map_put(&url_params, "test", "one");
-  u_map_put(&url_params, "other_test", "two");
-  
-  u_map_init(&post_params);
-  u_map_put(&post_params, "third_test", "three");
-  u_map_put(&post_params, "fourth_test", "four");
-  u_map_put(&post_params, "extreme_test", "Here ! are %9_ some $ ö\\)]= special châraçters");
-  
-  u_map_init(&req_headers);
-  u_map_put(&req_headers, "Content-Type", MHD_HTTP_POST_ENCODING_FORM_URLENCODED);
   
   json_object_set_new(json_body, "param1", json_string("one"));
   json_object_set_new(json_body, "param2", json_string("two"));
@@ -96,59 +81,87 @@ int main (int argc, char **argv) {
   ulfius_init_request(&req_list[7]);
   
   // Parameters in url
-  req_list[0].http_verb = o_strdup("GET");
-  req_list[0].http_url = o_strdup(SERVER_URL_PREFIX "/get/");
-  req_list[0].timeout = 20;
-  u_map_copy_into(req_list[0].map_url, &url_params);
+  ulfius_set_request_properties(&req_list[0],
+                                U_OPT_HTTP_VERB, "GET",
+                                U_OPT_HTTP_URL, SERVER_URL_PREFIX,
+                                U_OPT_HTTP_URL_APPEND, "/get/",
+                                U_OPT_TIMEOUT, 20,
+                                U_OPT_URL_PARAMETER, "test", "one",
+                                U_OPT_URL_PARAMETER, "other_test", "two",
+                                U_OPT_NONE); // Required to close the parameters list
   
   // No parameters
-  req_list[1].http_verb = o_strdup("DELETE");
-  req_list[1].http_url = o_strdup(SERVER_URL_PREFIX "/delete/");
-  req_list[1].timeout = 20;
+  ulfius_set_request_properties(&req_list[1],
+                                U_OPT_HTTP_VERB, "DELETE",
+                                U_OPT_HTTP_URL, SERVER_URL_PREFIX,
+                                U_OPT_HTTP_URL_APPEND, "/delete/",
+                                U_OPT_TIMEOUT, 20,
+                                U_OPT_NONE); // Required to close the parameters list
   
   // Parameters in post_map and string_body
-  req_list[2].http_verb = o_strdup("POST");
-  req_list[2].http_url = o_strdup(SERVER_URL_PREFIX "/post/param/");
-  req_list[2].timeout = 20;
-  u_map_copy_into(req_list[2].map_post_body, &post_params);
-  req_list[2].binary_body = o_strdup(string_body);
-  req_list[2].binary_body_length = o_strlen(string_body);
+  ulfius_set_request_properties(&req_list[2],
+                                U_OPT_HTTP_VERB, "POST",
+                                U_OPT_HTTP_URL, SERVER_URL_PREFIX,
+                                U_OPT_HTTP_URL_APPEND, "/post/param/",
+                                U_OPT_TIMEOUT, 20,
+                                U_OPT_BINARY_BODY, string_body, o_strlen(string_body),
+                                U_OPT_POST_BODY_PARAMETER, "third_test", "three",
+                                U_OPT_POST_BODY_PARAMETER, "fourth_test", "four",
+                                U_OPT_POST_BODY_PARAMETER, "extreme_test", "Here ! are %9_ some $ ö\\)]= special châraçters",
+                                U_OPT_NONE); // Required to close the parameters list
   
   // Paremeters in string body, header MHD_HTTP_POST_ENCODING_FORM_URLENCODED
-  req_list[3].http_verb = o_strdup("POST");
-  req_list[3].http_url = o_strdup(SERVER_URL_PREFIX "/post/plain/");
-  req_list[3].timeout = 20;
-  u_map_copy_into(req_list[3].map_header, &req_headers);
-  req_list[3].binary_body = o_strdup(string_body);
-  req_list[3].binary_body_length = o_strlen(string_body);
+  ulfius_set_request_properties(&req_list[3],
+                                U_OPT_HTTP_VERB, "POST",
+                                U_OPT_HTTP_URL, SERVER_URL_PREFIX,
+                                U_OPT_HTTP_URL_APPEND, "/post/plain/",
+                                U_OPT_TIMEOUT, 20,
+                                U_OPT_BINARY_BODY, string_body, o_strlen(string_body),
+                                U_OPT_HEADER_PARAMETER, "Content-Type", MHD_HTTP_POST_ENCODING_FORM_URLENCODED,
+                                U_OPT_NONE); // Required to close the parameters list
   
   // Parameters in json_body
-  req_list[4].http_verb = o_strdup("POST");
-  req_list[4].http_url = o_strdup(SERVER_URL_PREFIX "/post/json/");
-  req_list[4].timeout = 20;
-  u_map_copy_into(req_list[4].map_url, &url_params);
-  ulfius_set_json_body_request(&req_list[4], json_body);
+  ulfius_set_request_properties(&req_list[4],
+                                U_OPT_HTTP_VERB, "POST",
+                                U_OPT_HTTP_URL, SERVER_URL_PREFIX,
+                                U_OPT_HTTP_URL_APPEND, "/post/json/",
+                                U_OPT_TIMEOUT, 20,
+                                U_OPT_JSON_BODY, json_body,
+                                U_OPT_URL_PARAMETER, "test", "one",
+                                U_OPT_URL_PARAMETER, "other_test", "two",
+                                U_OPT_NONE); // Required to close the parameters list
   
   // Paremeters in string body, header MHD_HTTP_POST_ENCODING_FORM_URLENCODED
-  req_list[5].http_verb = o_strdup("PUT");
-  req_list[5].http_url = o_strdup(SERVER_URL_PREFIX "/put/plain/");
-  req_list[5].timeout = 20;
-  u_map_copy_into(req_list[5].map_header, &req_headers);
-  req_list[5].binary_body = o_strdup(string_body);
-  req_list[5].binary_body_length = o_strlen(string_body);
+  ulfius_set_request_properties(&req_list[5],
+                                U_OPT_HTTP_VERB, "PUT",
+                                U_OPT_HTTP_URL, SERVER_URL_PREFIX,
+                                U_OPT_HTTP_URL_APPEND, "/put/plain/",
+                                U_OPT_TIMEOUT, 20,
+                                U_OPT_BINARY_BODY, string_body, o_strlen(string_body),
+                                U_OPT_HEADER_PARAMETER, "Content-Type", MHD_HTTP_POST_ENCODING_FORM_URLENCODED,
+                                U_OPT_NONE); // Required to close the parameters list
   
   // Parameters in json_body
-  req_list[6].http_verb = o_strdup("PUT");
-  req_list[6].http_url = o_strdup(SERVER_URL_PREFIX "/put/json/");
-  req_list[6].timeout = 20;
-  u_map_copy_into(req_list[6].map_url, &url_params);
-  ulfius_set_json_body_request(&req_list[6], json_body);
+  ulfius_set_request_properties(&req_list[6],
+                                U_OPT_HTTP_VERB, "PUT",
+                                U_OPT_HTTP_URL, SERVER_URL_PREFIX,
+                                U_OPT_HTTP_URL_APPEND, "/put/json/",
+                                U_OPT_TIMEOUT, 20,
+                                U_OPT_JSON_BODY, json_body,
+                                U_OPT_URL_PARAMETER, "test", "one",
+                                U_OPT_URL_PARAMETER, "other_test", "two",
+                                U_OPT_NONE); // Required to close the parameters list
   
   // Parameters in post_map
-  req_list[7].http_verb = o_strdup("POST");
-  req_list[7].http_url = o_strdup(SERVER_URL_PREFIX "/post/param/");
-  req_list[7].timeout = 20;
-  u_map_copy_into(req_list[6].map_post_body, &post_params);
+  ulfius_set_request_properties(&req_list[7],
+                                U_OPT_HTTP_VERB, "POST",
+                                U_OPT_HTTP_URL, SERVER_URL_PREFIX,
+                                U_OPT_HTTP_URL_APPEND, "/post/param/",
+                                U_OPT_TIMEOUT, 20,
+                                U_OPT_POST_BODY_PARAMETER, "third_test", "three",
+                                U_OPT_POST_BODY_PARAMETER, "fourth_test", "four",
+                                U_OPT_POST_BODY_PARAMETER, "extreme_test", "Here ! are %9_ some $ ö\\)]= special châraçters",
+                                U_OPT_NONE); // Required to close the parameters list
   
   printf("Press <enter> to run get test\n");
   getchar();
@@ -246,10 +259,6 @@ int main (int argc, char **argv) {
   printf("Press <enter> to quit test\n");
   getchar();
   json_decref(json_body);
-  u_map_clean(&headers);
-  u_map_clean(&url_params);
-  u_map_clean(&post_params);
-  u_map_clean(&req_headers);
   ulfius_clean_request(&req_list[0]);
   ulfius_clean_request(&req_list[1]);
   ulfius_clean_request(&req_list[2]);
