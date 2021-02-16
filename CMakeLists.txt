@@ -4,7 +4,7 @@
 # CMake file used to build all programs
 #
 # Copyright 2018      Silvio Clecio <silvioprog@gmail.com>
-# Copyright 2018-2020 Nicolas Mora <mail@babelouest.org>
+# Copyright 2018-2021 Nicolas Mora <mail@babelouest.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License
@@ -30,7 +30,7 @@ set(PROJECT_HOMEPAGE_URL "https://github.com/babelouest/ulfius/")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/ulfius/issues")
 set(LIBRARY_VERSION_MAJOR "2")
 set(LIBRARY_VERSION_MINOR "7")
-set(LIBRARY_VERSION_PATCH "1")
+set(LIBRARY_VERSION_PATCH "2")
 
 set(PROJECT_VERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}.${LIBRARY_VERSION_PATCH}")
 set(PROJECT_VERSION_MAJOR ${LIBRARY_VERSION_MAJOR})

@@ -1,5 +1,13 @@
 # Ulfius Changelog
 
+## 2.7.2
+
+- Fix post processor on multiple values with the same key (Thanks Oliv3)
+- Fix certificate generation on MacOS (Thanks @valera-rozuvan)
+- Add missing check includes if tests are built (Thanks @valera-rozuvan)
+- Add option `U_OPT_HTTP_URL_APPEND` to `ulfius_set_request_properties`
+- Use `ulfius_set_request_properties` in example programs
+
 ## 2.7.1
 
 - Fix websocket protocol and extension management bug, thanks to Olivier Girondel
