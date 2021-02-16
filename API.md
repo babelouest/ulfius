@@ -175,6 +175,7 @@ The `struct _u_instance` is defined as:
  * port:                   port number to listen to
  * network_type:           Listen to ipv4 and or ipv6 connections, values available are U_USE_ALL, U_USE_IPV4 or U_USE_IPV6
  * bind_address:           ipv4 address to listen to (optional)
+ * bind_address6:          ipv6 address to listen to (optional)
  * timeout:                Timeout to close the connection because of inactivity between the client and the server
  * nb_endpoints:           Number of available endpoints
  * default_auth_realm:     Default realm on authentication error
@@ -268,6 +269,8 @@ void ulfius_clean_instance(struct _u_instance * u_instance);
 ```
 
 Since Ulfius 2.6, you can bind to IPv4 connections, IPv6 or both. By default, `ulfius_init_instance` binds to IPv4 addresses only. If you want to bind to both IPv4 and IPv6 addresses, use `ulfius_init_instance_ipv6` with the value parameter `network_type` set to `U_USE_ALL`. If you want to bind to IPv6 addresses only, use `ulfius_init_instance_ipv6` with the value parameter `network_type` set to `U_USE_IPV6`.
+
+If you bind your instance to an address, you **MUST** set the port number to `struct sockaddr_in.sport` because the `struct _u_instance.port` will be ignored.
 
 ### Endpoint structure <a name="endpoint-structure"></a>
 
