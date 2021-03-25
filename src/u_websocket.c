@@ -339,7 +339,7 @@ static int ulfius_send_websocket_message_managed(struct _websocket_manager * web
   } else {
     message = ulfius_build_message(opcode, rsv, (websocket_manager->type == U_WEBSOCKET_CLIENT), data, data_len);
     if (message != NULL) {
-      if (ulfius_push_websocket_message(websocket_manager->message_list_outcoming, message) != U_OK) {
+      if ((websocket_manager->keep_messages&U_WEBSOCKET_KEEP_OUTCOMING) && ulfius_push_websocket_message(websocket_manager->message_list_outcoming, message) != U_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error pushing new websocket message in list");
       }
       if (data_len) {
@@ -366,6 +366,10 @@ static int ulfius_send_websocket_message_managed(struct _websocket_manager * web
           ulfius_websocket_send_frame(websocket_manager, frame, frame_len);
         }
         o_free(frame);
+      }
+      if (!(websocket_manager->keep_messages&U_WEBSOCKET_KEEP_OUTCOMING)) {
+        ulfius_clear_websocket_message(message);
+        message = NULL;
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_build_message");
@@ -538,6 +542,7 @@ static int ulfius_read_incoming_message(struct _websocket_manager * websocket_ma
   }
   if (ret != U_OK) {
     ulfius_clear_websocket_message(*message);
+    *message = NULL;
   }
   return ret;
 }
@@ -702,10 +707,15 @@ static void * ulfius_thread_websocket(void * data) {
                         if (websocket->websocket_incoming_message_callback != NULL) {
                           websocket->websocket_incoming_message_callback(websocket->request, websocket->websocket_manager, message, websocket->websocket_incoming_user_data);
                         }
-                        if (ulfius_push_websocket_message(websocket->websocket_manager->message_list_incoming, message) != U_OK) {
-                          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error pushing new websocket message in list");
-                          websocket->websocket_manager->connected = 0;
+                        if (websocket->websocket_manager->keep_messages&U_WEBSOCKET_KEEP_INCOMING) {
+                          if (ulfius_push_websocket_message(websocket->websocket_manager->message_list_incoming, message) != U_OK) {
+                            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error pushing new websocket message in list");
+                            websocket->websocket_manager->connected = 0;
+                          } else {
+                            message = NULL;
+                          }
                         } else {
+                          ulfius_clear_websocket_message(message);
                           message = NULL;
                         }
                       } else {
@@ -1455,11 +1465,15 @@ int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websock
               if (message->opcode == U_WEBSOCKET_OPCODE_CLOSE) {
                 websocket_manager->connected = 0;
               }
-              if (ulfius_push_websocket_message(websocket_manager->message_list_incoming, message) != U_OK) {
+              if ((websocket_manager->keep_messages&U_WEBSOCKET_KEEP_INCOMING) && ulfius_push_websocket_message(websocket_manager->message_list_incoming, message) != U_OK) {
                 y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error pushing new websocket message in list");
               }
             } else {
               websocket_manager->connected = 0;
+            }
+            if (!(websocket_manager->keep_messages&U_WEBSOCKET_KEEP_INCOMING)) {
+              ulfius_clear_websocket_message(message);
+              message = NULL;
             }
           }
         } while (websocket_manager->connected && (count-- > 0));
@@ -1571,6 +1585,7 @@ struct _websocket_message * ulfius_websocket_pop_first_message(struct _websocket
 void ulfius_clear_websocket_message(struct _websocket_message * message) {
   if (message != NULL) {
     o_free(message->data);
+    message->data = NULL;
     o_free(message);
   }
 }
@@ -1613,8 +1628,10 @@ void ulfius_clear_websocket_message_list(struct _websocket_message_list * messag
   if (message_list != NULL) {
     for (i=0; i < message_list->len; i++) {
       ulfius_clear_websocket_message(message_list->list[i]);
+      message_list->list[i] = NULL;
     }
     o_free(message_list->list);
+    message_list->list = NULL;
   }
 }
 
@@ -1669,6 +1686,7 @@ int ulfius_init_websocket_manager(struct _websocket_manager * websocket_manager)
     websocket_manager->protocol = NULL;
     websocket_manager->extensions = NULL;
     websocket_manager->rsv_expected = 0;
+    websocket_manager->keep_messages = U_WEBSOCKET_KEEP_INCOMING|U_WEBSOCKET_KEEP_OUTCOMING;
     pthread_mutexattr_init ( &mutexattr );
     pthread_mutexattr_settype( &mutexattr, PTHREAD_MUTEX_RECURSIVE );
     if (pthread_mutex_init(&(websocket_manager->read_lock), &mutexattr) != 0 || pthread_mutex_init(&(websocket_manager->write_lock), &mutexattr) != 0) {

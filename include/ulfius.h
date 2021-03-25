@@ -1461,6 +1461,10 @@ int u_map_empty(struct _u_map * u_map);
 #define WEBSOCKET_DEFLATE_CHUNK_SIZE 32768
 #define WEBSOCKET_DEFLATE_WINDOWS_BITS 15
 
+#define U_WEBSOCKET_KEEP_NONE      0x00
+#define U_WEBSOCKET_KEEP_INCOMING  0x01
+#define U_WEBSOCKET_KEEP_OUTCOMING 0x10
+
 /**
  * @struct _websocket_deflate_context websocket extension permessage-deflate context
  */
@@ -1527,6 +1531,7 @@ struct _websocket_extension {
 struct _websocket_manager {
   struct _websocket_message_list * message_list_incoming; /* !< list of incoming messages */
   struct _websocket_message_list * message_list_outcoming; /* !< list of outcoming messages */
+  int                              keep_messages; /* !< keep incoming and/or outcoming messages, flags available are U_WEBSOCKET_KEEP_INCOMING, U_WEBSOCKET_KEEP_OUTCOMING, U_WEBSOCKET_KEEP_NONE, default is U_WEBSOCKET_KEEP_INCOMING|U_WEBSOCKET_KEEP_OUTCOMING */
   int                              connected; /* !< flag to know if the websocket is connected or not */
   int                              ping_sent; /* !< flag to know if the websocket has sent a ping frame or not, before receiving a pong */
   int                              close_flag; /* !< flag to set before closing a websocket */
