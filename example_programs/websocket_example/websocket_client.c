@@ -1,11 +1,11 @@
 /**
- * 
+ *
  * Ulfius Framework example program
- * 
+ *
  * This example program implements a websocket
- * 
+ *
  * Copyright 2017 Nicolas Mora <mail@babelouest.org>
- * 
+ *
  * License MIT
  *
  */
@@ -34,39 +34,41 @@ int main() {
 void websocket_manager_callback(const struct _u_request * request,
                                struct _websocket_manager * websocket_manager,
                                void * websocket_manager_user_data) {
-  
+
+  websocket_manager->keep_messages = U_WEBSOCKET_KEEP_INCOMING;
+
   if (websocket_manager_user_data != NULL) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_manager_user_data is %s", websocket_manager_user_data);
   }
-  
+
   // Send text message without fragmentation
   if (ulfius_websocket_wait_close(websocket_manager, 2000) == U_WEBSOCKET_STATUS_OPEN) {
     if (ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen("Message without fragmentation from client"), "Message without fragmentation from client") != U_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error send message without fragmentation");
     }
   }
-  
+
   // Send text message with fragmentation
   if (ulfius_websocket_wait_close(websocket_manager, 2000) == U_WEBSOCKET_STATUS_OPEN) {
     if (ulfius_websocket_send_fragmented_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen("Message with fragmentation from client"), "Message with fragmentation from client", 5) != U_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error send message with fragmentation");
     }
   }
-  
+
   // Send ping message
   if (ulfius_websocket_wait_close(websocket_manager, 2000) == U_WEBSOCKET_STATUS_OPEN) {
     if (ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_PING, 0, NULL) != U_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error send ping message");
     }
   }
-  
+
   // Send binary message without fragmentation
   if (ulfius_websocket_wait_close(websocket_manager, 2000) == U_WEBSOCKET_STATUS_OPEN) {
     if (ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_BINARY, o_strlen("Message without fragmentation from client"), "Message without fragmentation from client") != U_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error send binary message without fragmentation");
     }
   }
-  
+
   // Send JSON message without fragmentation
 #ifndef U_DISABLE_JANSSON
   if (ulfius_websocket_wait_close(websocket_manager, 2000) == U_WEBSOCKET_STATUS_OPEN) {
@@ -115,7 +117,7 @@ int main(int argc, char ** argv) {
   struct _websocket_client_handler websocket_client_handler = {NULL, NULL};
   char * websocket_user_data = o_strdup("my user data");
   char * url = (argc>1&&0==o_strcmp("-https", argv[1]))?"wss://localhost:" PORT PREFIX_WEBSOCKET:"ws://localhost:" PORT PREFIX_WEBSOCKET;
-  
+
   y_init_logs("websocket_client", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting websocket_client");
   ulfius_init_request(&request);
   ulfius_init_response(&response);
@@ -135,7 +137,7 @@ int main(int argc, char ** argv) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_set_websocket_request");
     o_free(websocket_user_data);
   }
-  
+
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
   y_close_logs();
