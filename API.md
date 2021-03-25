@@ -1245,7 +1245,7 @@ U_WEBSOCKET_OPCODE_CLOSE
 U_WEBSOCKET_OPCODE_PING
 ```
 
-If you want to send a message to the client, you must use the dedicated functions `ulfius_websocket_send_message`, `ulfius_websocket_send_fragmented_message` or `ulfius_websocket_send_json_message`:
+To send a message to the client, use the dedicated functions `ulfius_websocket_send_message`, `ulfius_websocket_send_fragmented_message` or `ulfius_websocket_send_json_message`:
 
 ```C
 /**
@@ -1276,6 +1276,8 @@ int ulfius_websocket_send_json_message(struct _websocket_manager * websocket_man
 ```
 
 To get the first message of the incoming or outcoming if you need to with `ulfius_websocket_pop_first_message`, this will remove the first message of the list, and return it as a pointer. You must free the message using the function `ulfius_clear_websocket_message` after use:
+
+All the sent or received messages are stored by default in the `struct _websocket_manager` attributes `message_list_incoming` and `message_list_outcoming`. To skip storing incoming and/or outcoming messages, you can set the flag `struct _websocket_manager.keep_messages` with the values `U_WEBSOCKET_KEEP_INCOMING`, `U_WEBSOCKET_KEEP_OUTCOMING` or `U_WEBSOCKET_KEEP_NONE`. The flag is set to default with `U_WEBSOCKET_KEEP_INCOMING|U_WEBSOCKET_KEEP_OUTCOMING`.
 
 ```C
 /**
