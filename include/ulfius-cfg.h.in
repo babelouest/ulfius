@@ -34,6 +34,12 @@
 
 #define ULFIUS_VERSION_NUMBER ((ULFIUS_VERSION_MAJOR << 16) | (ULFIUS_VERSION_MINOR << 8) | (ULFIUS_VERSION_PATCH << 0))
 
+#define ULFIUS_CHECK_VERSION(major,minor,patch)                        \
+  (ULFIUS_VERSION_MAJOR > (major) ||                                    \
+   (ULFIUS_VERSION_MAJOR == (major) && ULFIUS_VERSION_MINOR > (minor)) || \
+   (ULFIUS_VERSION_MAJOR == (major) && ULFIUS_VERSION_MINOR == (minor) && \
+    ULFIUS_VERSION_PATCH >= (patch)))
+
 #cmakedefine U_DISABLE_JANSSON
 #cmakedefine U_DISABLE_CURL
 #cmakedefine U_DISABLE_GNUTLS
