@@ -38,6 +38,16 @@
 #define BODY_NOT_REDIRECTED "This is the blue pill"
 #define BODY_REDIRECTED "Welcome to the Matrix, Neo!"
 
+#define PORT_PLAIN 2525
+#define PORT_RICH 2526
+#define FROM "from"
+#define TO "to"
+#define CC "cc"
+#define BCC "bcc"
+#define CONTENT_TYPE "text/ulfius; charset=utf-42"
+#define SUBJECT "subject"
+#define BODY "mail body"
+
 struct smtp_manager {
   char * mail_data;
   unsigned int port;
@@ -1203,16 +1213,6 @@ START_TEST(test_ulfius_MHD_set_response_with_other_free)
   ck_assert_int_gt(via_free_with_test, 1);
 }
 END_TEST
-
-#define PORT_PLAIN 2525
-#define PORT_RICH 2526
-#define FROM "from"
-#define TO "to"
-#define CC "cc"
-#define BCC "bcc"
-#define CONTENT_TYPE "text/ulfius; charset=utf-42"
-#define SUBJECT "subject"
-#define BODY "mail body"
 
 START_TEST(test_ulfius_send_smtp)
 {
