@@ -1,5 +1,10 @@
 # Ulfius Changelog
 
+## 2.7.3
+
+- Add `ULFIUS_CHECK_VERSION` macro (Thanks Oliv3)
+- Add `struct _websocket_manager.keep_messages` flag
+
 ## 2.7.2
 
 - Fix post processor on multiple values with the same key (Thanks Oliv3)
