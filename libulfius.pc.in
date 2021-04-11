@@ -9,5 +9,5 @@ URL: @PROJECT_BUGREPORT_PATH@
 Version: @LIBRARY_VERSION@
 Requires: @PKGCONF_REQ@
 Requires.private: @PKGCONF_REQ_PRIVATE@
-Libs: -L${libdir} -lulfius -lorcania -lyder
+Libs: -L${libdir} -lulfius -lorcania -lyder @LIB_STATIC@
 Cflags: -I${includedir}

@@ -31,7 +31,9 @@ PKGCONFIG_TEMPLATE=../libulfius.pc.in
 DESTDIR=/usr/local
 CC=gcc
 CFLAGS+=-c -pedantic -std=gnu99 -fPIC -Wall -Werror -Wextra -D_REENTRANT -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS) $(CPPFLAGS)
-LIBS=-L$(DESTDIR)/lib -lc -lmicrohttpd -lorcania -lpthread -lz $(LDFLAGS)
+LIBSDEP=-lmicrohttpd -lpthread -lz
+LIBS=-L$(DESTDIR)/lib -lc $(LDFLAGS)
+LIB_STATIC=
 SONAME = -soname
 ifeq ($(shell uname -s),Darwin)
 	SONAME = -install_name
@@ -170,17 +172,18 @@ $(PKGCONFIG_FILE):
 	@sed -i -e 's/@LIBRARY_VERSION@/$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_PATCH)/g' $(PKGCONFIG_FILE)
 	@sed -i -e 's/@PKGCONF_REQ@/$(PKGCONF_REQ)/g' $(PKGCONFIG_FILE)
 	@sed -i -e 's/@PKGCONF_REQ_PRIVATE@/$(PKGCONF_REQ_PRIVATE)/g' $(PKGCONFIG_FILE)
+	@sed -i -e 's/@LIB_STATIC@/$(LIB_STATIC)/g' $(PKGCONFIG_FILE)
 
 target: $(OBJECTS)
 
 %.o: %.c $(CONFIG_FILE) $(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h $(ULFIUS_INCLUDE)/yuarel.h
 	$(CC) $(CFLAGS) $<
 
-libulfius.so: $(OBJECTS)
-	$(CC) -shared -fPIC -Wl,$(SONAME),$(OUTPUT) -o $(OUTPUT).$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_PATCH) $(OBJECTS) $(LIBS) $(LYDER) $(LJANSSON) $(LCURL) $(LGNUTLS)
+libulfius.so: $(OBJECTS) $(PKGCONFIG_FILE)
+	$(CC) -shared -fPIC -Wl,$(SONAME),$(OUTPUT) -o $(OUTPUT).$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_PATCH) $(OBJECTS) $(LIBS) $(LIBSDEP) $(LYDER) $(LJANSSON) $(LCURL) $(LGNUTLS)
 	ln -sf $(OUTPUT).$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_PATCH) $(OUTPUT)
 
-libulfius.a: $(OBJECTS)
+libulfius.a: $(OBJECTS) $(PKGCONFIG_FILE)
 	ar rcs libulfius.a $(OBJECTS)
 
 clean:
@@ -217,6 +220,8 @@ release: ADDITIONALFLAGS=-O3
 release: libulfius.so
 
 static: ADDITIONALFLAGS=-O3
+
+static: LIB_STATIC=$(LIBSDEP) $(LYDER) $(LJANSSON) $(LCURL) $(LGNUTLS)
 
 static: libulfius.a
 
