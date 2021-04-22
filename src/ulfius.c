@@ -780,7 +780,7 @@ static int ulfius_webservice_dispatcher (void * cls,
                                            o_strcasestr(u_map_get_case(con_info->request->map_header, "upgrade"), U_WEBSOCKET_UPGRADE_VALUE)==NULL?"No Upgrade websocket header\n":"",
                                            o_strcasestr(u_map_get_case(con_info->request->map_header, "Connection"), "Upgrade")==NULL?"No Connection Upgrade header\n":"",
                                            u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Key")==NULL?"No Sec-WebSocket-Key header\n":"",
-                                           o_strcmp(con_info->request->http_protocol, "HTTP/1.1")!=0?"Wrong HTTP Protocol":"",
+                                           o_strcmp(con_info->request->http_protocol, "HTTP/1.1")!=0?"Wrong HTTP Protocol\n":"",
                                            o_strcmp(u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Version"), "13")!=0?"Wrong websocket version\n":"",
                                            o_strcmp(con_info->request->http_verb, "GET")!=0?"Method is not GET":"");
                 response->status = MHD_HTTP_BAD_REQUEST;
