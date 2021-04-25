@@ -280,6 +280,7 @@ struct _u_response {
   void             * stream_user_data; /* !< user defined data that will be available in your callback stream functions */
   void             * websocket_handle; /* !< handle for websocket extension */
   void *             shared_data; /* !< any data shared between callback functions, must be allocated and freed by the callback functions */
+  void            (* free_shared_data)(void * shared_data); /* !< pointer to a function that will free shared_data */
   unsigned int       timeout; /* !< Timeout in seconds to close the connection because of inactivity between the client and the server */
 };
 
@@ -991,7 +992,6 @@ int ulfius_copy_request(struct _u_request * dest, const struct _u_request * sour
 int ulfius_set_request_properties(struct _u_request * request, ...);
 
 /**
- * ulfius_init_response
  * Initialize a response structure by allocating inner elements
  * @param response the response to initialize
  * @return U_OK on success
@@ -1009,7 +1009,6 @@ int ulfius_init_response(struct _u_response * response);
 int ulfius_clean_response(struct _u_response * response);
 
 /**
- * ulfius_clean_response_full
  * clean the specified response and all its elements
  * @param response the response to cleanup
  * @return U_OK on success
@@ -1017,7 +1016,6 @@ int ulfius_clean_response(struct _u_response * response);
 int ulfius_clean_response_full(struct _u_response * response);
 
 /**
- * ulfius_copy_response
  * Copy the source response elements into the dest response
  * @param dest the response to receive the copied data
  * @param source the source response to copy
@@ -1058,11 +1056,21 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
 struct _u_response * ulfius_duplicate_response(const struct _u_response * response);
 
 /**
- * ulfius_set_response_properties
  * Set a list of properties to a response
- * return U_OK on success
+ * @param response the response to set values to
+ * @return U_OK on success
  */
 int ulfius_set_response_properties(struct _u_response * response, ...);
+
+/**
+ * Adds a shared_data pointer to the response
+ * and the function to free the shared_data at the end of the callback list
+ * @param response the response to set values to
+ * @param shared_data a pointer that will be transmitted to every callback
+ * @param free_shared_data a pointer to a function that will free shared_data at the end of the callback list
+ * @return U_OK on success
+ */
+int ulfius_set_response_shared_data(struct _u_response * response, void * shared_data, void (* free_shared_data) (void * shared_data));
 
 /**
  * @}
