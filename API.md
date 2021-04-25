@@ -411,7 +411,7 @@ The priority is in descending order, which means that it starts with 0 (highest 
 
 `Warning`: Having 2 callback functions with the same priority number will result in an undefined execution order result.
 
-To help passing parameters between callback functions of the same request, the value `struct _u_response.shared_data` can be used. But it will not be allocated or freed by the framework, the program using this variable must free by itself.
+To help passing parameters between callback functions of the same request, the value `struct _u_response.shared_data` can be used. It's recommended to use the function `ulfius_set_response_shared_data` with a pointer to a free function for `shared_data`, therefore the framework will automatically clean `struct _u_response.shared_data` at the end of the callback list.
 
 ### Multiple URLs with similar pattern <a name="multiple-urls-with-similar-pattern"></a>
 
@@ -724,6 +724,7 @@ The response variable is defined as:
  * stream_user_data:     user defined data that will be available in your callback stream functions
  * websocket_handle:     handle for websocket extension
  * shared_data:          any data shared between callback functions, must be allocated and freed by the callback functions
+ * free_shared_data:     pointer to a function that will free shared_data
  * timeout:              Timeout in seconds to close the connection because of inactivity between the client and the server
  * 
  */
@@ -743,6 +744,7 @@ struct _u_response {
   void             * stream_user_data;
   void             * websocket_handle;
   void *             shared_data;
+  void            (* free_shared_data)(void * shared_data);
   unsigned int       timeout;
 };
 ```
@@ -1012,7 +1014,7 @@ struct _u_response * ulfius_duplicate_response(const struct _u_response * respon
 
 ### Memory management <a name="memory-management-1"></a>
 
-The Ulfius framework will automatically free the variables referenced by the request and responses structures, except for `struct _u_response.shared_data`, so you must use dynamically allocated values for the response pointers.
+The Ulfius framework will automatically free the variables referenced by the request and responses structures, so you must use dynamically allocated values for the response pointers.
 
 ### Character encoding <a name="character-encoding"></a>
 
@@ -2077,7 +2079,11 @@ Then if the client calls the URL `GET` `/api/potato/myPotato`, the following cal
 
 *Warning:* In this example, the URL parameter `myPotato` will be available only in the `potato_get_callback` function, because the other endpoints did not defined a URL parameter after `/potato`.
 
-If you need to communicate between callback functions for any purpose, you can use the new parameter `struct _u_response.shared_data`. This is a `void *` pointer initialized to `NULL`. If you use it, remember to free it after use, because the framework won't.
+If you need to communicate between callback functions for any purpose, you can use the new parameter `struct _u_response.shared_data`. This is a `void *` pointer initialized to `NULL`.
+
+The dedicated function `ulfius_set_response_shared_data` can be used to set `struct _u_response.shared_data` and `struct _u_response.free_shared_data`. If `struct _u_response.free_shared_data` is set, the function will be used to free `struct _u_response.shared_data` at the end of the callback list.
+
+Note: If you call `ulfius_set_response_shared_data` multiple times in the same request, before replacing `_u_response.shared_data`, the function `ulfius_set_response_shared_data` will free the previous pointer with the previous `struct _u_response.free_shared_data` if set.
 
 ### Keep only binary_body in struct _u_request and struct _u_response <a name="keep-only-binary_body-in-struct-_u_request-and-struct-_u_response"></a>
 
