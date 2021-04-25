@@ -493,6 +493,34 @@ int callback_function_complete_after_flow(const struct _u_request * request, str
   return U_CALLBACK_CONTINUE;
 }
 
+int shared_data_counter = 0;
+
+static void free_with_counter(void * ptr) {
+  shared_data_counter++;
+  o_free(ptr);
+}
+
+static void free_json_with_counter(json_t * ptr) {
+  shared_data_counter++;
+  json_decref(ptr);
+}
+
+int callback_function_shared_data_1(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  ck_assert_int_eq(ulfius_set_response_shared_data(response, o_strdup("grut"), &free_with_counter), U_OK);
+  ck_assert_ptr_eq(response->free_shared_data, &free_with_counter);
+  ck_assert_int_eq(0, o_strncmp((const char *)response->shared_data, "grut", o_strlen("grut")));
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_function_shared_data_2(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  ck_assert_ptr_eq(response->free_shared_data, &free_with_counter);
+  ck_assert_int_eq(0, o_strncmp((const char *)response->shared_data, "grut", o_strlen("grut")));
+  ck_assert_int_eq(ulfius_set_response_shared_data(response, json_string("grut"), (void (*)(void *))&free_json_with_counter), U_OK);
+  ck_assert_ptr_eq(response->free_shared_data, &free_json_with_counter);
+  ck_assert_int_eq(0, o_strncmp(json_string_value((json_t *)response->shared_data), "grut", o_strlen("grut")));
+  return U_CALLBACK_CONTINUE;
+}
+
 int via_free_with_test = 0;
 
 void free_with_test(void * ptr) {
@@ -1302,6 +1330,27 @@ START_TEST(test_ulfius_follow_redirect)
 }
 END_TEST
 
+START_TEST(test_ulfius_shared_data)
+{
+  struct _u_instance u_instance;
+  struct _u_request request;
+  
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", NULL, "*", 0, &callback_function_shared_data_1, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", NULL, "*", 0, &callback_function_shared_data_2, NULL), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
+  
+  ulfius_init_request(&request);
+  ck_assert_int_eq(ulfius_set_request_properties(&request, U_OPT_HTTP_URL, "http://localhost:8080/", U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&request, NULL), U_OK);
+  ck_assert_int_eq(2, shared_data_counter);
+  
+  ulfius_clean_request(&request);
+  ulfius_stop_framework(&u_instance);
+  ulfius_clean_instance(&u_instance);
+}
+END_TEST
+
 #ifndef U_DISABLE_GNUTLS
 START_TEST(test_ulfius_server_ca_trust)
 {
@@ -1427,6 +1476,7 @@ static Suite *ulfius_suite(void)
   tcase_add_test(tc_core, test_ulfius_send_smtp);
   tcase_add_test(tc_core, test_ulfius_send_rich_smtp);
   tcase_add_test(tc_core, test_ulfius_follow_redirect);
+  tcase_add_test(tc_core, test_ulfius_shared_data);
 #ifndef U_DISABLE_GNUTLS
   tcase_add_test(tc_core, test_ulfius_server_ca_trust);
   tcase_add_test(tc_core, test_ulfius_client_certificate);
