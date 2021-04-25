@@ -4,6 +4,7 @@
 
 - Add `ULFIUS_CHECK_VERSION` macro (Thanks Oliv3)
 - Add `struct _websocket_manager.keep_messages` flag
+- Add `struct _u_response.free_shared_data` and `ulfius_set_response_shared_data`
 
 ## 2.7.2
 
