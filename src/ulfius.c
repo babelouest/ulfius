@@ -999,6 +999,9 @@ static int ulfius_webservice_dispatcher (void * cls,
           }
           MHD_destroy_response (mhd_response);
           // Free Response parameters
+          if (response->free_shared_data != NULL && response->shared_data != NULL) {
+            response->free_shared_data(response->shared_data);
+          }
           ulfius_clean_response_full(response);
           response = NULL;
         }

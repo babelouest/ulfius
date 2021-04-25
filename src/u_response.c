@@ -388,6 +388,7 @@ int ulfius_init_response(struct _u_response * response) {
     response->stream_user_data = NULL;
     response->timeout = 0;
     response->shared_data = NULL;
+    response->free_shared_data = NULL;
 #ifndef U_DISABLE_WEBSOCKET
     response->websocket_handle = o_malloc(sizeof(struct _websocket_handle));
     if (response->websocket_handle == NULL) {
@@ -651,6 +652,19 @@ int ulfius_set_response_properties(struct _u_response * response, ...) {
     ret = U_ERROR_PARAMS;
   }
   return ret;
+}
+
+int ulfius_set_response_shared_data(struct _u_response * response, void * shared_data, void (* free_shared_data) (void * shared_data)) {
+  if (response != NULL && shared_data != NULL) {
+    if (response->free_shared_data != NULL && response->shared_data != NULL) {
+      response->free_shared_data(response->shared_data);
+    }
+    response->shared_data = shared_data;
+    response->free_shared_data = free_shared_data;
+    return U_OK;
+  } else {
+    return U_ERROR_PARAMS;
+  }
 }
 
 #ifndef U_DISABLE_JANSSON
