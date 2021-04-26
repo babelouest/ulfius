@@ -711,7 +711,6 @@ json_t * ulfius_get_json_body_response(struct _u_response * response, json_error
 int ulfius_add_header_to_response(struct _u_response * response, const char * key, const char * value) {
   if (response != NULL && key != NULL && value != NULL) {
     return u_map_put(response->map_header, key, value);
-    return U_OK;
   } else {
     return U_ERROR_PARAMS;
   }
