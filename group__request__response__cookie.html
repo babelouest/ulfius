@@ -75,6 +75,8 @@ Functions</h2></td></tr>
 <tr class="separator:gaca7e470bd96c07482ea95a24c6fd1b44"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga63a657888d8b55416683ea114f5ae351"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__request__response__cookie.html#ga63a657888d8b55416683ea114f5ae351">ulfius_set_response_properties</a> (struct <a class="el" href="struct__u__response.html">_u_response</a> *response,...)</td></tr>
 <tr class="separator:ga63a657888d8b55416683ea114f5ae351"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaf11dd6edbb080b15cfea5fdd4d11a607"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__request__response__cookie.html#gaf11dd6edbb080b15cfea5fdd4d11a607">ulfius_set_response_shared_data</a> (struct <a class="el" href="struct__u__response.html">_u_response</a> *response, void *shared_data, void(*free_shared_data)(void *shared_data))</td></tr>
+<tr class="separator:gaf11dd6edbb080b15cfea5fdd4d11a607"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga42e4ff79ea7e40eea5d3ce9128abe9c1"><td class="memItemLeft" align="right" valign="top">json_t *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__request__response__cookie.html#ga42e4ff79ea7e40eea5d3ce9128abe9c1">ulfius_get_json_body_request</a> (const struct <a class="el" href="struct__u__request.html">_u_request</a> *request, json_error_t *json_error)</td></tr>
 <tr class="separator:ga42e4ff79ea7e40eea5d3ce9128abe9c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gade63875f40cb95ff87cde09221ff6410"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__request__response__cookie.html#gade63875f40cb95ff87cde09221ff6410">ulfius_set_json_body_request</a> (struct <a class="el" href="struct__u__request.html">_u_request</a> *request, json_t *j_body)</td></tr>
@@ -246,7 +248,7 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>ulfius_init_response Initialize a response structure by allocating inner elements </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Initialize a response structure by allocating inner elements </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">response</td><td>the response to initialize </td></tr>
   </table>
@@ -296,7 +298,7 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>ulfius_clean_response_full clean the specified response and all its elements </p><dl class="params"><dt>Parameters</dt><dd>
+<p>clean the specified response and all its elements </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">response</td><td>the response to cleanup </td></tr>
   </table>
@@ -331,7 +333,7 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>ulfius_copy_response Copy the source response elements into the dest response </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Copy the source response elements into the dest response </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">dest</td><td>the response to receive the copied data </td></tr>
     <tr><td class="paramname">source</td><td>the source response to copy </td></tr>
@@ -479,7 +481,56 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>ulfius_set_response_properties Set a list of properties to a response return U_OK on success </p>
+<p>Set a list of properties to a response </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">response</td><td>the response to set values to </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success </dd></dl>
+
+</div>
+</div>
+<a id="gaf11dd6edbb080b15cfea5fdd4d11a607"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gaf11dd6edbb080b15cfea5fdd4d11a607">&#9670;&nbsp;</a></span>ulfius_set_response_shared_data()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int ulfius_set_response_shared_data </td>
+          <td>(</td>
+          <td class="paramtype">struct <a class="el" href="struct__u__response.html">_u_response</a> *&#160;</td>
+          <td class="paramname"><em>response</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">void *&#160;</td>
+          <td class="paramname"><em>shared_data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">void(*)(void *shared_data)&#160;</td>
+          <td class="paramname"><em>free_shared_data</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Adds a shared_data pointer to the response and the function to free the shared_data at the end of the callback list </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">response</td><td>the response to set values to </td></tr>
+    <tr><td class="paramname">shared_data</td><td>a pointer that will be transmitted to every callback </td></tr>
+    <tr><td class="paramname">free_shared_data</td><td>a pointer to a function that will free shared_data at the end of the callback list </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>U_OK on success </dd></dl>
 
 </div>
 </div>
