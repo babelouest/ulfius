@@ -382,12 +382,12 @@ void u_free(void * data);
  * The function ulfius_send_request_close must be called when ulfius send request functions are no longer needed
  * @return U_OK on success
  */
-int ulfius_global_init();
+int ulfius_global_init(void);
 
 /**
  * Close global parameters
  */
-void ulfius_global_close();
+void ulfius_global_close(void);
 
 /**
  * @}
@@ -640,7 +640,7 @@ int ulfius_remove_endpoint_by_val(struct _u_instance * u_instance, const char * 
  * ulfius_empty_endpoint
  * @return empty endpoint that goes at the end of an endpoint list
  */
-const struct _u_endpoint * ulfius_empty_endpoint();
+const struct _u_endpoint * ulfius_empty_endpoint(void);
 
 /**
  * ulfius_copy_endpoint
@@ -2081,7 +2081,7 @@ struct _websocket_handler {
  */
 
 #ifndef U_DISABLE_GNUTLS
-/*
+/**
  * ulfius_export_client_certificate_pem
  * Exports the client certificate using PEM format
  * @param request struct _u_request used
@@ -2090,7 +2090,7 @@ struct _websocket_handler {
  */
 char * ulfius_export_client_certificate_pem(const struct _u_request * request);
 
-/*
+/**
  * ulfius_import_client_certificate_pem
  * Imports the client certificate using PEM format
  * @param request struct _u_request used

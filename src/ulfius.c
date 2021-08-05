@@ -57,7 +57,7 @@ void y_log_message(const unsigned long type, const char * message, ...) {
   (void)(message);
 }
 
-int y_close_logs() {
+int y_close_logs(void) {
   return 1;
 }
 #endif
@@ -1514,7 +1514,7 @@ int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endp
   return ret;
 }
 
-const struct _u_endpoint * ulfius_empty_endpoint() {
+const struct _u_endpoint * ulfius_empty_endpoint(void) {
   static struct _u_endpoint empty_endpoint;
 
   empty_endpoint.http_method = NULL;
@@ -1901,7 +1901,7 @@ char * ulfius_url_decode(const char * str) {
   }
 }
 
-int ulfius_global_init() {
+int ulfius_global_init(void) {
   int ret = U_OK;
   o_malloc_t malloc_fn;
   o_realloc_t realloc_fn;
@@ -1925,7 +1925,7 @@ int ulfius_global_init() {
   return ret;
 }
 
-void ulfius_global_close() {
+void ulfius_global_close(void) {
 #ifndef U_DISABLE_CURL
   curl_global_cleanup();
 #endif
