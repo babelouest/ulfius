@@ -2,7 +2,7 @@
 
 - [Use Ulfius in a C program](#use-ulfius-in-a-c-program)
   - [Header file](#header-file)
-  - [Build options](#build-option)
+  - [Build options](#build-options)
 - [Return values](#return-values)
 - [Memory management](#memory-management)
 - [Webservice initialization](#webservice-initialization)
@@ -61,7 +61,7 @@
 - [Update existing programs from Ulfius 2.0 to 2.1](#update-existing-programs-from-ulfius-20-to-21)
 - [Update existing programs from Ulfius 1.x to 2.0](#update-existing-programs-from-ulfius-1x-to-20)
 
-## Use Ulfius in a C program <a name="header-file"></a>
+## Use Ulfius in a C program <a name="use-ulfius-in-a-c-program"></a>
 
 ### Header file <a name="header-file"></a>
 
@@ -71,7 +71,7 @@ Include file `ulfius.h` in your source file:
 #include <ulfius.h>
 ```
 
-### Build options <a name="header-file"></a>
+### Build options <a name="build-options"></a>
 
 You can use `pkg-config` to provide the compile and link options for Ulfius:
 
