@@ -1,6 +1,8 @@
 # Ulfius API Documentation
 
-- [Header file](#header-file)
+- [Use Ulfius in a C program](#use-ulfius-in-a-c-program)
+  - [Header file](#header-file)
+  - [Build options](#build-option)
 - [Return values](#return-values)
 - [Memory management](#memory-management)
 - [Webservice initialization](#webservice-initialization)
@@ -59,13 +61,32 @@
 - [Update existing programs from Ulfius 2.0 to 2.1](#update-existing-programs-from-ulfius-20-to-21)
 - [Update existing programs from Ulfius 1.x to 2.0](#update-existing-programs-from-ulfius-1x-to-20)
 
-## Header file <a name="header-file"></a>
+## Use Ulfius in a C program <a name="header-file"></a>
+
+### Header file <a name="header-file"></a>
 
 Include file `ulfius.h` in your source file:
 
 ```C
 #include <ulfius.h>
 ```
+
+### Build options <a name="header-file"></a>
+
+You can use `pkg-config` to provide the compile and link options for Ulfius:
+
+```shell
+$ # compile flags
+$ pkg-config --cflags libulfius
+-I/usr/include
+$ # linker flags
+$ pkg-config --libs libulfius
+-L/usr/lib -lulfius -lorcania -lyder
+```
+
+If you don't or can't have pkg-config for the build, you can set the linker options `-lulfius -lorcania -lyder`.
+
+The options `-lorcania` and `-lyder` are not necessary if you don't directly use Orcania or Yder functions. But in doubt, add them anyway.
 
 On your linker command, add Ulfius as a dependency library, e.g. `-lulfius` for gcc.
 
