@@ -207,6 +207,7 @@ void * ulfius_uri_logger (void * cls, const char * uri) {
   UNUSED(cls);
 
   if (con_info != NULL) {
+    memset(con_info, 0, sizeof(struct connection_info_struct));
     con_info->callback_first_iteration = 1;
     con_info->u_instance = NULL;
     u_map_init(&con_info->map_url_initial);
@@ -217,7 +218,8 @@ void * ulfius_uri_logger (void * cls, const char * uri) {
       return NULL;
     }
 
-    if (NULL == con_info->request || ulfius_init_request(con_info->request) != U_OK) {
+    if (ulfius_init_request(con_info->request) != U_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error initializing con_info->request");
       ulfius_clean_request_full(con_info->request);
       o_free(con_info);
       return NULL;
@@ -433,7 +435,6 @@ static int ulfius_webservice_dispatcher (void * cls,
                                          size_t * upload_data_size,
                                          void ** con_cls) {
 #endif
-
   struct _u_endpoint * endpoint_list = ((struct _u_instance *)cls)->endpoint_list, ** current_endpoint_list = NULL, * current_endpoint = NULL;
   struct connection_info_struct * con_info = * con_cls;
   int mhd_ret = MHD_NO, callback_ret = U_OK, i, close_loop = 0, inner_error = U_OK, mhd_response_flag;
