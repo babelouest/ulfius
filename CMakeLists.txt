@@ -30,7 +30,7 @@ set(PROJECT_HOMEPAGE_URL "https://github.com/babelouest/ulfius/")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/ulfius/issues")
 set(LIBRARY_VERSION_MAJOR "2")
 set(LIBRARY_VERSION_MINOR "7")
-set(LIBRARY_VERSION_PATCH "3")
+set(LIBRARY_VERSION_PATCH "4")
 
 set(PROJECT_VERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}.${LIBRARY_VERSION_PATCH}")
 set(PROJECT_VERSION_MAJOR ${LIBRARY_VERSION_MAJOR})
@@ -281,7 +281,9 @@ endif ()
 option(WITH_YDER "Use Yder library to log messages" ON)
 option(SEARCH_YDER "Search for Yder library" ON)
 
+set(LIB_YDER "")
 if (WITH_YDER)
+    set(LIB_YDER "-lyder")
     set(U_DISABLE_YDER OFF)
     set(SEARCH_ORCANIA OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during yder search and download
 

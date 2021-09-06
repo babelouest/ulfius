@@ -1,5 +1,11 @@
 # Ulfius Changelog
 
+## 2.7.4
+
+- Add `void` parameter to functions with no param
+- Fix bug when malformed HTTP requests are sent, thanks Jeremy Brown!
+- Remove yder flag from `libulfius.pc` when yder is disabled
+
 ## 2.7.3
 
 - Add `ULFIUS_CHECK_VERSION` macro (Thanks Oliv3)

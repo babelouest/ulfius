@@ -34,6 +34,7 @@ CFLAGS+=-c -pedantic -std=gnu99 -fPIC -Wall -Werror -Wextra -D_REENTRANT -I$(ULF
 LIBSDEP=-lmicrohttpd -lpthread -lz
 LIBS=-L$(DESTDIR)/lib -lc $(LDFLAGS)
 LIB_STATIC=
+LIB_YDER=
 SONAME = -soname
 ifeq ($(shell uname -s),Darwin)
 	SONAME = -install_name
@@ -42,7 +43,7 @@ OBJECTS=ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o
 OUTPUT=libulfius.so
 VERSION_MAJOR=2
 VERSION_MINOR=7
-VERSION_PATCH=3
+VERSION_PATCH=4
 
 ifndef JANSSONFLAG
 DISABLE_JANSSON=0
@@ -75,6 +76,7 @@ endif
 ifndef YDERFLAG
 DISABLE_YDER=0
 LYDER=-lyder
+LIB_YDER=$(LYDER)
 else
 DISABLE_YDER=1
 endif
@@ -173,6 +175,7 @@ $(PKGCONFIG_FILE):
 	@sed -i -e 's/@PKGCONF_REQ@/$(PKGCONF_REQ)/g' $(PKGCONFIG_FILE)
 	@sed -i -e 's/@PKGCONF_REQ_PRIVATE@/$(PKGCONF_REQ_PRIVATE)/g' $(PKGCONFIG_FILE)
 	@sed -i -e 's/@LIB_STATIC@/$(LIB_STATIC)/g' $(PKGCONFIG_FILE)
+	@sed -i -e 's/@LIB_YDER@/$(LIB_YDER)/g' $(PKGCONFIG_FILE)
 
 target: $(OBJECTS)
 
