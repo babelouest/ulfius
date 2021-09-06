@@ -21,7 +21,7 @@ MEMCHECK=0
 all: test
 
 clean:
-	rm -f *.o u_map core framework websocket valgrind-*.txt
+	rm -f *.o u_map core framework websocket valgrind-*.txt *.log
 
 $(ULFIUS_LIBRARY): $(ULFIUS_SCRUTINIZE)
 	cd $(ULFIUS_LOCATION) && $(MAKE) debug
