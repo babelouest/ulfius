@@ -5,6 +5,7 @@
 - Add `void` parameter to functions with no param
 - Fix bug when malformed HTTP requests are sent, thanks Jeremy Brown!
 - Remove yder flag from `libulfius.pc` when yder is disabled
+- Avoid Time-of-check time-of-use filesystem race condition, assume `fopen` result is enough
 
 ## 2.7.3
 
