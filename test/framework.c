@@ -10,6 +10,7 @@
 #include <sys/select.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <netinet/tcp.h>
 
 #ifndef _WIN32
   #include <sys/socket.h>
@@ -528,6 +529,33 @@ void free_with_test(void * ptr) {
   free(ptr);
 }
 
+int callback_function_simple(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  ulfius_set_response_properties(response, U_OPT_STATUS, 200, U_OPT_STRING_BODY, "Hello World!", U_OPT_NONE);
+  return U_CALLBACK_CONTINUE;
+}
+
+int socket_connect_localhost(in_port_t port) {
+  struct sockaddr_in server;
+  struct hostent * he;
+	int sock = socket(AF_INET, SOCK_STREAM, 0);
+
+  if (sock != -1) {
+    if ((he = gethostbyname("127.0.0.1")) != NULL) {
+      memcpy(&server.sin_addr, he->h_addr_list[0], he->h_length);
+      server.sin_family = AF_INET;
+      server.sin_port = htons(port);
+
+      if (connect(sock, (struct sockaddr *)&server , sizeof(server)) < 0) {
+        close(sock);
+        sock = -1;
+      }
+    } else {
+      close(sock);
+      sock = -1;
+    }
+  }
+	return sock;
+}
 #ifndef U_DISABLE_GNUTLS
 int callback_auth_client_cert (const struct _u_request * request, struct _u_response * response, void * user_data) {
   char * dn;
@@ -1351,6 +1379,69 @@ START_TEST(test_ulfius_shared_data)
 }
 END_TEST
 
+
+START_TEST(test_ulfius_malformed_requests)
+{
+  struct _u_instance u_instance;
+  struct _u_request request;
+  int socket;
+  const char request_1[] = "GET / HTTP/1.1\n\r";
+  const char request_2[] = "GET / HTTP/1.1\r\rx";
+  const char request_3[] = "GET / HTTP/1.1\r\r";
+  const char request_4[] = "GET / HTTP/1.1\n\n";
+  const char request_5[] = "GET / HTTP/1.1\n";
+  const char request_6[] = "GET / HTTP/1.1";
+  const char request_7[] = "I am Cornholio!";
+
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", NULL, "*", 0, &callback_function_simple, NULL), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
+  
+  ulfius_init_request(&request);
+  ck_assert_int_eq(ulfius_set_request_properties(&request, U_OPT_HTTP_URL, "http://localhost:8080/", U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&request, NULL), U_OK);
+  
+  ck_assert_int_gt(socket = socket_connect_localhost(8080), -1);
+  send(socket, request_1, sizeof(request_1), MSG_NOSIGNAL);
+  shutdown(socket, SHUT_WR);
+  close(socket);
+  
+  ck_assert_int_gt(socket = socket_connect_localhost(8080), -1);
+  send(socket, request_2, sizeof(request_2), MSG_NOSIGNAL);
+  shutdown(socket, SHUT_WR);
+  close(socket);
+  
+  ck_assert_int_gt(socket = socket_connect_localhost(8080), -1);
+  send(socket, request_3, sizeof(request_3), MSG_NOSIGNAL);
+  shutdown(socket, SHUT_WR);
+  close(socket);
+  
+  ck_assert_int_gt(socket = socket_connect_localhost(8080), -1);
+  send(socket, request_4, sizeof(request_4), MSG_NOSIGNAL);
+  shutdown(socket, SHUT_WR);
+  close(socket);
+  
+  ck_assert_int_gt(socket = socket_connect_localhost(8080), -1);
+  send(socket, request_5, sizeof(request_5), MSG_NOSIGNAL);
+  shutdown(socket, SHUT_WR);
+  close(socket);
+  
+  ck_assert_int_gt(socket = socket_connect_localhost(8080), -1);
+  send(socket, request_6, sizeof(request_6), MSG_NOSIGNAL);
+  shutdown(socket, SHUT_WR);
+  close(socket);
+  
+  ck_assert_int_gt(socket = socket_connect_localhost(8080), -1);
+  send(socket, request_7, sizeof(request_7), MSG_NOSIGNAL);
+  shutdown(socket, SHUT_WR);
+  close(socket);
+  
+  ulfius_clean_request(&request);
+  ulfius_stop_framework(&u_instance);
+  ulfius_clean_instance(&u_instance);
+}
+END_TEST
+
 #ifndef U_DISABLE_GNUTLS
 START_TEST(test_ulfius_server_ca_trust)
 {
@@ -1477,6 +1568,7 @@ static Suite *ulfius_suite(void)
   tcase_add_test(tc_core, test_ulfius_send_rich_smtp);
   tcase_add_test(tc_core, test_ulfius_follow_redirect);
   tcase_add_test(tc_core, test_ulfius_shared_data);
+  tcase_add_test(tc_core, test_ulfius_malformed_requests);
 #ifndef U_DISABLE_GNUTLS
   tcase_add_test(tc_core, test_ulfius_server_ca_trust);
   tcase_add_test(tc_core, test_ulfius_client_certificate);
