@@ -194,7 +194,6 @@ static int callback_static_file_uncompressed (const struct _u_request * request,
       fseek (f, 0, SEEK_END);
       length = ftell (f);
       fseek (f, 0, SEEK_SET);
-      fclose(f);
 
       content_type = u_map_get_case(&((struct _u_compressed_inmemory_website_config *)user_data)->mime_types, get_filename_ext(file_requested));
       if (content_type == NULL) {
