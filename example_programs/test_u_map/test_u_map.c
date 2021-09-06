@@ -59,7 +59,7 @@ int put_file_content_in_map (struct _u_map * map, const char * file_path, uint64
   FILE * f;
   int res = U_OK;
   
-  if (access(file_path, F_OK) != -1 && map != NULL) {
+  if (map != NULL) {
     f = fopen (file_path, "rb");
     if (f) {
       fseek (f, 0, SEEK_END);
@@ -70,13 +70,15 @@ int put_file_content_in_map (struct _u_map * map, const char * file_path, uint64
         fread (buffer, 1, length, f);
       }
       fclose (f);
-    }
 
-    if (buffer) {
-      res = u_map_put_binary(map,file_path,  (char *)buffer, offset, length);
-      o_free(buffer);
+      if (buffer) {
+        res = u_map_put_binary(map,file_path,  (char *)buffer, offset, length);
+        o_free(buffer);
+      } else {
+        res = U_ERROR;
+      }
     } else {
-      res = U_ERROR;
+      res = U_ERROR_PARAMS;
     }
   } else {
     res = U_ERROR_PARAMS;
