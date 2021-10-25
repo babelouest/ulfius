@@ -195,7 +195,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
   CURLcode res;
   CURL * curl_handle = NULL;
   struct curl_slist * header_list = NULL, * cookies_list = NULL;
-  char * key_esc = NULL, * value_esc = NULL, * cookie = NULL, * header = NULL, * fp = "?", * np = "&";
+  char * key_esc = NULL, * value_esc = NULL, * cookie = NULL, * cookies = NULL, * header = NULL, * fp = "?", * np = "&";
   const char * value = NULL, ** keys = NULL;
   int i, has_params = 0, ret, exit_loop;
   struct _u_request * copy_request = NULL;
@@ -459,20 +459,21 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
               value = u_map_get(copy_request->map_cookie, keys[i]);
               if (value != NULL) {
                 cookie = msprintf("%s=%s", keys[i], value);
-                if (curl_easy_setopt(curl_handle, CURLOPT_COOKIE, cookie) != CURLE_OK) {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting cookie %s", cookie);
-                  exit_loop = 1;
-                }
-                o_free(cookie);
               } else {
                 cookie = msprintf("%s:", keys[i]);
-                if (curl_easy_setopt(curl_handle, CURLOPT_COOKIE, cookie) != CURLE_OK) {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting cookie %s", cookie);
-                  exit_loop = 1;
-                }
-                o_free(cookie);
               }
+              if (cookies == NULL) {
+                cookies = o_strdup(cookie);
+              } else {
+                cookies = mstrcatf(cookies, ";%s", cookie);
+              }
+              o_free(cookie);
             }
+            if (curl_easy_setopt(curl_handle, CURLOPT_COOKIE, cookies) != CURLE_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting cookie %s", cookie);
+              exit_loop = 1;
+            }
+            o_free(cookies);
             if (exit_loop) {
               ret = U_ERROR_LIBCURL;
               break;
