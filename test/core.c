@@ -472,7 +472,15 @@ START_TEST(test_ulfius_set_request_properties)
   ck_assert_str_eq(req.client_key_password, CLIENT_KEY_PASSWORD);
 #endif
 
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_AUTH_BASIC, NULL, NULL, U_OPT_NONE), U_OK);
+  ck_assert_ptr_eq(req.auth_basic_user, NULL);
+  ck_assert_ptr_eq(req.auth_basic_password, NULL);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_AUTH_BASIC, AUTH_BASIC_USER, AUTH_BASIC_PASSWORD, U_OPT_NONE), U_OK);
+  ck_assert_str_eq(req.auth_basic_user, AUTH_BASIC_USER);
+  ck_assert_str_eq(req.auth_basic_password, AUTH_BASIC_PASSWORD);
+
   ulfius_clean_request(&req);
+
 }
 END_TEST
 
