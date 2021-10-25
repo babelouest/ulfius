@@ -1,5 +1,10 @@
 # Ulfius Changelog
 
+## 2.7.5
+
+- Fix cookie management in `ulfius_send_http_request` and `ulfius_send_http_streaming_request`
+- Add option `U_OPT_AUTH_BASIC` to `ulfius_set_request_properties`
+
 ## 2.7.4
 
 - Add `void` parameter to functions with no param
