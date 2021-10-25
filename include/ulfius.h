@@ -154,28 +154,29 @@ typedef enum {
   U_OPT_TIMEOUT                       = 11, ///< connection timeout used by ulfius_send_http_request, default is 0 _or_ Timeout in seconds to close the connection because of inactivity between the client and the server, expected option value type: unsigned long
   U_OPT_AUTH_BASIC_USER               = 12, ///< basic authentication username, expected option value type: const char *
   U_OPT_AUTH_BASIC_PASSWORD           = 13, ///< basic authentication password, expected option value type: const char *
-  U_OPT_URL_PARAMETER                 = 14, ///< Add to the map containing the url variables, both from the route and the ?key=value variables, expected option value type: const char *, const char *
-  U_OPT_HEADER_PARAMETER              = 15, ///< Add to the map containing the header variables, expected option value type: const char *, const char *
-  U_OPT_COOKIE_PARAMETER              = 16, ///< Add to the map containing the cookie variables, expected option value type: const char *, const char *
-  U_OPT_POST_BODY_PARAMETER           = 17, ///< Add to the map containing the post body variables (if available), expected option value type: const char *, const char *
-  U_OPT_URL_PARAMETER_REMOVE          = 18, ///< Remove from the map containing the url variables, both from the route and the ?key=value variables, expected option value type: const char *
-  U_OPT_HEADER_PARAMETER_REMOVE       = 19, ///< Remove from map containing the header variables, expected option value type: const char *
-  U_OPT_COOKIE_PARAMETER_REMOVE       = 20, ///< Remove from map containing the cookie variables, expected option value type: const char *
-  U_OPT_POST_BODY_PARAMETER_REMOVE    = 21, ///< Remove from map containing the post body variables (if available), expected option value type: const char *
-  U_OPT_BINARY_BODY                   = 22, ///< Set a raw body to the request or the reponse, expected option value type: const char *, size_t
-  U_OPT_STRING_BODY                   = 23, ///< Set a char * body to the request or the reponse, expected option value type: const char *
+  U_OPT_AUTH_BASIC                    = 14, ///< basic authentication user, then password, expected option value type: const char *, const char *
+  U_OPT_URL_PARAMETER                 = 15, ///< Add to the map containing the url variables, both from the route and the ?key=value variables, expected option value type: const char *, const char *
+  U_OPT_HEADER_PARAMETER              = 16, ///< Add to the map containing the header variables, expected option value type: const char *, const char *
+  U_OPT_COOKIE_PARAMETER              = 17, ///< Add to the map containing the cookie variables, expected option value type: const char *, const char *
+  U_OPT_POST_BODY_PARAMETER           = 18, ///< Add to the map containing the post body variables (if available), expected option value type: const char *, const char *
+  U_OPT_URL_PARAMETER_REMOVE          = 19, ///< Remove from the map containing the url variables, both from the route and the ?key=value variables, expected option value type: const char *
+  U_OPT_HEADER_PARAMETER_REMOVE       = 20, ///< Remove from map containing the header variables, expected option value type: const char *
+  U_OPT_COOKIE_PARAMETER_REMOVE       = 21, ///< Remove from map containing the cookie variables, expected option value type: const char *
+  U_OPT_POST_BODY_PARAMETER_REMOVE    = 22, ///< Remove from map containing the post body variables (if available), expected option value type: const char *
+  U_OPT_BINARY_BODY                   = 23, ///< Set a raw body to the request or the reponse, expected option value type: const char *, size_t
+  U_OPT_STRING_BODY                   = 24, ///< Set a char * body to the request or the reponse, expected option value type: const char *
 #ifndef U_DISABLE_JANSSON
-  U_OPT_JSON_BODY                     = 24, ///< Set a stringified json_t * body to the request or the reponse, expected option value type: json_t *
+  U_OPT_JSON_BODY                     = 25, ///< Set a stringified json_t * body to the request or the reponse, expected option value type: json_t *
 #endif
 #ifndef U_DISABLE_GNUTLS
-  U_OPT_CLIENT_CERT_FILE              = 25, ///< path to client certificate file for sending http requests with certificate authentication, available only if GnuTLS support is enabled, expected option value type: const char *
-  U_OPT_CLIENT_KEY_FILE               = 26, ///< path to client key file for sending http requests with certificate authentication, available only if GnuTLS support is enabled, expected option value type: const char *
-  U_OPT_CLIENT_KEY_PASSWORD           = 27, ///< password to unlock client key file, available only if GnuTLS support is enabled, expected option value type: const char *
+  U_OPT_CLIENT_CERT_FILE              = 26, ///< path to client certificate file for sending http requests with certificate authentication, available only if GnuTLS support is enabled, expected option value type: const char *
+  U_OPT_CLIENT_KEY_FILE               = 27, ///< path to client key file for sending http requests with certificate authentication, available only if GnuTLS support is enabled, expected option value type: const char *
+  U_OPT_CLIENT_KEY_PASSWORD           = 28, ///< password to unlock client key file, available only if GnuTLS support is enabled, expected option value type: const char *
 #endif
-  U_OPT_STATUS                        = 28, ///< HTTP response status code (200, 404, 500, etc), expected option value type: long
-  U_OPT_AUTH_REALM                    = 29, ///< realm to send to the client response on authenticationb failed, expected option value type: const char *
-  U_OPT_SHARED_DATA                   = 30, ///< any data shared between callback functions, must be allocated and freed by the callback functions, expected option value type: void *
-  U_OPT_HTTP_URL_APPEND               = 31  ///< append char * value to the current url, expected option value type: const char *
+  U_OPT_STATUS                        = 29, ///< HTTP response status code (200, 404, 500, etc), expected option value type: long
+  U_OPT_AUTH_REALM                    = 30, ///< realm to send to the client response on authenticationb failed, expected option value type: const char *
+  U_OPT_SHARED_DATA                   = 31, ///< any data shared between callback functions, must be allocated and freed by the callback functions, expected option value type: void *
+  U_OPT_HTTP_URL_APPEND               = 32  ///< append char * value to the current url, expected option value type: const char *
 } u_option;
 
 /**

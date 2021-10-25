@@ -621,6 +621,22 @@ int ulfius_set_request_properties(struct _u_request * request, ...) {
             request->auth_basic_password = NULL;
           }
           break;
+        case U_OPT_AUTH_BASIC:
+          str_value = va_arg(vl, const char *);
+          o_free(request->auth_basic_user);
+          if (o_strlen(str_value)) {
+            request->auth_basic_user = o_strdup(str_value);
+          } else {
+            request->auth_basic_user = NULL;
+          }
+          str_value = va_arg(vl, const char *);
+          o_free(request->auth_basic_password);
+          if (o_strlen(str_value)) {
+            request->auth_basic_password = o_strdup(str_value);
+          } else {
+            request->auth_basic_password = NULL;
+          }
+          break;
         case U_OPT_URL_PARAMETER:
           str_key = va_arg(vl, const char *);
           str_value = va_arg(vl, const char *);
