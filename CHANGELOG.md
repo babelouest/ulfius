@@ -4,6 +4,7 @@
 
 - Fix cookie management in `ulfius_send_http_request` and `ulfius_send_http_streaming_request`
 - Add option `U_OPT_AUTH_BASIC` to `ulfius_set_request_properties`
+- Fix bug in static_compressed_inmemory_website callback example
 
 ## 2.7.4
 
