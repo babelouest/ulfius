@@ -49,6 +49,16 @@
 #define SUBJECT "subject"
 #define BODY "mail body"
 
+#define KEY1 "key1"
+#define KEY2 "kéy2"
+#define KEY3 "key 3"
+#define KEY4 "key%203"
+
+#define VALUE1 "value1"
+#define VALUE2 "value2:'with$%stuff"
+#define VALUE3 "value 3"
+#define VALUE4 "valué(4)"
+
 struct smtp_manager {
   char * mail_data;
   unsigned int port;
@@ -519,6 +529,33 @@ int callback_function_shared_data_2(const struct _u_request * request, struct _u
   ck_assert_int_eq(ulfius_set_response_shared_data(response, json_string("grut"), (void (*)(void *))&free_json_with_counter), U_OK);
   ck_assert_ptr_eq(response->free_shared_data, &free_json_with_counter);
   ck_assert_int_eq(0, o_strncmp(json_string_value((json_t *)response->shared_data), "grut", o_strlen("grut")));
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_send_request_no_rest(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct _u_request * request_orig = (struct _u_request *)user_data;
+  const char ** keys;
+  size_t i;
+
+  ck_assert_int_eq(u_map_count(request->map_url), u_map_count(request_orig->map_url));
+  keys = u_map_enum_keys(request->map_url);
+  for (i=0; keys[i]!=NULL; i++) {
+    if (o_strlen(u_map_get(request->map_url, keys[i]))) {
+      ck_assert_str_eq(u_map_get(request->map_url, keys[i]), u_map_get(request_orig->map_url, keys[i]));
+    }
+  }
+  response->status = 208;
+
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_send_request_rest(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  ck_assert_int_eq(u_map_count(request->map_url), 3);
+  ck_assert_str_eq(VALUE1, u_map_get(request->map_url, KEY1));
+  ck_assert_str_eq(VALUE3, u_map_get(request->map_url, KEY2));
+  ck_assert_str_eq(VALUE4, u_map_get(request->map_url, KEY3));
+  response->status = 208;
+
   return U_CALLBACK_CONTINUE;
 }
 
@@ -1379,7 +1416,6 @@ START_TEST(test_ulfius_shared_data)
 }
 END_TEST
 
-
 START_TEST(test_ulfius_malformed_requests)
 {
   struct _u_instance u_instance;
@@ -1437,6 +1473,44 @@ START_TEST(test_ulfius_malformed_requests)
   close(socket);
   
   ulfius_clean_request(&request);
+  ulfius_stop_framework(&u_instance);
+  ulfius_clean_instance(&u_instance);
+}
+END_TEST
+
+START_TEST(test_ulfius_send_http_request)
+{
+  struct _u_instance u_instance;
+  struct _u_request request;
+  struct _u_response response;
+  
+  ck_assert_int_eq(ulfius_init_request(&request), U_OK);
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "/norest", "*", 0, &callback_send_request_no_rest, &request), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "/rest", "/:"KEY1"/:"KEY2"/:"KEY3"/", 0, &callback_send_request_rest, NULL), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
+
+  ck_assert_int_eq(ulfius_init_response(&response), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&request, U_OPT_HTTP_URL, "http://localhost:8080/norest/test_request/give me some space/",
+                                                           U_OPT_URL_PARAMETER, KEY1, VALUE1,
+                                                           U_OPT_URL_PARAMETER, KEY2, VALUE2,
+                                                           U_OPT_URL_PARAMETER, KEY3, VALUE3,
+                                                           U_OPT_URL_PARAMETER, KEY4, NULL,
+                                                           U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(208, response.status);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+
+  ck_assert_int_eq(ulfius_init_request(&request), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&response), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&request, U_OPT_HTTP_URL, "http://localhost:8080/rest/" VALUE1 "/" VALUE3 "/" VALUE4,
+                                                           U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(208, response.status);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+
   ulfius_stop_framework(&u_instance);
   ulfius_clean_instance(&u_instance);
 }
@@ -1569,6 +1643,7 @@ static Suite *ulfius_suite(void)
   tcase_add_test(tc_core, test_ulfius_follow_redirect);
   tcase_add_test(tc_core, test_ulfius_shared_data);
   tcase_add_test(tc_core, test_ulfius_malformed_requests);
+  tcase_add_test(tc_core, test_ulfius_send_http_request);
 #ifndef U_DISABLE_GNUTLS
   tcase_add_test(tc_core, test_ulfius_server_ca_trust);
   tcase_add_test(tc_core, test_ulfius_client_certificate);
