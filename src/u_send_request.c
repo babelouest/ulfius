@@ -195,7 +195,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
   CURLcode res;
   CURL * curl_handle = NULL;
   struct curl_slist * header_list = NULL, * cookies_list = NULL;
-  char * key_esc = NULL, * value_esc = NULL, * cookie = NULL, * cookies = NULL, * header = NULL, * fp = "?", * np = "&";
+  char * key_esc = NULL, * value_esc = NULL, * cookie = NULL, * cookies = NULL, * header = NULL, * fp = "?", * np = "&", * url = NULL;
   const char * value = NULL, ** keys = NULL;
   int i, has_params = 0, ret, exit_loop;
   struct _u_request * copy_request = NULL;
@@ -300,7 +300,8 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
           }
 #endif
 
-          has_params = (o_strchr(copy_request->http_url, '?') != NULL);
+          url = str_replace(copy_request->http_url, " ", "%20");
+          has_params = (o_strchr(url, '?') != NULL);
           if (u_map_count(copy_request->map_url) > 0) {
             // Append url parameters
             keys = u_map_enum_keys(copy_request->map_url);
@@ -315,10 +316,10 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
                   value_esc = curl_easy_escape(curl_handle, value, 0);
                   if (value_esc != NULL) {
                     if (!has_params) {
-                      copy_request->http_url = mstrcatf(copy_request->http_url, "%s%s=%s", fp, key_esc, value_esc);
+                      url = mstrcatf(url, "%s%s=%s", fp, key_esc, value_esc);
                       has_params = 1;
                     } else {
-                      copy_request->http_url = mstrcatf(copy_request->http_url, "%s%s=%s", np, key_esc, value_esc);
+                      url = mstrcatf(url, "%s%s=%s", np, key_esc, value_esc);
                     }
                     curl_free(value_esc);
                   } else {
@@ -327,10 +328,10 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
                   }
                 } else {
                   if (!has_params) {
-                    copy_request->http_url = mstrcatf(copy_request->http_url, "%s%s", fp, key_esc);
+                    url = mstrcatf(url, "%s%s", fp, key_esc);
                     has_params = 1;
                   } else {
-                    copy_request->http_url = mstrcatf(copy_request->http_url, "%s%s", np, key_esc);
+                    url = mstrcatf(url, "%s%s", np, key_esc);
                   }
                 }
                 curl_free(key_esc);
@@ -481,7 +482,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
           }
 
           // Request parameters
-          if (curl_easy_setopt(curl_handle, CURLOPT_URL, copy_request->http_url) != CURLE_OK ||
+          if (curl_easy_setopt(curl_handle, CURLOPT_URL, url) != CURLE_OK ||
               curl_easy_setopt(curl_handle, CURLOPT_CUSTOMREQUEST, copy_request->http_verb!=NULL?copy_request->http_verb:"GET") != CURLE_OK ||
               curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, header_list) != CURLE_OK) {
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting libcurl options (1)");
@@ -666,6 +667,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
             curl_slist_free_all(cookies_list);
           }
         } while (0);
+        o_free(url);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error curl_easy_init");
         ret = U_ERROR_LIBCURL;
