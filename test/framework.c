@@ -785,19 +785,19 @@ START_TEST(test_ulfius_net_type_endpoint)
   ulfius_clean_instance(&u_instance);
   
   // Test network accepting IPV6 only connections
-  ck_assert_int_eq(ulfius_init_instance_ipv6(&u_instance, 8081, NULL, U_USE_IPV6, NULL), U_OK);
+  ck_assert_int_eq(ulfius_init_instance_ipv6(&u_instance, 8080, NULL, U_USE_IPV6, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "empty", NULL, 0, &callback_function_empty, NULL), U_OK);
   ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
   
   ulfius_init_request(&request);
-  request.http_url = o_strdup("http://127.0.0.1:8081/empty");
+  request.http_url = o_strdup("http://127.0.0.1:8080/empty");
   request.network_type = U_USE_IPV4;
   ck_assert_int_ne(ulfius_send_http_request(&request, NULL), U_OK);
   ulfius_clean_request(&request);
   
   if (has_ipv6()) {
     ulfius_init_request(&request);
-    request.http_url = o_strdup("http://[::1]:8081/empty");
+    request.http_url = o_strdup("http://[::1]:8080/empty");
     request.network_type = U_USE_IPV6;
     ulfius_init_response(&response);
     ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
@@ -810,12 +810,12 @@ START_TEST(test_ulfius_net_type_endpoint)
   ulfius_clean_instance(&u_instance);
   
   // Test network accepting IPV4 only connections
-  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8082, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "empty", NULL, 0, &callback_function_empty, NULL), U_OK);
   ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
   
   ulfius_init_request(&request);
-  request.http_url = o_strdup("http://localhost:8082/empty");
+  request.http_url = o_strdup("http://localhost:8080/empty");
   request.network_type = U_USE_IPV4;
   ulfius_init_response(&response);
   ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
@@ -825,7 +825,7 @@ START_TEST(test_ulfius_net_type_endpoint)
   
   if (has_ipv6()) {
     ulfius_init_request(&request);
-    request.http_url = o_strdup("http://[::1]:8082/empty");
+    request.http_url = o_strdup("http://[::1]:8080/empty");
     request.network_type = U_USE_IPV6;
     ck_assert_int_ne(ulfius_send_http_request(&request, NULL), U_OK);
     ulfius_clean_request(&request);
@@ -837,14 +837,14 @@ START_TEST(test_ulfius_net_type_endpoint)
   // Test network binding to an IPV4 address
   memset(&ipv4addr, 0, sizeof(ipv4addr));
   ipv4addr.sin_family = AF_INET;
-  ipv4addr.sin_port = htons(8083);
+  ipv4addr.sin_port = htons(8080);
   ipv4addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8083, &ipv4addr, NULL), U_OK);
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, &ipv4addr, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "empty", NULL, 0, &callback_function_empty, NULL), U_OK);
   ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
   
   ulfius_init_request(&request);
-  request.http_url = o_strdup("http://localhost:8083/empty");
+  request.http_url = o_strdup("http://localhost:8080/empty");
   request.network_type = U_USE_IPV4;
   ulfius_init_response(&response);
   ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
@@ -854,7 +854,7 @@ START_TEST(test_ulfius_net_type_endpoint)
   
   if (has_ipv6()) {
     ulfius_init_request(&request);
-    request.http_url = o_strdup("http://[::1]:8083/empty");
+    request.http_url = o_strdup("http://[::1]:8080/empty");
     request.network_type = U_USE_IPV6;
     ck_assert_int_ne(ulfius_send_http_request(&request, NULL), U_OK);
     ulfius_clean_request(&request);
@@ -867,20 +867,20 @@ START_TEST(test_ulfius_net_type_endpoint)
     // Test network binding to an IPV6 address
     memset(&ipv6addr, 0, sizeof(ipv6addr));
     ipv6addr.sin6_family = AF_INET6;
-    ipv6addr.sin6_port = htons(8084);
+    ipv6addr.sin6_port = htons(8080);
     ipv6addr.sin6_addr = in6addr_loopback;
-    ck_assert_int_eq(ulfius_init_instance_ipv6(&u_instance, 8084, &ipv6addr, U_USE_IPV6, NULL), U_OK);
+    ck_assert_int_eq(ulfius_init_instance_ipv6(&u_instance, 8080, &ipv6addr, U_USE_IPV6, NULL), U_OK);
     ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "empty", NULL, 0, &callback_function_empty, NULL), U_OK);
     ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
 
     ulfius_init_request(&request);
-    request.http_url = o_strdup("http://127.0.0.1:8084/empty");
+    request.http_url = o_strdup("http://127.0.0.1:8080/empty");
     request.network_type = U_USE_IPV4;
     ck_assert_int_ne(ulfius_send_http_request(&request, NULL), U_OK);
     ulfius_clean_request(&request);
   
     ulfius_init_request(&request);
-    request.http_url = o_strdup("http://[::1]:8084/empty");
+    request.http_url = o_strdup("http://[::1]:8080/empty");
     request.network_type = U_USE_IPV6;
     ulfius_init_response(&response);
     ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
@@ -1653,7 +1653,7 @@ int main(int argc, char *argv[])
   int number_failed;
   Suite *s;
   SRunner *sr;
-  y_init_logs("Ulfius", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Ulfius framework tests");
+  //y_init_logs("Ulfius", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Ulfius framework tests");
   ulfius_global_init();
   s = ulfius_suite();
   sr = srunner_create(s);
@@ -1663,6 +1663,6 @@ int main(int argc, char *argv[])
   srunner_free(sr);
   
   ulfius_global_close();
-  y_close_logs();
+  //y_close_logs();
   return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
