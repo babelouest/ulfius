@@ -1,5 +1,10 @@
 # Ulfius Changelog
 
+## 2.7.6
+
+- Fix `ulfius_websocket_wait_close`
+- Fix `ulfius_send_http_request` when url contains spaces
+
 ## 2.7.5
 
 - Fix cookie management in `ulfius_send_http_request` and `ulfius_send_http_streaming_request`
