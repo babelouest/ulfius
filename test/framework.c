@@ -288,10 +288,12 @@ static int has_ipv6() {
   for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
     if (ifa->ifa_addr != NULL) {
       if (ifa->ifa_addr->sa_family == AF_INET6) {
+        freeifaddrs(ifaddr);
         return 1;
       }
     }
   }
+  freeifaddrs(ifaddr);
   return 0;
 }
 
