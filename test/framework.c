@@ -11,6 +11,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <netinet/tcp.h>
+#include <ifaddrs.h>
 
 #ifndef _WIN32
   #include <sys/socket.h>
@@ -278,37 +279,20 @@ static char * get_file_content(const char * file_path) {
   return buffer;
 }
 
-/**
- * decode a u_map into a string
- */
-char * print_map(const struct _u_map * map) {
-  char * line, * to_return = NULL;
-  const char **keys, * value;
-  int len, i;
-  if (map != NULL) {
-    keys = u_map_enum_keys(map);
-    for (i=0; keys[i] != NULL; i++) {
-      value = u_map_get(map, keys[i]);
-      len = snprintf(NULL, 0, "key is %s, value is %s", keys[i], value);
-      line = o_malloc((len+1)*sizeof(char));
-      snprintf(line, (len+1), "key is %s, value is %s", keys[i], value);
-      if (to_return != NULL) {
-        len = o_strlen(to_return) + o_strlen(line) + 1;
-        to_return = o_realloc(to_return, (len+1)*sizeof(char));
-        if (o_strlen(to_return) > 0) {
-          strcat(to_return, "\n");
-        }
-      } else {
-        to_return = o_malloc((o_strlen(line) + 1)*sizeof(char));
-        to_return[0] = 0;
-      }
-      strcat(to_return, line);
-      o_free(line);
-    }
-    return to_return;
-  } else {
-    return NULL;
+static int has_ipv6() {
+  struct ifaddrs * ifaddr, * ifa;
+  
+  if (getifaddrs(&ifaddr) == -1) {
+    return 0;
   }
+  for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+    if (ifa->ifa_addr != NULL) {
+      if (ifa->ifa_addr->sa_family == AF_INET6) {
+        return 1;
+      }
+    }
+  }
+  return 0;
 }
 
 int callback_function_empty(const struct _u_request * request, struct _u_response * response, void * user_data) {
@@ -786,48 +770,52 @@ START_TEST(test_ulfius_net_type_endpoint)
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
   
-  ulfius_init_request(&request);
-  request.http_url = o_strdup("http://[::1]:8080/empty");
-  request.network_type = U_USE_IPV6;
-  ulfius_init_response(&response);
-  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
-  ck_assert_int_eq(response.status, 200);
-  ulfius_clean_request(&request);
-  ulfius_clean_response(&response);
+  if (has_ipv6()) {
+    ulfius_init_request(&request);
+    request.http_url = o_strdup("http://[::1]:8080/empty");
+    request.network_type = U_USE_IPV6;
+    ulfius_init_response(&response);
+    ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+    ck_assert_int_eq(response.status, 200);
+    ulfius_clean_request(&request);
+    ulfius_clean_response(&response);
+  }
   
   ulfius_stop_framework(&u_instance);
   ulfius_clean_instance(&u_instance);
   
   // Test network accepting IPV6 only connections
-  ck_assert_int_eq(ulfius_init_instance_ipv6(&u_instance, 8080, NULL, U_USE_IPV6, NULL), U_OK);
+  ck_assert_int_eq(ulfius_init_instance_ipv6(&u_instance, 8081, NULL, U_USE_IPV6, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "empty", NULL, 0, &callback_function_empty, NULL), U_OK);
   ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
   
   ulfius_init_request(&request);
-  request.http_url = o_strdup("http://127.0.0.1:8080/empty");
+  request.http_url = o_strdup("http://127.0.0.1:8081/empty");
   request.network_type = U_USE_IPV4;
   ck_assert_int_ne(ulfius_send_http_request(&request, NULL), U_OK);
   ulfius_clean_request(&request);
   
-  ulfius_init_request(&request);
-  request.http_url = o_strdup("http://[::1]:8080/empty");
-  request.network_type = U_USE_IPV6;
-  ulfius_init_response(&response);
-  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
-  ck_assert_int_eq(response.status, 200);
-  ulfius_clean_request(&request);
-  ulfius_clean_response(&response);
+  if (has_ipv6()) {
+    ulfius_init_request(&request);
+    request.http_url = o_strdup("http://[::1]:8081/empty");
+    request.network_type = U_USE_IPV6;
+    ulfius_init_response(&response);
+    ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+    ck_assert_int_eq(response.status, 200);
+    ulfius_clean_request(&request);
+    ulfius_clean_response(&response);
+  }
   
   ulfius_stop_framework(&u_instance);
   ulfius_clean_instance(&u_instance);
   
   // Test network accepting IPV4 only connections
-  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8082, NULL, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "empty", NULL, 0, &callback_function_empty, NULL), U_OK);
   ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
   
   ulfius_init_request(&request);
-  request.http_url = o_strdup("http://localhost:8080/empty");
+  request.http_url = o_strdup("http://localhost:8082/empty");
   request.network_type = U_USE_IPV4;
   ulfius_init_response(&response);
   ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
@@ -835,11 +823,13 @@ START_TEST(test_ulfius_net_type_endpoint)
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
   
-  ulfius_init_request(&request);
-  request.http_url = o_strdup("http://[::1]:8080/empty");
-  request.network_type = U_USE_IPV6;
-  ck_assert_int_ne(ulfius_send_http_request(&request, NULL), U_OK);
-  ulfius_clean_request(&request);
+  if (has_ipv6()) {
+    ulfius_init_request(&request);
+    request.http_url = o_strdup("http://[::1]:8082/empty");
+    request.network_type = U_USE_IPV6;
+    ck_assert_int_ne(ulfius_send_http_request(&request, NULL), U_OK);
+    ulfius_clean_request(&request);
+  }
   
   ulfius_stop_framework(&u_instance);
   ulfius_clean_instance(&u_instance);
@@ -847,14 +837,14 @@ START_TEST(test_ulfius_net_type_endpoint)
   // Test network binding to an IPV4 address
   memset(&ipv4addr, 0, sizeof(ipv4addr));
   ipv4addr.sin_family = AF_INET;
-  ipv4addr.sin_port = htons(8080);
+  ipv4addr.sin_port = htons(8083);
   ipv4addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, &ipv4addr, NULL), U_OK);
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8083, &ipv4addr, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "empty", NULL, 0, &callback_function_empty, NULL), U_OK);
   ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
   
   ulfius_init_request(&request);
-  request.http_url = o_strdup("http://localhost:8080/empty");
+  request.http_url = o_strdup("http://localhost:8083/empty");
   request.network_type = U_USE_IPV4;
   ulfius_init_response(&response);
   ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
@@ -862,41 +852,45 @@ START_TEST(test_ulfius_net_type_endpoint)
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
   
-  ulfius_init_request(&request);
-  request.http_url = o_strdup("http://[::1]:8080/empty");
-  request.network_type = U_USE_IPV6;
-  ck_assert_int_ne(ulfius_send_http_request(&request, NULL), U_OK);
-  ulfius_clean_request(&request);
+  if (has_ipv6()) {
+    ulfius_init_request(&request);
+    request.http_url = o_strdup("http://[::1]:8083/empty");
+    request.network_type = U_USE_IPV6;
+    ck_assert_int_ne(ulfius_send_http_request(&request, NULL), U_OK);
+    ulfius_clean_request(&request);
+  }
   
   ulfius_stop_framework(&u_instance);
   ulfius_clean_instance(&u_instance);
   
-  // Test network binding to an IPV6 address
-  memset(&ipv6addr, 0, sizeof(ipv6addr));
-  ipv6addr.sin6_family = AF_INET6;
-  ipv6addr.sin6_port = htons(8080);
-  ipv6addr.sin6_addr = in6addr_loopback;
-  ck_assert_int_eq(ulfius_init_instance_ipv6(&u_instance, 8080, &ipv6addr, U_USE_IPV6, NULL), U_OK);
-  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "empty", NULL, 0, &callback_function_empty, NULL), U_OK);
-  ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
+  if (has_ipv6()) {
+    // Test network binding to an IPV6 address
+    memset(&ipv6addr, 0, sizeof(ipv6addr));
+    ipv6addr.sin6_family = AF_INET6;
+    ipv6addr.sin6_port = htons(8084);
+    ipv6addr.sin6_addr = in6addr_loopback;
+    ck_assert_int_eq(ulfius_init_instance_ipv6(&u_instance, 8084, &ipv6addr, U_USE_IPV6, NULL), U_OK);
+    ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "empty", NULL, 0, &callback_function_empty, NULL), U_OK);
+    ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
 
-  ulfius_init_request(&request);
-  request.http_url = o_strdup("http://127.0.0.1:8080/empty");
-  request.network_type = U_USE_IPV4;
-  ck_assert_int_ne(ulfius_send_http_request(&request, NULL), U_OK);
-  ulfius_clean_request(&request);
+    ulfius_init_request(&request);
+    request.http_url = o_strdup("http://127.0.0.1:8084/empty");
+    request.network_type = U_USE_IPV4;
+    ck_assert_int_ne(ulfius_send_http_request(&request, NULL), U_OK);
+    ulfius_clean_request(&request);
   
-  ulfius_init_request(&request);
-  request.http_url = o_strdup("http://[::1]:8080/empty");
-  request.network_type = U_USE_IPV6;
-  ulfius_init_response(&response);
-  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
-  ck_assert_int_eq(response.status, 200);
-  ulfius_clean_request(&request);
-  ulfius_clean_response(&response);
+    ulfius_init_request(&request);
+    request.http_url = o_strdup("http://[::1]:8084/empty");
+    request.network_type = U_USE_IPV6;
+    ulfius_init_response(&response);
+    ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+    ck_assert_int_eq(response.status, 200);
+    ulfius_clean_request(&request);
+    ulfius_clean_response(&response);
   
-  ulfius_stop_framework(&u_instance);
-  ulfius_clean_instance(&u_instance);
+    ulfius_stop_framework(&u_instance);
+    ulfius_clean_instance(&u_instance);
+  }
 }
 END_TEST
 #endif
