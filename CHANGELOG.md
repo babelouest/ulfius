@@ -1,5 +1,9 @@
 # Ulfius Changelog
 
+## 2.7.7
+
+- Use `o_malloc` everywhere instead of `malloc` (#206)
+
 ## 2.7.6
 
 - Fix `ulfius_websocket_wait_close`
