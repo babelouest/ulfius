@@ -1842,7 +1842,7 @@ static char to_hex(char code) {
 char * ulfius_url_encode(const char * str) {
   char * pstr = (char*)str, * buf = NULL, * pbuf = NULL;
   if (str != NULL) {
-    buf = malloc(strlen(str) * 3 + 1);
+    buf = o_malloc(strlen(str) * 3 + 1);
     if (buf != NULL) {
       pbuf = buf;
       while (* pstr) {
@@ -1876,7 +1876,7 @@ char * ulfius_url_encode(const char * str) {
 char * ulfius_url_decode(const char * str) {
   char * pstr = (char*)str, * buf = NULL, * pbuf = NULL;
   if (str != NULL) {
-    buf = malloc(strlen(str) + 1);
+    buf = o_malloc(strlen(str) + 1);
     if (buf != NULL) {
       pbuf = buf;
       while (* pstr) {
