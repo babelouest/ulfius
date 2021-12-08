@@ -143,7 +143,7 @@ static char from_hex(char ch) {
  */
 static char * url_decode(const char * str) {
   if (str != NULL) {
-    char * pstr = (char*)str, * buf = malloc(strlen(str) + 1), * pbuf = buf;
+    char * pstr = (char*)str, * buf = o_malloc(strlen(str) + 1), * pbuf = buf;
     while (* pstr) {
       if (* pstr == '%') {
         if (pstr[1] && pstr[2]) {
