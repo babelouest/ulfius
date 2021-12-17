@@ -859,9 +859,11 @@ static int ulfius_websocket_connection_handshake(struct _u_request * request, st
   ulfius_websocket_send_frame(websocket->websocket_manager, (uint8_t *)http_line, o_strlen(http_line));
   o_free(http_line);
 
-  http_line = msprintf("Origin: %s://%s\r\n", y_url->scheme, y_url->host);
-  ulfius_websocket_send_frame(websocket->websocket_manager, (uint8_t *)http_line, o_strlen(http_line));
-  o_free(http_line);
+  if (u_map_get_case(request->map_url, "Origin") != NULL) {
+    http_line = msprintf("Origin: %s\r\n", u_map_get_case(request->map_url, "Origin"));
+    ulfius_websocket_send_frame(websocket->websocket_manager, (uint8_t *)http_line, o_strlen(http_line));
+    o_free(http_line);
+  }
 
   keys = u_map_enum_keys(request->map_header);
   for (i=0; keys[i] != NULL; i++) {
@@ -941,7 +943,11 @@ static int ulfius_websocket_connection_handshake(struct _u_request * request, st
     }
     close(websocket->websocket_manager->tcp_sock);
     websocket->websocket_manager->tcp_sock = -1;
-    ret = U_ERROR;
+    if (response->status >= 400 && response->status <= 499) {
+      ret = U_ERROR_PARAMS;
+    } else {
+      ret = U_ERROR;
+    }
   } else {
     ret = U_OK;
     if (o_strlen(websocket->websocket_manager->extensions)) {
@@ -2507,12 +2513,9 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
           // Open connection
           if (0 == o_strcasecmp("http", y_url.scheme) || 0 == o_strcasecmp("ws", y_url.scheme)) {
             websocket->websocket_manager->tls = 0;
-            if (ulfius_open_websocket(request, &y_url, websocket, response) != U_OK) {
+            if ((ret = ulfius_open_websocket(request, &y_url, websocket, response)) != U_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_open_websocket");
               ulfius_clear_websocket(websocket);
-              ret = U_ERROR;
-            } else {
-              ret = U_OK;
             }
           } else {
             websocket->websocket_manager->tls = 1;
@@ -2547,6 +2550,7 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
     }
     o_free(url);
   } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius ulfius_open_websocket_client_connection - Error input parameters");
     ret = U_ERROR_PARAMS;
   }
   return ret;
