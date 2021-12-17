@@ -2332,9 +2332,6 @@ int ulfius_set_websocket_request(struct _u_request * request,
       u_map_put(request->map_header, "Sec-WebSocket-Extensions", websocket_extensions);
     }
     u_map_put(request->map_header, "Sec-WebSocket-Version", "13");
-    u_map_put(request->map_header, "Upgrade", "websocket");
-    u_map_put(request->map_header, "Connection", "Upgrade");
-    u_map_put(request->map_header, "Content-Length", "0");
     u_map_put(request->map_header, "User-Agent", U_WEBSOCKET_USER_AGENT "/" STR(ULFIUS_VERSION));
     rand_string(rand_str, 16);
     if (!o_base64_encode((unsigned char *)rand_str, 16, (unsigned char *)rand_str_base64, &out_len)) {
