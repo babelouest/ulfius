@@ -23,29 +23,30 @@
  *
  */
 
-#include "u_private.h"
-#include "ulfius.h"
-
 #if defined(__APPLE__) && !defined (MSG_NOSIGNAL)
   #define MSG_NOSIGNAL 0
 #endif
 
 #ifndef U_DISABLE_WEBSOCKET
-#include "yuarel.h"
-#include <string.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <pthread.h>
-#include <errno.h>
-#include <unistd.h>
 #include <sys/socket.h>
+
 #include <netinet/in.h>
-#include <netdb.h>
-#include <stdlib.h>
+
 #include <gnutls/crypto.h>
-#include <zlib.h>
+
 #include <errno.h>
+#include <fcntl.h>
+#include <netdb.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <u_private.h>
+#include <ulfius.h>
+#include <unistd.h>
+#include <zlib.h>
+
+#include "yuarel.h"
 
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
