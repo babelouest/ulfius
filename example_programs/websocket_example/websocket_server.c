@@ -10,14 +10,15 @@
  *
  */
 
+#include <sys/stat.h>
+#include <sys/types.h>
+
+#include <inttypes.h>
 #include <string.h>
 #include <unistd.h>
-#include <inttypes.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-
 #include <ulfius.h>
-#include <u_example.h>
+
+#include "u_example.h"
 
 #include "static_compressed_inmemory_website_callback.h"
 
