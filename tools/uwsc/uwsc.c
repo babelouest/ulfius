@@ -21,9 +21,9 @@
  *
  */
 
+#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <getopt.h>
 #include <ulfius.h>
 
 /** Define mock yder functions when yder is disabled **/
