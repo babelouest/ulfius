@@ -1,12 +1,11 @@
 /* Public domain, no copyright. Use at your own risk. */
 
+#include <check.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 #include <time.h>
-
-#include <check.h>
 #include <ulfius.h>
 
 START_TEST(test_u_map_init)
