@@ -88,9 +88,9 @@
  * 
  */
 #include <pthread.h>
-#include <zlib.h>
 #include <string.h>
 #include <ulfius.h>
+#include <zlib.h>
 
 #include "static_compressed_inmemory_website_callback.h"
 
