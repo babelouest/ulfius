@@ -11,11 +11,11 @@
  *
  */
 
-#include <string.h>
 #include <stdio.h>
-
+#include <string.h>
 #include <ulfius.h>
-#include <u_example.h>
+
+#include "u_example.h"
 
 /**
  * decode a u_map into a string
