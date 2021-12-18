@@ -10,14 +10,16 @@
  *
  */
 
-#include <string.h>
-#include <jansson.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
+#include <arpa/inet.h>
+#include <netinet/in.h>
+
+#include <jansson.h>
+#include <string.h>
 #include <ulfius.h>
-#include <u_example.h>
+
+#include "u_example.h"
 
 #define PORT 4528
 #define PREFIX "/inject"
