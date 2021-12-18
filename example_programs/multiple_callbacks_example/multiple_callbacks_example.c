@@ -11,14 +11,16 @@
  *
  */
 
-#include <string.h>
-#include <stdio.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
+#include <arpa/inet.h>
+#include <netinet/in.h>
+
+#include <stdio.h>
+#include <string.h>
 #include <ulfius.h>
-#include <u_example.h>
+
+#include "u_example.h"
 
 #define PORT 6875
 #define PREFIX "/multiple"
