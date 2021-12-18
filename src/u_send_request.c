@@ -31,14 +31,12 @@
   #define _POSIX_C_SOURCE 200112L
 #endif
 
-#include "u_private.h"
-#include "ulfius.h"
-
 #ifndef U_DISABLE_CURL
 
-#include <stdlib.h>
-#include <ctype.h>
 #include <curl/curl.h>
+
+#include <ctype.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define U_ACCEPT_HEADER  "Accept-Encoding"
@@ -57,6 +55,9 @@ struct tm * gmtime_r(const time_t* t, struct tm* r) {
   }
 }
 #endif
+
+#include <u_private.h>
+#include <ulfius.h>
 
 /**
  * Internal structure used to store temporarily the response body
