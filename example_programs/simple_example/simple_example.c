@@ -11,16 +11,17 @@
  *
  */
 
-#include <string.h>
-
 #ifndef _WIN32
   #include <sys/socket.h>
-  #include <netinet/in.h>
+
   #include <arpa/inet.h>
+  #include <netinet/in.h>
 #endif
 
+#include <string.h>
 #include <ulfius.h>
-#include <u_example.h>
+
+#include "u_example.h"
 
 #define PORT 8537
 #define PREFIX "/test"
