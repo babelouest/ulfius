@@ -32,6 +32,8 @@ extern "C"
 {
 #endif
 
+#include "ulfius-cfg.h"
+
 /** External dependencies **/
 
 #ifndef U_DISABLE_GNUTLS
@@ -72,8 +74,6 @@ extern "C"
 #ifndef U_DISABLE_YDER
   #include <yder.h>
 #else
-
-#include "ulfius-cfg.h"
 
 #define Y_LOG_MODE_NONE     0
 #define Y_LOG_MODE_CONSOLE  0
