@@ -277,6 +277,27 @@ static int ulfius_get_body_from_response(struct _u_response * response, void ** 
   }
 }
 
+void mhd_redirect_log(void * arg, const char * fmt, va_list ap) {
+  UNUSED(arg);
+  va_list args_cpy, args_cpy2;
+  size_t out_len = 0;
+  char * out = NULL, * new_fmt;
+
+  va_copy(args_cpy, ap);
+  va_copy(args_cpy2, ap);
+  new_fmt = msprintf("MHD - %s", fmt);
+  out_len = vsnprintf(NULL, 0, new_fmt, args_cpy);
+  out = o_malloc((out_len)*sizeof(char));
+  if (out != NULL) {
+    vsnprintf(out, (out_len), new_fmt, args_cpy2);
+    y_log_message(Y_LOG_LEVEL_ERROR, out);
+    o_free(out);
+  }
+  o_free(new_fmt);
+  va_end(args_cpy);
+  va_end(args_cpy2);
+}
+
 /**
  * mhd_request_completed
  * function used to clean data allocated after a web call is complete
@@ -311,12 +332,13 @@ void mhd_request_completed (void *cls, struct MHD_Connection *connection,
 #if MHD_VERSION >= 0x00097002
 static enum MHD_Result mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, const char * key,
                                               const char * filename, const char * content_type,
-                                              const char * transfer_encoding, const char * data, uint64_t off, size_t size) {
+                                              const char * transfer_encoding, const char * data, uint64_t off, size_t size)
 #else
 static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, const char * key,
                                   const char * filename, const char * content_type,
-                                  const char * transfer_encoding, const char * data, uint64_t off, size_t size) {
+                                  const char * transfer_encoding, const char * data, uint64_t off, size_t size)
 #endif
+{
   struct connection_info_struct * con_info = coninfo_cls;
   size_t data_size = size, cur_size;
   char * filename_param = NULL, * data_concat = NULL;
@@ -424,7 +446,7 @@ static enum MHD_Result ulfius_webservice_dispatcher (void * cls,
                                                      const char * version,
                                                      const char * upload_data,
                                                      size_t * upload_data_size,
-                                                     void ** con_cls) {
+                                                     void ** con_cls)
 #else
 static int ulfius_webservice_dispatcher (void * cls,
                                          struct MHD_Connection * connection,
@@ -433,8 +455,9 @@ static int ulfius_webservice_dispatcher (void * cls,
                                          const char * version,
                                          const char * upload_data,
                                          size_t * upload_data_size,
-                                         void ** con_cls) {
+                                         void ** con_cls)
 #endif
+{
   struct _u_endpoint * endpoint_list = ((struct _u_instance *)cls)->endpoint_list, ** current_endpoint_list = NULL, * current_endpoint = NULL;
   struct connection_info_struct * con_info = * con_cls;
   int mhd_ret = MHD_NO, callback_ret = U_OK, i, close_loop = 0, inner_error = U_OK, mhd_response_flag;
@@ -1042,7 +1065,7 @@ static int ulfius_webservice_dispatcher (void * cls,
  *
  */
 static struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem, const char * root_ca_perm) {
-  unsigned int mhd_flags = MHD_USE_THREAD_PER_CONNECTION;
+  unsigned int mhd_flags = MHD_USE_THREAD_PER_CONNECTION | MHD_USE_ERROR_LOG;
   int index;
 
 #ifdef DEBUG
@@ -1056,24 +1079,28 @@ static struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance
 #endif
 
   if (u_instance->mhd_daemon == NULL) {
-    struct MHD_OptionItem mhd_ops[8];
+    struct MHD_OptionItem mhd_ops[9];
 
     // Default options
-    mhd_ops[0].option = MHD_OPTION_NOTIFY_COMPLETED;
-    mhd_ops[0].value = (intptr_t)mhd_request_completed;
+    mhd_ops[0].option = MHD_OPTION_EXTERNAL_LOGGER;
+    mhd_ops[0].value = (intptr_t)mhd_redirect_log;
     mhd_ops[0].ptr_value = NULL;
+
+    mhd_ops[1].option = MHD_OPTION_NOTIFY_COMPLETED;
+    mhd_ops[1].value = (intptr_t)mhd_request_completed;
+    mhd_ops[1].ptr_value = NULL;
 
 #if MHD_VERSION >= 0x00095208
     // If bind_address6 is specified, listen only to IPV6 addresses
     if (u_instance->bind_address6 != NULL) {
-      mhd_ops[1].option = MHD_OPTION_SOCK_ADDR;
-      mhd_ops[1].value = 0;
-      mhd_ops[1].ptr_value = (void *)u_instance->bind_address6;
+      mhd_ops[2].option = MHD_OPTION_SOCK_ADDR;
+      mhd_ops[2].value = 0;
+      mhd_ops[2].ptr_value = (void *)u_instance->bind_address6;
       mhd_flags |= MHD_USE_IPv6;
     } else {
-      mhd_ops[1].option = MHD_OPTION_SOCK_ADDR;
-      mhd_ops[1].value = 0;
-      mhd_ops[1].ptr_value = (void *)u_instance->bind_address;
+      mhd_ops[2].option = MHD_OPTION_SOCK_ADDR;
+      mhd_ops[2].value = 0;
+      mhd_ops[2].ptr_value = (void *)u_instance->bind_address;
       // Default network stack is listening to IPV4 only
       if ((u_instance->network_type & U_USE_IPV4) && (u_instance->network_type & U_USE_IPV6)) {
         // If u_instance->network_type & U_USE_ALL, listen to IPV4 and IPV6 addresses
@@ -1084,16 +1111,16 @@ static struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance
       }
     }
 #else
-    mhd_ops[1].option = MHD_OPTION_SOCK_ADDR;
-    mhd_ops[1].value = 0;
-    mhd_ops[1].ptr_value = (void *)u_instance->bind_address;
+    mhd_ops[2].option = MHD_OPTION_SOCK_ADDR;
+    mhd_ops[2].value = 0;
+    mhd_ops[2].ptr_value = (void *)u_instance->bind_address;
 #endif
 
-    mhd_ops[2].option = MHD_OPTION_URI_LOG_CALLBACK;
-    mhd_ops[2].value = (intptr_t)ulfius_uri_logger;
-    mhd_ops[2].ptr_value = NULL;
+    mhd_ops[3].option = MHD_OPTION_URI_LOG_CALLBACK;
+    mhd_ops[3].value = (intptr_t)ulfius_uri_logger;
+    mhd_ops[3].ptr_value = NULL;
 
-    index = 3;
+    index = 4;
 
     if (key_pem != NULL && cert_pem != NULL) {
       // HTTPS parameters
