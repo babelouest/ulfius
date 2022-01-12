@@ -46,7 +46,7 @@ ifndef UWSCFLAG
 endif
 	cd $(TESTS_LOCATION) && $(MAKE) clean
 	cd $(TESTS_LOCATION)/autobahn && $(MAKE) clean
-	rm -rf doc/html $(TESTS_LOCATION)/cert/server.* $(TESTS_LOCATION)/cert/root* $(TESTS_LOCATION)/cert/client*
+	rm -rf doc/html
 
 examples:
 	cd $(EXAMPLES_LOCATION) && $(MAKE) $*

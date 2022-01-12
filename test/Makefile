@@ -17,11 +17,15 @@ VALGRIND_COMMAND=valgrind --tool=memcheck --leak-check=full --show-leak-kinds=al
 TARGET=u_map core framework websocket
 VERBOSE=0
 MEMCHECK=0
+CERT=cert
 
 all: test
 
 clean:
-	rm -f *.o u_map core framework websocket valgrind-*.txt *.log
+	rm -f *.o $(TARGET) valgrind-*.txt *.log $(CERT)/*.crt $(CERT)/*.key
+
+$(CERT)/server.key:
+	./$(CERT)/create-cert.sh
 
 $(ULFIUS_LIBRARY): $(ULFIUS_SCRUTINIZE)
 	cd $(ULFIUS_LOCATION) && $(MAKE) debug
@@ -32,13 +36,13 @@ u_map: u_map.c
 core: core.c
 	$(CC) $(CFLAGS) core.c -o core $(LIBS)
 
-framework: framework.c
+framework: framework.c $(CERT)/server.key
 	$(CC) $(CFLAGS) framework.c -o framework $(LIBS)
 
 websocket: websocket.c
 	$(CC) $(CFLAGS) websocket.c -o websocket $(LIBS)
 
-test: $(ULFIUS_LIBRARY) $(TARGET) test_u_map test_core test_framework test_websocket
+test: $(ULFIUS_LIBRARY) $(CERT)/server.key $(TARGET) test_u_map test_core test_framework test_websocket
 
 test_%: % $(ULFIUS_LIBRARY)
 	@if [ "$(VERBOSE)" = "0" ] && [ "$(MEMCHECK)" = "0" ]; then \
