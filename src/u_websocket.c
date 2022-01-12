@@ -2086,7 +2086,7 @@ int websocket_extension_server_match_deflate(const char * extension_client, cons
                     if (window_bits == 8) {
                       window_bits = 9; // Is really 8, but zlib does not support value 8 so increase to 9 - Morten Houmøller Nygaard
                     }
-                    ((struct _websocket_deflate_context *)*context)->server_max_window_bits = (uint)window_bits;
+                    ((struct _websocket_deflate_context *)*context)->server_max_window_bits = (unsigned int)window_bits;
                     server_bits_changed = 1;
                   } else {
                     y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_extension_server_match_deflate - Error server_max_window_bits value");
@@ -2108,7 +2108,7 @@ int websocket_extension_server_match_deflate(const char * extension_client, cons
                     if (window_bits == 8) {
                       window_bits = 9; // Is really 8, but zlib does not support value 8 so increase to 9 - Morten Houmøller Nygaard
                     }
-                    ((struct _websocket_deflate_context *)*context)->client_max_window_bits = (uint)window_bits;
+                    ((struct _websocket_deflate_context *)*context)->client_max_window_bits = (unsigned int)window_bits;
                     client_bits_changed = 1;
                   } else {
                     y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_extension_server_match_deflate - Error client_max_window_bits value");
@@ -2586,7 +2586,7 @@ int websocket_extension_client_match_deflate(const char * extension_server, void
                   if (window_bits == 8) {
                     window_bits = 9; // Is really 8, but zlib does not support value 8 so increase to 9 - Morten Houmøller Nygaard
                   }
-                  ((struct _websocket_deflate_context *)*context)->server_max_window_bits = (uint)window_bits;
+                  ((struct _websocket_deflate_context *)*context)->server_max_window_bits = (unsigned int)window_bits;
                 } else {
                   y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_extension_client_match_deflate - Error server_max_window_bits value");
                   ret = U_ERROR;
@@ -2607,7 +2607,7 @@ int websocket_extension_client_match_deflate(const char * extension_server, void
                   if (window_bits == 8) {
                     window_bits = 9; // Is really 8, but zlib does not support value 8 so increase to 9 - Morten Houmøller Nygaard
                   }
-                  ((struct _websocket_deflate_context *)*context)->client_max_window_bits = (uint)window_bits;
+                  ((struct _websocket_deflate_context *)*context)->client_max_window_bits = (unsigned int)window_bits;
                 } else {
                   y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_extension_client_match_deflate - Error client_max_window_bits value");
                   ret = U_ERROR;

@@ -597,7 +597,7 @@ int ulfius_set_response_properties(struct _u_response * response, ...) {
 
   if (response != NULL) {
     va_start(vl, response);
-    for (option = va_arg(vl, uint); option != U_OPT_NONE && ret == U_OK; option = va_arg(vl, uint)) {
+    for (option = va_arg(vl, unsigned int); option != U_OPT_NONE && ret == U_OK; option = va_arg(vl, unsigned int)) {
       switch (option) {
         case U_OPT_STATUS:
           response->status = va_arg(vl, long);

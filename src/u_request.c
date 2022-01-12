@@ -538,7 +538,7 @@ int ulfius_set_request_properties(struct _u_request * request, ...) {
 
   if (request != NULL) {
     va_start(vl, request);
-    for (option = va_arg(vl, uint); option != U_OPT_NONE && ret == U_OK; option = va_arg(vl, uint)) {
+    for (option = va_arg(vl, unsigned int); option != U_OPT_NONE && ret == U_OK; option = va_arg(vl, unsigned int)) {
       switch (option) {
         case U_OPT_HTTP_VERB:
           str_value = va_arg(vl, const char *);

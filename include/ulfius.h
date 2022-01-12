@@ -1478,14 +1478,14 @@ int u_map_empty(struct _u_map * u_map);
  * @struct _websocket_deflate_context websocket extension permessage-deflate context
  */
 struct _websocket_deflate_context {
-  z_stream infstream;
-  z_stream defstream;
-  int deflate_mask;
-  int inflate_mask;
-  uint server_no_context_takeover;
-  uint client_no_context_takeover;
-  uint server_max_window_bits;
-  uint client_max_window_bits;
+  z_stream     infstream;
+  z_stream     defstream;
+  int          deflate_mask;
+  int          inflate_mask;
+  unsigned int server_no_context_takeover;
+  unsigned int client_no_context_takeover;
+  unsigned int server_max_window_bits;
+  unsigned int client_max_window_bits;
 };
 
 /**
