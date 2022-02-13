@@ -18,7 +18,7 @@
 ## 2.7.4
 
 - Add `void` parameter to functions with no param
-- Fix bug when malformed HTTP requests are sent, thanks Jeremy Brown!
+- Security: Fix bug when malformed HTTP requests are sent, thanks Jeremy Brown! (CVE-2021-40540)
 - Remove yder flag from `libulfius.pc` when yder is disabled
 - Avoid Time-of-check time-of-use filesystem race condition, assume `fopen` result is enough
 
