@@ -362,7 +362,7 @@ int ulfius_add_endpoint_by_val(struct _u_instance * u_instance,
                                const char * http_method,
                                const char * url_prefix,
                                const char * url_format,
-                               uint priority,
+                               unsigned int priority,
                                int (* callback_function)(const struct _u_request * request, // Input parameters (set by the framework)
                                                          struct _u_response * response,     // Output parameters (set by the user)
                                                          void * user_data),
@@ -791,21 +791,21 @@ int ulfius_add_header_to_response(struct _u_response * response, const char * ke
  * body must end with a '\0' character
  * return U_OK on success
  */
-int ulfius_set_string_body_response(struct _u_response * response, const uint status, const char * body);
+int ulfius_set_string_body_response(struct _u_response * response, const unsigned int status, const char * body);
 
 /**
  * ulfius_set_binary_response
  * Add a binary body to a response
  * return U_OK on success
  */
-int ulfius_set_binary_response(struct _u_response * response, const uint status, const char * body, const size_t length);
+int ulfius_set_binary_response(struct _u_response * response, const unsigned int status, const char * body, const size_t length);
 
 /**
  * ulfius_set_empty_body_response
  * Set an empty response with only a status
  * return U_OK on success
  */
-int ulfius_set_empty_body_response(struct _u_response * response, const uint status);
+int ulfius_set_empty_body_response(struct _u_response * response, const unsigned int status);
 
 /**
  * ulfius_set_stream_response
@@ -813,7 +813,7 @@ int ulfius_set_empty_body_response(struct _u_response * response, const uint sta
  * return U_OK on success
  */
 int ulfius_set_stream_response(struct _u_response * response, 
-                                const uint status,
+                                const unsigned int status,
                                 ssize_t (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max);
                                 void (* stream_callback_free) (void * stream_user_data),
                                 uint64_t stream_size,
@@ -943,7 +943,7 @@ json_t * ulfius_get_json_body_response(struct _u_response * response, json_error
  * Add a json_t body to a response
  * return U_OK on success
  */
-int ulfius_set_json_body_response(struct _u_response * response, const uint status, const json_t * body);
+int ulfius_set_json_body_response(struct _u_response * response, const unsigned int status, const json_t * body);
 ```
 
 The `jansson` API documentation is available at the following address: [Jansson documentation](https://jansson.readthedocs.org/).
@@ -1105,7 +1105,7 @@ struct _u_cookie {
   char * key;
   char * value;
   char * expires;
-  uint   max_age;
+  unsigned int   max_age;
   char * domain;
   char * path;
   int    secure;
@@ -1122,7 +1122,7 @@ You can use the functions `ulfius_add_cookie_to_response` or `ulfius_add_same_si
  * add a cookie to the cookie map
  * return U_OK on success
  */
-int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const uint max_age, 
+int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age, 
                                   const char * domain, const char * path, const int secure, const int http_only);
 
 /**
@@ -2152,7 +2152,7 @@ int ulfius_set_json_body_request(struct _u_request * request, json_t * body);
  * Add a json_t body to a response
  * return U_OK on success
  */
-int ulfius_set_json_body_response(struct _u_response * response, const uint status, const json_t * body);
+int ulfius_set_json_body_response(struct _u_response * response, const unsigned int status, const json_t * body);
 
 /**
  * ulfius_get_json_body_response
@@ -2288,9 +2288,9 @@ You can find some ready-to-use callback functions in the folder [example_callbac
 - Unify and update functions name `ulfius_set_*_body_response`. You may have to update your legacy code.
 The new functions names are:
 ```c
-int ulfius_set_string_body_response(struct _u_response * response, const uint status, const char * body);
-int ulfius_set_binary_body_response(struct _u_response * response, const uint status, const char * body, const size_t length);
-int ulfius_set_empty_body_response(struct _u_response * response, const uint status);
+int ulfius_set_string_body_response(struct _u_response * response, const unsigned int status, const char * body);
+int ulfius_set_binary_body_response(struct _u_response * response, const unsigned int status, const char * body, const size_t length);
+int ulfius_set_empty_body_response(struct _u_response * response, const unsigned int status);
 ```
 
 ## Update existing programs from Ulfius 1.x to 2.0 <a name="update-existing-programs-from-ulfius-1x-to-20"></a>
