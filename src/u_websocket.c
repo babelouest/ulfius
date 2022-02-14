@@ -27,6 +27,9 @@
   #define MSG_NOSIGNAL 0
 #endif
 
+#include <u_private.h>
+#include <ulfius.h>
+
 #ifndef U_DISABLE_WEBSOCKET
 #include <sys/socket.h>
 
@@ -41,8 +44,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <u_private.h>
-#include <ulfius.h>
 #include <unistd.h>
 #include <zlib.h>
 
