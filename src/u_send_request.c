@@ -31,6 +31,9 @@
   #define _POSIX_C_SOURCE 200112L
 #endif
 
+#include <u_private.h>
+#include <ulfius.h>
+
 #ifndef U_DISABLE_CURL
 
 #include <curl/curl.h>
@@ -56,8 +59,6 @@ struct tm * gmtime_r(const time_t* t, struct tm* r) {
 }
 #endif
 
-#include <u_private.h>
-#include <ulfius.h>
 
 /**
  * Internal structure used to store temporarily the response body
