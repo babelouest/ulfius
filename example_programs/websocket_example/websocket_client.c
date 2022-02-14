@@ -10,14 +10,15 @@
  *
  */
 
-#include <string.h>
-#include <unistd.h>
-#include <inttypes.h>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
+#include <inttypes.h>
+#include <string.h>
 #include <ulfius.h>
-#include <u_example.h>
+#include <unistd.h>
+
+#include "u_example.h"
 
 #define PORT "9275"
 #define PREFIX_WEBSOCKET "/websocket"

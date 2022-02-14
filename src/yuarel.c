@@ -19,12 +19,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-typedef int make_iso_compilers_happy;
-
 #ifndef U_DISABLE_WEBSOCKET
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
 #include "yuarel.h"
 
 /**
@@ -296,3 +295,5 @@ yuarel_parse_query(char *query, char delimiter, struct yuarel_param *params, int
 	return i;
 }
 #endif // U_DISABLE_WEBSOCKET
+
+typedef int make_iso_compilers_happy;

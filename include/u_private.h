@@ -26,8 +26,6 @@
 #ifndef __U_PRIVATE_H__
 #define __U_PRIVATE_H__
 
-#include "ulfius.h"
-
 /** Macro to avoid compiler warning when some parameters are unused and that's ok **/
 #define UNUSED(x) (void)(x)
 
@@ -45,6 +43,7 @@
   #endif // U_WITH_LWIP
 #endif // U_WITH_FREERTOS
 
+#include <ulfius.h>
 
 /**********************************
  * Internal functions declarations

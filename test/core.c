@@ -1,16 +1,16 @@
 /* Public domain, no copyright. Use at your own risk. */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <time.h>
 #ifndef _WIN32
 #include <netinet/in.h>
 #endif
-#include <jansson.h>
 
 #include <check.h>
+#include <errno.h>
+#include <jansson.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 #include <ulfius.h>
 
 #define HTTP_PROTOCOL "http_protocol"

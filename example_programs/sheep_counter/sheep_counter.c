@@ -13,14 +13,13 @@
  *
  */
 
-#include <string.h>
 #include <jansson.h>
-
+#include <string.h>
 #include <ulfius.h>
-#include <u_example.h>
 
-#include "static_compressed_inmemory_website_callback.h"
 #include "http_compression_callback.h"
+#include "static_compressed_inmemory_website_callback.h"
+#include "u_example.h"
 
 #define PORT 7437
 #define PREFIX "/sheep"

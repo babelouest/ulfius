@@ -32,9 +32,9 @@
  * 
  */
 
-#include <zlib.h>
 #include <string.h>
 #include <ulfius.h>
+#include <zlib.h>
 
 #include "http_compression_callback.h"
 

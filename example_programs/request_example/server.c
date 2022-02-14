@@ -11,11 +11,11 @@
  *
  */
 
-#include <string.h>
 #include <jansson.h>
-
+#include <string.h>
 #include <ulfius.h>
-#include <u_example.h>
+
+#include "u_example.h"
 
 #define PORT 7778
 #define PREFIX "/curl"

@@ -11,11 +11,11 @@
  *
  */
 
-#include <string.h>
 #include <jansson.h>
-
+#include <string.h>
 #include <ulfius.h>
-#include <u_example.h>
+
+#include "u_example.h"
 
 #define SERVER_URL_PREFIX "http://localhost:7778/curl"
 

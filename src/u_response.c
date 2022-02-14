@@ -23,9 +23,8 @@
  *
  */
 #include <string.h>
-
-#include "u_private.h"
-#include "ulfius.h"
+#include <u_private.h>
+#include <ulfius.h>
 
 static char * ulfius_generate_cookie_header(const struct _u_cookie * cookie) {
   char * attr_expires = NULL, * attr_max_age = NULL, * attr_domain = NULL, * attr_path = NULL;

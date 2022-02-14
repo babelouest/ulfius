@@ -29,12 +29,12 @@
  * ./auth_client client.crt client.key <password>
  */
 
-#include <stdio.h>
 #include <gnutls/gnutls.h>
 #include <gnutls/x509.h>
-
+#include <stdio.h>
 #include <ulfius.h>
-#include <u_example.h>
+
+#include "u_example.h"
 
 #define PORT 2884
 #define PREFIX "/auth"

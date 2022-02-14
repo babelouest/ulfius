@@ -44,6 +44,10 @@ extern "C"
   #include <gnutls/x509.h>
 #endif
 
+#ifndef U_DISABLE_JANSSON
+#include <jansson.h>
+#endif
+
 #ifndef U_DISABLE_WEBSOCKET
   #include <poll.h>
   #include <zlib.h>
@@ -90,10 +94,6 @@ int y_init_logs(const char * app, const unsigned long init_mode, const unsigned 
 int y_set_logs_callback(void (* y_callback_log_message) (void * cls, const char * app_name, const time_t date, const unsigned long level, const char * message), void * cls, const char * message);
 void y_log_message(const unsigned long type, const char * message, ...);
 int y_close_logs();
-#endif
-
-#ifndef U_DISABLE_JANSSON
-#include <jansson.h>
 #endif
 
 /**

@@ -1,11 +1,5 @@
 /* Public domain, no copyright. Use at your own risk. */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <time.h>
-#include <ctype.h>
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <sys/time.h>
@@ -21,9 +15,15 @@
 #else
   #include <unistd.h>
 #endif
-#include <inttypes.h>
 
 #include <check.h>
+#include <ctype.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 #include <ulfius.h>
 
 #define SMTP_FROM "sender@localhost"

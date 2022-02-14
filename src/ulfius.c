@@ -23,16 +23,16 @@
  *
  */
 
-#include <string.h>
-#include <ctype.h>
-#include <stdlib.h>
-#include <pthread.h>
-#include "u_private.h"
-#include "ulfius.h"
-
 #ifndef U_DISABLE_CURL
 #include <curl/curl.h>
 #endif
+
+#include <ctype.h>
+#include <pthread.h>
+#include <stdlib.h>
+#include <string.h>
+#include <u_private.h>
+#include <ulfius.h>
 
 /** Define mock yder functions when yder is disabled **/
 #ifdef U_DISABLE_YDER

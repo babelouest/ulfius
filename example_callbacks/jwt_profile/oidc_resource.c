@@ -28,11 +28,11 @@
  *
  */
 
+#include <jansson.h>
+#include <orcania.h>
 #include <string.h>
 #include <time.h>
-#include <orcania.h>
 #include <ulfius.h>
-#include <jansson.h>
 
 #include "oidc_resource.h"
 

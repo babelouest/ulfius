@@ -33,9 +33,9 @@
 
 #include <stdio.h>
 #include <string.h>
-
 #include <ulfius.h>
-#include <u_example.h>
+
+#include "u_example.h"
 
 #define SERVER_URL "http://localhost:2884/auth/basic"
 #define SERVER_URL_DEFAULT "http://localhost:2884/auth/default"

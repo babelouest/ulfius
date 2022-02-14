@@ -26,9 +26,8 @@
 
 #include <stdio.h>
 #include <string.h>
-
-#include "u_private.h"
-#include "ulfius.h"
+#include <u_private.h>
+#include <ulfius.h>
 
 int u_map_init(struct _u_map * u_map) {
   if (u_map != NULL) {

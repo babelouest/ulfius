@@ -12,9 +12,9 @@
 
 #include <stdio.h>
 #include <string.h>
-
 #include <ulfius.h>
-#include <u_example.h>
+
+#include "u_example.h"
 
 #define URL "http://localhost:7876/stream"
 
