@@ -714,3 +714,40 @@ int ulfius_add_header_to_response(struct _u_response * response, const char * ke
     return U_ERROR_PARAMS;
   }
 }
+
+char * ulfius_export_http_response(const struct _u_response * response) {
+  char * out = NULL, * header;
+  const char * value = NULL, ** keys = NULL;
+  unsigned int i;
+
+  if (response != NULL) {
+    out = msprintf("HTTP/1.1 %ld\r\n", response->status);
+      
+    keys = u_map_enum_keys(response->map_header);
+    for (i=0; keys != NULL && keys[i] != NULL; i++) {
+      value = u_map_get(response->map_header, keys[i]);
+      if (value != NULL) {
+        out = mstrcatf(out, "%s: %s\r\n", keys[i], value);
+      } else {
+        out = mstrcatf(out, "%s:\r\n", keys[i]);
+      }
+    }
+
+    if (response->nb_cookies && !u_map_has_key_case(response->map_header, "Set-Cookie")) {
+      for (i=0; i<response->nb_cookies; i++) {
+        header = ulfius_generate_cookie_header(&response->map_cookie[i]);
+        out = mstrcatf(out, "%s\r\n", header);
+        o_free(header);
+      }
+    }
+    if (response->binary_body_length) {
+      out = mstrcatf(out, "Content-Length: %zu\r\n", response->binary_body_length);
+    }
+    out = mstrcatf(out, "\r\n");
+      
+    if (response->binary_body_length) {
+      out = mstrcatf(out, "%.*s\r\n", response->binary_body_length, response->binary_body);
+    }
+  }
+  return out;
+}

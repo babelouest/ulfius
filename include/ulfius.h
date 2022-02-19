@@ -993,6 +993,33 @@ int ulfius_copy_request(struct _u_request * dest, const struct _u_request * sour
 int ulfius_set_request_properties(struct _u_request * request, ...);
 
 /**
+ * create a new request based on the source elements
+ * returned value must be cleaned after use
+ * @param request the request to duplicate
+ * @return a heap-allocated request
+ */
+struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
+
+/**
+ * Exports a struct _u_request * into a readable HTTP request
+ * This function is for debug or educational purpose
+ * And the output is probably incomplete for some edge cases
+ * So don't think this is the right way
+ * Example:
+ * PUT /api/write HTTP/1.1\r\n
+ * Host: domain.tld\r\n
+ * Accept: gzip\r\n
+ * Content-Type: application/x-www-form-urlencoded\r\n
+ * Content-length: 4321\r\n
+ * \r\n
+ * key1=value1&key2=value2[...]
+ * 
+ * @param request the request to export
+ * returned value must be cleaned after use
+ */
+char * ulfius_export_http_request(const struct _u_request * request);
+
+/**
  * Initialize a response structure by allocating inner elements
  * @param response the response to initialize
  * @return U_OK on success
@@ -1041,14 +1068,6 @@ int ulfius_clean_cookie(struct _u_cookie * cookie);
 int ulfius_copy_cookie(struct _u_cookie * dest, const struct _u_cookie * source);
 
 /**
- * create a new request based on the source elements
- * returned value must be cleaned after use
- * @param request the request to duplicate
- * @return a heap-allocated request
- */
-struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
-
-/**
  * create a new response based on the source elements
  * return value must be cleaned after use
  * @param response the response to duplicate
@@ -1072,6 +1091,30 @@ int ulfius_set_response_properties(struct _u_response * response, ...);
  * @return U_OK on success
  */
 int ulfius_set_response_shared_data(struct _u_response * response, void * shared_data, void (* free_shared_data) (void * shared_data));
+
+/**
+ * Exports a struct _u_response * into a readable HTTP response
+ * This function is for debug or educational purpose
+ * And the output is probably incomplete for some edge cases
+ * So don't think this is the right way
+ * Example:
+ * HTTP/1.1 200 OK\r\n
+ * Content-type: text/html; charset=utf-8\r\n
+ * Set-Cookie: cookieXyz1234...\r\n
+ * Content-length: 1234\r\n
+ * \r\n
+ * <html>\r\n
+ * <head>\r\n
+ * <title>Example</title>\r\n
+ * </head>\r\n
+ * <body>\r\n
+ * <h2>Welcome</h2>\r\n
+ * ....
+ * 
+ * @param response the response to export
+ * returned value must be cleaned after use
+ */
+char * ulfius_export_http_response(const struct _u_response * response);
 
 /**
  * @}

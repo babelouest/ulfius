@@ -29,6 +29,8 @@
 #include <u_private.h>
 #include <ulfius.h>
 
+#include "yuarel.h"
+
 #ifdef _MSC_VER
 #define strtok_r strtok_s
 #endif
@@ -821,6 +823,164 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request) 
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error source request is NULL");
   }
   return new_request;
+}
+
+char * ulfius_export_http_request(const struct _u_request * request) {
+  char * out = NULL, * host, * key_esc = NULL, * value_esc = NULL, * body = NULL, fp = '?', np = '&', * url = NULL, * auth_basic, * auth_basic_b64 = NULL;
+  const char * value = NULL, ** keys = NULL;
+  struct yuarel y_url;
+  int has_params = 0, i;
+  size_t auth_basic_b64_len = 0;
+
+  if (request != NULL && request->http_url != NULL) {
+    if (!yuarel_parse(&y_url, request->http_url)) {
+      url = str_replace(y_url.path, " ", "%20");
+      if (y_url.query != NULL) {
+        url = mstrcatf(url, "?%s", y_url.query);
+        has_params = 1;
+      }
+      if (u_map_count(request->map_url) > 0) {
+        // Append url parameters
+        keys = u_map_enum_keys(request->map_url);
+
+        // Append parameters from map_url
+        for (i=0; keys != NULL && keys[i] != NULL; i++) {
+          key_esc = ulfius_url_encode(keys[i]);
+          if (key_esc != NULL) {
+            value = u_map_get(request->map_url, keys[i]);
+            if (value != NULL) {
+              value_esc = ulfius_url_encode(value);
+              if (value_esc != NULL) {
+                if (!has_params) {
+                  url = mstrcatf(url, "%c%s=%s", fp, key_esc, value_esc);
+                  has_params = 1;
+                } else {
+                  url = mstrcatf(url, "%c%s=%s", np, key_esc, value_esc);
+                }
+                o_free(value_esc);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_url_encode for url parameter value %s=%s", keys[i], value);
+              }
+            } else {
+              if (!has_params) {
+                url = mstrcatf(url, "%c%s", fp, key_esc);
+                has_params = 1;
+              } else {
+                url = mstrcatf(url, "%c%s", np, key_esc);
+              }
+            }
+            o_free(key_esc);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_url_encode for url key %s", keys[i]);
+          }
+        }
+      }
+
+      if (request->http_verb != NULL) {
+        out = msprintf("%s /%s HTTP/1.1\r\n", request->http_verb, url);
+      } else {
+        out = msprintf("GET /%s HTTP/1.1\r\n", url);
+      }
+      o_free(url);
+      if (y_url.port) {
+        host = msprintf("%s:%d", y_url.host, y_url.port);
+      } else {
+        host = o_strdup(y_url.host);
+      }
+      out = mstrcatf(out, "Host: %s\r\n", host);
+      o_free(host);
+      
+      keys = u_map_enum_keys(request->map_header);
+      for (i=0; keys != NULL && keys[i] != NULL; i++) {
+        value = u_map_get(request->map_header, keys[i]);
+        if (value != NULL) {
+          out = mstrcatf(out, "%s: %s\r\n", keys[i], value);
+        } else {
+          out = mstrcatf(out, "%s:\r\n", keys[i]);
+        }
+      }
+      if (u_map_count(request->map_cookie)) {
+        keys = u_map_enum_keys(request->map_cookie);
+        for (i=0; keys != NULL && keys[i] != NULL; i++) {
+          value = u_map_get(request->map_cookie, keys[i]);
+          if (value != NULL) {
+            value_esc = ulfius_url_encode(value);
+            if (value_esc != NULL) {
+              out = mstrcatf(out, "Cookie: %s=%s\r\n", keys[i], value_esc);
+              o_free(value_esc);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_url_encode for cookie parameter value %s=%s", keys[i], value);
+            }
+          } else {
+            out = mstrcatf(out, "Cookie: %s\r\n", keys[i]);
+          }
+        }
+      }
+      if (request->binary_body_length) {
+        out = mstrcatf(out, "Content-Length: %zu\r\n", request->binary_body_length);
+      }
+      if (NULL == u_map_get(request->map_header, ULFIUS_HTTP_HEADER_CONTENT) && u_map_count(request->map_post_body)) {
+        out = mstrcatf(out, "Content-type: %s\r\n", MHD_HTTP_POST_ENCODING_FORM_URLENCODED);
+      }
+      if (request->auth_basic_user != NULL && request->auth_basic_password != NULL) {
+        auth_basic = msprintf("%s:%s", request->auth_basic_user, request->auth_basic_password);
+        if (o_base64_encode((const unsigned char *)auth_basic, o_strlen(auth_basic), NULL, &auth_basic_b64_len)) {
+          if ((auth_basic_b64 = o_malloc(auth_basic_b64_len+4)) != NULL) {
+            if (o_base64_encode((const unsigned char *)auth_basic, o_strlen(auth_basic), (unsigned char *)auth_basic_b64, &auth_basic_b64_len)) {
+              auth_basic_b64[auth_basic_b64_len] = '\0';
+              out = mstrcatf(out, "Authorization: Basic %s\r\n", auth_basic_b64);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error o_base64_encode (2)");
+            }
+            o_free(auth_basic_b64);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error o_malloc");
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error o_base64_encode (1)");
+        }
+        o_free(auth_basic);
+      }
+      out = mstrcatf(out, "\r\n");
+      
+      if (request->binary_body_length) {
+        out = mstrcatf(out, "%.*s\r\n", request->binary_body_length, request->binary_body);
+      } else if (u_map_count(request->map_post_body)) {
+        if (NULL == u_map_get(request->map_header, ULFIUS_HTTP_HEADER_CONTENT) ||
+            NULL != o_strstr(u_map_get(request->map_header, ULFIUS_HTTP_HEADER_CONTENT), MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) {
+          keys = u_map_enum_keys(request->map_post_body);
+          for (i=0; keys != NULL && keys[i] != NULL; i++) {
+            if (i) {
+              body = mstrcatf(body, "&");
+            } else {
+              body = o_strdup("");
+            }
+            key_esc = ulfius_url_encode(keys[i]);
+            if (key_esc) {
+              value = u_map_get(request->map_post_body, keys[i]);
+              if (value != NULL) {
+                value_esc = ulfius_url_encode(value);
+                if (value_esc != NULL) {
+                  body = mstrcatf(body, "%s=%s", key_esc, value_esc);
+                  o_free(value_esc);
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_url_encode for post parameter value %s=%s", key_esc, value);
+                }
+              } else {
+                body = mstrcatf(body, "%s", fp, keys[i]);
+              }
+              o_free(key_esc);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_url_encode for post parameter key %s", keys[i]);
+            }
+          }
+          out = mstrcatf(out, "%s", body);
+          o_free(body);
+        }
+      }
+    }
+  }
+  return out;
 }
 
 #ifndef U_DISABLE_JANSSON
