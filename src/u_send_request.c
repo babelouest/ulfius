@@ -197,7 +197,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
   CURLcode res;
   CURL * curl_handle = NULL;
   struct curl_slist * header_list = NULL, * cookies_list = NULL;
-  char * key_esc = NULL, * value_esc = NULL, * cookie = NULL, * cookies = NULL, * header = NULL, * fp = "?", * np = "&", * url = NULL;
+  char * key_esc = NULL, * value_esc = NULL, * cookie = NULL, * cookies = NULL, * header = NULL, fp = '?', np = '&', * url = NULL;
   const char * value = NULL, ** keys = NULL;
   int i, has_params = 0, ret, exit_loop;
   struct _u_request * copy_request = NULL;
@@ -318,10 +318,10 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
                   value_esc = curl_easy_escape(curl_handle, value, 0);
                   if (value_esc != NULL) {
                     if (!has_params) {
-                      url = mstrcatf(url, "%s%s=%s", fp, key_esc, value_esc);
+                      url = mstrcatf(url, "%c%s=%s", fp, key_esc, value_esc);
                       has_params = 1;
                     } else {
-                      url = mstrcatf(url, "%s%s=%s", np, key_esc, value_esc);
+                      url = mstrcatf(url, "%c%s=%s", np, key_esc, value_esc);
                     }
                     curl_free(value_esc);
                   } else {
@@ -330,10 +330,10 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
                   }
                 } else {
                   if (!has_params) {
-                    url = mstrcatf(url, "%s%s", fp, key_esc);
+                    url = mstrcatf(url, "%c%s", fp, key_esc);
                     has_params = 1;
                   } else {
-                    url = mstrcatf(url, "%s%s", np, key_esc);
+                    url = mstrcatf(url, "%c%s", np, key_esc);
                   }
                 }
                 curl_free(key_esc);
@@ -366,7 +366,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
                     if (!i) {
                       copy_request->binary_body = mstrcatf(copy_request->binary_body, "%s=%s", key_esc, value_esc);
                     } else {
-                      copy_request->binary_body = mstrcatf(copy_request->binary_body, "%s%s=%s", np, key_esc, value_esc);
+                      copy_request->binary_body = mstrcatf(copy_request->binary_body, "%c%s=%s", np, key_esc, value_esc);
                     }
                     copy_request->binary_body_length = o_strlen(copy_request->binary_body);
                   } else {
@@ -378,7 +378,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
                   if (!i) {
                     copy_request->binary_body = mstrcatf(copy_request->binary_body, "%s", key_esc);
                   } else {
-                    copy_request->binary_body = mstrcatf(copy_request->binary_body, "%s%s", np, key_esc);
+                    copy_request->binary_body = mstrcatf(copy_request->binary_body, "%c%s", np, key_esc);
                   }
                   copy_request->binary_body_length = o_strlen(copy_request->binary_body);
                 }
