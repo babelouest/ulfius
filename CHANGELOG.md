@@ -1,5 +1,13 @@
 # Ulfius Changelog
 
+## 2.7.8
+
+- Fix Origin header setting in websocket client
+- Remove header duplicates and Content-Length
+- Redirect libmicrohttpd logs to yder
+- Replace uint with 'unsigned int'
+- Add `ulfius_export_http_request` and `ulfius_export_http_response`
+
 ## 2.7.7
 
 - Use `o_malloc` everywhere instead of `malloc` (#206)
