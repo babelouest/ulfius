@@ -994,7 +994,7 @@ int ulfius_set_request_properties(struct _u_request * request, ...);
 
 /**
  * create a new request based on the source elements
- * returned value must be cleaned after use
+ * returned value must be u_free'd after use
  * @param request the request to duplicate
  * @return a heap-allocated request
  */
@@ -1015,7 +1015,7 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
  * key1=value1&key2=value2[...]
  * 
  * @param request the request to export
- * returned value must be cleaned after use
+ * returned value must be u_free'd after use
  */
 char * ulfius_export_http_request(const struct _u_request * request);
 
@@ -1112,7 +1112,7 @@ int ulfius_set_response_shared_data(struct _u_response * response, void * shared
  * ....
  * 
  * @param response the response to export
- * returned value must be cleaned after use
+ * returned value must be u_free'd after use
  */
 char * ulfius_export_http_response(const struct _u_response * response);
 
@@ -1128,7 +1128,7 @@ char * ulfius_export_http_response(const struct _u_response * response);
 
 /**
  * Returns a url-decoded version of str
- * returned value must be cleaned after use
+ * returned value must be u_free'd after use
  * Thanks Geek Hideout!
  * http://www.geekhideout.com/urlcode.shtml
  * @param str the string to decode
@@ -1138,7 +1138,7 @@ char * ulfius_url_decode(const char * str);
 
 /**
  * Returns a url-encoded version of str
- * returned value must be cleaned after use
+ * returned value must be u_free'd after use
  * Thanks Geek Hideout!
  * http://www.geekhideout.com/urlcode.shtml
  * @param str the string to encode
