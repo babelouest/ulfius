@@ -8,11 +8,11 @@ ULFIUS_LIBRARY=$(ULFIUS_LOCATION)/libulfius.so
 ULFIUS_SCRUTINIZE=$(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h $(ULFIUS_INCLUDE)/yuarel.h $(ULFIUS_LOCATION)/ulfius.c $(ULFIUS_LOCATION)/u_map.c $(ULFIUS_LOCATION)/u_request.c $(ULFIUS_LOCATION)/u_response.c $(ULFIUS_LOCATION)/u_send_request.c $(ULFIUS_LOCATION)/u_websocket.c $(ULFIUS_LOCATION)/yuarel.c
 CC=gcc
 CFLAGS+=-Wall -D_REENTRANT -I$(ULFIUS_INCLUDE) -DDEBUG -g -O0 $(CPPFLAGS)
-LIBS=-lc -L$(ULFIUS_LOCATION) $(shell pkg-config --libs liborcania) $(shell pkg-config --libs libyder) $(shell pkg-config --libs check) $(shell pkg-config --libs gnutls) -lorcania -lulfius -lyder -ljansson -lgnutls -lz $(shell pkg-config --libs check)
-# Use this LIBS below if you don't have/need gnutls
-#LIBS=-lc -lorcania -lyder -lulfius -lcheck -lpthread -lm -lrt -lsubunit -L$(ULFIUS_LOCATION)
-# Use this LIBS below if you use yder logs
-#LIBS=-lc -lorcania -lyder -lulfius -lgnutls -lcheck -lpthread -lm -lrt -lsubunit -L$(ULFIUS_LOCATION)
+LDFLAGS=-lc -L$(ULFIUS_LOCATION) $(shell pkg-config --libs liborcania) $(shell pkg-config --libs libyder) $(shell pkg-config --libs check) $(shell pkg-config --libs gnutls) -lorcania -lulfius -lyder -ljansson -lgnutls -lz
+# Use this LDFLAGS below if you don't have/need gnutls
+#LDFLAGS=-lc -lorcania -lyder -lulfius -lcheck -lpthread -lm -lrt -lsubunit -L$(ULFIUS_LOCATION)
+# Use this LDFLAGS below if you use yder logs
+#LDFLAGS=-lc -lorcania -lyder -lulfius -lgnutls -lcheck -lpthread -lm -lrt -lsubunit -L$(ULFIUS_LOCATION)
 VALGRIND_COMMAND=valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all
 TARGET=u_map core framework websocket
 VERBOSE=0
