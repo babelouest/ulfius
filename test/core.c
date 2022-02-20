@@ -1005,6 +1005,19 @@ START_TEST(test_ulfius_response_export)
   json_decref(j_body);
   o_free(export);
   ulfius_clean_response(&resp);
+
+  ulfius_init_response(&resp);
+  ck_assert_ptr_eq(NULL, ulfius_export_http_response(NULL));
+  ulfius_set_response_properties(&resp, U_OPT_STATUS, 302,
+                                        U_OPT_HEADER_PARAMETER, "param", "value4&%",
+                                        U_OPT_NONE);
+  ulfius_add_cookie_to_response(&resp, "respCookie", "cookieValue", NULL, 3600, "localhost", "/", 1, 1);
+  ck_assert_ptr_ne(NULL, export = ulfius_export_http_response(&resp));
+  ck_assert_ptr_ne(NULL, o_strstr(export, "HTTP/1.1 302\r\n"));
+  ck_assert_ptr_ne(NULL, o_strstr(export, "\r\nparam: value4&%\r\n"));
+  ck_assert_ptr_ne(NULL, o_strstr(export, "\r\nSet-Cookie: respCookie=cookieValue; Max-Age=3600; Domain=localhost; Path=/; Secure; HttpOnly\r\n"));
+  o_free(export);
+  ulfius_clean_response(&resp);
 }
 END_TEST
 
