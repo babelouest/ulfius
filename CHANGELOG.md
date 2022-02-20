@@ -6,7 +6,7 @@
 - Remove header duplicates and Content-Length
 - Redirect libmicrohttpd logs to yder
 - Replace uint with 'unsigned int'
-- Add `ulfius_export_http_request` and `ulfius_export_http_response`
+- Add `ulfius_export_request_http` and `ulfius_export_response_http`
 
 ## 2.7.7
 
