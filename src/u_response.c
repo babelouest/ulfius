@@ -736,7 +736,7 @@ char * ulfius_export_http_response(const struct _u_response * response) {
     if (response->nb_cookies && !u_map_has_key_case(response->map_header, "Set-Cookie")) {
       for (i=0; i<response->nb_cookies; i++) {
         header = ulfius_generate_cookie_header(&response->map_cookie[i]);
-        out = mstrcatf(out, "%s\r\n", header);
+        out = mstrcatf(out, "Set-Cookie: %s\r\n", header);
         o_free(header);
       }
     }
