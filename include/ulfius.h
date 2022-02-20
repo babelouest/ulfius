@@ -1017,7 +1017,7 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
  * @param request the request to export
  * returned value must be u_free'd after use
  */
-char * ulfius_export_http_request(const struct _u_request * request);
+char * ulfius_export_request_http(const struct _u_request * request);
 
 /**
  * Initialize a response structure by allocating inner elements
@@ -1105,7 +1105,7 @@ int ulfius_set_response_shared_data(struct _u_response * response, void * shared
  * \r\n
  * <html>\r\n
  * <head>\r\n
- * <title>Example</title>\r\n
+ * <title>Hello World!</title>\r\n
  * </head>\r\n
  * <body>\r\n
  * <h2>Welcome</h2>\r\n
@@ -1114,7 +1114,7 @@ int ulfius_set_response_shared_data(struct _u_response * response, void * shared
  * @param response the response to export
  * returned value must be u_free'd after use
  */
-char * ulfius_export_http_response(const struct _u_response * response);
+char * ulfius_export_response_http(const struct _u_response * response);
 
 /**
  * @}

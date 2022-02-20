@@ -715,7 +715,7 @@ int ulfius_add_header_to_response(struct _u_response * response, const char * ke
   }
 }
 
-char * ulfius_export_http_response(const struct _u_response * response) {
+char * ulfius_export_response_http(const struct _u_response * response) {
   char * out = NULL, * header;
   const char * value = NULL, ** keys = NULL;
   unsigned int i;

@@ -825,7 +825,7 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request) 
   return new_request;
 }
 
-char * ulfius_export_http_request(const struct _u_request * request) {
+char * ulfius_export_request_http(const struct _u_request * request) {
   char * out = NULL, * host, * key_esc = NULL, * value_esc = NULL, * body = NULL, fp = '?', np = '&', * url = NULL, * auth_basic, * auth_basic_b64 = NULL;
   const char * value = NULL, ** keys = NULL;
   struct yuarel y_url;
