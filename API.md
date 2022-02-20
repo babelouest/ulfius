@@ -1836,6 +1836,84 @@ int ulfius_send_smtp_rich_email(const char * host,
                                 const char * mail_body);
 ```
 
+## Miscellaneous functions
+
+### Escape/Unescape string for url
+
+Ulfius includes the functions `ulfius_url_decode` and `ulfius_url_encode` to transform a string into url-safe string and vice-versa. Both functions take a string in input and return a head-allocated string as output that must be u_free'd after use.
+Note: In the callback functions, the `request->map_url` values are already url-decoded by the framework.
+
+```C
+/**
+ * Returns a url-decoded version of str
+ * returned value must be u_free'd after use
+ * Thanks Geek Hideout!
+ * http://www.geekhideout.com/urlcode.shtml
+ * @param str the string to decode
+ * @return a heap-allocated string
+ */
+char * ulfius_url_decode(const char * str);
+
+/**
+ * Returns a url-encoded version of str
+ * returned value must be u_free'd after use
+ * Thanks Geek Hideout!
+ * http://www.geekhideout.com/urlcode.shtml
+ * @param str the string to encode
+ * @return a heap-allocated string
+ */
+char * ulfius_url_encode(const char * str);
+```
+
+### Export struct _u_request * and struct _u_response * in HTTP/1.1 stream format
+
+Those functions can be useful to debug requests or responses, or can be used to demonstrate how their respective parameters are translated in HTTP language.
+
+```C
+/**
+ * Exports a struct _u_request * into a readable HTTP request
+ * This function is for debug or educational purpose
+ * And the output is probably incomplete for some edge cases
+ * So don't think this is the right way
+ * Example:
+ * PUT /api/write HTTP/1.1\r\n
+ * Host: domain.tld\r\n
+ * Accept: gzip\r\n
+ * Content-Type: application/x-www-form-urlencoded\r\n
+ * Content-length: 4321\r\n
+ * \r\n
+ * key1=value1&key2=value2[...]
+ * 
+ * @param request the request to export
+ * returned value must be u_free'd after use
+ */
+char * ulfius_export_request_http(const struct _u_request * request);
+
+/**
+ * Exports a struct _u_response * into a readable HTTP response
+ * This function is for debug or educational purpose
+ * And the output is probably incomplete for some edge cases
+ * So don't think this is the right way
+ * Example:
+ * HTTP/1.1 200 OK\r\n
+ * Content-type: text/html; charset=utf-8\r\n
+ * Set-Cookie: cookieXyz1234...\r\n
+ * Content-length: 1234\r\n
+ * \r\n
+ * <html>\r\n
+ * <head>\r\n
+ * <title>Hello World!</title>\r\n
+ * </head>\r\n
+ * <body>\r\n
+ * <h2>Welcome</h2>\r\n
+ * ....
+ * 
+ * @param response the response to export
+ * returned value must be u_free'd after use
+ */
+char * ulfius_export_response_http(const struct _u_response * response);
+```
+
 ## struct _u_map API <a name="struct-_u_map-api"></a>
 
 The `struct _u_map` is a simple key/value mapping API used in the requests and the response for setting parameters. The available functions to use this structure are:
