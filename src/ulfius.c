@@ -66,10 +66,11 @@ int y_close_logs(void) {
  * Fill a map with the key/values specified
  */
 #if MHD_VERSION >= 0x00097002
-static enum MHD_Result ulfius_fill_map_check_utf8(void * cls, enum MHD_ValueKind kind, const char * key, const char * value) {
+static enum MHD_Result ulfius_fill_map_check_utf8(void * cls, enum MHD_ValueKind kind, const char * key, const char * value)
 #else
-static int ulfius_fill_map_check_utf8(void * cls, enum MHD_ValueKind kind, const char * key, const char * value) {
+static int ulfius_fill_map_check_utf8(void * cls, enum MHD_ValueKind kind, const char * key, const char * value)
 #endif
+  {
   char * tmp;
   int res;
   UNUSED(kind);
@@ -103,10 +104,11 @@ static int ulfius_fill_map_check_utf8(void * cls, enum MHD_ValueKind kind, const
  * Fill a map with the key/values specified
  */
 #if MHD_VERSION >= 0x00097002
-static enum MHD_Result ulfius_fill_map(void * cls, enum MHD_ValueKind kind, const char * key, const char * value) {
+static enum MHD_Result ulfius_fill_map(void * cls, enum MHD_ValueKind kind, const char * key, const char * value)
 #else
-static int ulfius_fill_map(void * cls, enum MHD_ValueKind kind, const char * key, const char * value) {
+static int ulfius_fill_map(void * cls, enum MHD_ValueKind kind, const char * key, const char * value)
 #endif
+  {
   char * tmp;
   int res;
   UNUSED(kind);
@@ -137,10 +139,11 @@ static int ulfius_fill_map(void * cls, enum MHD_ValueKind kind, const char * key
  * return true if the endpoind has valid parameters
  */
 #if MHD_VERSION >= 0x00097002
-static enum MHD_Result ulfius_is_valid_endpoint(const struct _u_endpoint * endpoint, int to_delete) {
+static enum MHD_Result ulfius_is_valid_endpoint(const struct _u_endpoint * endpoint, int to_delete)
 #else
-static int ulfius_is_valid_endpoint(const struct _u_endpoint * endpoint, int to_delete) {
+static int ulfius_is_valid_endpoint(const struct _u_endpoint * endpoint, int to_delete)
 #endif
+  {
   if (endpoint != NULL) {
     if (ulfius_equals_endpoints(endpoint, ulfius_empty_endpoint())) {
       // Should be the last endpoint of the list to close it
@@ -1687,11 +1690,12 @@ static int internal_ulfius_init_instance(struct _u_instance * u_instance,
   pthread_mutexattr_t mutexattr;
 #endif
 #if MHD_VERSION >= 0x00095208
-  if (u_instance != NULL && port > 0 && port < 65536 && (bind_address4 == NULL || bind_address6 == NULL) && (network_type & U_USE_ALL)) {
+  if (u_instance != NULL && port > 0 && port < 65536 && (bind_address4 == NULL || bind_address6 == NULL) && (network_type & U_USE_ALL))
 #else
 UNUSED(network_type);
-  if (u_instance != NULL && port > 0 && port < 65536) {
+  if (u_instance != NULL && port > 0 && port < 65536)
 #endif
+  {
     u_instance->mhd_daemon = NULL;
     u_instance->status = U_STATUS_STOP;
     u_instance->port = port;
