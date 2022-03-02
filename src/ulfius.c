@@ -22,6 +22,8 @@
  * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+#include <u_private.h>
+#include <ulfius.h>
 
 #ifndef U_DISABLE_CURL
 #include <curl/curl.h>
@@ -31,8 +33,6 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
-#include <u_private.h>
-#include <ulfius.h>
 
 /** Define mock yder functions when yder is disabled **/
 #ifdef U_DISABLE_YDER
