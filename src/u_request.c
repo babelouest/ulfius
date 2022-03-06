@@ -144,7 +144,7 @@ static char from_hex(char ch) {
  */
 static char * url_decode(const char * str) {
   if (str != NULL) {
-    char * pstr = (char*)str, * buf = o_malloc(strlen(str) + 1), * pbuf = buf;
+    char * pstr = (char*)str, * buf = o_malloc(o_strlen(str) + 1), * pbuf = buf;
     while (* pstr) {
       if (* pstr == '%') {
         if (pstr[1] && pstr[2]) {
@@ -544,7 +544,7 @@ int ulfius_set_request_properties(struct _u_request * request, ...) {
         case U_OPT_HTTP_VERB:
           str_value = va_arg(vl, const char *);
           o_free(request->http_verb);
-          if (o_strlen(str_value)) {
+          if (!o_strnullempty(str_value)) {
             request->http_verb = o_strdup(str_value);
           } else {
             request->http_verb = NULL;
@@ -553,7 +553,7 @@ int ulfius_set_request_properties(struct _u_request * request, ...) {
         case U_OPT_HTTP_URL:
           str_value = va_arg(vl, const char *);
           o_free(request->http_url);
-          if (o_strlen(str_value)) {
+          if (!o_strnullempty(str_value)) {
             request->http_url = o_strdup(str_value);
           } else {
             request->http_url = NULL;
@@ -566,7 +566,7 @@ int ulfius_set_request_properties(struct _u_request * request, ...) {
         case U_OPT_HTTP_PROXY:
           str_value = va_arg(vl, const char *);
           o_free(request->proxy);
-          if (o_strlen(str_value)) {
+          if (!o_strnullempty(str_value)) {
             request->proxy = o_strdup(str_value);
           } else {
             request->proxy = NULL;
@@ -595,7 +595,7 @@ int ulfius_set_request_properties(struct _u_request * request, ...) {
         case U_OPT_CA_PATH:
           str_value = va_arg(vl, const char *);
           o_free(request->ca_path);
-          if (o_strlen(str_value)) {
+          if (!o_strnullempty(str_value)) {
             request->ca_path = o_strdup(str_value);
           } else {
             request->ca_path = NULL;
@@ -607,7 +607,7 @@ int ulfius_set_request_properties(struct _u_request * request, ...) {
         case U_OPT_AUTH_BASIC_USER:
           str_value = va_arg(vl, const char *);
           o_free(request->auth_basic_user);
-          if (o_strlen(str_value)) {
+          if (!o_strnullempty(str_value)) {
             request->auth_basic_user = o_strdup(str_value);
           } else {
             request->auth_basic_user = NULL;
@@ -616,7 +616,7 @@ int ulfius_set_request_properties(struct _u_request * request, ...) {
         case U_OPT_AUTH_BASIC_PASSWORD:
           str_value = va_arg(vl, const char *);
           o_free(request->auth_basic_password);
-          if (o_strlen(str_value)) {
+          if (!o_strnullempty(str_value)) {
             request->auth_basic_password = o_strdup(str_value);
           } else {
             request->auth_basic_password = NULL;
@@ -625,14 +625,14 @@ int ulfius_set_request_properties(struct _u_request * request, ...) {
         case U_OPT_AUTH_BASIC:
           str_value = va_arg(vl, const char *);
           o_free(request->auth_basic_user);
-          if (o_strlen(str_value)) {
+          if (!o_strnullempty(str_value)) {
             request->auth_basic_user = o_strdup(str_value);
           } else {
             request->auth_basic_user = NULL;
           }
           str_value = va_arg(vl, const char *);
           o_free(request->auth_basic_password);
-          if (o_strlen(str_value)) {
+          if (!o_strnullempty(str_value)) {
             request->auth_basic_password = o_strdup(str_value);
           } else {
             request->auth_basic_password = NULL;
@@ -693,7 +693,7 @@ int ulfius_set_request_properties(struct _u_request * request, ...) {
         case U_OPT_CLIENT_CERT_FILE:
           str_value = va_arg(vl, const char *);
           o_free(request->client_cert_file);
-          if (o_strlen(str_value)) {
+          if (!o_strnullempty(str_value)) {
             request->client_cert_file = o_strdup(str_value);
           } else {
             request->client_cert_file = NULL;
@@ -702,7 +702,7 @@ int ulfius_set_request_properties(struct _u_request * request, ...) {
         case U_OPT_CLIENT_KEY_FILE:
           str_value = va_arg(vl, const char *);
           o_free(request->client_key_file);
-          if (o_strlen(str_value)) {
+          if (!o_strnullempty(str_value)) {
             request->client_key_file = o_strdup(str_value);
           } else {
             request->client_key_file = NULL;
@@ -711,7 +711,7 @@ int ulfius_set_request_properties(struct _u_request * request, ...) {
         case U_OPT_CLIENT_KEY_PASSWORD:
           str_value = va_arg(vl, const char *);
           o_free(request->client_key_password);
-          if (o_strlen(str_value)) {
+          if (!o_strnullempty(str_value)) {
             request->client_key_password = o_strdup(str_value);
           } else {
             request->client_key_password = NULL;

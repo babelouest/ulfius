@@ -897,7 +897,7 @@ static int ulfius_websocket_connection_handshake(struct _u_request * request, st
   if (websocket_response_http && response->status == 101) {
     do {
       if (ulfius_get_next_line_from_http_response(websocket, buffer, buffer_len, &line_len) == U_OK) {
-        if (o_strlen(buffer) && (separator = o_strchr(buffer, ':')) != NULL) {
+        if (!o_strnullempty(buffer) && (separator = o_strchr(buffer, ':')) != NULL) {
           key = o_strndup(buffer, (separator - buffer));
           value = o_strdup(separator + 1);
           if (u_map_put(response->map_header, key, value) != U_OK) {
@@ -952,7 +952,7 @@ static int ulfius_websocket_connection_handshake(struct _u_request * request, st
     }
   } else {
     ret = U_OK;
-    if (o_strlen(websocket->websocket_manager->extensions)) {
+    if (!o_strnullempty(websocket->websocket_manager->extensions)) {
       extension_len = pointer_list_size(websocket->websocket_manager->websocket_extension_list);
       if (extension_len) {
         if (split_string(websocket->websocket_manager->extensions, ",", &extension_list)) {
@@ -1557,7 +1557,7 @@ int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
 int ulfius_websocket_send_json_message(struct _websocket_manager * websocket_manager,
                                        json_t *message) {
   char * json = json_dumps(message, JSON_COMPACT);
-  int ret = ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, strlen(json), json);
+  int ret = ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(json), json);
   o_free(json);
   return ret;
 }
@@ -1841,7 +1841,7 @@ int ulfius_add_websocket_extension_message_perform(struct _u_response * response
   int ret;
   struct _websocket_extension * extension;
 
-  if (response != NULL && o_strlen(extension_server) &&
+  if (response != NULL && !o_strnullempty(extension_server) &&
      (websocket_extension_message_out_perform != NULL || websocket_extension_message_in_perform != NULL) &&
      (rsv == U_WEBSOCKET_RSV1 || rsv == U_WEBSOCKET_RSV2 || rsv == U_WEBSOCKET_RSV3)) {
     if ((extension = o_malloc(sizeof(struct _websocket_extension))) != NULL) {
@@ -2101,7 +2101,7 @@ int websocket_extension_server_match_deflate(const char * extension_client, cons
                 }
               } else if (0 == o_strncmp("client_max_window_bits", trimwhitespace(parameters[i]), o_strlen("client_max_window_bits"))) {
                 if (split_string(trimwhitespace(parameters[i]), "=", &param_value)) {
-                  if (o_strlen(trimwhitespace(param_value[1]))) {
+                  if (!o_strnullempty(trimwhitespace(param_value[1]))) {
                     window_bits = strtol(trimwhitespace(param_value[1]), NULL, 10);
                   } else {
                     window_bits = WEBSOCKET_DEFLATE_WINDOWS_BITS;
@@ -2121,7 +2121,7 @@ int websocket_extension_server_match_deflate(const char * extension_client, cons
                   y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_server_match_deflate - Error split_string param_value client_max_window_bits");
                   ret = U_ERROR;
                 }
-              } else if (o_strlen(trimwhitespace(parameters[i]))) {
+              } else if (!o_strnullempty(trimwhitespace(parameters[i]))) {
                 y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_server_match_deflate - Invalid parameter");
                 ret = U_ERROR;
               }
@@ -2600,7 +2600,7 @@ int websocket_extension_client_match_deflate(const char * extension_server, void
               }
             } else if (0 == o_strncmp("client_max_window_bits", trimwhitespace(parameters[i]), o_strlen("client_max_window_bits"))) {
               if (split_string(trimwhitespace(parameters[i]), "=", &param_value)) {
-                if (o_strlen(trimwhitespace(param_value[1]))) {
+                if (!o_strnullempty(trimwhitespace(param_value[1]))) {
                   window_bits = strtol(trimwhitespace(param_value[1]), NULL, 10);
                 } else {
                   window_bits = WEBSOCKET_DEFLATE_WINDOWS_BITS;
@@ -2619,7 +2619,7 @@ int websocket_extension_client_match_deflate(const char * extension_server, void
                 y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_client_match_deflate - Error split_string param_value client_max_window_bits");
                 ret = U_ERROR;
               }
-            } else if (o_strlen(trimwhitespace(parameters[i]))) {
+            } else if (!o_strnullempty(trimwhitespace(parameters[i]))) {
               y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_client_match_deflate - Invalid parameter");
               ret = U_ERROR;
             }

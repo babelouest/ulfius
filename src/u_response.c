@@ -613,7 +613,7 @@ int ulfius_set_response_properties(struct _u_response * response, ...) {
         case U_OPT_AUTH_REALM:
           str_value = va_arg(vl, const char *);
           o_free(response->auth_realm);
-          if (o_strlen(str_value)) {
+          if (!o_strnullempty(str_value)) {
             response->auth_realm = o_strdup(str_value);
           } else {
             response->auth_realm = NULL;

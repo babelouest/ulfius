@@ -753,7 +753,7 @@ static int ulfius_webservice_dispatcher (void * cls,
                         MHD_add_response_header (mhd_response,
                                                  "Sec-WebSocket-Protocol",
                                                  protocol);
-                        if (o_strlen(extension)) {
+                        if (!o_strnullempty(extension)) {
                           MHD_add_response_header (mhd_response,
                                                    "Sec-WebSocket-Extensions",
                                                    extension);
@@ -1873,7 +1873,7 @@ static char to_hex(char code) {
 char * ulfius_url_encode(const char * str) {
   char * pstr = (char*)str, * buf = NULL, * pbuf = NULL;
   if (str != NULL) {
-    buf = o_malloc(strlen(str) * 3 + 1);
+    buf = o_malloc(o_strlen(str) * 3 + 1);
     if (buf != NULL) {
       pbuf = buf;
       while (* pstr) {
@@ -1907,7 +1907,7 @@ char * ulfius_url_encode(const char * str) {
 char * ulfius_url_decode(const char * str) {
   char * pstr = (char*)str, * buf = NULL, * pbuf = NULL;
   if (str != NULL) {
-    buf = o_malloc(strlen(str) + 1);
+    buf = o_malloc(o_strlen(str) + 1);
     if (buf != NULL) {
       pbuf = buf;
       while (* pstr) {
