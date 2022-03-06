@@ -903,10 +903,10 @@ Except for the return values `U_CALLBACK_UNAUTHORIZED` and `U_CALLBACK_ERROR`, t
 
 In Ulfius 2.0, hard dependency with `libjansson` has been removed, the Jansson library is now optional but enabled by default.
 
-If you want to remove JSON dependency, build Ulfius library using Makefile with the flag `JANSSONFLAG=-DU_DISABLE_JANSSON` or with CMake with the option `-DWITH_WEBSOCKET=off`.
+If you want to remove JSON dependency, build Ulfius library using Makefile with the flag `JANSSONFLAG=1` or CMake with the option `-DWITH_WEBSOCKET=off`.
 
 ```
-$ make JANSSONFLAG=-DU_DISABLE_JANSSON # Makefile
+$ make JANSSONFLAG=1 # Makefile
 $ cmake -DWITH_WEBSOCKET=off # CMake
 ```
 
@@ -1717,10 +1717,10 @@ int ulfius_websocket_client_connection_wait_close(struct _websocket_client_handl
 
 ## Outgoing request functions <a name="outgoing-request-functions"></a>
 
-Ulfius allows output functions to send HTTP or SMTP requests. These functions use `libcurl`. You can disable these functions by appending the argument `CURLFLAG=-DU_DISABLE_CURL` when you build the library with Makefile or by disabling the flag in CMake build:
+Ulfius allows output functions to send HTTP or SMTP requests. These functions use `libcurl`. You can disable these functions by appending the argument `CURLFLAG=1` when you build the library with Makefile or by disabling the flag in CMake build:
 
 ```
-$ make CURLFLAG=-DU_DISABLE_CURL # Makefile
+$ make CURLFLAG=1 # Makefile
 $ cmake -DWITH_CURL=off # CMake
 ```
 
@@ -2195,10 +2195,10 @@ Ulfius now allows websockets communication between the client and the server. Ch
 
 Using websocket requires [libgnutls](https://www.gnutls.org/). It also requires a recent version of [Libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/), at least 0.9.53.
 
-If you don't need or can't use this feature, you can disable it by adding the option `WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET` to the make command when you build Ulfius:
+If you don't need or can't use this feature, you can disable it by adding the option `WEBSOCKETFLAG=1` to the make command when you build Ulfius:
 
 ```shell
-$ make WEBSOCKETFLAG=-DU_DISABLE_WEBSOCKET
+$ make WEBSOCKETFLAG=1
 ```
 
 ### Remove libjansson and libcurl hard dependency <a name="remove-libjansson-and-libcurl-hard-dependency"></a>
@@ -2239,13 +2239,13 @@ int ulfius_set_json_body_response(struct _u_response * response, const unsigned 
 json_t * ulfius_get_json_body_response(struct _u_response * response, json_error_t * json_error);
 ```
 
-If you want to disable these functions, append `JANSSONFLAG=-DU_DISABLE_JANSSON` when you build Ulfius library.
+If you want to disable these functions, append `JANSSONFLAG=1` when you build Ulfius library.
 
 ```
 $ git clone https://github.com/babelouest/ulfius.git
 $ cd ulfius/
 $ git submodule update --init
-$ make JANSSONFLAG=-DU_DISABLE_JANSSON
+$ make JANSSONFLAG=1
 $ sudo make install
 ```
 
@@ -2334,13 +2334,13 @@ int ulfius_send_smtp_rich_email(const char * host,
                                 const char * mail_body);
 ```
 
-If you want to disable these functions, append `CURLFLAG=-DU_DISABLE_CURL` when you build Ulfius library.
+If you want to disable these functions, append `CURLFLAG=1` when you build Ulfius library.
 
 ```
 $ git clone https://github.com/babelouest/ulfius.git
 $ cd ulfius/
 $ git submodule update --init
-$ make CURLFLAG=-DU_DISABLE_CURL
+$ make CURLFLAG=1
 $ sudo make install
 ```
 
@@ -2350,7 +2350,7 @@ If you wan to disable libjansson and libcurl, you can append both parameters.
 $ git clone https://github.com/babelouest/ulfius.git
 $ cd ulfius/
 $ git submodule update --init
-$ make CURLFLAG=-DU_DISABLE_CURL JANSSONFLAG=-DU_DISABLE_JANSSON
+$ make CURLFLAG=1 JANSSONFLAG=1
 $ sudo make install
 ```
 
