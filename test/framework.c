@@ -84,7 +84,7 @@ static void handle_smtp (struct smtp_manager * manager) {
   int inmessage = 0;
 
   sprintf(bufferout, "220 ulfius.tld SMTP CCSMTP\r\n");
-  send(manager->sockfd, bufferout, strlen(bufferout), 0);
+  send(manager->sockfd, bufferout, o_strlen(bufferout), 0);
   //manager->mail_data = mstrcatf(manager->mail_data, bufferout);
 
   while (1) {
@@ -108,7 +108,7 @@ static void handle_smtp (struct smtp_manager * manager) {
     if (buffer_left == 0) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "%d: Command line too long", manager->sockfd);
       sprintf(bufferout, "500 Too long\r\n");
-      send(manager->sockfd, bufferout, strlen(bufferout), 0);
+      send(manager->sockfd, bufferout, o_strlen(bufferout), 0);
       //manager->mail_data = mstrcatf(manager->mail_data, bufferout);
       buffer_offset = 0;
       continue;
@@ -159,44 +159,44 @@ processline:
       //
       if (STREQU(buffer, "HELO")) { // Initial greeting
         sprintf(bufferout, "250 Ok\r\n");
-        send(manager->sockfd, bufferout, strlen(bufferout), 0);
+        send(manager->sockfd, bufferout, o_strlen(bufferout), 0);
         //manager->mail_data = mstrcatf(manager->mail_data, bufferout);
       } else if (STREQU(buffer, "MAIL")) { // New mail from...
         sprintf(bufferout, "250 Ok\r\n");
-        send(manager->sockfd, bufferout, strlen(bufferout), 0);
+        send(manager->sockfd, bufferout, o_strlen(bufferout), 0);
         //manager->mail_data = mstrcatf(manager->mail_data, bufferout);
       } else if (STREQU(buffer, "RCPT")) { // Mail addressed to...
         sprintf(bufferout, "250 Ok recipient\r\n");
-        send(manager->sockfd, bufferout, strlen(bufferout), 0);
+        send(manager->sockfd, bufferout, o_strlen(bufferout), 0);
         //manager->mail_data = mstrcatf(manager->mail_data, bufferout);
       } else if (STREQU(buffer, "DATA")) { // Message contents...
         sprintf(bufferout, "354 Continue\r\n");
-        send(manager->sockfd, bufferout, strlen(bufferout), 0);
+        send(manager->sockfd, bufferout, o_strlen(bufferout), 0);
         //manager->mail_data = mstrcatf(manager->mail_data, bufferout);
         inmessage = 1;
       } else if (STREQU(buffer, "RSET")) { // Reset the connection
         sprintf(bufferout, "250 Ok reset\r\n");
-        send(manager->sockfd, bufferout, strlen(bufferout), 0);
+        send(manager->sockfd, bufferout, o_strlen(bufferout), 0);
         //manager->mail_data = mstrcatf(manager->mail_data, bufferout);
       } else if (STREQU(buffer, "NOOP")) { // Do nothing.
         sprintf(bufferout, "250 Ok noop\r\n");
-        send(manager->sockfd, bufferout, strlen(bufferout), 0);
+        send(manager->sockfd, bufferout, o_strlen(bufferout), 0);
         //manager->mail_data = mstrcatf(manager->mail_data, bufferout);
       } else if (STREQU(buffer, "QUIT")) { // Close the connection
         sprintf(bufferout, "221 Ok\r\n");
-        send(manager->sockfd, bufferout, strlen(bufferout), 0);
+        send(manager->sockfd, bufferout, o_strlen(bufferout), 0);
         //manager->mail_data = mstrcatf(manager->mail_data, bufferout);
         break;
       } else { // The verb used hasn't been implemented.
         sprintf(bufferout, "502 Command Not Implemented\r\n");
-        send(manager->sockfd, bufferout, strlen(bufferout), 0);
+        send(manager->sockfd, bufferout, o_strlen(bufferout), 0);
         //manager->mail_data = mstrcatf(manager->mail_data, bufferout);
       }
     } else { // We are inside the message after a DATA verb.
       manager->mail_data = mstrcatf(manager->mail_data, "%s\n", buffer);
       if (STREQU(buffer, ".")) { // A single "." signifies the end
         sprintf(bufferout, "250 Ok\r\n");
-        send(manager->sockfd, bufferout, strlen(bufferout), 0);
+        send(manager->sockfd, bufferout, o_strlen(bufferout), 0);
         //manager->mail_data = mstrcatf(manager->mail_data, bufferout);
         inmessage = 0;
       }
