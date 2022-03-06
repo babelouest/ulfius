@@ -7,6 +7,7 @@
 - Redirect libmicrohttpd logs to yder
 - Replace uint with 'unsigned int'
 - Add `ulfius_export_request_http` and `ulfius_export_response_http`
+- Use `o_strnullempty` instead of `o_strlen` to check if a char * has data
 
 ## 2.7.7
 
