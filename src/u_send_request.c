@@ -106,7 +106,8 @@ static size_t ulfius_write_body(void * contents, size_t size, size_t nmemb, void
 static size_t write_header(void * buffer, size_t size, size_t nitems, void * user_data) {
 
   struct _u_response * response = (struct _u_response *) user_data;
-  char * header = (char *)buffer, * key, * value, * saveptr, * tmp;
+  char * header = (char *)buffer, * saveptr, * tmp;
+  const char * key, * value;
 
   if (o_strchr(header, ':') != NULL) {
     if (response->map_header != NULL) {
