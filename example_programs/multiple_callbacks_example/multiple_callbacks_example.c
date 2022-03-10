@@ -5,7 +5,7 @@
  * This example program describes the multiple callback feature
  * that are available in ulfius 2.0
  * 
- * Copyright 2017 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2017-2022 Nicolas Mora <mail@babelouest.org>
  * 
  * License MIT
  *

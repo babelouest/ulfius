@@ -4,7 +4,7 @@
 # CMake file used to build all programs
 #
 # Copyright 2018      Silvio Clecio <silvioprog@gmail.com>
-# Copyright 2018-2021 Nicolas Mora <mail@babelouest.org>
+# Copyright 2018-2022 Nicolas Mora <mail@babelouest.org>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the MIT License

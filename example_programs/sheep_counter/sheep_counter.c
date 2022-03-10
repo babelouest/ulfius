@@ -7,7 +7,7 @@
  * As a result, the index.html page will increment a sheep counter and 
  * shows a new sheep on the screen every time an increment is done (every 5 seconds)
  * 
- * Copyright 2015-2017 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2015-2022 Nicolas Mora <mail@babelouest.org>
  * 
  * License MIT
  *

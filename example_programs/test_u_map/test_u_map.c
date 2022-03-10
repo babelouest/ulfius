@@ -5,7 +5,7 @@
  * This example program describes the main features 
  * that are available in struct _u_map
  * 
- * Copyright 2015 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2015-2022 Nicolas Mora <mail@babelouest.org>
  * 
  * License MIT
  *

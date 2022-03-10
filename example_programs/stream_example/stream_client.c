@@ -4,7 +4,7 @@
  * 
  * This example program get a stream data from the server
  * 
- * Copyright 2016-2021 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2022 Nicolas Mora <mail@babelouest.org>
  * 
  * License MIT
  *

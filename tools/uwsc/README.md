@@ -2,7 +2,7 @@
 
 Simple command-line application to connect to websocket services
 
-Copyright 2018-2020 Nicolas Mora <mail@babelouest.org>
+Copyright 2018-2022 Nicolas Mora <mail@babelouest.org>
 
 This program is free software; you can redistribute it and/or modify it under the terms of the GPL3 License.
 

@@ -4,7 +4,7 @@
  * 
  * This example program describes the endpoints injections
  * 
- * Copyright 2016-2017 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2022 Nicolas Mora <mail@babelouest.org>
  * 
  * License MIT
  *

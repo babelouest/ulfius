@@ -4,7 +4,7 @@
  *
  * This example program implements a websocket
  *
- * Copyright 2017 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2017-2022 Nicolas Mora <mail@babelouest.org>
  *
  * License MIT
  *

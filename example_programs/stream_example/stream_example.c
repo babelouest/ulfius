@@ -4,7 +4,7 @@
  * 
  * This example program streams some data
  * 
- * Copyright 2016 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2022 Nicolas Mora <mail@babelouest.org>
  * 
  * License MIT
  *

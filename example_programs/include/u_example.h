@@ -4,7 +4,7 @@
  *
  * Common header for all example programs
  *
- * Copyright 2018-2020 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2018-2022 Nicolas Mora <mail@babelouest.org>
  *
  * License MIT
  *
