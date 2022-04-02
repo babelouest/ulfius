@@ -26,6 +26,8 @@
 #include <time.h>
 #include <ulfius.h>
 
+#include <curl/curl.h>
+
 #define SMTP_FROM "sender@localhost"
 #define SMTP_TO "recipient@localhost"
 #define SMTP_HOST "localhost"
@@ -59,6 +61,599 @@
 #define VALUE2 "value2:'with$%stuff"
 #define VALUE3 "value 3"
 #define VALUE4 "valué(4)"
+
+#define VALUE1024 "0123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567012345670123456701234567"
+#define VALUE2048 VALUE1024 VALUE1024
+#define VALUE4096 VALUE2048 VALUE2048
+#define VALUE65536 VALUE4096 VALUE4096 VALUE4096 VALUE4096 VALUE4096 VALUE4096 VALUE4096 VALUE4096 VALUE4096 VALUE4096 VALUE4096 VALUE4096 VALUE4096 VALUE4096 VALUE4096 VALUE4096
+#define VALUE_JSON_LARGE "[{\"random\": \"89\",\"random float\": \"1.363\",\"bool\": \"true\",\"date\": \"1983-10-06\",\"regEx\": \"hellooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo world\",\"enum\": \"generator\",\"firstname\": \"Viki\",\"lastname\": \"Shama\",\"city\": \"Jamestown\",\"country\": \"Namibia\",\"countryCode\": \"TM\",\"email uses current data\": \"Viki.Shama@gmail.com\",\"email from expression\": \"Viki.Shama@yopmail.com\",\"array\": [\"Lexine\",\"Rivalee\",\"Fidelia\",\"Brietta\",\"Odessa\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Lelah\": {\"age\": \"71\"}},{\"random\": \"44\",\"random float\": \"61.485\",\"bool\": \"true\",\"date\": \"1985-11-12\",\"regEx\": \"hello world\",\"enum\": \"generator\",\"firstname\": \"Sophia\",\"lastname\": \"Mullane\",\"city\": \"Havana\",\"country\": \"Belgium\",\"countryCode\": \"IN\",\"email uses current data\": \"Sophia.Mullane@gmail.com\",\"email from expression\": \"Sophia.Mullane@yopmail.com\",\"array\": [\"Bernie\",\"Correy\",\"Flo\",\"Aimil\",\"Dianemarie\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Jere\": {\"age\": \"35\"}},{\"random\": \"66\",\"random float\": \"80.908\",\"bool\": \"false\",\"date\": \"1982-09-17\",\"regEx\": \"hellooooooooooooooooooooooooooooooooo world\",\"enum\": \"json\",\"firstname\": \"Peri\",\"lastname\": \"Roche\",\"city\": \"Maputo\",\"country\": \"San Marino\",\"countryCode\": \"BD\",\"email uses current data\": \"Peri.Roche@gmail.com\",\"email from expression\": \"Peri.Roche@yopmail.com\",\"array\": [\"Lynnea\",\"Donnie\",\"Alia\",\"Selma\",\"Jaclyn\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Eugine\": {\"age\": \"100\"}},{\"random\": \"20\",\"random float\": \"93.184\",\"bool\": \"true\",\"date\": \"1987-01-03\",\"regEx\": \"helloooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo world\",\"enum\": \"json\",\"firstname\": \"Odessa\",\"lastname\": \"Gino\",\"city\": \"Nagpur\",\"country\": \"Christmas Island\",\"countryCode\": \"TL\",\"email uses current data\": \"Odessa.Gino@gmail.com\",\"email from expression\": \"Odessa.Gino@yopmail.com\",\"array\": [\"Gerianna\",\"Robinia\",\"Ofilia\",\"Lindie\",\"Tilly\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Aryn\": {\"age\": \"59\"}},{\"random\": \"25\",\"random float\": \"45.534\",\"bool\": \"false\",\"date\": \"1999-12-19\",\"regEx\": \"hellooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo to you\",\"enum\": \"generator\",\"firstname\": \"Karlee\",\"lastname\": \"Kathie\",\"city\": \"Anchorage\",\"country\": \"Greece\",\"countryCode\": \"AN\",\"email uses current data\": \"Karlee.Kathie@gmail.com\",\"email from expression\": \"Karlee.Kathie@yopmail.com\",\"array\": [\"Sarette\",\"Ernesta\",\"Dyann\",\"Ekaterina\",\"Aeriela\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Gusty\": {\"age\": \"71\"}},{\"random\": \"27\",\"random float\": \"51.558\",\"bool\": \"true\",\"date\": \"1981-08-25\",\"regEx\": \"hellooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo to you\",\"enum\": \"online\",\"firstname\": \"Tierney\",\"lastname\": \"Raseda\",\"city\": \"Birkirkara\",\"country\": \"Israel\",\"countryCode\": \"SG\",\"email uses current data\": \"Tierney.Raseda@gmail.com\",\"email from expression\": \"Tierney.Raseda@yopmail.com\",\"array\": [\"Aryn\",\"Aryn\",\"Ursulina\",\"Celisse\",\"Nanete\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Lory\": {\"age\": \"46\"}},{\"random\": \"70\",\"random float\": \"32.86\",\"bool\": \"true\",\"date\": \"1992-11-06\",\"regEx\": \"hellooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo world\",\"enum\": \"generator\",\"firstname\": \"Neila\",\"lastname\": \"Skurnik\",\"city\": \"Horta (Azores)\",\"country\": \"Hungary\",\"countryCode\": \"ID\",\"email uses current data\": \"Neila.Skurnik@gmail.com\",\"email from expression\": \"Neila.Skurnik@yopmail.com\",\"array\": [\"Abbie\",\"Ketti\",\"Vonny\",\"Chloris\",\"Shauna\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Belinda\": {\"age\": \"84\"}},{\"random\": \"55\",\"random float\": \"43.587\",\"bool\": \"false\",\"date\": \"1983-07-25\",\"regEx\": \"hellooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo world\",\"enum\": \"json\",\"firstname\": \"Starla\",\"lastname\": \"Eugenia\",\"city\": \"Riverside\",\"country\": \"Kyrgyzstan\",\"countryCode\": \"EG\",\"email uses current data\": \"Starla.Eugenia@gmail.com\",\"email from expression\": \"Starla.Eugenia@yopmail.com\",\"array\": [\"Isa\",\"Perry\",\"Letizia\",\"Pollyanna\",\"Lucille\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Arabel\": {\"age\": \"24\"}},{\"random\": \"98\",\"random float\": \"47.688\",\"bool\": \"false\",\"date\": \"1997-01-04\",\"regEx\": \"helloooooooo to you\",\"enum\": \"online\",\"firstname\": \"Shaine\",\"lastname\": \"Linskey\",\"city\": \"Maseru\",\"country\": \"Chad\",\"countryCode\": \"MC\",\"email uses current data\": \"Shaine.Linskey@gmail.com\",\"email from expression\": \"Shaine.Linskey@yopmail.com\",\"array\": [\"Lita\",\"Barbi\",\"Priscilla\",\"Emmey\",\"Gianina\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Belva\": {\"age\": \"45\"}},{\"random\": \"94\",\"random float\": \"40.619\",\"bool\": \"false\",\"date\": \"1989-07-25\",\"regEx\": \"helloooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo world\",\"enum\": \"online\",\"firstname\": \"Antonietta\",\"lastname\": \"Rogerio\",\"city\": \"Hong Kong\",\"country\": \"Eritrea\",\"countryCode\": \"LI\",\"email uses current data\": \"Antonietta.Rogerio@gmail.com\",\"email from expression\": \"Antonietta.Rogerio@yopmail.com\",\"array\": [\"Chloris\",\"Constance\",\"Evaleen\",\"Jillayne\",\"Nikki\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Deane\": {\"age\": \"60\"}},{\"random\": \"99\",\"random float\": \"75.445\",\"bool\": \"false\",\"date\": \"1982-01-11\",\"regEx\": \"hellooooooooooooooooooooooooooooooooooooooooooooooooo to you\",\"enum\": \"generator\",\"firstname\": \"Nollie\",\"lastname\": \"Izaak\",\"city\": \"Siem Reap\",\"country\": \"Tajikistan\",\"countryCode\": \"BG\",\"email uses current data\": \"Nollie.Izaak@gmail.com\",\"email from expression\": \"Nollie.Izaak@yopmail.com\",\"array\": [\"Karly\",\"Edith\",\"Riannon\",\"Jordan\",\"Dorthy\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Therine\": {\"age\": \"41\"}},{\"random\": \"59\",\"random float\": \"17.889\",\"bool\": \"true\",\"date\": \"1997-12-11\",\"regEx\": \"helloooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo to you\",\"enum\": \"online\",\"firstname\": \"Marylou\",\"lastname\": \"Ranjiv\",\"city\": \"Tashkent\",\"country\": \"Djibouti\",\"countryCode\": \"HT\",\"email uses current data\": \"Marylou.Ranjiv@gmail.com\",\"email from expression\": \"Marylou.Ranjiv@yopmail.com\",\"array\": [\"Ellette\",\"Bettine\",\"Deedee\",\"Kelly\",\"Candi\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Miquela\": {\"age\": \"70\"}},{\"random\": \"11\",\"random float\": \"80.746\",\"bool\": \"true\",\"date\": \"1987-07-08\",\"regEx\": \"helloooooooooo to you\",\"enum\": \"generator\",\"firstname\": \"Elbertina\",\"lastname\": \"Rolf\",\"city\": \"St. John's\",\"country\": \"Serbia and Montenegro\",\"countryCode\": \"TK\",\"email uses current data\": \"Elbertina.Rolf@gmail.com\",\"email from expression\": \"Elbertina.Rolf@yopmail.com\",\"array\": [\"Penelopa\",\"Nicoli\",\"Tierney\",\"Leona\",\"Valera\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Sara-Ann\": {\"age\": \"57\"}},{\"random\": \"11\",\"random float\": \"85.34\",\"bool\": \"true\",\"date\": \"1985-10-05\",\"regEx\": \"hellooooooooooooooooo to you\",\"enum\": \"generator\",\"firstname\": \"Marcy\",\"lastname\": \"Madaih\",\"city\": \"Buenos Aires\",\"country\": \"Bhutan\",\"countryCode\": \"SL\",\"email uses current data\": \"Marcy.Madaih@gmail.com\",\"email from expression\": \"Marcy.Madaih@yopmail.com\",\"array\": [\"Dale\",\"Aurelie\",\"Collen\",\"Kaja\",\"Cherrita\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Joelly\": {\"age\": \"65\"}},{\"random\": \"44\",\"random float\": \"50.479\",\"bool\": \"true\",\"date\": \"1981-09-25\",\"regEx\": \"hellooooooooooooooooooooooooooo world\",\"enum\": \"online\",\"firstname\": \"Veda\",\"lastname\": \"Brunell\",\"city\": \"Tampa\",\"country\": \"Korea, Republic of\",\"countryCode\": \"GB\",\"email uses current data\": \"Veda.Brunell@gmail.com\",\"email from expression\": \"Veda.Brunell@yopmail.com\",\"array\": [\"Evita\",\"Lucille\",\"Ninnetta\",\"Maurene\",\"Judy\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Zondra\": {\"age\": \"89\"}},{\"random\": \"74\",\"random float\": \"86.867\",\"bool\": \"true\",\"date\": \"1997-06-17\",\"regEx\": \"helloooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo world\",\"enum\": \"json\",\"firstname\": \"Phylis\",\"lastname\": \"Gilmour\",\"city\": \"Angra do Heroísmo\",\"country\": \"Turks and Caicos Islands\",\"countryCode\": \"PE\",\"email uses current data\": \"Phylis.Gilmour@gmail.com\",\"email from expression\": \"Phylis.Gilmour@yopmail.com\",\"array\": [\"Teddie\",\"Tressa\",\"Tilly\",\"Etta\",\"Millie\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Fayre\": {\"age\": \"95\"}},{\"random\": \"48\",\"random float\": \"58.562\",\"bool\": \"true\",\"date\": \"1989-11-26\",\"regEx\": \"helloooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo to you\",\"enum\": \"online\",\"firstname\": \"Olwen\",\"lastname\": \"Heisel\",\"city\": \"Austin\",\"country\": \"Kyrgyzstan\",\"countryCode\": \"HM\",\"email uses current data\": \"Olwen.Heisel@gmail.com\",\"email from expression\": \"Olwen.Heisel@yopmail.com\",\"array\": [\"Sam\",\"Janeczka\",\"Minne\",\"Quintina\",\"Jessamyn\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Agathe\": {\"age\": \"75\"}},{\"random\": \"99\",\"random float\": \"48.126\",\"bool\": \"false\",\"date\": \"1990-08-21\",\"regEx\": \"hellooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo world\",\"enum\": \"online\",\"firstname\": \"Anestassia\",\"lastname\": \"Goerke\",\"city\": \"Guatemala City\",\"country\": \"Western Sahara\",\"countryCode\": \"SB\",\"email uses current data\": \"Anestassia.Goerke@gmail.com\",\"email from expression\": \"Anestassia.Goerke@yopmail.com\",\"array\": [\"Mary\",\"Heddie\",\"Philis\",\"Brena\",\"Madeleine\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Mamie\": {\"age\": \"94\"}},{\"random\": \"45\",\"random float\": \"63.712\",\"bool\": \"true\",\"date\": \"1992-02-12\",\"regEx\": \"hellooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo to you\",\"enum\": \"online\",\"firstname\": \"Ronna\",\"lastname\": \"Hertzfeld\",\"city\": \"Nanning\",\"country\": \"Bahrain\",\"countryCode\": \"MT\",\"email uses current data\": \"Ronna.Hertzfeld@gmail.com\",\"email from expression\": \"Ronna.Hertzfeld@yopmail.com\",\"array\": [\"Vonny\",\"Marylou\",\"Meg\",\"Roberta\",\"Emilia\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Cordi\": {\"age\": \"71\"}},{\"random\": \"12\",\"random float\": \"93.981\",\"bool\": \"false\",\"date\": \"1982-07-17\",\"regEx\": \"hellooooooooooooooooooooooooooooooooooooooooooo world\",\"enum\": \"generator\",\"firstname\": \"Marita\",\"lastname\": \"Nicoline\",\"city\": \"Nanjing\",\"country\": \"Norfolk Island\",\"countryCode\": \"BM\",\"email uses current data\": \"Marita.Nicoline@gmail.com\",\"email from expression\": \"Marita.Nicoline@yopmail.com\",\"array\": [\"Suzette\",\"Madelle\",\"Bobbi\",\"Lila\",\"Nannie\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Trixi\": {\"age\": \"38\"}},{\"random\": \"65\",\"random float\": \"37.489\",\"bool\": \"true\",\"date\": \"1983-09-11\",\"regEx\": \"helloooooooooooooooo world\",\"enum\": \"generator\",\"firstname\": \"Raina\",\"lastname\": \"Joni\",\"city\": \"Shijiazhuang\",\"country\": \"Wallis and Futuna\",\"countryCode\": \"KR\",\"email uses current data\": \"Raina.Joni@gmail.com\",\"email from expression\": \"Raina.Joni@yopmail.com\",\"array\": [\"Carly\",\"Babita\",\"Bernardine\",\"Dale\",\"Liana\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Annaliese\": {\"age\": \"93\"}},{\"random\": \"14\",\"random float\": \"76.075\",\"bool\": \"false\",\"date\": \"1987-12-02\",\"regEx\": \"hellooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo to you\",\"enum\": \"online\",\"firstname\": \"Deane\",\"lastname\": \"Euridice\",\"city\": \"Tabriz\",\"country\": \"New Caledonia\",\"countryCode\": \"CD\",\"email uses current data\": \"Deane.Euridice@gmail.com\",\"email from expression\": \"Deane.Euridice@yopmail.com\",\"array\": [\"Krystle\",\"Harmonia\",\"Alameda\",\"Molli\",\"Livvyy\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Sybille\": {\"age\": \"77\"}},{\"random\": \"26\",\"random float\": \"95.46\",\"bool\": \"true\",\"date\": \"1994-06-04\",\"regEx\": \"helloooooooooooooooooooooooooooooooooooooooooooooooooo to you\",\"enum\": \"generator\",\"firstname\": \"Winny\",\"lastname\": \"Modie\",\"city\": \"Brikama\",\"country\": \"Svalbard and Jan Mayen\",\"countryCode\": \"MT\",\"email uses current data\": \"Winny.Modie@gmail.com\",\"email from expression\": \"Winny.Modie@yopmail.com\",\"array\": [\"Kial\",\"Beverley\",\"Daryl\",\"Josephine\",\"Luci\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Edyth\": {\"age\": \"35\"}},{\"random\": \"13\",\"random float\": \"59.531\",\"bool\": \"true\",\"date\": \"1980-12-12\",\"regEx\": \"helloooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo to you\",\"enum\": \"online\",\"firstname\": \"Cyndie\",\"lastname\": \"Love\",\"city\": \"Adana\",\"country\": \"Kuwait\",\"countryCode\": \"JP\",\"email uses current data\": \"Cyndie.Love@gmail.com\",\"email from expression\": \"Cyndie.Love@yopmail.com\",\"array\": [\"Lory\",\"Annora\",\"Ardenia\",\"Fidelia\",\"Fayre\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Rivalee\": {\"age\": \"86\"}},{\"random\": \"49\",\"random float\": \"87.966\",\"bool\": \"false\",\"date\": \"1982-04-06\",\"regEx\": \"helloooooooooooooooooooooooooooooooooooooooooooooo to you\",\"enum\": \"online\",\"firstname\": \"Candy\",\"lastname\": \"Macey\",\"city\": \"San Fernando\",\"country\": \"India\",\"countryCode\": \"AE\",\"email uses current data\": \"Candy.Macey@gmail.com\",\"email from expression\": \"Candy.Macey@yopmail.com\",\"array\": [\"Annabela\",\"Olivette\",\"Rosabelle\",\"Gilda\",\"Taffy\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Layla\": {\"age\": \"81\"}},{\"random\": \"25\",\"random float\": \"70.452\",\"bool\": \"false\",\"date\": \"1980-05-11\",\"regEx\": \"hellooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo world\",\"enum\": \"online\",\"firstname\": \"Gwyneth\",\"lastname\": \"Wind\",\"city\": \"Portland\",\"country\": \"Guyana\",\"countryCode\": \"MO\",\"email uses current data\": \"Gwyneth.Wind@gmail.com\",\"email from expression\": \"Gwyneth.Wind@yopmail.com\",\"array\": [\"Mignon\",\"Kimberley\",\"Lory\",\"Marita\",\"Letizia\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Elbertina\": {\"age\": \"77\"}},{\"random\": \"14\",\"random float\": \"11.858\",\"bool\": \"true\",\"date\": \"1989-01-09\",\"regEx\": \"hellooooooooooooooo world\",\"enum\": \"online\",\"firstname\": \"Lusa\",\"lastname\": \"Pernick\",\"city\": \"Francistown\",\"country\": \"Svalbard and Jan Mayen\",\"countryCode\": \"ZM\",\"email uses current data\": \"Lusa.Pernick@gmail.com\",\"email from expression\": \"Lusa.Pernick@yopmail.com\",\"array\": [\"Millie\",\"Corly\",\"Larine\",\"Janey\",\"Addia\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Marleah\": {\"age\": \"56\"}},{\"random\": \"30\",\"random float\": \"35.524\",\"bool\": \"false\",\"date\": \"1987-11-06\",\"regEx\": \"helloooooooooo world\",\"enum\": \"online\",\"firstname\": \"Felice\",\"lastname\": \"Stav\",\"city\": \"Horta (Azores)\",\"country\": \"Syrian Arab Republic\",\"countryCode\": \"ES\",\"email uses current data\": \"Felice.Stav@gmail.com\",\"email from expression\": \"Felice.Stav@yopmail.com\",\"array\": [\"Amii\",\"Layla\",\"Pamella\",\"Violet\",\"Amalie\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Carmencita\": {\"age\": \"75\"}},{\"random\": \"16\",\"random float\": \"84.126\",\"bool\": \"false\",\"date\": \"1990-11-04\",\"regEx\": \"hellooooooooo to you\",\"enum\": \"generator\",\"firstname\": \"Janey\",\"lastname\": \"Ingra\",\"city\": \"Barcelona\",\"country\": \"Oman\",\"countryCode\": \"NA\",\"email uses current data\": \"Janey.Ingra@gmail.com\",\"email from expression\": \"Janey.Ingra@yopmail.com\",\"array\": [\"Charlena\",\"Camile\",\"Viki\",\"Chloris\",\"Jacenta\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Charmaine\": {\"age\": \"72\"}},{\"random\": \"62\",\"random float\": \"8.957\",\"bool\": \"false\",\"date\": \"1988-06-30\",\"regEx\": \"helloooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo world\",\"enum\": \"generator\",\"firstname\": \"Edee\",\"lastname\": \"Amand\",\"city\": \"Bangui\",\"country\": \"Northern Mariana Islands\",\"countryCode\": \"MM\",\"email uses current data\": \"Edee.Amand@gmail.com\",\"email from expression\": \"Edee.Amand@yopmail.com\",\"array\": [\"Priscilla\",\"Sissy\",\"Cacilie\",\"Cherilyn\",\"Nannie\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Tani\": {\"age\": \"47\"}},{\"random\": \"15\",\"random float\": \"10.192\",\"bool\": \"false\",\"date\": \"1989-03-29\",\"regEx\": \"helloooooooooooooooooooooooooooooooo to you\",\"enum\": \"json\",\"firstname\": \"Mignon\",\"lastname\": \"Salchunas\",\"city\": \"Kaohsiung\",\"country\": \"Anguilla\",\"countryCode\": \"OM\",\"email uses current data\": \"Mignon.Salchunas@gmail.com\",\"email from expression\": \"Mignon.Salchunas@yopmail.com\",\"array\": [\"Talya\",\"Agnese\",\"Rebeca\",\"Aimil\",\"Marnia\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Rivalee\": {\"age\": \"58\"}},{\"random\": \"45\",\"random float\": \"43.964\",\"bool\": \"false\",\"date\": \"1991-09-09\",\"regEx\": \"helloooooooo world\",\"enum\": \"online\",\"firstname\": \"Augustine\",\"lastname\": \"Macey\",\"city\": \"Palma\",\"country\": \"Antigua and Barbuda\",\"countryCode\": \"LA\",\"email uses current data\": \"Augustine.Macey@gmail.com\",\"email from expression\": \"Augustine.Macey@yopmail.com\",\"array\": [\"Sophia\",\"Kristan\",\"Joane\",\"Bettine\",\"Fayre\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Tilly\": {\"age\": \"68\"}},{\"random\": \"11\",\"random float\": \"54.745\",\"bool\": \"false\",\"date\": \"1993-06-05\",\"regEx\": \"hellooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo to you\",\"enum\": \"generator\",\"firstname\": \"Hollie\",\"lastname\": \"Ade\",\"city\": \"Kunming\",\"country\": \"India\",\"countryCode\": \"CU\",\"email uses current data\": \"Hollie.Ade@gmail.com\",\"email from expression\": \"Hollie.Ade@yopmail.com\",\"array\": [\"Olwen\",\"Henriette\",\"Julieta\",\"Brandise\",\"Celestyna\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Georgetta\": {\"age\": \"48\"}},{\"random\": \"17\",\"random float\": \"87.565\",\"bool\": \"false\",\"date\": \"1991-01-27\",\"regEx\": \"helloooooooooooo world\",\"enum\": \"online\",\"firstname\": \"Emilia\",\"lastname\": \"Gilbertson\",\"city\": \"Nouakchott\",\"country\": \"Moldova, Republic of\",\"countryCode\": \"HM\",\"email uses current data\": \"Emilia.Gilbertson@gmail.com\",\"email from expression\": \"Emilia.Gilbertson@yopmail.com\",\"array\": [\"Noelle\",\"Celestyna\",\"Cassandra\",\"Kristan\",\"Roberta\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Natka\": {\"age\": \"36\"}},{\"random\": \"52\",\"random float\": \"45.537\",\"bool\": \"false\",\"date\": \"1995-11-23\",\"regEx\": \"helloooooooooooooooooooooooooooooooooooooooooo world\",\"enum\": \"online\",\"firstname\": \"Averyl\",\"lastname\": \"Callista\",\"city\": \"Raleigh\",\"country\": \"Iran, Islamic Republic Of\",\"countryCode\": \"KE\",\"email uses current data\": \"Averyl.Callista@gmail.com\",\"email from expression\": \"Averyl.Callista@yopmail.com\",\"array\": [\"Raf\",\"Sonni\",\"Charlena\",\"Zsa Zsa\",\"Fina\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Lilith\": {\"age\": \"25\"}},{\"random\": \"43\",\"random float\": \"34.184\",\"bool\": \"true\",\"date\": \"1999-08-16\",\"regEx\": \"helloooooooooooooooooooooooooooooooooooooooooooooooooooooo to you\",\"enum\": \"generator\",\"firstname\": \"Lelah\",\"lastname\": \"Goldina\",\"city\": \"Antwerp\",\"country\": \"French Guiana\",\"countryCode\": \"IN\",\"email uses current data\": \"Lelah.Goldina@gmail.com\",\"email from expression\": \"Lelah.Goldina@yopmail.com\",\"array\": [\"Britni\",\"Raina\",\"Alameda\",\"Gabi\",\"Neila\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Ardys\": {\"age\": \"95\"}},{\"random\": \"90\",\"random float\": \"96.335\",\"bool\": \"false\",\"date\": \"1990-07-07\",\"regEx\": \"hellooooooooooooooooooooooooooooooooooooooooooooo world\",\"enum\": \"generator\",\"firstname\": \"Florencia\",\"lastname\": \"Belanger\",\"city\": \"Pyongyang\",\"country\": \"Finland\",\"countryCode\": \"CX\",\"email uses current data\": \"Florencia.Belanger@gmail.com\",\"email from expression\": \"Florencia.Belanger@yopmail.com\",\"array\": [\"Ezmeralda\",\"Katleen\",\"Anestassia\",\"Babita\",\"Anestassia\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Dotty\": {\"age\": \"62\"}},{\"random\": \"75\",\"random float\": \"23.8\",\"bool\": \"true\",\"date\": \"1980-06-21\",\"regEx\": \"hellooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo world\",\"enum\": \"online\",\"firstname\": \"Rochette\",\"lastname\": \"Strephon\",\"city\": \"Phnom Penh\",\"country\": \"Mauritania\",\"countryCode\": \"RW\",\"email uses current data\": \"Rochette.Strephon@gmail.com\",\"email from expression\": \"Rochette.Strephon@yopmail.com\",\"array\": [\"Miquela\",\"Justinn\",\"Sarette\",\"Correy\",\"Gale\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Merry\": {\"age\": \"93\"}},{\"random\": \"87\",\"random float\": \"71.83\",\"bool\": \"false\",\"date\": \"1993-08-18\",\"regEx\": \"helloooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo world\",\"enum\": \"generator\",\"firstname\": \"Marsiella\",\"lastname\": \"Honoria\",\"city\": \"Dar es Salaam\",\"country\": \"Burundi\",\"countryCode\": \"AT\",\"email uses current data\": \"Marsiella.Honoria@gmail.com\",\"email from expression\": \"Marsiella.Honoria@yopmail.com\",\"array\": [\"Rivalee\",\"Merrie\",\"Mady\",\"Tarra\",\"Teddie\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Alameda\": {\"age\": \"56\"}},{\"random\": \"13\",\"random float\": \"52.65\",\"bool\": \"false\",\"date\": \"1993-08-08\",\"regEx\": \"hellooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo to you\",\"enum\": \"json\",\"firstname\": \"Ada\",\"lastname\": \"Uird\",\"city\": \"Asmara\",\"country\": \"Malta\",\"countryCode\": \"MU\",\"email uses current data\": \"Ada.Uird@gmail.com\",\"email from expression\": \"Ada.Uird@yopmail.com\",\"array\": [\"Aurore\",\"Flo\",\"Alia\",\"Wileen\",\"Janenna\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Ginnie\": {\"age\": \"54\"}},{\"random\": \"30\",\"random float\": \"47.688\",\"bool\": \"true\",\"date\": \"1980-01-23\",\"regEx\": \"hellooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo world\",\"enum\": \"generator\",\"firstname\": \"Kelly\",\"lastname\": \"Gherardo\",\"city\": \"Ibiza\",\"country\": \"Micronesia, Federated States of\",\"countryCode\": \"ZA\",\"email uses current data\": \"Kelly.Gherardo@gmail.com\",\"email from expression\": \"Kelly.Gherardo@yopmail.com\",\"array\": [\"Alyssa\",\"Agathe\",\"Rhea\",\"Cyb\",\"Randa\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Micheline\": {\"age\": \"89\"}},{\"random\": \"79\",\"random float\": \"92.91\",\"bool\": \"true\",\"date\": \"1987-05-03\",\"regEx\": \"hellooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo world\",\"enum\": \"online\",\"firstname\": \"Dorothy\",\"lastname\": \"Lemuela\",\"city\": \"Lagos\",\"country\": \"Canada\",\"countryCode\": \"AZ\",\"email uses current data\": \"Dorothy.Lemuela@gmail.com\",\"email from expression\": \"Dorothy.Lemuela@yopmail.com\",\"array\": [\"Amara\",\"Gusty\",\"Ruthe\",\"Frieda\",\"Tabbatha\"],\"array of objects\": [{\"index\": \"0\",\"index start at 5\": \"5\"},{\"index\": \"1\",\"index start at 5\": \"6\"},{\"index\": \"2\",\"index start at 5\": \"7\"}],\"Raquela\": {\"age\": \"25\"}}]"
+#define VALUE_JSON_LARGE_NEWLINES "[\
+	{\
+		\"random\": \"100\",\
+		\"random float\": \"19.768\",\
+		\"bool\": \"true\",\
+		\"date\": \"1987-01-31\",\
+		\"regEx\": \"hellooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo to you\",\
+		\"enum\": \"json\",\
+		\"firstname\": \"Juliane\",\
+		\"lastname\": \"Sibyls\",\
+		\"city\": \"Miri\",\
+		\"country\": \"Greece\",\
+		\"countryCode\": \"AR\",\
+		\"email uses current data\": \"Juliane.Sibyls@gmail.com\",\
+		\"email from expression\": \"Juliane.Sibyls@yopmail.com\",\
+		\"array\": [\
+			\"Ellette\",\
+			\"Dorthy\",\
+			\"Ivett\",\
+			\"Deane\",\
+			\"Berget\"\
+		],\
+		\"array of objects\": [\
+			{\
+				\"index\": \"0\",\
+				\"index start at 5\": \"5\"\
+			},\
+			{\
+				\"index\": \"1\",\
+				\"index start at 5\": \"6\"\
+			},\
+			{\
+				\"index\": \"2\",\
+				\"index start at 5\": \"7\"\
+			}\
+		],\
+		\"Adele\": {\
+			\"age\": \"89\"\
+		}\
+	},\
+	{\
+		\"random\": \"93\",\
+		\"random float\": \"25.543\",\
+		\"bool\": \"true\",\
+		\"date\": \"1993-06-29\",\
+		\"regEx\": \"hellooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo to you\",\
+		\"enum\": \"generator\",\
+		\"firstname\": \"Fidelia\",\
+		\"lastname\": \"Rolf\",\
+		\"city\": \"Alexandria\",\
+		\"country\": \"Venezuela\",\
+		\"countryCode\": \"WF\",\
+		\"email uses current data\": \"Fidelia.Rolf@gmail.com\",\
+		\"email from expression\": \"Fidelia.Rolf@yopmail.com\",\
+		\"array\": [\
+			\"Chrystel\",\
+			\"Iseabal\",\
+			\"Belinda\",\
+			\"Lelah\",\
+			\"Alleen\"\
+		],\
+		\"array of objects\": [\
+			{\
+				\"index\": \"0\",\
+				\"index start at 5\": \"5\"\
+			},\
+			{\
+				\"index\": \"1\",\
+				\"index start at 5\": \"6\"\
+			},\
+			{\
+				\"index\": \"2\",\
+				\"index start at 5\": \"7\"\
+			}\
+		],\
+		\"Kara-Lynn\": {\
+			\"age\": \"49\"\
+		}\
+	},\
+	{\
+		\"random\": \"40\",\
+		\"random float\": \"19.866\",\
+		\"bool\": \"false\",\
+		\"date\": \"1987-04-22\",\
+		\"regEx\": \"helloooooooooooooooooooo world\",\
+		\"enum\": \"json\",\
+		\"firstname\": \"Audrie\",\
+		\"lastname\": \"Forrer\",\
+		\"city\": \"Rochester\",\
+		\"country\": \"Cayman Islands\",\
+		\"countryCode\": \"CG\",\
+		\"email uses current data\": \"Audrie.Forrer@gmail.com\",\
+		\"email from expression\": \"Audrie.Forrer@yopmail.com\",\
+		\"array\": [\
+			\"Daphne\",\
+			\"Marita\",\
+			\"Shandie\",\
+			\"Mireielle\",\
+			\"Bobinette\"\
+		],\
+		\"array of objects\": [\
+			{\
+				\"index\": \"0\",\
+				\"index start at 5\": \"5\"\
+			},\
+			{\
+				\"index\": \"1\",\
+				\"index start at 5\": \"6\"\
+			},\
+			{\
+				\"index\": \"2\",\
+				\"index start at 5\": \"7\"\
+			}\
+		],\
+		\"Albertina\": {\
+			\"age\": \"29\"\
+		}\
+	},\
+	{\
+		\"random\": \"59\",\
+		\"random float\": \"18.087\",\
+		\"bool\": \"false\",\
+		\"date\": \"1991-02-16\",\
+		\"regEx\": \"hellooooooooooooo to you\",\
+		\"enum\": \"generator\",\
+		\"firstname\": \"Tina\",\
+		\"lastname\": \"Cleo\",\
+		\"city\": \"Dallas\",\
+		\"country\": \"Bangladesh\",\
+		\"countryCode\": \"EG\",\
+		\"email uses current data\": \"Tina.Cleo@gmail.com\",\
+		\"email from expression\": \"Tina.Cleo@yopmail.com\",\
+		\"array\": [\
+			\"Kylynn\",\
+			\"Julieta\",\
+			\"Nananne\",\
+			\"Sarette\",\
+			\"Abbie\"\
+		],\
+		\"array of objects\": [\
+			{\
+				\"index\": \"0\",\
+				\"index start at 5\": \"5\"\
+			},\
+			{\
+				\"index\": \"1\",\
+				\"index start at 5\": \"6\"\
+			},\
+			{\
+				\"index\": \"2\",\
+				\"index start at 5\": \"7\"\
+			}\
+		],\
+		\"Jsandye\": {\
+			\"age\": \"73\"\
+		}\
+	},\
+	{\
+		\"random\": \"65\",\
+		\"random float\": \"8.492\",\
+		\"bool\": \"false\",\
+		\"date\": \"1992-01-14\",\
+		\"regEx\": \"hellooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo to you\",\
+		\"enum\": \"online\",\
+		\"firstname\": \"Sindee\",\
+		\"lastname\": \"Braun\",\
+		\"city\": \"Port-au-Prince\",\
+		\"country\": \"Nicaragua\",\
+		\"countryCode\": \"BH\",\
+		\"email uses current data\": \"Sindee.Braun@gmail.com\",\
+		\"email from expression\": \"Sindee.Braun@yopmail.com\",\
+		\"array\": [\
+			\"Sophia\",\
+			\"Sheree\",\
+			\"Rosanne\",\
+			\"Gwenneth\",\
+			\"Olivette\"\
+		],\
+		\"array of objects\": [\
+			{\
+				\"index\": \"0\",\
+				\"index start at 5\": \"5\"\
+			},\
+			{\
+				\"index\": \"1\",\
+				\"index start at 5\": \"6\"\
+			},\
+			{\
+				\"index\": \"2\",\
+				\"index start at 5\": \"7\"\
+			}\
+		],\
+		\"Corry\": {\
+			\"age\": \"19\"\
+		}\
+	},\
+	{\
+		\"random\": \"92\",\
+		\"random float\": \"83.149\",\
+		\"bool\": \"true\",\
+		\"date\": \"1991-06-18\",\
+		\"regEx\": \"helloooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo world\",\
+		\"enum\": \"generator\",\
+		\"firstname\": \"Kelly\",\
+		\"lastname\": \"Leopold\",\
+		\"city\": \"Handan\",\
+		\"country\": \"United Arab Emirates\",\
+		\"countryCode\": \"QA\",\
+		\"email uses current data\": \"Kelly.Leopold@gmail.com\",\
+		\"email from expression\": \"Kelly.Leopold@yopmail.com\",\
+		\"array\": [\
+			\"Fina\",\
+			\"Jaclyn\",\
+			\"Lindie\",\
+			\"Loree\",\
+			\"Kristan\"\
+		],\
+		\"array of objects\": [\
+			{\
+				\"index\": \"0\",\
+				\"index start at 5\": \"5\"\
+			},\
+			{\
+				\"index\": \"1\",\
+				\"index start at 5\": \"6\"\
+			},\
+			{\
+				\"index\": \"2\",\
+				\"index start at 5\": \"7\"\
+			}\
+		],\
+		\"Damaris\": {\
+			\"age\": \"57\"\
+		}\
+	},\
+	{\
+		\"random\": \"56\",\
+		\"random float\": \"15.704\",\
+		\"bool\": \"false\",\
+		\"date\": \"1985-04-03\",\
+		\"regEx\": \"helloooooo world\",\
+		\"enum\": \"generator\",\
+		\"firstname\": \"Lesly\",\
+		\"lastname\": \"Whittaker\",\
+		\"city\": \"Nicosia\",\
+		\"country\": \"Mali\",\
+		\"countryCode\": \"PH\",\
+		\"email uses current data\": \"Lesly.Whittaker@gmail.com\",\
+		\"email from expression\": \"Lesly.Whittaker@yopmail.com\",\
+		\"array\": [\
+			\"Celene\",\
+			\"Leontine\",\
+			\"Annecorinne\",\
+			\"Linzy\",\
+			\"Dawn\"\
+		],\
+		\"array of objects\": [\
+			{\
+				\"index\": \"0\",\
+				\"index start at 5\": \"5\"\
+			},\
+			{\
+				\"index\": \"1\",\
+				\"index start at 5\": \"6\"\
+			},\
+			{\
+				\"index\": \"2\",\
+				\"index start at 5\": \"7\"\
+			}\
+		],\
+		\"Merci\": {\
+			\"age\": \"96\"\
+		}\
+	},\
+	{\
+		\"random\": \"55\",\
+		\"random float\": \"88.204\",\
+		\"bool\": \"true\",\
+		\"date\": \"1987-10-25\",\
+		\"regEx\": \"hellooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo to you\",\
+		\"enum\": \"json\",\
+		\"firstname\": \"Catharine\",\
+		\"lastname\": \"Pandolfi\",\
+		\"city\": \"Chişinău\",\
+		\"country\": \"Montserrat\",\
+		\"countryCode\": \"DJ\",\
+		\"email uses current data\": \"Catharine.Pandolfi@gmail.com\",\
+		\"email from expression\": \"Catharine.Pandolfi@yopmail.com\",\
+		\"array\": [\
+			\"Ariela\",\
+			\"Adore\",\
+			\"Marnia\",\
+			\"Lita\",\
+			\"Valeda\"\
+		],\
+		\"array of objects\": [\
+			{\
+				\"index\": \"0\",\
+				\"index start at 5\": \"5\"\
+			},\
+			{\
+				\"index\": \"1\",\
+				\"index start at 5\": \"6\"\
+			},\
+			{\
+				\"index\": \"2\",\
+				\"index start at 5\": \"7\"\
+			}\
+		],\
+		\"Etta\": {\
+			\"age\": \"71\"\
+		}\
+	},\
+	{\
+		\"random\": \"77\",\
+		\"random float\": \"55.034\",\
+		\"bool\": \"false\",\
+		\"date\": \"1988-11-11\",\
+		\"regEx\": \"helloooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo world\",\
+		\"enum\": \"online\",\
+		\"firstname\": \"Konstance\",\
+		\"lastname\": \"Kussell\",\
+		\"city\": \"London\",\
+		\"country\": \"Netherlands Antilles\",\
+		\"countryCode\": \"AU\",\
+		\"email uses current data\": \"Konstance.Kussell@gmail.com\",\
+		\"email from expression\": \"Konstance.Kussell@yopmail.com\",\
+		\"array\": [\
+			\"Lisette\",\
+			\"Catrina\",\
+			\"Gerrie\",\
+			\"Amara\",\
+			\"Merci\"\
+		],\
+		\"array of objects\": [\
+			{\
+				\"index\": \"0\",\
+				\"index start at 5\": \"5\"\
+			},\
+			{\
+				\"index\": \"1\",\
+				\"index start at 5\": \"6\"\
+			},\
+			{\
+				\"index\": \"2\",\
+				\"index start at 5\": \"7\"\
+			}\
+		],\
+		\"Gwenneth\": {\
+			\"age\": \"65\"\
+		}\
+	},\
+	{\
+		\"random\": \"19\",\
+		\"random float\": \"99.26\",\
+		\"bool\": \"true\",\
+		\"date\": \"1991-09-27\",\
+		\"regEx\": \"hellooooooooooooooooooooooooooooooooooooooooooooo world\",\
+		\"enum\": \"generator\",\
+		\"firstname\": \"Lory\",\
+		\"lastname\": \"Elisha\",\
+		\"city\": \"Antwerp\",\
+		\"country\": \"Nauru\",\
+		\"countryCode\": \"CM\",\
+		\"email uses current data\": \"Lory.Elisha@gmail.com\",\
+		\"email from expression\": \"Lory.Elisha@yopmail.com\",\
+		\"array\": [\
+			\"Corene\",\
+			\"Arabel\",\
+			\"Jennica\",\
+			\"Glynnis\",\
+			\"Gratia\"\
+		],\
+		\"array of objects\": [\
+			{\
+				\"index\": \"0\",\
+				\"index start at 5\": \"5\"\
+			},\
+			{\
+				\"index\": \"1\",\
+				\"index start at 5\": \"6\"\
+			},\
+			{\
+				\"index\": \"2\",\
+				\"index start at 5\": \"7\"\
+			}\
+		],\
+		\"Carol-Jean\": {\
+			\"age\": \"66\"\
+		}\
+	},\
+	{\
+		\"random\": \"77\",\
+		\"random float\": \"97.394\",\
+		\"bool\": \"false\",\
+		\"date\": \"1982-05-26\",\
+		\"regEx\": \"hellooooooooooooooooooooooooooooooo to you\",\
+		\"enum\": \"generator\",\
+		\"firstname\": \"Hallie\",\
+		\"lastname\": \"Pitt\",\
+		\"city\": \"Tehran\",\
+		\"country\": \"Saudi Arabia\",\
+		\"countryCode\": \"GW\",\
+		\"email uses current data\": \"Hallie.Pitt@gmail.com\",\
+		\"email from expression\": \"Hallie.Pitt@yopmail.com\",\
+		\"array\": [\
+			\"Kara-Lynn\",\
+			\"Elka\",\
+			\"Lanae\",\
+			\"Beverley\",\
+			\"Maud\"\
+		],\
+		\"array of objects\": [\
+			{\
+				\"index\": \"0\",\
+				\"index start at 5\": \"5\"\
+			},\
+			{\
+				\"index\": \"1\",\
+				\"index start at 5\": \"6\"\
+			},\
+			{\
+				\"index\": \"2\",\
+				\"index start at 5\": \"7\"\
+			}\
+		],\
+		\"Sherrie\": {\
+			\"age\": \"97\"\
+		}\
+	},\
+	{\
+		\"random\": \"90\",\
+		\"random float\": \"57.086\",\
+		\"bool\": \"true\",\
+		\"date\": \"1983-01-30\",\
+		\"regEx\": \"helloooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo to you\",\
+		\"enum\": \"generator\",\
+		\"firstname\": \"Myrtice\",\
+		\"lastname\": \"Anestassia\",\
+		\"city\": \"Hamilton\",\
+		\"country\": \"Bahrain\",\
+		\"countryCode\": \"PT\",\
+		\"email uses current data\": \"Myrtice.Anestassia@gmail.com\",\
+		\"email from expression\": \"Myrtice.Anestassia@yopmail.com\",\
+		\"array\": [\
+			\"Cecile\",\
+			\"Ermengarde\",\
+			\"Elbertina\",\
+			\"Mellicent\",\
+			\"Angela\"\
+		],\
+		\"array of objects\": [\
+			{\
+				\"index\": \"0\",\
+				\"index start at 5\": \"5\"\
+			},\
+			{\
+				\"index\": \"1\",\
+				\"index start at 5\": \"6\"\
+			},\
+			{\
+				\"index\": \"2\",\
+				\"index start at 5\": \"7\"\
+			}\
+		],\
+		\"Kirstin\": {\
+			\"age\": \"53\"\
+		}\
+	},\
+	{\
+		\"random\": \"57\",\
+		\"random float\": \"11.212\",\
+		\"bool\": \"true\",\
+		\"date\": \"1989-07-30\",\
+		\"regEx\": \"helloooooooooooo world\",\
+		\"enum\": \"generator\",\
+		\"firstname\": \"Katuscha\",\
+		\"lastname\": \"Cyrie\",\
+		\"city\": \"Kanpur\",\
+		\"country\": \"Lesotho\",\
+		\"countryCode\": \"LA\",\
+		\"email uses current data\": \"Katuscha.Cyrie@gmail.com\",\
+		\"email from expression\": \"Katuscha.Cyrie@yopmail.com\",\
+		\"array\": [\
+			\"Oralee\",\
+			\"Rhoda\",\
+			\"Morganica\",\
+			\"Gusella\",\
+			\"Ursulina\"\
+		],\
+		\"array of objects\": [\
+			{\
+				\"index\": \"0\",\
+				\"index start at 5\": \"5\"\
+			},\
+			{\
+				\"index\": \"1\",\
+				\"index start at 5\": \"6\"\
+			},\
+			{\
+				\"index\": \"2\",\
+				\"index start at 5\": \"7\"\
+			}\
+		],\
+		\"Roslyn\": {\
+			\"age\": \"31\"\
+		}\
+	},\
+	{\
+		\"random\": \"90\",\
+		\"random float\": \"72.61\",\
+		\"bool\": \"true\",\
+		\"date\": \"1996-12-19\",\
+		\"regEx\": \"helloooooooooooooooooooooooooooo world\",\
+		\"enum\": \"online\",\
+		\"firstname\": \"Trudie\",\
+		\"lastname\": \"Teddman\",\
+		\"city\": \"Indianapolis\",\
+		\"country\": \"Åland Islands\",\
+		\"countryCode\": \"NO\",\
+		\"email uses current data\": \"Trudie.Teddman@gmail.com\",\
+		\"email from expression\": \"Trudie.Teddman@yopmail.com\",\
+		\"array\": [\
+			\"Elbertina\",\
+			\"Mallory\",\
+			\"Barbara\",\
+			\"Kimmy\",\
+			\"Robinia\"\
+		],\
+		\"array of objects\": [\
+			{\
+				\"index\": \"0\",\
+				\"index start at 5\": \"5\"\
+			},\
+			{\
+				\"index\": \"1\",\
+				\"index start at 5\": \"6\"\
+			},\
+			{\
+				\"index\": \"2\",\
+				\"index start at 5\": \"7\"\
+			}\
+		],\
+		\"Britni\": {\
+			\"age\": \"75\"\
+		}\
+	},\
+	{\
+		\"random\": \"82\",\
+		\"random float\": \"33.162\",\
+		\"bool\": \"true\",\
+		\"date\": \"1996-11-01\",\
+		\"regEx\": \"helloooooooooooooooooooooooooooooooooooooo to you\",\
+		\"enum\": \"generator\",\
+		\"firstname\": \"Roseline\",\
+		\"lastname\": \"Lareena\",\
+		\"city\": \"Bangui\",\
+		\"country\": \"Ethiopia\",\
+		\"countryCode\": \"WS\",\
+		\"email uses current data\": \"Roseline.Lareena@gmail.com\",\
+		\"email from expression\": \"Roseline.Lareena@yopmail.com\",\
+		\"array\": [\
+			\"Gabi\",\
+			\"Lisette\",\
+			\"Britte\",\
+			\"Sissy\",\
+			\"Ira\"\
+		],\
+		\"array of objects\": [\
+			{\
+				\"index\": \"0\",\
+				\"index start at 5\": \"5\"\
+			},\
+			{\
+				\"index\": \"1\",\
+				\"index start at 5\": \"6\"\
+			},\
+			{\
+				\"index\": \"2\",\
+				\"index start at 5\": \"7\"\
+			}\
+		],\
+		\"Sharlene\": {\
+			\"age\": \"85\"\
+		}\
+	}\
+]"
 
 struct smtp_manager {
   char * mail_data;
@@ -554,6 +1149,32 @@ void free_with_test(void * ptr) {
 
 int callback_function_simple(const struct _u_request * request, struct _u_response * response, void * user_data) {
   ulfius_set_response_properties(response, U_OPT_STATUS, 200, U_OPT_STRING_BODY, "Hello World!", U_OPT_NONE);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_function_large_post(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  ck_assert_int_eq(o_strlen(u_map_get(request->map_post_body, "VALUE1024")), 1024);
+  ck_assert_int_eq(o_strlen(u_map_get(request->map_post_body, "VALUE2048")), 2048);
+  ck_assert_int_eq(o_strlen(u_map_get(request->map_post_body, "VALUE4096")), 4096);
+  ck_assert_int_eq(o_strlen(u_map_get(request->map_post_body, "VALUE65536")), 65536);
+  ck_assert_int_eq(o_strlen(u_map_get(request->map_post_body, "VALUE_JSON_LARGE")), o_strlen(VALUE_JSON_LARGE));
+  ck_assert_int_eq(o_strlen(u_map_get(request->map_post_body, "VALUE_JSON_LARGE_NEWLINES")), o_strlen(VALUE_JSON_LARGE_NEWLINES));
+
+  ck_assert_int_eq(0, memcmp(u_map_get(request->map_post_body, "VALUE1024"), VALUE1024, 1024));
+  ck_assert_int_eq(0, memcmp(u_map_get(request->map_post_body, "VALUE2048"), VALUE2048, 2048));
+  ck_assert_int_eq(0, memcmp(u_map_get(request->map_post_body, "VALUE4096"), VALUE4096, 4096));
+  ck_assert_int_eq(0, memcmp(u_map_get(request->map_post_body, "VALUE65536"), VALUE65536, 65536));
+  ck_assert_int_eq(0, memcmp(u_map_get(request->map_post_body, "VALUE_JSON_LARGE"), VALUE_JSON_LARGE, o_strlen(VALUE_JSON_LARGE)));
+  ck_assert_int_eq(0, memcmp(u_map_get(request->map_post_body, "VALUE_JSON_LARGE_NEWLINES"), VALUE_JSON_LARGE_NEWLINES, o_strlen(VALUE_JSON_LARGE_NEWLINES)));
+  
+  json_t * j_value = json_loads(u_map_get(request->map_post_body, "VALUE_JSON_LARGE"), JSON_DECODE_ANY, NULL);
+  ck_assert_ptr_ne(j_value, NULL);
+  json_decref(j_value);
+
+  j_value = json_loads(u_map_get(request->map_post_body, "VALUE_JSON_LARGE_NEWLINES"), JSON_DECODE_ANY, NULL);
+  ck_assert_ptr_ne(j_value, NULL);
+  json_decref(j_value);
+
   return U_CALLBACK_CONTINUE;
 }
 
@@ -1474,6 +2095,89 @@ START_TEST(test_ulfius_malformed_requests)
 }
 END_TEST
 
+START_TEST(test_ulfius_large_posts)
+{
+  struct _u_instance u_instance;
+  struct _u_request request;
+  struct _u_response response;
+  
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "POST", "/", NULL, 0, &callback_function_large_post, NULL), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
+
+  ulfius_init_request(&request);
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_set_request_properties(&request, U_OPT_HTTP_VERB, "POST",
+                                                           U_OPT_HTTP_URL, "http://localhost:8080/",
+                                                           U_OPT_POST_BODY_PARAMETER, "VALUE1024", VALUE1024,
+                                                           U_OPT_POST_BODY_PARAMETER, "VALUE2048", VALUE2048,
+                                                           U_OPT_POST_BODY_PARAMETER, "VALUE4096", VALUE4096,
+                                                           U_OPT_POST_BODY_PARAMETER, "VALUE65536", VALUE65536,
+                                                           U_OPT_POST_BODY_PARAMETER, "VALUE_JSON_LARGE", VALUE_JSON_LARGE,
+                                                           U_OPT_POST_BODY_PARAMETER, "VALUE_JSON_LARGE_NEWLINES", VALUE_JSON_LARGE_NEWLINES,
+                                                           U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 200);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+  
+  CURL *curl;
+ 
+  curl_mime *form = NULL;
+  curl_mimepart *field = NULL;
+  struct curl_slist *headerlist = NULL;
+  static const char buf[] = "Expect:";
+ 
+  curl_global_init(CURL_GLOBAL_ALL);
+ 
+  curl = curl_easy_init();
+  if(curl) {
+    /* Create the form */
+    form = curl_mime_init(curl);
+ 
+    field = curl_mime_addpart(form);
+    curl_mime_name(field, "VALUE1024");
+    curl_mime_data(field, VALUE1024, CURL_ZERO_TERMINATED);
+ 
+    field = curl_mime_addpart(form);
+    curl_mime_name(field, "VALUE2048");
+    curl_mime_data(field, VALUE2048, CURL_ZERO_TERMINATED);
+ 
+    field = curl_mime_addpart(form);
+    curl_mime_name(field, "VALUE4096");
+    curl_mime_data(field, VALUE4096, CURL_ZERO_TERMINATED);
+ 
+    field = curl_mime_addpart(form);
+    curl_mime_name(field, "VALUE65536");
+    curl_mime_data(field, VALUE65536, CURL_ZERO_TERMINATED);
+ 
+    field = curl_mime_addpart(form);
+    curl_mime_name(field, "VALUE_JSON_LARGE");
+    curl_mime_data(field, VALUE_JSON_LARGE, CURL_ZERO_TERMINATED);
+ 
+    field = curl_mime_addpart(form);
+    curl_mime_name(field, "VALUE_JSON_LARGE_NEWLINES");
+    curl_mime_data(field, VALUE_JSON_LARGE_NEWLINES, CURL_ZERO_TERMINATED);
+ 
+    headerlist = curl_slist_append(headerlist, buf);
+
+    curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:8080/");
+
+    curl_easy_setopt(curl, CURLOPT_MIMEPOST, form);
+ 
+    ck_assert_int_eq(curl_easy_perform(curl), CURLE_OK);
+ 
+    curl_easy_cleanup(curl);
+ 
+    curl_mime_free(form);
+    curl_slist_free_all(headerlist);
+  }
+
+  ulfius_stop_framework(&u_instance);
+  ulfius_clean_instance(&u_instance);
+}
+END_TEST
+
 START_TEST(test_ulfius_send_http_request)
 {
   struct _u_instance u_instance;
@@ -1639,6 +2343,7 @@ static Suite *ulfius_suite(void)
   tcase_add_test(tc_core, test_ulfius_follow_redirect);
   tcase_add_test(tc_core, test_ulfius_shared_data);
   tcase_add_test(tc_core, test_ulfius_malformed_requests);
+  tcase_add_test(tc_core, test_ulfius_large_posts);
   tcase_add_test(tc_core, test_ulfius_send_http_request);
 #ifndef U_DISABLE_GNUTLS
   tcase_add_test(tc_core, test_ulfius_server_ca_trust);
