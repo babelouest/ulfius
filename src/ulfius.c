@@ -344,7 +344,7 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
 {
   struct connection_info_struct * con_info = coninfo_cls;
   size_t data_size = size, cur_size;
-  char * filename_param = NULL, * data_concat = NULL;
+  char * filename_param = NULL, * data_concat = NULL, * tmp;
   const char * cur_data;
 #if MHD_VERSION >= 0x00097002
   enum MHD_Result ret = MHD_YES;
@@ -407,19 +407,22 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
         cur_size = u_map_get_length((struct _u_map *)con_info->request->map_post_body, key);
         if (cur_data != NULL) {
           if (off) {
-            data_concat = msprintf("%s%s", cur_data, data);
+            data_concat = msprintf("%s%.*s", cur_data, (int)size, data);
           } else {
-            data_concat = msprintf("%s,%s", cur_data, data);
+            data_concat = msprintf("%s,%.*s", cur_data, (int)size, data);
           }
           if (u_map_put((struct _u_map *)con_info->request->map_post_body, key, data_concat) != U_OK) {
             ret = MHD_NO;
             break;
           }
         } else {
-          if (u_map_put((struct _u_map *)con_info->request->map_post_body, key, data) != U_OK) {
+          tmp = o_strndup(data, size);
+          if (u_map_put((struct _u_map *)con_info->request->map_post_body, key, tmp) != U_OK) {
             ret = MHD_NO;
+            o_free(tmp);
             break;
           }
+          o_free(tmp);
         }
       }
       
