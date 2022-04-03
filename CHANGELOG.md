@@ -1,5 +1,9 @@
 # Ulfius Changelog
 
+## 2.7.9
+
+- Fix multipart/form-data large values, thanks itzoke! (#222, #223)
+
 ## 2.7.8
 
 - Fix Origin header setting in websocket client
