@@ -344,7 +344,7 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
 {
   struct connection_info_struct * con_info = coninfo_cls;
   size_t data_size = size, cur_size;
-  char * filename_param = NULL, * data_concat = NULL, * tmp;
+  char * filename_param = NULL, * data_concat = NULL;
   const char * cur_data;
 #if MHD_VERSION >= 0x00097002
   enum MHD_Result ret = MHD_YES;
@@ -363,7 +363,7 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
     
     do {
       if (con_info->u_instance->check_utf8) {
-        if (utf8_check(key, o_strlen(key)) != NULL || data == NULL || utf8_check(data, o_strlen(data)) != NULL || (filename != NULL && utf8_check(filename, o_strlen(filename)) != NULL)) {
+        if (utf8_check(key, o_strlen(key)) != NULL || data == NULL || utf8_check(data, size) != NULL || (filename != NULL && utf8_check(filename, o_strlen(filename)) != NULL)) {
           break;
         }
       }
@@ -372,7 +372,7 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
         break;
       }
       
-      if (off + size > con_info->max_post_param_size) {
+      if (con_info->max_post_param_size && off + size > con_info->max_post_param_size) {
         data_size = con_info->max_post_param_size - off;
       }
       
@@ -381,48 +381,26 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
         if (!u_map_has_key((struct _u_map *)con_info->request->map_post_body, filename_param) && u_map_put((struct _u_map *)con_info->request->map_post_body, filename_param, filename) != U_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error u_map_put filename value");
         }
-        cur_data = u_map_get((struct _u_map *)con_info->request->map_post_body, key);
-        cur_size = u_map_get_length((struct _u_map *)con_info->request->map_post_body, key);
-        if (cur_data != NULL) {
-          if (off) {
-            if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data, cur_size, data_size) != U_OK) {
-              ret = MHD_NO;
-              break;
-            }
-          } else {
-            if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, ",", cur_size, 1) != U_OK ||
-                u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data, cur_size+1, 1) != U_OK) {
-              ret = MHD_NO;
-              break;
-            }
+      }
+      cur_data = u_map_get((struct _u_map *)con_info->request->map_post_body, key);
+      cur_size = u_map_get_length((struct _u_map *)con_info->request->map_post_body, key);
+      if (cur_data != NULL) {
+        if (off) {
+          if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data, cur_size, data_size) != U_OK) {
+            ret = MHD_NO;
+            break;
           }
         } else {
-          if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data, 0, data_size) != U_OK) {
+          if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, ",", cur_size, 1) != U_OK ||
+              u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data, cur_size+1, data_size) != U_OK) {
             ret = MHD_NO;
             break;
           }
         }
       } else {
-        cur_data = u_map_get((struct _u_map *)con_info->request->map_post_body, key);
-        cur_size = u_map_get_length((struct _u_map *)con_info->request->map_post_body, key);
-        if (cur_data != NULL) {
-          if (off) {
-            data_concat = msprintf("%s%.*s", cur_data, (int)size, data);
-          } else {
-            data_concat = msprintf("%s,%.*s", cur_data, (int)size, data);
-          }
-          if (u_map_put((struct _u_map *)con_info->request->map_post_body, key, data_concat) != U_OK) {
-            ret = MHD_NO;
-            break;
-          }
-        } else {
-          tmp = o_strndup(data, size);
-          if (u_map_put((struct _u_map *)con_info->request->map_post_body, key, tmp) != U_OK) {
-            ret = MHD_NO;
-            o_free(tmp);
-            break;
-          }
-          o_free(tmp);
+        if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data, 0, data_size) != U_OK) {
+          ret = MHD_NO;
+          break;
         }
       }
       
