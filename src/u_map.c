@@ -161,9 +161,9 @@ int u_map_put_binary(struct _u_map * u_map, const char * key, const char * value
         }
         if (value != NULL) {
           memcpy(u_map->values[i]+offset, value, length);
-          *(u_map->values[i]+offset+length) = '\0';
           if (u_map->lengths[i] < (offset + length)) {
             u_map->lengths[i] = (offset + length);
+            *(u_map->values[i]+offset+length) = '\0';
           }
         } else {
           o_free(u_map->values[i]);
