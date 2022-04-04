@@ -5143,6 +5143,13 @@ int callback_function_large_post_multipart_check_utf8_no(const struct _u_request
   ck_assert_int_eq(u_map_get_length(request->map_post_body, "VALUE_JSON_LARGE"), o_strlen(VALUE_JSON_LARGE));
   ck_assert_int_eq(u_map_get_length(request->map_post_body, "VALUE_JSON_LARGE_NEWLINES"), o_strlen(VALUE_JSON_LARGE_NEWLINES));
 
+  ck_assert_int_eq(o_strlen(u_map_get(request->map_post_body, "VALUE1024")), 1024);
+  ck_assert_int_eq(o_strlen(u_map_get(request->map_post_body, "VALUE2048")), 2048);
+  ck_assert_int_eq(o_strlen(u_map_get(request->map_post_body, "VALUE4096")), 4096);
+  ck_assert_int_eq(o_strlen(u_map_get(request->map_post_body, "VALUE65536")), 65536);
+  ck_assert_int_eq(o_strlen(u_map_get(request->map_post_body, "VALUE_JSON_LARGE")), o_strlen(VALUE_JSON_LARGE));
+  ck_assert_int_eq(o_strlen(u_map_get(request->map_post_body, "VALUE_JSON_LARGE_NEWLINES")), o_strlen(VALUE_JSON_LARGE_NEWLINES));
+
   ck_assert_int_eq(0, memcmp(u_map_get(request->map_post_body, "VALUE1024"), VALUE1024, 1024));
   ck_assert_int_eq(0, memcmp(u_map_get(request->map_post_body, "VALUE2048"), VALUE2048, 2048));
   ck_assert_int_eq(0, memcmp(u_map_get(request->map_post_body, "VALUE4096"), VALUE4096, 4096));
@@ -5174,6 +5181,13 @@ int callback_function_large_post_multipart_check_utf8_yes(const struct _u_reques
   ck_assert_int_eq(u_map_get_length(request->map_post_body, "VALUE65536"), 65536);
   ck_assert_int_eq(u_map_get_length(request->map_post_body, "VALUE_JSON_LARGE"), o_strlen(VALUE_JSON_LARGE));
   ck_assert_int_eq(u_map_get_length(request->map_post_body, "VALUE_JSON_LARGE_NEWLINES"), o_strlen(VALUE_JSON_LARGE_NEWLINES));
+
+  ck_assert_int_eq(o_strlen(u_map_get(request->map_post_body, "VALUE1024")), 1024);
+  ck_assert_int_eq(o_strlen(u_map_get(request->map_post_body, "VALUE2048")), 2048);
+  ck_assert_int_eq(o_strlen(u_map_get(request->map_post_body, "VALUE4096")), 4096);
+  ck_assert_int_eq(o_strlen(u_map_get(request->map_post_body, "VALUE65536")), 65536);
+  ck_assert_int_eq(o_strlen(u_map_get(request->map_post_body, "VALUE_JSON_LARGE")), o_strlen(VALUE_JSON_LARGE));
+  ck_assert_int_eq(o_strlen(u_map_get(request->map_post_body, "VALUE_JSON_LARGE_NEWLINES")), o_strlen(VALUE_JSON_LARGE_NEWLINES));
 
   ck_assert_int_eq(0, memcmp(u_map_get(request->map_post_body, "VALUE1024"), VALUE1024, 1024));
   ck_assert_int_eq(0, memcmp(u_map_get(request->map_post_body, "VALUE2048"), VALUE2048, 2048));
