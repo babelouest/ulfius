@@ -125,7 +125,7 @@ static size_t write_header(void * buffer, size_t size, size_t nitems, void * use
         o_free(tmp);
       }
     }
-  } else if (o_strlen(trimwhitespace(header)) > 0) {
+  } else if (!o_strnullempty(trimwhitespace(header))) {
     // Expecting the HTTP/x.x header
     if (response->protocol != NULL) {
       o_free(response->protocol);
