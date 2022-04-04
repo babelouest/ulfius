@@ -2,7 +2,7 @@
 
 ## 2.7.9
 
-- Fix multipart/form-data large values, thanks itzoke! (#222, #223)
+- Fix multipart/form-data for large values, thanks itzoke! (#222, #223)
 
 ## 2.7.8
 
