@@ -34,6 +34,9 @@ START_TEST(test_u_map_put)
   ck_assert_int_eq(u_map_put_binary(&map, NULL, NULL, 0, o_strlen("value")), U_ERROR_PARAMS);
   ck_assert_int_eq(u_map_put_binary(NULL, "bkey", "value", 0, o_strlen("value")), U_ERROR_PARAMS);
   ck_assert_int_eq(u_map_put_binary(&map, "bkey", "new_value", 0, o_strlen("new_value")), U_OK);
+  ck_assert_int_eq(u_map_put_binary(&map, "bkey", "append_value", u_map_get_length(&map, "bkey"), o_strlen("append_value")), U_OK);
+  ck_assert_int_eq(u_map_put_binary(&map, "bkey", "far_value", 1024, o_strlen("far_value")), U_OK);
+  ck_assert_int_eq(u_map_put_binary(&map, "bkey", "inserted_value", 3, o_strlen("inserted_value")), U_OK);
   ck_assert_int_eq(u_map_put(&map, "key", "value"), U_OK);
   u_map_clean(&map);
 }
@@ -66,6 +69,15 @@ START_TEST(test_u_map_get)
   ck_assert_str_eq(u_map_get(&map, "key"), "value");
   ck_assert_int_eq(u_map_put(&map, "key", NULL), U_OK);
   ck_assert_ptr_eq(u_map_get(&map, "key"), NULL);
+  ck_assert_int_eq(u_map_put_binary(&map, "bkey", "new_value", 0, o_strlen("new_value")), U_OK);
+  ck_assert_str_eq(u_map_get(&map, "bkey"), "new_value");
+  ck_assert_int_eq(u_map_put_binary(&map, "bkey", "append_value", u_map_get_length(&map, "bkey"), o_strlen("append_value")), U_OK);
+  ck_assert_str_eq(u_map_get(&map, "bkey"), "new_valueappend_value");
+  ck_assert_int_eq(u_map_put_binary(&map, "bkey", "inserted_value", 3, o_strlen("inserted_value")), U_OK);
+  ck_assert_str_eq(u_map_get(&map, "bkey"), "newinserted_valuealue");
+  ck_assert_int_eq(u_map_put_binary(&map, "bkey", "far_value", 1024, o_strlen("far_value")), U_OK);
+  ck_assert_str_eq(u_map_get(&map, "bkey"), "newinserted_valuealue");
+  ck_assert_int_eq(1024+o_strlen("far_value"), u_map_get_length(&map, "bkey"));
   u_map_clean(&map);
 }
 END_TEST
