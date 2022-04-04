@@ -161,17 +161,35 @@ START_TEST(test_u_map_copy_empty)
   ck_assert_int_eq(u_map_put(&map, "key1", "value1"), U_OK);
   ck_assert_int_eq(u_map_put(&map, "key2", "value2"), U_OK);
   ck_assert_int_eq(u_map_put(&map, "key3", "value3"), U_OK);
+  ck_assert_int_eq(u_map_put(&map, "key4", NULL), U_OK);
   ck_assert_int_eq(u_map_copy_into(&copy_map, &map), U_OK);
   ck_assert_int_eq(u_map_copy_into(NULL, &map), U_ERROR_PARAMS);
   ck_assert_int_eq(u_map_copy_into(&copy_map, NULL), U_ERROR_PARAMS);
   ck_assert_int_eq(u_map_copy_into(NULL, NULL), U_ERROR_PARAMS);
-  ck_assert_int_eq(u_map_count(&map), 3);
-  ck_assert_int_eq(u_map_count(&copy_map), 3);
+  ck_assert_int_eq(u_map_count(&map), 4);
+  ck_assert_int_eq(u_map_count(&copy_map), 4);
   ck_assert_int_eq(u_map_empty(&copy_map), U_OK);
   ck_assert_int_eq(u_map_empty(NULL), U_ERROR_PARAMS);
   ck_assert_int_eq(u_map_count(&copy_map), 0);
   u_map_clean(&map);
   u_map_clean(&copy_map);
+}
+END_TEST
+
+START_TEST(test_u_map_copy)
+{
+  struct _u_map map, * copy_map;
+  u_map_init(&map);
+  ck_assert_int_eq(u_map_put(&map, "key1", "value1"), U_OK);
+  ck_assert_int_eq(u_map_put(&map, "key2", "value2"), U_OK);
+  ck_assert_int_eq(u_map_put(&map, "key3", "value3"), U_OK);
+  ck_assert_int_eq(u_map_put(&map, "key4", NULL), U_OK);
+  ck_assert_ptr_eq(NULL, u_map_copy(NULL));
+  ck_assert_ptr_ne(NULL, copy_map = u_map_copy(&map));
+  ck_assert_int_eq(u_map_count(&map), 4);
+  ck_assert_int_eq(u_map_count(copy_map), 4);
+  u_map_clean(&map);
+  u_map_clean_full(copy_map);
 }
 END_TEST
 
@@ -190,6 +208,7 @@ static Suite *ulfius_suite(void)
 	tcase_add_test(tc_core, test_u_map_has);
 	tcase_add_test(tc_core, test_u_map_remove);
 	tcase_add_test(tc_core, test_u_map_copy_empty);
+	tcase_add_test(tc_core, test_u_map_copy);
 	tcase_set_timeout(tc_core, 30);
 	suite_add_tcase(s, tc_core);
 
@@ -202,6 +221,7 @@ int main(int argc, char *argv[])
   Suite *s;
   SRunner *sr;
   
+  //y_init_logs("Ulfius", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Ulfius u_map tests");
   ulfius_global_init();
   
   s = ulfius_suite();
@@ -212,5 +232,6 @@ int main(int argc, char *argv[])
   srunner_free(sr);
   
   ulfius_global_close();
+  //y_close_logs();
   return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
