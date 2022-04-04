@@ -26,6 +26,7 @@
   - [Accessing header parameters](#accessing-header-parameters)
   - [Cookie management](#cookie-management)
   - [File upload](#file-upload)
+    - [Binary file upload](#binary-file-upload)
   - [Streaming data](#streaming-data)
   - [Websockets communication](#websockets-communication)
     - [Websocket management](#websocket-management)
@@ -1197,6 +1198,34 @@ int ulfius_set_upload_file_callback_function(struct _u_instance * u_instance,
 This callback function will be called before all the other callback functions, and be aware that not all parameters, especially URL parameters, will be present during the file upload callback function executions.
 
 See `examples/sheep_counter` for a file upload example.
+
+### Binary file upload <a name="binary-file-upload"></a>
+
+By default, Ulfius will check input body data to be valid utf8 characters. This will most likely break binary files uploaded via `multipart/form-data` transfert-encoding.
+
+If you don't or can't use `ulfius_set_upload_file_callback_function`, you must disable utf8 check before starting ulfius instance, then in the callback function, make sure to use `u_map_get_length` for every `request->map_post_body` element.
+
+```C
+int callback_function(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  const char * file_data = u_map_get(request->map_post_body, "file_parameter");
+  size_t file_size = u_map_get_length(request->map_post_body, "file_parameter");
+  // process http request
+  // [...]
+  return U_CALLBACK_CONTINUE;
+}
+
+int main() {
+  // initialize instance
+  struct _u_instance u_instance;
+
+  ulfius_init_instance(&u_instance, 8080, NULL, NULL);
+  u_instance.check_utf8 = 0;
+  ulfius_add_endpoint_by_val(&u_instance, "POST", "/upload", NULL, 0, &callback_function, NULL);
+  ulfius_start_framework(&u_instance);
+  
+  // The program continues...
+}
+```
 
 ## Streaming data <a name="streaming-data"></a>
 
