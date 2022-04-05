@@ -830,7 +830,7 @@ char * ulfius_export_request_http(const struct _u_request * request) {
   const char * value = NULL, ** keys = NULL;
   struct yuarel y_url;
   int has_params = 0, i;
-  size_t auth_basic_b64_len = 0;
+  size_t auth_basic_b64_len = 0, len = 0;
 
   if (request != NULL && request->http_url != NULL) {
     if (!yuarel_parse(&y_url, request->http_url)) {
@@ -882,13 +882,15 @@ char * ulfius_export_request_http(const struct _u_request * request) {
         out = msprintf("GET /%s HTTP/1.1\r\n", url);
       }
       o_free(url);
-      if (y_url.port) {
-        host = msprintf("%s:%d", y_url.host, y_url.port);
-      } else {
-        host = o_strdup(y_url.host);
+      if (!u_map_has_key_case(request->map_header, "Host")) {
+        if (y_url.port) {
+          host = msprintf("%s:%d", y_url.host, y_url.port);
+        } else {
+          host = o_strdup(y_url.host);
+        }
+        out = mstrcatf(out, "Host: %s\r\n", host);
+        o_free(host);
       }
-      out = mstrcatf(out, "Host: %s\r\n", host);
-      o_free(host);
       
       keys = u_map_enum_keys(request->map_header);
       for (i=0; keys != NULL && keys[i] != NULL; i++) {
@@ -916,13 +918,13 @@ char * ulfius_export_request_http(const struct _u_request * request) {
           }
         }
       }
-      if (request->binary_body_length) {
+      if (!u_map_has_key_case(request->map_header, "Content-Length") && request->binary_body_length) {
         out = mstrcatf(out, "Content-Length: %zu\r\n", request->binary_body_length);
       }
-      if (NULL == u_map_get(request->map_header, ULFIUS_HTTP_HEADER_CONTENT) && u_map_count(request->map_post_body)) {
+      if (!u_map_has_key_case(request->map_header, ULFIUS_HTTP_HEADER_CONTENT) && u_map_count(request->map_post_body)) {
         out = mstrcatf(out, "Content-type: %s\r\n", MHD_HTTP_POST_ENCODING_FORM_URLENCODED);
       }
-      if (request->auth_basic_user != NULL && request->auth_basic_password != NULL) {
+      if (!u_map_has_key_case(request->map_header, "Authorization") && request->auth_basic_user != NULL && request->auth_basic_password != NULL) {
         auth_basic = msprintf("%s:%s", request->auth_basic_user, request->auth_basic_password);
         if (o_base64_encode((const unsigned char *)auth_basic, o_strlen(auth_basic), NULL, &auth_basic_b64_len)) {
           if ((auth_basic_b64 = o_malloc(auth_basic_b64_len+4)) != NULL) {
@@ -941,9 +943,9 @@ char * ulfius_export_request_http(const struct _u_request * request) {
         }
         o_free(auth_basic);
       }
-      out = mstrcatf(out, "\r\n");
       
       if (request->binary_body_length) {
+        out = mstrcatf(out, "\r\n");
         out = mstrcatf(out, "%.*s\r\n", request->binary_body_length, request->binary_body);
       } else if (u_map_count(request->map_post_body)) {
         if (NULL == u_map_get(request->map_header, ULFIUS_HTTP_HEADER_CONTENT) ||
@@ -958,7 +960,8 @@ char * ulfius_export_request_http(const struct _u_request * request) {
             key_esc = ulfius_url_encode(keys[i]);
             if (key_esc) {
               value = u_map_get(request->map_post_body, keys[i]);
-              if (value != NULL) {
+              len = u_map_get_length(request->map_post_body, keys[i]);
+              if (value != NULL && utf8_check(value, len) == NULL) {
                 value_esc = ulfius_url_encode(value);
                 if (value_esc != NULL) {
                   body = mstrcatf(body, "%s=%s", key_esc, value_esc);
@@ -967,13 +970,15 @@ char * ulfius_export_request_http(const struct _u_request * request) {
                   y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_url_encode for post parameter value %s=%s", key_esc, value);
                 }
               } else {
-                body = mstrcatf(body, "%s", fp, keys[i]);
+                body = mstrcatf(body, "%c%s", fp, keys[i]);
               }
               o_free(key_esc);
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_url_encode for post parameter key %s", keys[i]);
             }
           }
+          out = mstrcatf(out, "Content-Length: %zu\r\n", o_strlen(body));
+          out = mstrcatf(out, "\r\n");
           out = mstrcatf(out, "%s", body);
           o_free(body);
         }
