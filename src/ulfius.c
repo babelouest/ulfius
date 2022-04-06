@@ -529,8 +529,8 @@ static int ulfius_webservice_dispatcher (void * cls,
 
     // Set POST Processor if content-type is properly set
     if (content_type != NULL && 
-       (0 == o_strncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, o_strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) ||
-        0 == o_strncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, o_strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA)))) {
+       ((con_info->u_instance->allowed_post_processor&U_POST_PROCESS_URL_ENCODED && 0 == o_strncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, o_strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED))) ||
+        (con_info->u_instance->allowed_post_processor&U_POST_PROCESS_MULTIPART_FORMDATA && 0 == o_strncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, o_strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA))))) {
       con_info->has_post_processor = 1;
       con_info->post_processor = MHD_create_post_processor (connection, ULFIUS_POSTBUFFERSIZE, mhd_iterate_post_data, (void *) con_info);
       if (NULL == con_info->post_processor) {
@@ -1734,6 +1734,7 @@ UNUSED(network_type);
 #else
     u_instance->websocket_handler = NULL;
 #endif
+    u_instance->allowed_post_processor = U_POST_PROCESS_URL_ENCODED|U_POST_PROCESS_MULTIPART_FORMDATA;
     return U_OK;
   } else {
     return U_ERROR_PARAMS;

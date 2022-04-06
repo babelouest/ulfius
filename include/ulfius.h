@@ -133,6 +133,10 @@ int y_close_logs();
 #define U_SSL_VERIFY_PEER     0x0001 ///< Verify TLS session with peers
 #define U_SSL_VERIFY_HOSTNAME 0x0010 ///< Verify TLS session with hostname
 
+#define U_POST_PROCESS_NONE               0x0000
+#define U_POST_PROCESS_URL_ENCODED        0x0001
+#define U_POST_PROCESS_MULTIPART_FORMDATA 0x0010
+
 /**
  * Options available to set or get properties using
  * ulfius_set_request_properties or ulfius_set_request_properties
@@ -341,6 +345,7 @@ struct _u_instance {
 #ifndef U_DISABLE_GNUTLS
   int                           use_client_cert_auth; /* !< Internal variable use to indicate if the instance uses client certificate authentication, Do not change this value, available only if websocket support is enabled */
 #endif
+  int                           allowed_post_processor; /* !< Specifies which content-type are allowed to process in the request->map_post_body parameters list, default value is U_POST_PROCESS_URL_ENCODED|U_POST_PROCESS_MULTIPART_FORMDATA, to disable all, use U_POST_PROCESS_NONE */
 };
 
 /**
