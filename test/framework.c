@@ -4611,6 +4611,7 @@ unsigned char binary_data[] = {0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0
                                      0x00, 0x25, 0x74, 0x45, 0x58, 0x74, 0x64, 0x61, 0x74, 0x65, 0x3a, 0x6d, 0x6f, 0x64, 0x69, 0x66, 0x79, 0x00, 0x32, 0x30, 0x32, 0x32, 0x2d, 0x30, 
                                      0x33, 0x2d, 0x32, 0x30, 0x54, 0x31, 0x39, 0x3a, 0x35, 0x32, 0x3a, 0x33, 0x35, 0x2b, 0x30, 0x30, 0x3a, 0x30, 0x30, 0x97, 0x74, 0xbe, 0x05, 0x00, 
                                      0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82};
+char invalid_params[] = {0x6, 0x12, 0x0};
 
 struct smtp_manager {
   char * mail_data;
@@ -5207,6 +5208,19 @@ int callback_function_large_post_multipart_check_utf8_yes(const struct _u_reques
   ck_assert_ptr_ne(j_value, NULL);
   json_decref(j_value);
 
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_function_post_params_processed(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  ck_assert_int_eq(u_map_count(request->map_post_body), 3);
+  ck_assert_str_eq("value1", u_map_get(request->map_post_body, "param1"));
+  ck_assert_str_eq("valueé2", u_map_get(request->map_post_body, "param2"));
+  ck_assert_str_eq(invalid_params, u_map_get(request->map_post_body, "param3"));
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_function_post_params_not_processed(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  ck_assert_int_eq(u_map_count(request->map_post_body), 0);
   return U_CALLBACK_CONTINUE;
 }
 
@@ -6132,6 +6146,11 @@ START_TEST(test_ulfius_large_posts_check_utf8_no)
   struct _u_instance u_instance;
   struct _u_request request;
   struct _u_response response;
+  CURL *curl;
+  curl_mime *form = NULL;
+  curl_mimepart *field = NULL;
+  struct curl_slist *headerlist = NULL;
+  static const char buf[] = "Expect:";
 
   ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "POST", "/urlencoded", NULL, 0, &callback_function_large_post_urlencoded_check_utf8_no, NULL), U_OK);
@@ -6154,15 +6173,6 @@ START_TEST(test_ulfius_large_posts_check_utf8_no)
   ck_assert_int_eq(response.status, 200);
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
-
-  CURL *curl;
-
-  curl_mime *form = NULL;
-  curl_mimepart *field = NULL;
-  struct curl_slist *headerlist = NULL;
-  static const char buf[] = "Expect:";
-
-  curl_global_init(CURL_GLOBAL_ALL);
 
   curl = curl_easy_init();
   if(curl) {
@@ -6223,19 +6233,15 @@ END_TEST
 START_TEST(test_ulfius_large_posts_check_utf8_yes)
 {
   struct _u_instance u_instance;
-
-  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
-  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "POST", "/", NULL, 0, &callback_function_large_post_multipart_check_utf8_yes, NULL), U_OK);
-  ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
-
   CURL *curl;
-
   curl_mime *form = NULL;
   curl_mimepart *field = NULL;
   struct curl_slist *headerlist = NULL;
   static const char buf[] = "Expect:";
 
-  curl_global_init(CURL_GLOBAL_ALL);
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "POST", "/", NULL, 0, &callback_function_large_post_multipart_check_utf8_yes, NULL), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
 
   curl = curl_easy_init();
   if(curl) {
@@ -6290,6 +6296,234 @@ START_TEST(test_ulfius_large_posts_check_utf8_yes)
 
   ulfius_stop_framework(&u_instance);
   ulfius_clean_instance(&u_instance);
+}
+END_TEST
+
+START_TEST(test_ulfius_post_processor_flag)
+{
+  struct _u_instance u_instance;
+  struct _u_request request;
+  struct _u_response response;
+  CURL *curl;
+  curl_mime *form = NULL;
+  curl_mimepart *field = NULL;
+  struct curl_slist *headerlist = NULL;
+  static const char buf[] = "Expect:";
+
+  // Default, all enabled
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "POST", "processed", NULL, 0, &callback_function_post_params_processed, NULL), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
+
+  ulfius_init_request(&request);
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_set_request_properties(&request, U_OPT_HTTP_URL, "http://localhost:8080/processed",
+                                                           U_OPT_HTTP_VERB, "POST",
+                                                           U_OPT_POST_BODY_PARAMETER, "param1", "value1",
+                                                           U_OPT_POST_BODY_PARAMETER, "param2", "valueé2",
+                                                           U_OPT_POST_BODY_PARAMETER, "param3", invalid_params,
+                                                           U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 200);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+
+  curl = curl_easy_init();
+  if(curl) {
+    /* Create the form */
+    form = curl_mime_init(curl);
+
+    field = curl_mime_addpart(form);
+    curl_mime_name(field, "param1");
+    curl_mime_data(field, "value1", CURL_ZERO_TERMINATED);
+
+    field = curl_mime_addpart(form);
+    curl_mime_name(field, "param2");
+    curl_mime_data(field, "valueé2", CURL_ZERO_TERMINATED);
+
+    field = curl_mime_addpart(form);
+    curl_mime_name(field, "param3");
+    curl_mime_data(field, invalid_params, CURL_ZERO_TERMINATED);
+
+    headerlist = curl_slist_append(headerlist, buf);
+
+    curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:8080/processed");
+
+    curl_easy_setopt(curl, CURLOPT_MIMEPOST, form);
+
+    ck_assert_int_eq(curl_easy_perform(curl), CURLE_OK);
+
+    curl_easy_cleanup(curl);
+
+    curl_mime_free(form);
+    curl_slist_free_all(headerlist);
+    headerlist = NULL;
+  }
+
+  ulfius_stop_framework(&u_instance);
+  ulfius_clean_instance(&u_instance);
+
+  // Enable url_encoded only
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
+  u_instance.allowed_post_processor = U_POST_PROCESS_URL_ENCODED;
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "POST", "processed", NULL, 0, &callback_function_post_params_processed, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "POST", "not_processed", NULL, 0, &callback_function_post_params_not_processed, NULL), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
+
+  ulfius_init_request(&request);
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_set_request_properties(&request, U_OPT_HTTP_URL, "http://localhost:8080/processed",
+                                                           U_OPT_HTTP_VERB, "POST",
+                                                           U_OPT_POST_BODY_PARAMETER, "param1", "value1",
+                                                           U_OPT_POST_BODY_PARAMETER, "param2", "valueé2",
+                                                           U_OPT_POST_BODY_PARAMETER, "param3", invalid_params,
+                                                           U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 200);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+
+  curl = curl_easy_init();
+  if(curl) {
+    /* Create the form */
+    form = curl_mime_init(curl);
+
+    field = curl_mime_addpart(form);
+    curl_mime_name(field, "param1");
+    curl_mime_data(field, "value1", CURL_ZERO_TERMINATED);
+
+    field = curl_mime_addpart(form);
+    curl_mime_name(field, "param2");
+    curl_mime_data(field, "valueé2", CURL_ZERO_TERMINATED);
+
+    field = curl_mime_addpart(form);
+    curl_mime_name(field, "param3");
+    curl_mime_data(field, invalid_params, CURL_ZERO_TERMINATED);
+
+    headerlist = curl_slist_append(headerlist, buf);
+
+    curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:8080/not_processed");
+
+    curl_easy_setopt(curl, CURLOPT_MIMEPOST, form);
+
+    ck_assert_int_eq(curl_easy_perform(curl), CURLE_OK);
+
+    curl_easy_cleanup(curl);
+
+    curl_mime_free(form);
+    curl_slist_free_all(headerlist);
+    headerlist = NULL;
+  }
+  ulfius_stop_framework(&u_instance);
+  ulfius_clean_instance(&u_instance);
+
+  // Enable multipart only
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
+  u_instance.allowed_post_processor = U_POST_PROCESS_MULTIPART_FORMDATA;
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "POST", "processed", NULL, 0, &callback_function_post_params_processed, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "POST", "not_processed", NULL, 0, &callback_function_post_params_not_processed, NULL), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
+
+  ulfius_init_request(&request);
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_set_request_properties(&request, U_OPT_HTTP_URL, "http://localhost:8080/not_processed",
+                                                           U_OPT_HTTP_VERB, "POST",
+                                                           U_OPT_POST_BODY_PARAMETER, "param1", "value1",
+                                                           U_OPT_POST_BODY_PARAMETER, "param2", "valueé2",
+                                                           U_OPT_POST_BODY_PARAMETER, "param3", invalid_params,
+                                                           U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 200);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+
+  curl = curl_easy_init();
+  if(curl) {
+    /* Create the form */
+    form = curl_mime_init(curl);
+
+    field = curl_mime_addpart(form);
+    curl_mime_name(field, "param1");
+    curl_mime_data(field, "value1", CURL_ZERO_TERMINATED);
+
+    field = curl_mime_addpart(form);
+    curl_mime_name(field, "param2");
+    curl_mime_data(field, "valueé2", CURL_ZERO_TERMINATED);
+
+    field = curl_mime_addpart(form);
+    curl_mime_name(field, "param3");
+    curl_mime_data(field, invalid_params, CURL_ZERO_TERMINATED);
+
+    headerlist = curl_slist_append(headerlist, buf);
+
+    curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:8080/processed");
+
+    curl_easy_setopt(curl, CURLOPT_MIMEPOST, form);
+
+    ck_assert_int_eq(curl_easy_perform(curl), CURLE_OK);
+
+    curl_easy_cleanup(curl);
+
+    curl_mime_free(form);
+    curl_slist_free_all(headerlist);
+    headerlist = NULL;
+  }
+  ulfius_stop_framework(&u_instance);
+  ulfius_clean_instance(&u_instance);
+
+  // Disable all
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
+  u_instance.allowed_post_processor = U_POST_PROCESS_NONE;
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "POST", "not_processed", NULL, 0, &callback_function_post_params_not_processed, NULL), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
+
+  ulfius_init_request(&request);
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_set_request_properties(&request, U_OPT_HTTP_URL, "http://localhost:8080/not_processed",
+                                                           U_OPT_HTTP_VERB, "POST",
+                                                           U_OPT_POST_BODY_PARAMETER, "param1", "value1",
+                                                           U_OPT_POST_BODY_PARAMETER, "param2", "valueé2",
+                                                           U_OPT_POST_BODY_PARAMETER, "param3", invalid_params,
+                                                           U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 200);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+
+  curl = curl_easy_init();
+  if(curl) {
+    /* Create the form */
+    form = curl_mime_init(curl);
+
+    field = curl_mime_addpart(form);
+    curl_mime_name(field, "param1");
+    curl_mime_data(field, "value1", CURL_ZERO_TERMINATED);
+
+    field = curl_mime_addpart(form);
+    curl_mime_name(field, "param2");
+    curl_mime_data(field, "valueé2", CURL_ZERO_TERMINATED);
+
+    field = curl_mime_addpart(form);
+    curl_mime_name(field, "param3");
+    curl_mime_data(field, invalid_params, CURL_ZERO_TERMINATED);
+
+    headerlist = curl_slist_append(headerlist, buf);
+
+    curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:8080/not_processed");
+
+    curl_easy_setopt(curl, CURLOPT_MIMEPOST, form);
+
+    ck_assert_int_eq(curl_easy_perform(curl), CURLE_OK);
+
+    curl_easy_cleanup(curl);
+
+    curl_mime_free(form);
+    curl_slist_free_all(headerlist);
+    headerlist = NULL;
+  }
+  ulfius_stop_framework(&u_instance);
+  ulfius_clean_instance(&u_instance);
+
 }
 END_TEST
 
@@ -6460,6 +6694,7 @@ static Suite *ulfius_suite(void)
   tcase_add_test(tc_core, test_ulfius_malformed_requests);
   tcase_add_test(tc_core, test_ulfius_large_posts_check_utf8_no);
   tcase_add_test(tc_core, test_ulfius_large_posts_check_utf8_yes);
+  tcase_add_test(tc_core, test_ulfius_post_processor_flag);
   tcase_add_test(tc_core, test_ulfius_send_http_request);
 #ifndef U_DISABLE_GNUTLS
   tcase_add_test(tc_core, test_ulfius_server_ca_trust);
