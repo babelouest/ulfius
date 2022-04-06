@@ -4619,6 +4619,9 @@ struct smtp_manager {
   int sockfd;
 };
 
+static pthread_mutex_t smtp_lock;
+static pthread_cond_t  smtp_cond;
+
 /**
  *
  * Function that emulates a very simple SMTP server
@@ -4784,6 +4787,9 @@ static void * simple_smtp(void * args) {
 
       if (!bind(server_fd, (struct sockaddr *)&address, sizeof(address))) {
         if (listen(server_fd, 3) >= 0) {
+          pthread_mutex_lock(&smtp_lock);
+          pthread_cond_signal(&smtp_cond);
+          pthread_mutex_unlock(&smtp_lock);
           if ((manager->sockfd = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) >= 0) {
             handle_smtp(manager);
           } else {
@@ -5986,6 +5992,11 @@ START_TEST(test_ulfius_send_smtp)
   ck_assert_int_eq(ulfius_send_smtp_email("localhost", PORT_PLAIN, 0, 0, NULL, NULL, FROM, TO, CC, BCC, SUBJECT, NULL), U_ERROR_PARAMS);
 
   pthread_create(&thread, NULL, simple_smtp, &manager);
+
+  pthread_mutex_lock(&smtp_lock);
+  pthread_cond_wait(&smtp_cond, &smtp_lock);
+  pthread_mutex_unlock(&smtp_lock);
+
   ck_assert_int_eq(ulfius_send_smtp_email("localhost", PORT_PLAIN, 0, 0, NULL, NULL, FROM, TO, CC, BCC, SUBJECT, BODY), U_OK);
   pthread_join(thread, NULL);
   ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, "HELO"));
@@ -6010,6 +6021,11 @@ START_TEST(test_ulfius_send_rich_smtp)
   manager.sockfd = 0;
 
   pthread_create(&thread, NULL, simple_smtp, &manager);
+
+  pthread_mutex_lock(&smtp_lock);
+  pthread_cond_wait(&smtp_cond, &smtp_lock);
+  pthread_mutex_unlock(&smtp_lock);
+
   ck_assert_int_eq(ulfius_send_smtp_rich_email("localhost", PORT_RICH, 0, 0, NULL, NULL, FROM, TO, CC, BCC, CONTENT_TYPE, SUBJECT, BODY), U_OK);
   pthread_join(thread, NULL);
   ck_assert_ptr_ne(NULL, o_strstr(manager.mail_data, "HELO"));
@@ -6715,12 +6731,19 @@ int main(int argc, char *argv[])
   ulfius_global_init();
   s = ulfius_suite();
   sr = srunner_create(s);
+  
+  pthread_mutex_init(&smtp_lock, NULL);
+  pthread_cond_init(&smtp_cond, NULL);
 
   srunner_run_all(sr, CK_VERBOSE);
   number_failed = srunner_ntests_failed(sr);
   srunner_free(sr);
 
   ulfius_global_close();
+
+  pthread_mutex_destroy(&smtp_lock);
+  pthread_cond_destroy(&smtp_cond);
+
   //y_close_logs();
   return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
