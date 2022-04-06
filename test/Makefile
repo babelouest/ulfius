@@ -8,7 +8,7 @@ ULFIUS_LIBRARY=$(ULFIUS_LOCATION)/libulfius.so
 ULFIUS_SCRUTINIZE=$(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h $(ULFIUS_INCLUDE)/yuarel.h $(ULFIUS_LOCATION)/ulfius.c $(ULFIUS_LOCATION)/u_map.c $(ULFIUS_LOCATION)/u_request.c $(ULFIUS_LOCATION)/u_response.c $(ULFIUS_LOCATION)/u_send_request.c $(ULFIUS_LOCATION)/u_websocket.c $(ULFIUS_LOCATION)/yuarel.c
 CC=gcc
 CFLAGS+=-Wall -D_REENTRANT -I$(ULFIUS_INCLUDE) -DDEBUG -g -O0 $(CPPFLAGS)
-LDFLAGS=-lc -L$(ULFIUS_LOCATION) -lulfius $(shell pkg-config --libs liborcania) $(shell pkg-config --libs libyder) $(shell pkg-config --libs check) $(shell pkg-config --libs gnutls) $(shell pkg-config --libs libcurl) $(shell pkg-config --libs jansson) -lz
+LDFLAGS=-lc -L$(ULFIUS_LOCATION) -lulfius $(shell pkg-config --libs liborcania) $(shell pkg-config --libs libyder) $(shell pkg-config --libs check) $(shell pkg-config --libs gnutls) $(shell pkg-config --libs libcurl) $(shell pkg-config --libs jansson) -lz -lpthread
 # Use this LDFLAGS below if you don't have/need gnutls
 #LDFLAGS=-lc -lorcania -lyder -lulfius -lcheck -lpthread -lm -lrt -lsubunit -L$(ULFIUS_LOCATION)
 # Use this LDFLAGS below if you use yder logs
