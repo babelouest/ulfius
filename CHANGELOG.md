@@ -3,6 +3,8 @@
 ## 2.7.9
 
 - Fix multipart/form-data for large values, thanks itzoke! (#222, #223)
+- Add option `allowed_post_processor` in `struct _u_instance` to disable post parameter processing depending on the content-type
+- Add more example_callbacks
 
 ## 2.7.8
 
