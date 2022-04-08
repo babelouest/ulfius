@@ -4,7 +4,7 @@
  *
  * Copyright 2021-2022 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20220326
+ * Version 20220408
  *
  * The MIT License (MIT)
  * 
@@ -35,6 +35,18 @@
 #include <iddawc.h>
 
 #include "iddawc_resource.h"
+
+static const char * get_auth_header_token(const char * auth_header, int * is_header_dpop) {
+  if (0 == o_strncmp(HEADER_PREFIX_BEARER, auth_header, HEADER_PREFIX_BEARER_LEN)) {
+    *is_header_dpop = 0;
+    return auth_header + HEADER_PREFIX_BEARER_LEN;
+  } else if (0 == o_strncmp(HEADER_PREFIX_DPOP, auth_header, HEADER_PREFIX_DPOP_LEN)) {
+    *is_header_dpop = 1;
+    return auth_header + HEADER_PREFIX_DPOP_LEN;
+  } else {
+    return NULL;
+  }
+}
 
 /**
  * Validates if an access_token grants has a valid scope
@@ -85,17 +97,15 @@ int jwt_profile_access_token_check_scope(struct _iddawc_resource_config * config
 int callback_check_jwt_profile_access_token (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _iddawc_resource_config * config = (struct _iddawc_resource_config *)user_data;
   json_t * j_access_token = NULL;
-  int res = U_CALLBACK_UNAUTHORIZED, res_validity;
-  const char * token_value = NULL;
+  int res = U_CALLBACK_UNAUTHORIZED, res_validity, is_header_dpop = 0;
+  const char * token_value = NULL, * dpop = u_map_get_case(request->map_header, HEADER_DPOP);
   char * response_value = NULL, * htu;
   
   if (config != NULL) {
     switch (config->method) {
       case I_METHOD_HEADER:
         if (u_map_get_case(request->map_header, HEADER_AUTHORIZATION) != NULL) {
-          if (o_strstr(u_map_get_case(request->map_header, HEADER_AUTHORIZATION), HEADER_PREFIX_BEARER) == u_map_get_case(request->map_header, HEADER_AUTHORIZATION)) {
-            token_value = u_map_get_case(request->map_header, HEADER_AUTHORIZATION) + o_strlen(HEADER_PREFIX_BEARER);
-          }
+          token_value = get_auth_header_token(u_map_get_case(request->map_header, HEADER_AUTHORIZATION), &is_header_dpop);
         }
         break;
       case I_METHOD_BODY:
@@ -121,8 +131,8 @@ int callback_check_jwt_profile_access_token (const struct _u_request * request, 
             u_map_put(response->map_header, HEADER_RESPONSE, response_value);
             o_free(response_value);
           } else {
-            if (!o_strnullempty(json_string_value(json_object_get(json_object_get(j_access_token, "cnf"), "jkt")))) {
-              htu = msprintf("%s%s", config->resource_url_root, request->url_path);
+            if (is_header_dpop && json_object_get(json_object_get(j_access_token, "cnf"), "jkt") != NULL && dpop != NULL) {
+              htu = msprintf("%s%s", config->resource_url_root, request->url_path+1);
               if (i_verify_dpop_proof(u_map_get(request->map_header, I_HEADER_DPOP), request->http_verb, htu, config->dpop_max_iat, json_string_value(json_object_get(json_object_get(j_access_token, "cnf"), "jkt")), token_value) == I_OK) {
                 res = U_CALLBACK_CONTINUE;
                 if (ulfius_set_response_shared_data(response, json_deep_copy(j_access_token), (void (*)(void *))&json_decref) != U_OK) {
@@ -134,7 +144,7 @@ int callback_check_jwt_profile_access_token (const struct _u_request * request, 
                 o_free(response_value);
               }
               o_free(htu);
-            } else {
+            } else if (!is_header_dpop && json_object_get(json_object_get(j_access_token, "cnf"), "jkt") == NULL && dpop == NULL) {
               res = U_CALLBACK_CONTINUE;
               if (ulfius_set_response_shared_data(response, json_deep_copy(j_access_token), (void (*)(void *))&json_decref) != U_OK) {
                 res = U_CALLBACK_ERROR;
@@ -162,7 +172,7 @@ int callback_check_jwt_profile_access_token (const struct _u_request * request, 
   return res;
 }
 
-int i_jwt_profile_access_token_init_config(struct _iddawc_resource_config * config, unsigned short method, const char * realm, const char * aud, const char * oauth_scope, const char * resource_url_root, unsigned short accept_client_token, time_t dpop_max_iat) {
+int i_jwt_profile_access_token_init_config(struct _iddawc_resource_config * config, unsigned short method, const char * realm, const char * aud, const char * oauth_scope, const char * resource_url_root, time_t dpop_max_iat) {
   int ret;
   pthread_mutexattr_t mutexattr;
   
@@ -172,7 +182,6 @@ int i_jwt_profile_access_token_init_config(struct _iddawc_resource_config * conf
     config->aud = o_strdup(aud);
     config->oauth_scope = o_strdup(oauth_scope);
     config->resource_url_root = o_strdup(resource_url_root);
-    config->accept_client_token = accept_client_token;
     config->dpop_max_iat = dpop_max_iat;
     
     if ((config->session = o_malloc(sizeof(struct _i_session))) != NULL) {

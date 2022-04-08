@@ -4,7 +4,7 @@
  *
  * Copyright 2021-2022 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20220326
+ * Version 20220408
  *
  * The MIT License (MIT)
  * 
@@ -41,11 +41,14 @@
 #define I_METHOD_BODY   1
 #define I_METHOD_URL    2
 
-#define HEADER_PREFIX_BEARER "Bearer "
-#define HEADER_RESPONSE      "WWW-Authenticate"
-#define HEADER_AUTHORIZATION "Authorization"
-#define BODY_URL_PARAMETER   "access_token"
-#define HEADER_DPOP          "DPoP"
+#define HEADER_PREFIX_BEARER     "Bearer "
+#define HEADER_PREFIX_BEARER_LEN 7
+#define HEADER_PREFIX_DPOP       "DPoP "
+#define HEADER_PREFIX_DPOP_LEN   5
+#define HEADER_RESPONSE          "WWW-Authenticate"
+#define HEADER_AUTHORIZATION     "Authorization"
+#define BODY_URL_PARAMETER       "access_token"
+#define HEADER_DPOP              "DPoP"
 
 struct _iddawc_resource_config {
   unsigned short      method;
@@ -70,7 +73,7 @@ int jwt_profile_access_token_check_scope(struct _iddawc_resource_config * config
  */
 int callback_check_jwt_profile_access_token (const struct _u_request * request, struct _u_response * response, void * user_data);
 
-int i_jwt_profile_access_token_init_config(struct _iddawc_resource_config * config, unsigned short method, const char * realm, const char * aud, const char * oauth_scope, const char * resource_url_root, unsigned short accept_client_token, time_t dpop_max_iat);
+int i_jwt_profile_access_token_init_config(struct _iddawc_resource_config * config, unsigned short method, const char * realm, const char * aud, const char * oauth_scope, const char * resource_url_root, time_t dpop_max_iat);
 
 int i_jwt_profile_access_token_load_config(struct _iddawc_resource_config * config, const char * config_url, int verify_cert);
 
