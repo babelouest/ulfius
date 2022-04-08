@@ -1,5 +1,9 @@
 # Token validation for resource service based on [Ulfius](https://github.com/babelouest/ulfius) framework
 
+**(DEPRECATED)**
+
+This callback function is deprecated and is not maintained anymore, please use [iddawc_jwt_profile](../iddawc_jwt_profile) instead.
+
 These files contain an authentication callback for Ulfius framework to validate a [JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens Draft 10](https://tools.ietf.org/html/draft-ietf-oauth-access-token-jwt-10) with the correct scope.
 
 [rhonabwy](https://github.com/babelouest/rhonabwy) is required.

@@ -1,5 +1,9 @@
 # Token validation for resource service based on [Ulfius](https://github.com/babelouest/ulfius) framework
 
+**(DEPRECATED)**
+
+This callback function is deprecated and is not maintained anymore, please use [iddawc_jwt_profile](../iddawc_jwt_profile) instead.
+
 These files contain an authentication callback for Ulfius framework to validate a Glewlwyd OAuth2 access token with the correct scope.
 
 [rhonabwy](https://github.com/babelouest/rhonabwy) is required.
