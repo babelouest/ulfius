@@ -216,13 +216,16 @@ The `struct _u_instance` is defined as:
  *                         will be ignored, default 1
  * use_client_cert_auth:   Internal variable use to indicate if the instance uses client certificate authentication
  *                         Do not change this value, available only if websocket support is enabled
- * 
+ * allowed_post_processor: Specifies which content-type are allowed to process in the request->map_post_body parameters list,
+ *                         default value is U_POST_PROCESS_URL_ENCODED|U_POST_PROCESS_MULTIPART_FORMDATA, to disable all, use U_POST_PROCESS_NONE
  */
 struct _u_instance {
   struct MHD_Daemon          *  mhd_daemon;
   int                           status;
   unsigned int                  port;
+#if MHD_VERSION >= 0x00095208
   unsigned short                network_type;
+#endif
   struct sockaddr_in          * bind_address;
   struct sockaddr_in6         * bind_address6;
   unsigned int                  timeout;
@@ -249,6 +252,7 @@ struct _u_instance {
 #ifndef U_DISABLE_GNUTLS
   int                           use_client_cert_auth;
 #endif
+  int                           allowed_post_processor;
 };
 ```
 
