@@ -22,6 +22,15 @@
     var mySocket = false;
     var curFile = false;
     
+    function escapeMessage(htmlStr) {
+     return htmlStr.replace(/&/g, "&amp;")
+                   .replace(/</g, "&lt;")
+                   .replace(/>/g, "&gt;")
+                   .replace(/"/g, "&quot;")
+                   .replace(/'/g, "&#39;");        
+
+    }
+
     function connectSocket(echo) {
       if (location.protocol === "https:") {
         mySocket = new WebSocket("wss://" + location.hostname + ":" + location.port + "/websocket" + (echo?"/echo":""));
@@ -32,7 +41,7 @@
         if (event.data instanceof Blob) {
           var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Binary message received: </strong>" + event.data.size + " bytes</p><hr>"
         } else {
-          var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Text message received: </strong>" + event.data + "</p><hr>"
+          var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Text message received: </strong>" + escapeMessage(event.data) + "</p><hr>"
         }
         $("#message").append(message);
       };
@@ -83,7 +92,7 @@
           connectSocket(false);
         }
         mySocket.send($("#sendMessage").val());
-        var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Message sent: </strong>" + $("#sendMessage").val() + "</p><hr>"
+        var message = "<div><strong>Date: </strong>" + (new Date()).toLocaleString() + "</div><p><strong>Message sent: </strong>" + escapeMessage($("#sendMessage").val()) + "</p><hr>"
         $("#message").append(message);
       }
     });
