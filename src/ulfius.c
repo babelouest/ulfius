@@ -290,7 +290,7 @@ void mhd_redirect_log(void * arg, const char * fmt, va_list ap) {
   va_copy(args_cpy2, ap);
   new_fmt = msprintf("MHD - %s", fmt);
   out_len = vsnprintf(NULL, 0, new_fmt, args_cpy);
-  out = o_malloc((out_len)*sizeof(char));
+  out = o_malloc((out_len));
   if (out != NULL) {
     vsnprintf(out, (out_len), new_fmt, args_cpy2);
     y_log_message(Y_LOG_LEVEL_ERROR, out);

@@ -445,7 +445,7 @@ int ulfius_copy_response(struct _u_response * dest, const struct _u_response * s
       dest->map_cookie = NULL;
     }
 
-    if (source->binary_body != NULL && source->binary_body_length > 0) {
+    if (source->binary_body != NULL && source->binary_body_length) {
       dest->binary_body = o_malloc(source->binary_body_length);
       if (dest->binary_body == NULL) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for dest->binary_body");
@@ -525,7 +525,7 @@ int ulfius_set_string_body_response(struct _u_response * response, const unsigne
 }
 
 int ulfius_set_binary_body_response(struct _u_response * response, const unsigned int status, const char * binary_body, const size_t length) {
-  if (response != NULL && binary_body != NULL && length > 0) {
+  if (response != NULL && binary_body != NULL && length) {
     // Free all the bodies available
     o_free(response->binary_body);
     response->binary_body = NULL;

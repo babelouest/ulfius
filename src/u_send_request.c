@@ -167,7 +167,7 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
 
   res = ulfius_send_http_streaming_request(request, response, ulfius_write_body, (void *)&body_data);
   if (res == U_OK && response != NULL) {
-    if (body_data.data != NULL && body_data.size > 0) {
+    if (body_data.data != NULL && body_data.size) {
       response->binary_body = o_malloc(body_data.size);
       if (response->binary_body == NULL) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->binary_body");

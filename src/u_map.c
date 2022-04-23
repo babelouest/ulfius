@@ -181,7 +181,7 @@ int u_map_put_binary(struct _u_map * u_map, const char * key, const char * value
         return U_ERROR_MEMORY;
       }
       if (value != NULL) {
-        dup_value = o_malloc((offset + length + 1)*sizeof(char));
+        dup_value = o_malloc((offset + length + 1));
         if (dup_value == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for dup_value");
           o_free(dup_key);

@@ -760,7 +760,7 @@ int ulfius_set_string_body_request(struct _u_request * request, const char * str
  * return U_OK on success
  */
 int ulfius_set_binary_body_request(struct _u_request * request, const char * binary_body, const size_t length) {
-  if (request != NULL && binary_body != NULL && length > 0) {
+  if (request != NULL && binary_body != NULL && length) {
     // Free all the bodies available
     o_free(request->binary_body);
     request->binary_body = NULL;
@@ -936,7 +936,7 @@ char * ulfius_export_request_http(const struct _u_request * request) {
             }
             o_free(auth_basic_b64);
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error o_malloc");
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error o_malloc auth_basic_b64_len");
           }
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error o_base64_encode (1)");

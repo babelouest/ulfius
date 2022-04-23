@@ -285,7 +285,7 @@ static struct _websocket_message * ulfius_build_message (const uint8_t opcode,
     new_message = o_malloc(sizeof(struct _websocket_message));
     if (new_message != NULL) {
       if (data_len) {
-        new_message->data = o_malloc(data_len*sizeof(char));
+        new_message->data = o_malloc(data_len);
       } else {
         new_message->data = NULL;
       }
@@ -579,7 +579,7 @@ static int ulfius_websocket_extension_message_in_perform_apply(struct _websocket
 
   if ((len = pointer_list_size(websocket->websocket_manager->websocket_extension_list))) {
     data_in = NULL;
-    if (!message->data_len || (message->data_len && (data_in = o_malloc(message->data_len*sizeof(char))) != NULL)) {
+    if (!message->data_len || (message->data_len && (data_in = o_malloc(message->data_len)) != NULL)) {
       if (message->data_len) {
         memcpy(data_in, message->data, message->data_len);
       }
@@ -605,7 +605,7 @@ static int ulfius_websocket_extension_message_in_perform_apply(struct _websocket
             data_in = NULL;
             data_in_len = 0;
             if (data_out_len) {
-              if ((data_in = o_malloc(data_out_len*sizeof(char))) != NULL) {
+              if ((data_in = o_malloc(data_out_len)) != NULL) {
                 memcpy(data_in, data_out, data_out_len);
                 data_in_len = data_out_len;
               } else {
@@ -934,13 +934,17 @@ static int ulfius_websocket_connection_handshake(struct _u_request * request, st
   if (!websocket_response_http || !(websocket_response & check_websocket) || response->status != 101) {
     if (u_map_has_key(response->map_header, "Content-Length")) {
       response->binary_body_length = strtol(u_map_get(response->map_header, "Content-Length"), NULL, 10);
-      response->binary_body = o_malloc(response->binary_body_length);
-      if (response->binary_body != NULL) {
-        if (read_data_from_socket(websocket->websocket_manager, response->binary_body, response->binary_body_length) != (ssize_t)response->binary_body_length) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error read_data_from_socket for response->binary_body");
+      if (response->binary_body) {
+        response->binary_body = o_malloc(response->binary_body_length);
+        if (response->binary_body != NULL) {
+          if (read_data_from_socket(websocket->websocket_manager, response->binary_body, response->binary_body_length) != (ssize_t)response->binary_body_length) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error read_data_from_socket for response->binary_body");
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for response->binary_body");
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for response->binary_body");
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error invalid response->binary_body_length");
       }
     }
     close(websocket->websocket_manager->tcp_sock);
@@ -1494,7 +1498,7 @@ int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websock
       ret = U_OK;
     } else {
       ret = U_OK;
-      if ((data_len && (data_in = o_malloc(data_len*sizeof(char))) != NULL) || !data_len) {
+      if ((data_len && (data_in = o_malloc(data_len)) != NULL) || !data_len) {
         if (data != NULL) {
           memcpy(data_in, data, data_len);
         } else {
@@ -1509,7 +1513,7 @@ int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websock
               } else {
                 rsv |= extension->rsv;
                 o_free(data_in);
-                if ((data_in = o_malloc(data_out_len*sizeof(char))) != NULL) {
+                if ((data_in = o_malloc(data_out_len)) != NULL) {
                   memcpy(data_in, data_out, data_out_len);
                   data_in_len = data_out_len;
                 } else {
