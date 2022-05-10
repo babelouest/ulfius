@@ -122,9 +122,10 @@ int y_close_logs();
 #define U_CALLBACK_UNAUTHORIZED 3 ///< Request is unauthorized, exit callback list and return status 401
 #define U_CALLBACK_ERROR        4 ///< Error during request process, exit callback list and return status 500
 
-#define U_COOKIE_SAME_SITE_NONE   0 ///< Set same_site cookie property to 0
+#define U_COOKIE_SAME_SITE_EMPTY  0 ///< Set same_site cookie property not set
 #define U_COOKIE_SAME_SITE_STRICT 1 ///< Set same_site cookie property to strict
 #define U_COOKIE_SAME_SITE_LAX    2 ///< Set same_site cookie property to lax
+#define U_COOKIE_SAME_SITE_NONE   3 ///< Set same_site cookie property to none
 
 #define U_USE_IPV4 0x0001 ///< Use instance in IPV4 mode only
 #define U_USE_IPV6 0x0010 ///< Use instance in IPV6 mode only
@@ -931,7 +932,7 @@ int ulfius_set_empty_body_response(struct _u_response * response, const unsigned
  * @param response the response to be updated
  * @param status the http status code to set to the response
  * @param stream_callback a pointer to a function that will handle the response stream
- * @param stream_callback_free a pointer to a function that will free its allocated resoures during stream_callback
+ * @param stream_callback_free a pointer to a function that will free its allocated resources during stream_callback
  * @param stream_size size of the streamed data (U_STREAM_SIZE_UNKNOWN if unknown)
  * @param stream_block_size preferred size of each stream chunk, may be overwritten by the system if necessary
  * @param stream_user_data a user-defined pointer that will be available in stream_callback and stream_callback_free

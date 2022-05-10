@@ -28,7 +28,7 @@
 
 static char * ulfius_generate_cookie_header(const struct _u_cookie * cookie) {
   char * attr_expires = NULL, * attr_max_age = NULL, * attr_domain = NULL, * attr_path = NULL;
-  char * attr_secure = NULL, * attr_http_only = NULL, * cookie_header_value = NULL, * same_site = NULL;
+  char * attr_secure = NULL, * attr_http_only = NULL, * cookie_header_value = NULL, same_site[64] = {0};
 
   if (cookie != NULL) {
     if (cookie->expires != NULL) {
@@ -117,11 +117,11 @@ static char * ulfius_generate_cookie_header(const struct _u_cookie * cookie) {
     }
 
     if (cookie->same_site  == U_COOKIE_SAME_SITE_STRICT) {
-      same_site = o_strdup("; SameSite=Strict");
+      o_strcpy(same_site, "; SameSite=Strict");
     } else if (cookie->same_site == U_COOKIE_SAME_SITE_LAX) {
-      same_site = o_strdup("; SameSite=Lax");
-    } else {
-      same_site = o_strdup("");
+      o_strcpy(same_site, "; SameSite=Lax");
+    } else if (cookie->same_site == U_COOKIE_SAME_SITE_NONE) {
+      o_strcpy(same_site, "; SameSite=None");
     }
 
     if (attr_expires == NULL || attr_max_age == NULL || attr_domain == NULL || attr_path == NULL || attr_secure == NULL || attr_http_only == NULL) {
@@ -138,14 +138,12 @@ static char * ulfius_generate_cookie_header(const struct _u_cookie * cookie) {
     o_free(attr_path);
     o_free(attr_secure);
     o_free(attr_http_only);
-    o_free(same_site);
     attr_expires = NULL;
     attr_max_age = NULL;
     attr_domain = NULL;
     attr_path = NULL;
     attr_secure = NULL;
     attr_http_only = NULL;
-    same_site = NULL;
     return cookie_header_value;
   } else {
     return NULL;
@@ -198,13 +196,13 @@ int ulfius_set_response_cookie(struct MHD_Response * mhd_response, const struct 
 
 int ulfius_add_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age,
                                   const char * domain, const char * path, const int secure, const int http_only) {
-  return ulfius_add_same_site_cookie_to_response(response, key, value, expires, max_age, domain, path, secure, http_only, U_COOKIE_SAME_SITE_NONE);
+  return ulfius_add_same_site_cookie_to_response(response, key, value, expires, max_age, domain, path, secure, http_only, U_COOKIE_SAME_SITE_EMPTY);
 }
 
 int ulfius_add_same_site_cookie_to_response(struct _u_response * response, const char * key, const char * value, const char * expires, const unsigned int max_age,
                                             const char * domain, const char * path, const int secure, const int http_only, const int same_site) {
   unsigned int i;
-  if (response != NULL && key != NULL && (same_site == U_COOKIE_SAME_SITE_NONE || same_site == U_COOKIE_SAME_SITE_STRICT || same_site == U_COOKIE_SAME_SITE_LAX)) {
+  if (response != NULL && key != NULL && (same_site == U_COOKIE_SAME_SITE_EMPTY || same_site == U_COOKIE_SAME_SITE_NONE || same_site == U_COOKIE_SAME_SITE_STRICT || same_site == U_COOKIE_SAME_SITE_LAX)) {
     // Look for cookies with the same key
     for (i=0; i<response->nb_cookies; i++) {
       if (0 == o_strcmp(response->map_cookie[i].key, key)) {
