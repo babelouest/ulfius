@@ -30,6 +30,9 @@ jobs:
     # Initializes the CodeQL tools for scanning.
     - name: dependencies
       run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake pkg-config libsystemd-dev libmicrohttpd-dev libgnutls28-dev libjansson-dev libcurl4-gnutls-dev zlib1g-dev gnutls-bin doxygen
+        
         cd /opt
         git clone https://github.com/babelouest/orcania.git
         git clone https://github.com/babelouest/yder.git
@@ -48,9 +51,6 @@ jobs:
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v1
     - run: |
-        sudo apt-get update
-        sudo apt-get install -y cmake pkg-config libsystemd-dev libmicrohttpd-dev libgnutls28-dev libjansson-dev libcurl4-gnutls-dev zlib1g-dev gnutls-bin doxygen
-        
         # prepare build folders
         mkdir build
         mkdir example_programs/build
