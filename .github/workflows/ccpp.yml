@@ -15,6 +15,23 @@ jobs:
         sudo sysctl -w net.ipv6.conf.lo.disable_ipv6=0
     - name: cppcheck
       run: cppcheck --force --enable=warning,missingInclude --error-exitcode=1 .
+    - name: dependencies
+      run: |
+        cd /opt
+        git clone https://github.com/babelouest/orcania.git
+        git clone https://github.com/babelouest/yder.git
+        mkdir build
+        cd build
+        
+        cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib ../orcania
+        make
+        sudo make install
+        rm -rf *
+        
+        cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib ../yder
+        make
+        sudo make install
+        rm -rf *
     - name: build
       run: |
         # prepare build folders
