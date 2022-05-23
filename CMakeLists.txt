@@ -56,13 +56,14 @@ set(PROJECT_VERSION_NUMBER "${LIBRARY_VERSION_MAJOR_PAD}${LIBRARY_VERSION_MINOR_
 
 set(LIBRARY_VERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}.${LIBRARY_VERSION_PATCH}")
 set(LIBRARY_SOVERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}")
-set(ORCANIA_VERSION_REQUIRED "2.2.2")
+set(ORCANIA_VERSION_REQUIRED "2.3.0")
 set(YDER_VERSION_REQUIRED "1.4.15")
 set(JANSSON_VERSION_REQUIRED "2.1")
 
 # cmake modules
 
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules)
+set(U_CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules)
+list(APPEND CMAKE_MODULE_PATH "${U_CMAKE_MODULE_PATH}")
 
 include(GNUInstallDirs)
 include(CheckSymbolExists)
@@ -391,7 +392,7 @@ if (BUILD_ULFIUS_TESTING)
         endif ()
 
         configure_file(
-                "${CMAKE_MODULE_PATH}/CTestCustom.cmake.in"
+                "${U_CMAKE_MODULE_PATH}/CTestCustom.cmake.in"
                 "${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake"
                 @ONLY)
 
@@ -409,6 +410,18 @@ endif ()
 # install target
 
 option(INSTALL_HEADER "Install the header files" ON) # Install ulfius.h or not
+
+if(IS_ABSOLUTE "${CMAKE_INSTALL_INCLUDEDIR}")
+  set(PKGCONFIG_TARGET_INCLUDES "${CMAKE_INSTALL_INCLUDEDIR}")
+else()
+  set(PKGCONFIG_TARGET_INCLUDES "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}")
+endif()
+
+if(IS_ABSOLUTE "${CMAKE_INSTALL_LIBDIR}")
+  set(PKGCONFIG_TARGET_LIBDIR "${CMAKE_INSTALL_LIBDIR}")
+else()
+  set(PKGCONFIG_TARGET_LIBDIR "\${prefix}/${CMAKE_INSTALL_LIBDIR}")
+endif()
 
 configure_file(libulfius.pc.in libulfius.pc @ONLY)
 
@@ -449,7 +462,7 @@ endif ()
 
 if (NOT TARGET uninstall)
     configure_file(
-            "${CMAKE_MODULE_PATH}/CMakeUninstall.cmake.in"
+            "${U_CMAKE_MODULE_PATH}/CMakeUninstall.cmake.in"
             "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
             IMMEDIATE @ONLY)
     add_custom_target(uninstall
