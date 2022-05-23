@@ -826,11 +826,12 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request) 
 }
 
 char * ulfius_export_request_http(const struct _u_request * request) {
-  char * out = NULL, * host, * key_esc = NULL, * value_esc = NULL, * body = NULL, fp = '?', np = '&', * url = NULL, * auth_basic, * auth_basic_b64 = NULL;
+  char * out = NULL, * host, * key_esc = NULL, * value_esc = NULL, * body = NULL, fp = '?', np = '&', * url = NULL, * auth_basic;
   const char * value = NULL, ** keys = NULL;
   struct yuarel y_url;
   int has_params = 0, i;
-  size_t auth_basic_b64_len = 0, len = 0;
+  struct _o_datum dat = {0, NULL};
+  size_t len = 0;
 
   if (request != NULL && request->http_url != NULL) {
     if (!yuarel_parse(&y_url, request->http_url)) {
@@ -926,20 +927,11 @@ char * ulfius_export_request_http(const struct _u_request * request) {
       }
       if (!u_map_has_key_case(request->map_header, "Authorization") && request->auth_basic_user != NULL && request->auth_basic_password != NULL) {
         auth_basic = msprintf("%s:%s", request->auth_basic_user, request->auth_basic_password);
-        if (o_base64_encode((const unsigned char *)auth_basic, o_strlen(auth_basic), NULL, &auth_basic_b64_len)) {
-          if ((auth_basic_b64 = o_malloc(auth_basic_b64_len+4)) != NULL) {
-            if (o_base64_encode((const unsigned char *)auth_basic, o_strlen(auth_basic), (unsigned char *)auth_basic_b64, &auth_basic_b64_len)) {
-              auth_basic_b64[auth_basic_b64_len] = '\0';
-              out = mstrcatf(out, "Authorization: Basic %s\r\n", auth_basic_b64);
-            } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error o_base64_encode (2)");
-            }
-            o_free(auth_basic_b64);
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error o_malloc auth_basic_b64_len");
-          }
+        if (o_base64_encode_alloc((const unsigned char *)auth_basic, o_strlen(auth_basic), &dat)) {
+          out = mstrcatf(out, "Authorization: Basic %.*s\r\n", (int)dat.size, dat.data);
+          o_free(dat.data);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error o_base64_encode (1)");
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error o_base64_encode_alloc");
         }
         o_free(auth_basic);
       }

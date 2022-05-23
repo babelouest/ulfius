@@ -1231,6 +1231,7 @@ int ulfius_generate_handshake_answer(const char * key, char * out_digest) {
 
   if (key_data.data != NULL && out_digest != NULL && (res = gnutls_fingerprint(GNUTLS_DIG_SHA1, &key_data, encoded_key, &encoded_key_size)) == GNUTLS_E_SUCCESS) {
     if (o_base64_encode(encoded_key, encoded_key_size, (unsigned char *)out_digest, &encoded_key_size_base64)) {
+      out_digest[encoded_key_size_base64] = '\0';
       to_return = 1;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error base64 encoding hashed key");
@@ -2458,11 +2459,11 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
                                             struct _u_response * response) {
   int ret;
   struct yuarel y_url;
-  char * url, * basic_auth_encoded_header, * basic_auth, * basic_auth_encoded;
-  size_t basic_auth_encoded_len;
+  char * url, * basic_auth_encoded_header, * basic_auth;
   struct _websocket * websocket = NULL;
   pthread_t thread_websocket;
   int thread_ret_websocket = 0, thread_detach_websocket = 0;
+  struct _o_datum dat = {0, NULL};
 
   if (request != NULL && response != NULL && (websocket_manager_callback != NULL || websocket_incoming_message_callback != NULL)) {
     url = o_strdup(request->http_url);
@@ -2477,18 +2478,16 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
         }
         if (y_url.username != NULL && y_url.password != NULL) {
           basic_auth = msprintf("%s:%s", y_url.username, y_url.password);
-          basic_auth_encoded = o_malloc((o_strlen(basic_auth)*4/3)+1);
-          memset(basic_auth_encoded, 0, (o_strlen(basic_auth)*4/3)+1);
-          if (o_base64_encode((const unsigned char *)basic_auth, o_strlen(basic_auth), (unsigned char *)basic_auth_encoded, &basic_auth_encoded_len)) {
-            basic_auth_encoded_header = msprintf("Basic: %s", basic_auth_encoded);
+          if (o_base64_encode_alloc((const unsigned char *)basic_auth, o_strlen(basic_auth), &dat)) {
+            basic_auth_encoded_header = msprintf("Basic: %.*s", dat.size, dat.data);
             u_map_remove_from_key(request->map_header, "Authorization");
             u_map_put(request->map_header, "Authorization", basic_auth_encoded_header);
             o_free(basic_auth_encoded_header);
-            o_free(basic_auth_encoded);
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error o_base64_encode");
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error o_base64_encode_alloc");
           }
           o_free(basic_auth);
+          o_free(dat.data);
         }
 
         if (websocket_client_handler->websocket == NULL) {
