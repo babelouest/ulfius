@@ -43,7 +43,7 @@ OBJECTS=ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o
 OUTPUT=libulfius.so
 VERSION_MAJOR=2
 VERSION_MINOR=7
-VERSION_PATCH=9
+VERSION_PATCH=10
 
 ifndef JANSSONFLAG
 DISABLE_JANSSON=0
@@ -166,8 +166,8 @@ $(PKGCONFIG_FILE):
 	@cp $(PKGCONFIG_TEMPLATE) $(PKGCONFIG_FILE)
 	@echo Pkgconfig file $(PKGCONFIG_FILE) generated
 	@sed -i -e 's#@CMAKE_INSTALL_PREFIX@#$(DESTDIR)#g' $(PKGCONFIG_FILE)
-	@sed -i -e 's/@CMAKE_INSTALL_LIBDIR@/lib/g' $(PKGCONFIG_FILE)
-	@sed -i -e 's/@CMAKE_INSTALL_INCLUDEDIR@/include/g' $(PKGCONFIG_FILE)
+	@sed -i -e 's#@PKGCONFIG_TARGET_LIBDIR@#$${prefix}/lib#g' $(PKGCONFIG_FILE)
+	@sed -i -e 's#@PKGCONFIG_TARGET_INCLUDES@#$${prefix}/include#g' $(PKGCONFIG_FILE)
 	@sed -i -e 's/@PROJECT_NAME@/$(PROJECT_NAME)/g' $(PKGCONFIG_FILE)
 	@sed -i -e 's/@PROJECT_DESCRIPTION@/$(PROJECT_DESCRIPTION)/g' $(PKGCONFIG_FILE)
 	@sed -i -e 's|@PROJECT_BUGREPORT_PATH@|$(PROJECT_BUGREPORT_PATH)|g' $(PKGCONFIG_FILE)
