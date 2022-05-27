@@ -1,5 +1,11 @@
 # Ulfius Changelog
 
+## 2.7.10
+
+- Update `SameSite` cookie value, add `U_COOKIE_SAME_SITE_EMPTY` and allow value None
+- Fix pkg-config file with absolute path for `CMAKE_INSTALL_{INCLUDE,LIB}DIR`
+- Fix `CMAKE_MODULE_PATH` who was used as single value
+
 ## 2.7.9
 
 - Fix multipart/form-data for large values, thanks itzoke! (#222, #223)
