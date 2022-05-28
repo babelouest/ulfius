@@ -887,6 +887,7 @@ int ulfius_send_smtp_rich_email(const char * host,
       ret = U_ERROR_LIBCURL;
     }
   } else {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "Ulfius - invalid required smtp parameters");
     ret = U_ERROR_PARAMS;
   }
   return ret;
