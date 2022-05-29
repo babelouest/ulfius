@@ -31,7 +31,8 @@ include(CheckSymbolExists)
 
 # cmake modules
 
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules)
+set(U_CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules)
+list(APPEND CMAKE_MODULE_PATH "${U_CMAKE_MODULE_PATH}")
 
 # check if _GNU_SOURCE is available
 
