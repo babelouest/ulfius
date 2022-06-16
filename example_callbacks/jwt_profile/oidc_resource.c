@@ -2,9 +2,10 @@
  *
  * Glewlwyd SSO Access Token token check
  *
- * Copyright 2016-2020 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2022 Nicolas Mora <mail@babelouest.org>
+ * This code is deprecated and should not be used anymore
  *
- * Version 20201013
+ * Version 20220616
  *
  * The MIT License (MIT)
  * 
@@ -139,7 +140,7 @@ static json_t * access_token_check_signature(struct _oidc_resource_config * conf
   const char * kid;
   
   if (token_value != NULL) {
-    if (r_jwt_parse(jwt, token_value, 0) == RHN_OK) {
+    if (r_jwt_advanced_parse(jwt, token_value, R_PARSE_NONE, 0) == RHN_OK) {
       if ((kid = r_jwt_get_header_str_value(jwt, "kid")) != NULL) {
         if ((jwk = r_jwks_get_by_kid(jwt->jwks_pubkey_sign, kid)) == NULL) {
           j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);

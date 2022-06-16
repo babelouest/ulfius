@@ -1,10 +1,11 @@
 /**
  *
  * Glewlwyd SSO Access Token token check
+ * This code is deprecated and should not be used anymore
  *
- * Copyright 2016-2020 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2022 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20200508
+ * Version 20220604
  *
  * The MIT License (MIT)
  * 
@@ -28,9 +29,9 @@
  *
  */
 
-#include <orcania.h>
 #include <string.h>
 #include <time.h>
+#include <orcania.h>
 #include <ulfius.h>
 
 #include "glewlwyd_resource.h"
@@ -139,7 +140,7 @@ static json_t * access_token_check_signature(struct _glewlwyd_resource_config * 
   jwt_t * jwt = r_jwt_copy(config->jwt);
   
   if (token_value != NULL) {
-    if (r_jwt_parse(jwt, token_value, 0) == RHN_OK && r_jwt_verify_signature(jwt, NULL, 0) == RHN_OK && r_jwt_get_sign_alg(jwt) == config->alg) {
+    if (r_jwt_advanced_parse(jwt, token_value, R_PARSE_NONE, 0) == RHN_OK && r_jwt_verify_signature(jwt, NULL, 0) == RHN_OK && r_jwt_get_sign_alg(jwt) == config->alg) {
       j_grants = r_jwt_get_full_claims_json_t(jwt);
       if (j_grants != NULL) {
         j_return = json_pack("{siso}", "result", G_TOKEN_OK, "grants", j_grants);
@@ -199,10 +200,10 @@ int callback_check_glewlwyd_access_token (const struct _u_request * request, str
             u_map_put(response->map_header, HEADER_RESPONSE, response_value);
             o_free(response_value);
           } else {
-            res = U_CALLBACK_CONTINUE;
-            response->shared_data = (void*)json_pack("{sssO}", "username", json_string_value(json_object_get(json_object_get(j_access_token, "grants"), "username")), "scope", json_object_get(j_res_scope, "scope"));
-            if (response->shared_data == NULL) {
+            if (ulfius_set_response_shared_data(response, json_pack("{sssO}", "username", json_string_value(json_object_get(json_object_get(j_access_token, "grants"), "username")), "scope", json_object_get(j_res_scope, "scope")), (void (*)(void *))&json_decref) != U_OK) {
               res = U_CALLBACK_ERROR;
+            } else {
+              res = U_CALLBACK_CONTINUE;
             }
           }
           json_decref(j_res_scope);

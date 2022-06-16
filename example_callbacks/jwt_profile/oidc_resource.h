@@ -2,9 +2,10 @@
  *
  * Glewlwyd SSO Access Token token check
  *
- * Copyright 2016-2020 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2022 Nicolas Mora <mail@babelouest.org>
+ * This code is deprecated and should not be used anymore
  *
- * Version 20201013
+ * Version 20220616
  *
  * The MIT License (MIT)
  * 
