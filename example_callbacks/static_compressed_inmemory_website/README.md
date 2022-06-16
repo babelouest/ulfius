@@ -1,5 +1,7 @@
 # Static file server with compression callback function for Ulfius Framework
 
+*Note: it is not recommended to use this callback function for public access or untrusted networks (i.e. internet), you should use a better web server like Apache or NGINX instead*
+
 Provides a static file server where HTTP compress is allowed if specified in the mime-types. A memory cache system can be used to retrieve compressed files more easily. This cache system can be disabled if you don't want to overload the memory with a huge static website.
 
 `user_data` must be initialized with a `struct _u_compressed_inmemory_website_config` containing the following informations:

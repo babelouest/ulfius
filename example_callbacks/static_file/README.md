@@ -1,5 +1,7 @@
 # Static file server callback function for Ulfius Framework
 
+*Note: it is not recommended to use this callback function for public access or untrusted networks (i.e. internet), you should use a better web server like Apache or NGINX instead*
+
 Provides a simple static file server. `user_data` must be initialized with a `struct static_file_config` containing the following informations:
 
 - `files_path`: path to the DocumentRoot folder, can be relative or absolute
