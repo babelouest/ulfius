@@ -4,7 +4,7 @@
  *
  * Copyright 2017-2020 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20201028
+ * Version 202020616
  * 
  * The MIT License (MIT)
  * 
@@ -126,7 +126,7 @@ static void callback_static_file_stream_free(void * cls) {
 int callback_static_file (const struct _u_request * request, struct _u_response * response, void * user_data) {
   size_t length;
   FILE * f;
-  char * file_requested, * file_path, * url_dup_save;
+  char * file_requested, * file_path, * url_dup_save, * real_path = NULL;
   const char * content_type;
 
   /*
@@ -160,24 +160,33 @@ int callback_static_file (const struct _u_request * request, struct _u_response 
     }
     
     file_path = msprintf("%s/%s", ((struct _static_file_config *)user_data)->files_path, file_requested);
-
-    if (access(file_path, F_OK) != -1) {
-      f = fopen (file_path, "rb");
-      if (f) {
-        fseek (f, 0, SEEK_END);
-        length = ftell (f);
-        fseek (f, 0, SEEK_SET);
-        
-        content_type = u_map_get_case(((struct _static_file_config *)user_data)->mime_types, get_filename_ext(file_requested));
-        if (content_type == NULL) {
-          content_type = u_map_get(((struct _static_file_config *)user_data)->mime_types, "*");
-          y_log_message(Y_LOG_LEVEL_WARNING, "Static File Server - Unknown mime type for extension %s", get_filename_ext(file_requested));
+    real_path = realpath(file_path, NULL);
+    if (0 == o_strncmp(((struct _static_file_config *)user_data)->files_path, real_path, o_strlen(((struct _static_file_config *)user_data)->files_path))) {
+      if (access(file_path, F_OK) != -1) {
+        f = fopen (file_path, "rb");
+        if (f) {
+          fseek (f, 0, SEEK_END);
+          length = ftell (f);
+          fseek (f, 0, SEEK_SET);
+          
+          content_type = u_map_get_case(((struct _static_file_config *)user_data)->mime_types, get_filename_ext(file_requested));
+          if (content_type == NULL) {
+            content_type = u_map_get(((struct _static_file_config *)user_data)->mime_types, "*");
+            y_log_message(Y_LOG_LEVEL_WARNING, "Static File Server - Unknown mime type for extension %s", get_filename_ext(file_requested));
+          }
+          u_map_put(response->map_header, "Content-Type", content_type);
+          u_map_copy_into(response->map_header, ((struct _static_file_config *)user_data)->map_header);
+          
+          if (ulfius_set_stream_response(response, 200, callback_static_file_stream, callback_static_file_stream_free, length, STATIC_FILE_CHUNK, f) != U_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "callback_static_file - Error ulfius_set_stream_response");
+          }
         }
-        u_map_put(response->map_header, "Content-Type", content_type);
-        u_map_copy_into(response->map_header, ((struct _static_file_config *)user_data)->map_header);
-        
-        if (ulfius_set_stream_response(response, 200, callback_static_file_stream, callback_static_file_stream_free, length, STATIC_FILE_CHUNK, f) != U_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "callback_static_file - Error ulfius_set_stream_response");
+      } else {
+        if (((struct _static_file_config *)user_data)->redirect_on_404 == NULL) {
+          ulfius_set_string_body_response(response, 404, "File not found");
+        } else {
+          ulfius_add_header_to_response(response, "Location", ((struct _static_file_config *)user_data)->redirect_on_404);
+          response->status = 302;
         }
       }
     } else {
@@ -188,8 +197,10 @@ int callback_static_file (const struct _u_request * request, struct _u_response 
         response->status = 302;
       }
     }
+
     o_free(file_path);
     o_free(url_dup_save);
+    free(real_path); // realpath uses malloc
     return U_CALLBACK_CONTINUE;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "Static File Server - Error, user_data is NULL or inconsistent");
