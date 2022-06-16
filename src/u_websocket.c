@@ -827,7 +827,7 @@ static int ulfius_get_next_line_from_http_response(struct _websocket * websocket
 
 /**
  * Sends the HTTP request and read the HTTP response
- * Verify if the response has the expexted paramters to open the
+ * Verify if the response has the expexted parameters to open the
  * websocket
  * Return U_OK on success
  */
