@@ -4,7 +4,7 @@
  *
  * Copyright 2021-2022 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20220408
+ * Version 20220620
  *
  * The MIT License (MIT)
  * 
@@ -30,11 +30,29 @@
 
 #include <string.h>
 #include <time.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <orcania.h>
 #include <ulfius.h>
 #include <iddawc.h>
 
 #include "iddawc_resource.h"
+
+static const char * get_ip_source(const struct _u_request * request) {
+  const char * ip_source = u_map_get_case(request->map_header, "X-Forwarded-For");
+  
+  if (ip_source == NULL) {
+    struct sockaddr_in * in_source = (struct sockaddr_in *)request->client_address;
+    if (in_source != NULL) {
+      ip_source = inet_ntoa(in_source->sin_addr);
+    } else {
+      ip_source = "NOT_FOUND";
+    }
+  }
+  
+  return ip_source;
+};
 
 static const char * get_auth_header_token(const char * auth_header, int * is_header_dpop) {
   if (0 == o_strncmp(HEADER_PREFIX_BEARER, auth_header, HEADER_PREFIX_BEARER_LEN)) {
@@ -54,7 +72,7 @@ static const char * get_auth_header_token(const char * auth_header, int * is_hea
  */
 int jwt_profile_access_token_check_scope(struct _iddawc_resource_config * config, json_t * j_access_token) {
   int i, scope_count_token, scope_count_expected, ret;
-  char ** scope_list_token, ** scope_list_expected;
+  char ** scope_list_token = NULL, ** scope_list_expected = NULL;
   json_t * j_scope_final_list = json_array();
   
   if (j_scope_final_list != NULL) {
@@ -152,18 +170,21 @@ int callback_check_jwt_profile_access_token (const struct _u_request * request, 
             }
           }
         } else {
+          y_log_message(Y_LOG_LEVEL_WARNING, "Security - Invalid access token from address %s", get_ip_source(request));
           response_value = msprintf(HEADER_PREFIX_BEARER "%s%s%serror=\"invalid_request\",error_description=\"The access token is invalid\"", (config->realm!=NULL?"realm=":""), (config->realm!=NULL?config->realm:""), (config->realm!=NULL?",":""));
           u_map_put(response->map_header, HEADER_RESPONSE, response_value);
           o_free(response_value);
         }
         json_decref(j_access_token);
       } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_check_jwt_profile_access_token - Error pthread_mutex_lock");
         response_value = msprintf(HEADER_PREFIX_BEARER "%s%s%serror=\"invalid_request\",error_description=\"Internal server error\"", (config->realm!=NULL?"realm=":""), (config->realm!=NULL?config->realm:""), (config->realm!=NULL?",":""));
         u_map_put(response->map_header, HEADER_RESPONSE, response_value);
         o_free(response_value);
       }
       pthread_mutex_unlock(&config->session_lock);
     } else {
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Missing access token from address %s", get_ip_source(request));
       response_value = msprintf(HEADER_PREFIX_BEARER "%s%s%serror=\"invalid_token\",error_description=\"The access token is missing\"", (config->realm!=NULL?"realm=":""), (config->realm!=NULL?config->realm:""), (config->realm!=NULL?",":""));
       u_map_put(response->map_header, HEADER_RESPONSE, response_value);
       o_free(response_value);
