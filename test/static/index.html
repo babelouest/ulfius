@@ -1,0 +1,66 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sheep counter</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<body>
+  <label>Counter:</label><input type="text" id="counter" name="counter"><br/>
+  <input type="button" id="start" name="start" value="Start counting"><br/>
+  <input type="button" id="pause" name="pause" value="Pause counting"><br/>
+  <input type="button" id="reset" name="reset" value="Reset counting"><br/>
+  <div style="width=100%; height=100%" id="layout"></div>
+</body>
+<script type="text/javascript">
+  $(document).ready(function() {
+    var counter = 0;
+    var timer;
+    
+    $("#counter").val(counter);
+    
+    $("#start").click(function() {
+      $.ajax({
+        url:"/sheep",
+        method: "POST",
+        contentType: "application/json",
+        data: JSON.stringify({nbsheep: counter}),
+        dataType: "json",
+        complete: function(data) {
+          counter = data;
+          timer = setInterval(function() {
+            $.ajax({
+              url:"/sheep",
+              method: "PUT",
+              success: function(data) {
+                counter = data.nbsheep;
+                $("#counter").val(counter);
+                var left = (Math.random() * ($(document).width())).toFixed()-300;
+                var top = (Math.random() * ($(document).height())).toFixed();
+                $("#layout").append("<img id='sheep-"+counter+"' src='/static/sheep.png'>");
+                $("#sheep-"+counter).css({"position":"absolute","top": top + "px", "left": left + "px"});
+              }
+            });
+          }, 1000);
+        }
+      })
+    });
+    
+    $("#pause").click(function() {
+      clearInterval(timer);
+    });
+    
+    $("#reset").click(function() {
+      $.ajax({
+        url:"/sheep",
+        method: "DELETE",
+        success: function(data) {
+          counter = data.nbsheep;
+          $("#counter").val(counter);
+          $("#layout").empty();
+        }
+      });
+    });
+  });
+</script>
+</html>

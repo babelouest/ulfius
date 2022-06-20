@@ -373,6 +373,8 @@ if (BUILD_ULFIUS_TESTING)
         set(CMAKE_CTEST_COMMAND ctest -V)
 
         set(TST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test)
+        set(EXAMPLE_CALLBACK_COMPRESSION_DIR ${CMAKE_CURRENT_SOURCE_DIR}/example_callbacks/http_compression/)
+        set(EXAMPLE_CALLBACK_STATIC_FILE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/example_callbacks/static_compressed_inmemory_website/)
         set(LIBS ulfius ${LIBS} ${CHECK_LIBRARIES})
         include_directories(${CHECK_INCLUDE_DIRS})
         if (NOT WIN32)
@@ -396,6 +398,18 @@ if (BUILD_ULFIUS_TESTING)
                 "${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake"
                 @ONLY)
 
+        set(EXAMPLE_CALLBACKS_TEST "example_callbacks")
+        add_executable(${EXAMPLE_CALLBACKS_TEST} ${EXAMPLE_CALLBACK_COMPRESSION_DIR}/http_compression_callback.c
+                                                 ${EXAMPLE_CALLBACK_COMPRESSION_DIR}/http_compression_callback.h
+                                                 ${EXAMPLE_CALLBACK_STATIC_FILE_DIR}/static_compressed_inmemory_website_callback.c
+                                                 ${EXAMPLE_CALLBACK_STATIC_FILE_DIR}/static_compressed_inmemory_website_callback.h 
+                                                 ${TST_DIR}/example_callbacks.c)
+        target_include_directories(${EXAMPLE_CALLBACKS_TEST} PUBLIC ${TST_DIR} ${EXAMPLE_CALLBACK_COMPRESSION_DIR} ${EXAMPLE_CALLBACK_STATIC_FILE_DIR})
+        target_link_libraries(${EXAMPLE_CALLBACKS_TEST} PUBLIC ${LIBS})
+        add_test(NAME ${EXAMPLE_CALLBACKS_TEST}
+                WORKING_DIRECTORY ${TST_DIR}
+                COMMAND ${EXAMPLE_CALLBACKS_TEST})
+    
         foreach (t ${TESTS})
             add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c)
             target_include_directories(${t} PUBLIC ${TST_DIR})

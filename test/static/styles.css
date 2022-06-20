@@ -1,0 +1,23 @@
+/* Your Style */
+
+.elt-left {
+  margin-right: 5px;
+}
+.elt-right {
+  margin-left: 5px;
+}
+.elt-top {
+  margin-bottom: 5px;
+}
+.elt-bottom {
+  margin-top: 5px;
+}
+.perfect-centering {
+  position: absolute;
+  top: 50%;
+  left:50%;
+  transform: translate(-50%,-50%);
+}
+.description {
+  white-space: pre-wrap;
+}

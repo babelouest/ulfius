@@ -4,6 +4,8 @@
 
 ULFIUS_INCLUDE=../include
 ULFIUS_LOCATION=../src
+ULFIUS_EXAMPLE_CALLBACK_COMPRESS=../example_callbacks/http_compression
+ULFIUS_EXAMPLE_CALLBACK_FILE=../example_callbacks/static_compressed_inmemory_website
 ULFIUS_LIBRARY=$(ULFIUS_LOCATION)/libulfius.so
 ULFIUS_SCRUTINIZE=$(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h $(ULFIUS_INCLUDE)/yuarel.h $(ULFIUS_LOCATION)/ulfius.c $(ULFIUS_LOCATION)/u_map.c $(ULFIUS_LOCATION)/u_request.c $(ULFIUS_LOCATION)/u_response.c $(ULFIUS_LOCATION)/u_send_request.c $(ULFIUS_LOCATION)/u_websocket.c $(ULFIUS_LOCATION)/yuarel.c
 CC=gcc
@@ -14,7 +16,7 @@ LDFLAGS=-lc -L$(ULFIUS_LOCATION) -lulfius $(shell pkg-config --libs liborcania) 
 # Use this LDFLAGS below if you use yder logs
 #LDFLAGS=-lc -lorcania -lyder -lulfius -lgnutls -lcheck -lpthread -lm -lrt -lsubunit -L$(ULFIUS_LOCATION)
 VALGRIND_COMMAND=valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all
-TARGET=u_map core framework websocket
+TARGET=u_map core framework websocket example_callbacks
 VERBOSE=0
 MEMCHECK=0
 CERT=cert
@@ -33,7 +35,16 @@ $(ULFIUS_LIBRARY): $(ULFIUS_SCRUTINIZE)
 %: %.c
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
-test: $(ULFIUS_LIBRARY) $(CERT)/server.key $(TARGET) test_u_map test_core test_framework test_websocket
+http_compression_callback.o: $(ULFIUS_EXAMPLE_CALLBACK_COMPRESS)/http_compression_callback.c $(ULFIUS_EXAMPLE_CALLBACK_COMPRESS)/http_compression_callback.h
+	$(CC) -c $(CFLAGS) $(ULFIUS_EXAMPLE_CALLBACK_COMPRESS)/http_compression_callback.c
+
+static_compressed_inmemory_website_callback.o: $(ULFIUS_EXAMPLE_CALLBACK_FILE)/static_compressed_inmemory_website_callback.c $(ULFIUS_EXAMPLE_CALLBACK_FILE)/static_compressed_inmemory_website_callback.h
+	$(CC) -c $(CFLAGS) $(ULFIUS_EXAMPLE_CALLBACK_FILE)/static_compressed_inmemory_website_callback.c
+
+example_callbacks: example_callbacks.c http_compression_callback.o static_compressed_inmemory_website_callback.o
+	$(CC) -I$(ULFIUS_EXAMPLE_CALLBACK_COMPRESS) -I$(ULFIUS_EXAMPLE_CALLBACK_FILE) example_callbacks.c http_compression_callback.o static_compressed_inmemory_website_callback.o -o example_callbacks $(LDFLAGS)
+
+test: $(ULFIUS_LIBRARY) $(CERT)/server.key $(TARGET) test_u_map test_core test_framework test_websocket test_example_callbacks
 
 test_%: % $(ULFIUS_LIBRARY) $(CERT)/server.key
 	@if [ "$(VERBOSE)" = "0" ] && [ "$(MEMCHECK)" = "0" ]; then \
