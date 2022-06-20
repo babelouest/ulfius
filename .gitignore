@@ -26,6 +26,7 @@ test/core
 test/u_map
 test/framework
 test/websocket
+test/example_callbacks
 tools/uwsc/uwsc
 tools/uwsc/valgrind.txt
 *.log
