@@ -738,7 +738,7 @@ char * ulfius_export_response_http(const struct _u_response * response) {
         o_free(header);
       }
     }
-    if (response->binary_body_length) {
+    if (response->binary_body_length && u_map_get_case(response->map_header, "Content-Length") == NULL) {
       out = mstrcatf(out, "Content-Length: %zu\r\n", response->binary_body_length);
     }
     out = mstrcatf(out, "\r\n");
