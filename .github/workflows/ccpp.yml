@@ -44,7 +44,7 @@ jobs:
         ln -s ../test/cert/ .
         ln -s ../test/static/ .
         ./cert/create-cert.sh || (cat ../test/cert/certtool.log && false)
-        make test || (cat Testing/Temporary/LastTest.log && false)
+        make example_callbacks test || (cat Testing/Temporary/LastTest.log && false)
         make package
         sudo make install
 
