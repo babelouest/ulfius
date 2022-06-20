@@ -397,9 +397,19 @@ if (BUILD_ULFIUS_TESTING)
                 "${U_CMAKE_MODULE_PATH}/CTestCustom.cmake.in"
                 "${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake"
                 @ONLY)
+    
+        foreach (t ${TESTS})
+            add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c)
+            target_include_directories(${t} PUBLIC ${TST_DIR})
+            target_link_libraries(${t} PUBLIC ${LIBS})
+            add_test(NAME ${t}
+                     WORKING_DIRECTORY ${TST_DIR}
+                     COMMAND ${t})
+        endforeach ()
 
         set(EXAMPLE_CALLBACKS_TEST "example_callbacks")
-        add_executable(${EXAMPLE_CALLBACKS_TEST} ${EXAMPLE_CALLBACK_COMPRESSION_DIR}/http_compression_callback.c
+        add_executable(${EXAMPLE_CALLBACKS_TEST} EXCLUDE_FROM_ALL
+                                                 ${EXAMPLE_CALLBACK_COMPRESSION_DIR}/http_compression_callback.c
                                                  ${EXAMPLE_CALLBACK_COMPRESSION_DIR}/http_compression_callback.h
                                                  ${EXAMPLE_CALLBACK_STATIC_FILE_DIR}/static_compressed_inmemory_website_callback.c
                                                  ${EXAMPLE_CALLBACK_STATIC_FILE_DIR}/static_compressed_inmemory_website_callback.h 
@@ -407,17 +417,8 @@ if (BUILD_ULFIUS_TESTING)
         target_include_directories(${EXAMPLE_CALLBACKS_TEST} PUBLIC ${TST_DIR} ${EXAMPLE_CALLBACK_COMPRESSION_DIR} ${EXAMPLE_CALLBACK_STATIC_FILE_DIR})
         target_link_libraries(${EXAMPLE_CALLBACKS_TEST} PUBLIC ${LIBS})
         add_test(NAME ${EXAMPLE_CALLBACKS_TEST}
-                WORKING_DIRECTORY ${TST_DIR}
-                COMMAND ${EXAMPLE_CALLBACKS_TEST})
-    
-        foreach (t ${TESTS})
-            add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c)
-            target_include_directories(${t} PUBLIC ${TST_DIR})
-            target_link_libraries(${t} PUBLIC ${LIBS})
-            add_test(NAME ${t}
-                    WORKING_DIRECTORY ${TST_DIR}
-                    COMMAND ${t})
-        endforeach ()
+                 WORKING_DIRECTORY ${TST_DIR}
+                 COMMAND ${EXAMPLE_CALLBACKS_TEST})
     endif ()
 endif ()
 
