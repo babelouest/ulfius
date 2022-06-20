@@ -42,6 +42,7 @@ jobs:
         cd build
         cmake -DBUILD_ULFIUS_TESTING=on ..
         ln -s ../test/cert/ .
+        ln -s ../test/static/ .
         ./cert/create-cert.sh || (cat ../test/cert/certtool.log && false)
         make test || (cat Testing/Temporary/LastTest.log && false)
         make package
