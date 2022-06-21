@@ -388,7 +388,7 @@ if (BUILD_ULFIUS_TESTING)
             set(LIBS ${LIBS} ${SUBUNIT_LIBRARIES} rt)
         endif ()
         
-        set(TESTS core u_map framework)
+        set(TESTS core u_map framework example_callbacks)
         if (WITH_WEBSOCKET)
             set(TESTS ${TESTS} websocket)
         endif ()
@@ -399,26 +399,18 @@ if (BUILD_ULFIUS_TESTING)
                 @ONLY)
     
         foreach (t ${TESTS})
-            add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c)
-            target_include_directories(${t} PUBLIC ${TST_DIR})
+            add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c
+                                                 ${EXAMPLE_CALLBACK_COMPRESSION_DIR}/http_compression_callback.c
+                                                 ${EXAMPLE_CALLBACK_COMPRESSION_DIR}/http_compression_callback.h
+                                                 ${EXAMPLE_CALLBACK_STATIC_FILE_DIR}/static_compressed_inmemory_website_callback.c
+                                                 ${EXAMPLE_CALLBACK_STATIC_FILE_DIR}/static_compressed_inmemory_website_callback.h )
+            target_include_directories(${t} PUBLIC ${TST_DIR} ${EXAMPLE_CALLBACK_COMPRESSION_DIR} ${EXAMPLE_CALLBACK_STATIC_FILE_DIR})
             target_link_libraries(${t} PUBLIC ${LIBS})
             add_test(NAME ${t}
                      WORKING_DIRECTORY ${TST_DIR}
                      COMMAND ${t})
         endforeach ()
 
-        set(EXAMPLE_CALLBACKS_TEST "example_callbacks")
-        add_executable(${EXAMPLE_CALLBACKS_TEST} EXCLUDE_FROM_ALL
-                                                 ${EXAMPLE_CALLBACK_COMPRESSION_DIR}/http_compression_callback.c
-                                                 ${EXAMPLE_CALLBACK_COMPRESSION_DIR}/http_compression_callback.h
-                                                 ${EXAMPLE_CALLBACK_STATIC_FILE_DIR}/static_compressed_inmemory_website_callback.c
-                                                 ${EXAMPLE_CALLBACK_STATIC_FILE_DIR}/static_compressed_inmemory_website_callback.h 
-                                                 ${TST_DIR}/example_callbacks.c)
-        target_include_directories(${EXAMPLE_CALLBACKS_TEST} PUBLIC ${TST_DIR} ${EXAMPLE_CALLBACK_COMPRESSION_DIR} ${EXAMPLE_CALLBACK_STATIC_FILE_DIR})
-        target_link_libraries(${EXAMPLE_CALLBACKS_TEST} PUBLIC ${LIBS})
-        add_test(NAME ${EXAMPLE_CALLBACKS_TEST}
-                 WORKING_DIRECTORY ${TST_DIR}
-                 COMMAND ${EXAMPLE_CALLBACKS_TEST})
     endif ()
 endif ()
 
