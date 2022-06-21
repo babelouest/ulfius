@@ -1924,6 +1924,48 @@ START_TEST(test_ulfius_static_compressed_files_compress_accept_all)
 
   ulfius_init_request(&request);
   ck_assert_int_eq(ulfius_set_request_properties(&request, U_OPT_HTTP_VERB, "GET",
+                                                           U_OPT_HTTP_URL, "http://localhost:8081/index.html?param=value",
+                                                           U_OPT_HEADER_PARAMETER, "Accept-Encoding", "gzip,deflate",
+                                                           U_OPT_NONE), U_OK);
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 200);
+  ck_assert_int_gt(response.binary_body_length, 0);
+  ck_assert_int_gt(response.binary_body_length, strtol(u_map_get_case(response.map_header, "Content-Length"), NULL, 10));
+  ck_assert_ptr_ne(NULL, u_map_get_case(response.map_header, "Content-Encoding"));
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+
+  ulfius_init_request(&request);
+  ck_assert_int_eq(ulfius_set_request_properties(&request, U_OPT_HTTP_VERB, "GET",
+                                                           U_OPT_HTTP_URL, "http://localhost:8081/index.html#param",
+                                                           U_OPT_HEADER_PARAMETER, "Accept-Encoding", "gzip,deflate",
+                                                           U_OPT_NONE), U_OK);
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 200);
+  ck_assert_int_gt(response.binary_body_length, 0);
+  ck_assert_int_gt(response.binary_body_length, strtol(u_map_get_case(response.map_header, "Content-Length"), NULL, 10));
+  ck_assert_ptr_ne(NULL, u_map_get_case(response.map_header, "Content-Encoding"));
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+
+  ulfius_init_request(&request);
+  ck_assert_int_eq(ulfius_set_request_properties(&request, U_OPT_HTTP_VERB, "GET",
+                                                           U_OPT_HTTP_URL, "http://localhost:8081/index.html?param=value#param",
+                                                           U_OPT_HEADER_PARAMETER, "Accept-Encoding", "gzip,deflate",
+                                                           U_OPT_NONE), U_OK);
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 200);
+  ck_assert_int_gt(response.binary_body_length, 0);
+  ck_assert_int_gt(response.binary_body_length, strtol(u_map_get_case(response.map_header, "Content-Length"), NULL, 10));
+  ck_assert_ptr_ne(NULL, u_map_get_case(response.map_header, "Content-Encoding"));
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+
+  ulfius_init_request(&request);
+  ck_assert_int_eq(ulfius_set_request_properties(&request, U_OPT_HTTP_VERB, "GET",
                                                            U_OPT_HTTP_URL, "http://localhost:8081/sheep.png",
                                                            U_OPT_HEADER_PARAMETER, "Accept-Encoding", "gzip,deflate",
                                                            U_OPT_NONE), U_OK);
@@ -1979,6 +2021,19 @@ START_TEST(test_ulfius_static_compressed_files_compress_accept_all)
   ulfius_init_request(&request);
   ck_assert_int_eq(ulfius_set_request_properties(&request, U_OPT_HTTP_VERB, "GET",
                                                            U_OPT_HTTP_URL, "http://localhost:8081/../example_callbacks.c",
+                                                           U_OPT_HEADER_PARAMETER, "Accept-Encoding", "gzip,deflate",
+                                                           U_OPT_NONE), U_OK);
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 302);
+  ck_assert_ptr_eq(NULL, u_map_get_case(response.map_header, "Content-Encoding"));
+  ck_assert_int_eq(response.binary_body_length, 0);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+
+  ulfius_init_request(&request);
+  ck_assert_int_eq(ulfius_set_request_properties(&request, U_OPT_HTTP_VERB, "GET",
+                                                           U_OPT_HTTP_URL, "http://localhost:8081/\\\\error",
                                                            U_OPT_HEADER_PARAMETER, "Accept-Encoding", "gzip,deflate",
                                                            U_OPT_NONE), U_OK);
   ulfius_init_response(&response);
