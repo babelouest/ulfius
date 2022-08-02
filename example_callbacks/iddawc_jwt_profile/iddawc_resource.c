@@ -4,7 +4,7 @@
  *
  * Copyright 2021-2022 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20220620
+ * Version 20220622
  *
  * The MIT License (MIT)
  * 
@@ -135,7 +135,7 @@ int callback_check_jwt_profile_access_token (const struct _u_request * request, 
         token_value = u_map_get(request->map_url, BODY_URL_PARAMETER);
         break;
     }
-    if (token_value != NULL) {
+    if (!o_strnullempty(token_value)) {
       if (!pthread_mutex_lock(&config->session_lock)) {
         i_set_str_parameter(config->session, I_OPT_ACCESS_TOKEN, token_value);
         if (i_verify_jwt_access_token(config->session, config->aud) == I_OK) {
