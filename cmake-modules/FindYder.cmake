@@ -65,6 +65,10 @@ find_package_handle_standard_args(Yder
         REQUIRED_VARS YDER_LIBRARY YDER_INCLUDE_DIR
         VERSION_VAR YDER_VERSION_STRING)
 
+if (PC_YDER_FOUND)
+    set(YDER_FOUND 1)
+endif ()
+
 if (YDER_FOUND)
     set(YDER_LIBRARIES ${YDER_LIBRARY})
     set(YDER_INCLUDE_DIRS ${YDER_INCLUDE_DIR})
