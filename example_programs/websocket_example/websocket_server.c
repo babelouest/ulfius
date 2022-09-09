@@ -87,7 +87,7 @@ int main(int argc, char ** argv) {
     u_map_put(&file_config.mime_types, ".map", "application/octet-stream");
     u_map_put(&file_config.mime_types, ".json", "application/json");
     u_map_put(&file_config.mime_types, "*", "application/octet-stream");
-    file_config.files_path = "static";
+    file_config.files_path = realpath("static", NULL);
     file_config.url_prefix = PREFIX_STATIC;
 
     if (ulfius_init_instance(&instance, PORT, NULL, NULL) != U_OK) {
@@ -132,6 +132,7 @@ int main(int argc, char ** argv) {
     ulfius_stop_framework(&instance);
     ulfius_clean_instance(&instance);
     u_clean_compressed_inmemory_website_config(&file_config);
+    free(file_config.files_path);
   }
 
   y_close_logs();
