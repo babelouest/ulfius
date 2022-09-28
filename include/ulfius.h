@@ -1703,15 +1703,23 @@ int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websock
                                              const char * data,
                                              const uint64_t fragment_len);
 
+#ifndef U_DISABLE_JANSSON
 /**
  * Sends a JSON message in the websocket
  * @param websocket_manager the websocket manager to use for sending the message
- * @param message the message to send
+ * @param j_message the message to send
  * @return U_OK on success
  */
-#ifndef U_DISABLE_JANSSON
 int ulfius_websocket_send_json_message(struct _websocket_manager * websocket_manager,
-                                       json_t * message);
+                                       json_t * j_message);
+
+/**
+ * Parses the struct _websocket_message * payload into a json_t object if possible
+ * @param message the websocket message to parse
+ * @param json_error the parsing error output, optional
+ * @return a json_t * object on success, NULL on error, must be json_decref'd after use
+ */
+json_t * ulfius_websocket_parse_json_message(const struct _websocket_message * message, json_error_t * json_error);
 #endif
 
 /**

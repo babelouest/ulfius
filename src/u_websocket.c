@@ -1554,17 +1554,37 @@ int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
   return ulfius_websocket_send_fragmented_message(websocket_manager, opcode, data_len, data, 0);
 }
 
+#ifndef U_DISABLE_JANSSON
 /**
  * Send a JSON message in the websocket
  * Return U_OK on success
  */
-#ifndef U_DISABLE_JANSSON
 int ulfius_websocket_send_json_message(struct _websocket_manager * websocket_manager,
-                                       json_t *message) {
-  char * json = json_dumps(message, JSON_COMPACT);
-  int ret = ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(json), json);
-  o_free(json);
+                                       json_t * j_message) {
+  int ret;
+  char * json;
+  if (websocket_manager != NULL && j_message != NULL) {
+    json = json_dumps(j_message, JSON_COMPACT);
+    ret = ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(json), json);
+    o_free(json);
+  } else if (j_message == NULL) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "ulfius_websocket_send_json_message - Error, input j_message is NULL");
+    ret = U_ERROR_PARAMS;
+  } else {
+    ret = U_ERROR_PARAMS;
+  }
   return ret;
+}
+
+/**
+ * Parses a websocket message into a JSON object if possible
+ */
+json_t * ulfius_websocket_parse_json_message(const struct _websocket_message * message, json_error_t * json_error) {
+  json_t * j_message = NULL;
+  if (message != NULL && (message->opcode == U_WEBSOCKET_OPCODE_TEXT || message->opcode == U_WEBSOCKET_OPCODE_BINARY) && message->data_len) {
+    j_message = json_loadb(message->data, message->data_len, JSON_DECODE_ANY, json_error);
+  }
+  return j_message;
 }
 #endif
 
