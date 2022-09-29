@@ -1,5 +1,12 @@
 # Ulfius Changelog
 
+## 2.7.11
+
+- Add `ulfius_websocket_parse_json_message` for incoming websocket messages
+- Breaking: in `ulfius_websocket_send_json_message`, return `U_ERROR_PARAMS` if `j_message` is NULL
+- Update callback examples
+- Fix minor bugs
+
 ## 2.7.10
 
 - Update `SameSite` cookie value, add `U_COOKIE_SAME_SITE_EMPTY` and allow value None
