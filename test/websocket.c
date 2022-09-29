@@ -25,6 +25,7 @@
 #define PORT_8 9282
 #define PORT_9 9283
 #define PORT_10 9284
+#define PORT_11 9285
 #define PREFIX_WEBSOCKET "/websocket"
 #define MESSAGE "HelloFrom"
 #define MESSAGE_CLIENT "HelloFromClient"
@@ -39,6 +40,9 @@
 
 #define U_W_FLAG_SERVER  0x00000001
 #define U_W_FLAG_CONTEXT 0x00000010
+
+static pthread_mutex_t ws_lock;
+static pthread_cond_t  ws_cond;
 
 #ifndef U_DISABLE_WEBSOCKET
 
@@ -104,6 +108,60 @@ void websocket_extension_callback_client (const struct _u_request * request, str
 
 void websocket_incoming_message_callback_client (const struct _u_request * request, struct _websocket_manager * websocket_manager, const struct _websocket_message * message, void * websocket_incoming_user_data) {
   ck_assert_int_eq(0, o_strncmp(message->data, DEFAULT_MESSAGE, message->data_len));
+}
+
+void websocket_incoming_json_valid_messages (const struct _u_request * request, struct _websocket_manager * websocket_manager, const struct _websocket_message * message, void * websocket_incoming_user_data) {
+  json_t * j_message = ulfius_websocket_parse_json_message(message, NULL), * j_expected_message = json_pack("{ss}", "message", "Hello World!");
+  
+  // Valid JSON
+  ck_assert_ptr_ne(j_message, NULL);
+  ck_assert_int_eq(1, json_equal(j_message, j_expected_message));
+  ck_assert_int_ne(message->data_len, 0);
+
+  json_decref(j_message);
+  json_decref(j_expected_message);
+}
+
+void websocket_incoming_json_invalid_messages (const struct _u_request * request, struct _websocket_manager * websocket_manager, const struct _websocket_message * message, void * websocket_incoming_user_data) {
+  json_t * j_message = ulfius_websocket_parse_json_message(message, NULL);
+  
+  // Invalid JSON
+  ck_assert_ptr_eq(j_message, NULL);
+  ck_assert_int_ne(message->data_len, 0);
+
+  json_decref(j_message);
+}
+
+void websocket_incoming_json_empty_messages (const struct _u_request * request, struct _websocket_manager * websocket_manager, const struct _websocket_message * message, void * websocket_incoming_user_data) {
+  json_t * j_message = ulfius_websocket_parse_json_message(message, NULL);
+  
+  // Empty payload
+  ck_assert_ptr_eq(j_message, NULL);
+
+  json_decref(j_message);
+}
+
+void websocket_manager_json_valid_callback(const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_manager_user_data) {
+  json_t * j_message = json_pack("{ss}", "message", "Hello World!");
+  ck_assert_ptr_ne(j_message, NULL);
+  const char str_message[] = "{\"message\":\"Hello World!\"}";
+  
+  ck_assert_int_eq(ulfius_websocket_send_json_message(websocket_manager, j_message), U_OK);
+  ck_assert_int_eq(ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(str_message), str_message), U_OK);
+  ck_assert_int_eq(ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_BINARY, o_strlen(str_message), str_message), U_OK);
+
+  json_decref(j_message);
+}
+
+void websocket_manager_json_invalid_callback(const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_manager_user_data) {
+  ck_assert_int_eq(ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(DEFAULT_MESSAGE), DEFAULT_MESSAGE), U_OK);
+  ck_assert_int_eq(ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_BINARY, o_strlen(DEFAULT_MESSAGE), DEFAULT_MESSAGE), U_OK);
+}
+
+void websocket_manager_json_empty_callback(const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_manager_user_data) {
+  ck_assert_int_eq(ulfius_websocket_send_json_message(websocket_manager, NULL), U_ERROR_PARAMS);
+  ck_assert_int_eq(ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, 0, NULL), U_OK);
+  ck_assert_int_eq(ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_BINARY, 0, NULL), U_OK);
 }
 
 void websocket_incoming_message_without_origin_callback_client (const struct _u_request * request, struct _websocket_manager * websocket_manager, const struct _websocket_message * message, void * websocket_incoming_user_data) {
@@ -332,6 +390,30 @@ int callback_websocket_with_origin (const struct _u_request * request, struct _u
   ret = ulfius_set_websocket_response(response, NULL, NULL, &websocket_origin_callback, origin, NULL, NULL, &websocket_origin_onclose_callback, origin);
   ck_assert_int_eq(ret, U_OK);
 
+  return (ret == U_OK)?U_CALLBACK_CONTINUE:U_CALLBACK_ERROR;
+}
+
+int callback_websocket_json_valid_messages (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  int ret;
+  
+  ret = ulfius_set_websocket_response(response, NULL, NULL, NULL, NULL, websocket_incoming_json_valid_messages, user_data, NULL, NULL);
+  ck_assert_int_eq(ret, U_OK);
+  return (ret == U_OK)?U_CALLBACK_CONTINUE:U_CALLBACK_ERROR;
+}
+
+int callback_websocket_json_invalid_messages (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  int ret;
+  
+  ret = ulfius_set_websocket_response(response, NULL, NULL, NULL, NULL, websocket_incoming_json_invalid_messages, user_data, NULL, NULL);
+  ck_assert_int_eq(ret, U_OK);
+  return (ret == U_OK)?U_CALLBACK_CONTINUE:U_CALLBACK_ERROR;
+}
+
+int callback_websocket_json_empty_messages (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  int ret;
+  
+  ret = ulfius_set_websocket_response(response, NULL, NULL, NULL, NULL, websocket_incoming_json_empty_messages, user_data, NULL, NULL);
+  ck_assert_int_eq(ret, U_OK);
   return (ret == U_OK)?U_CALLBACK_CONTINUE:U_CALLBACK_ERROR;
 }
 
@@ -1003,6 +1085,61 @@ START_TEST(test_ulfius_websocket_origin)
 }
 END_TEST
 
+START_TEST(test_ulfius_websocket_json_messages)
+{
+  struct _u_instance instance;
+  struct _u_request request;
+  struct _u_response response;
+  struct _websocket_client_handler websocket_client_handler = {NULL, NULL};
+  char url[64];
+
+  ck_assert_int_eq(ulfius_init_instance(&instance, PORT_11, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", PREFIX_WEBSOCKET, "/valid", 0, &callback_websocket_json_valid_messages, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", PREFIX_WEBSOCKET, "/invalid", 0, &callback_websocket_json_invalid_messages, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", PREFIX_WEBSOCKET, "/empty", 0, &callback_websocket_json_empty_messages, NULL), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
+
+  // Valid JSON
+  sprintf(url, "ws://localhost:%d/%s/valid", PORT_11, PREFIX_WEBSOCKET);
+  ulfius_init_request(&request);
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_set_websocket_request(&request, url, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_open_websocket_client_connection(&request, &websocket_manager_json_valid_callback, NULL, NULL, NULL, NULL, NULL, &websocket_client_handler, &response), U_OK);
+  ck_assert_int_eq(ulfius_websocket_client_connection_wait_close(&websocket_client_handler, 0), U_WEBSOCKET_STATUS_CLOSE);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+
+  usleep(50);
+
+  // Invalid JSON
+  sprintf(url, "ws://localhost:%d/%s/invalid", PORT_11, PREFIX_WEBSOCKET);
+  ulfius_init_request(&request);
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_set_websocket_request(&request, url, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_open_websocket_client_connection(&request, &websocket_manager_json_invalid_callback, NULL, NULL, NULL, NULL, NULL, &websocket_client_handler, &response), U_OK);
+  ck_assert_int_eq(ulfius_websocket_client_connection_wait_close(&websocket_client_handler, 0), U_WEBSOCKET_STATUS_CLOSE);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+
+  usleep(50);
+
+  // Empty JSON
+  sprintf(url, "ws://localhost:%d/%s/empty", PORT_11, PREFIX_WEBSOCKET);
+  ulfius_init_request(&request);
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_set_websocket_request(&request, url, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_open_websocket_client_connection(&request, &websocket_manager_json_empty_callback, NULL, NULL, NULL, NULL, NULL, &websocket_client_handler, &response), U_OK);
+  ck_assert_int_eq(ulfius_websocket_client_connection_wait_close(&websocket_client_handler, 0), U_WEBSOCKET_STATUS_CLOSE);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+
+  usleep(50);
+  ck_assert_int_eq(ulfius_stop_framework(&instance), U_OK);
+
+  ulfius_clean_instance(&instance);
+}
+END_TEST
+
 #endif
 
 static Suite *ulfius_suite(void)
@@ -1025,6 +1162,7 @@ static Suite *ulfius_suite(void)
 	tcase_add_test(tc_websocket, test_ulfius_websocket_extension_deflate_error_params);
 	tcase_add_test(tc_websocket, test_ulfius_websocket_keep_messages);
 	tcase_add_test(tc_websocket, test_ulfius_websocket_origin);
+	tcase_add_test(tc_websocket, test_ulfius_websocket_json_messages);
 #endif
 	tcase_set_timeout(tc_websocket, 30);
 	suite_add_tcase(s, tc_websocket);
@@ -1042,11 +1180,17 @@ int main(int argc, char *argv[])
   s = ulfius_suite();
   sr = srunner_create(s);
 
+  pthread_mutex_init(&ws_lock, NULL);
+  pthread_cond_init(&ws_cond, NULL);
+
   srunner_run_all(sr, CK_VERBOSE);
   number_failed = srunner_ntests_failed(sr);
   srunner_free(sr);
-  
   ulfius_global_close();
+  
+  pthread_mutex_destroy(&ws_lock);
+  pthread_cond_destroy(&ws_cond);
+
   //y_close_logs();
 	return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
