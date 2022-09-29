@@ -1306,8 +1306,13 @@ To send a message to the client, use the dedicated functions `ulfius_websocket_s
 
 ```C
 /**
- * Send a message in the websocket
- * Return U_OK on success
+ * Sends a message in the websocket
+ * @param websocket_manager the websocket manager to use for sending the message
+ * @param opcode the opcode to use
+ * values available are U_WEBSOCKET_OPCODE_TEXT, U_WEBSOCKET_OPCODE_BINARY, U_WEBSOCKET_OPCODE_PING, U_WEBSOCKET_OPCODE_PONG, U_WEBSOCKET_OPCODE_CLOSE
+ * @param data_len the length of the data to send
+ * @param data the data to send
+ * @return U_OK on success
  */
 int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
                                   const uint8_t opcode,
@@ -1317,24 +1322,35 @@ int ulfius_websocket_send_message(struct _websocket_manager * websocket_manager,
 /**
  * Send a fragmented message in the websocket
  * each fragment size will be at most fragment_len
- * Return U_OK on success
+ * @param websocket_manager the websocket manager to use for sending the message
+ * @param opcode the opcode to use
+ * values available are U_WEBSOCKET_OPCODE_TEXT, U_WEBSOCKET_OPCODE_BINARY, U_WEBSOCKET_OPCODE_PING, U_WEBSOCKET_OPCODE_PONG, U_WEBSOCKET_OPCODE_CLOSE
+ * @param data_len the length of the data to send
+ * @param data the data to send
+ * @param fragment_len the maximum length of each fragment
+ * @return U_OK on success
  */
 int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websocket_manager,
                                              const uint8_t opcode,
                                              const uint64_t data_len,
                                              const char * data,
-                                             const size_t fragment_len);
+                                             const uint64_t fragment_len);
+
 /**
- * Send a JSON message in the websocket
- * Return U_OK on success
+ * Sends a JSON message in the websocket
+ * @param websocket_manager the websocket manager to use for sending the message
+ * @param j_message the message to send
+ * @return U_OK on success
  */
 int ulfius_websocket_send_json_message(struct _websocket_manager * websocket_manager,
-                                       json_t * message);
+                                       json_t * j_message);
 ```
 
 To get the first message of the incoming or outcoming if you need to with `ulfius_websocket_pop_first_message`, this will remove the first message of the list, and return it as a pointer. You must free the message using the function `ulfius_clear_websocket_message` after use:
 
 All the sent or received messages are stored by default in the `struct _websocket_manager` attributes `message_list_incoming` and `message_list_outcoming`. To skip storing incoming and/or outcoming messages, you can set the flag `struct _websocket_manager.keep_messages` with the values `U_WEBSOCKET_KEEP_INCOMING`, `U_WEBSOCKET_KEEP_OUTCOMING` or `U_WEBSOCKET_KEEP_NONE`. The flag is set to default with `U_WEBSOCKET_KEEP_INCOMING|U_WEBSOCKET_KEEP_OUTCOMING`.
+
+if you exchange messages in JSON format, you can use `ulfius_websocket_parse_json_message` to parse a `struct _websocket_message *` payload into a `json_t *` object.
 
 ```C
 /**
@@ -1348,6 +1364,14 @@ struct _websocket_message * ulfius_websocket_pop_first_message(struct _websocket
  * Clear data of a websocket message
  */
 void ulfius_clear_websocket_message(struct _websocket_message * message);
+
+/**
+ * Parses the struct _websocket_message * payload into a json_t object if possible
+ * @param message the websocket message to parse
+ * @param json_error the parsing error output, optional
+ * @return a json_t * object on success, NULL on error, must be json_decref'd after use
+ */
+json_t * ulfius_websocket_parse_json_message(const struct _websocket_message * message, json_error_t * json_error);
 ```
 
 #### Fragmented messages limitation in browsers <a name="fragmented-messages-limitation-in-browsers"></a>
