@@ -65,6 +65,12 @@ find_package_handle_standard_args(MHD
 if (MHD_FOUND)
     set(MHD_LIBRARIES ${MHD_LIBRARY})
     set(MHD_INCLUDE_DIRS ${MHD_INCLUDE_DIR})
+    if (NOT TARGET MHD::MHD)
+        add_library(MHD::MHD UNKNOWN IMPORTED)
+        set_target_properties(MHD::MHD PROPERTIES
+                IMPORTED_LOCATION "${MHD_LIBRARY}"
+                INTERFACE_INCLUDE_DIRECTORIES "${MHD_INCLUDE_DIRS}")
+    endif ()
 endif ()
 
 mark_as_advanced(MHD_INCLUDE_DIR MHD_LIBRARY)

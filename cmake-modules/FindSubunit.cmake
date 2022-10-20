@@ -54,6 +54,12 @@ find_package_handle_standard_args(Subunit
 if (SUBUNIT_FOUND)
     set(SUBUNIT_LIBRARIES ${SUBUNIT_LIBRARY})
     set(SUBUNIT_INCLUDE_DIRS ${SUBUNIT_INCLUDE_DIR})
+    if (NOT TARGET Subunit::Subunit)
+        add_library(Subunit::Subunit UNKNOWN IMPORTED)
+        set_target_properties(Subunit:Subunit PROPERTIES
+                IMPORTED_LOCATION "${SUBUNIT_LIBRARY}"
+                INTERFACE_INCLUDE_DIRECTORIES "${SUBUNIT_INCLUDE_DIR}")
+    endif ()
 endif ()
 
 mark_as_advanced(SUBUNIT_INCLUDE_DIR SUBUNIT_LIBRARY)
