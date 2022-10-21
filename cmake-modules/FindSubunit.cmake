@@ -56,7 +56,7 @@ if (SUBUNIT_FOUND)
     set(SUBUNIT_INCLUDE_DIRS ${SUBUNIT_INCLUDE_DIR})
     if (NOT TARGET Subunit::Subunit)
         add_library(Subunit::Subunit UNKNOWN IMPORTED)
-        set_target_properties(Subunit:Subunit PROPERTIES
+        set_target_properties(Subunit::Subunit PROPERTIES
                 IMPORTED_LOCATION "${SUBUNIT_LIBRARY}"
                 INTERFACE_INCLUDE_DIRECTORIES "${SUBUNIT_INCLUDE_DIR}")
     endif ()
