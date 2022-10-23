@@ -51,12 +51,12 @@ extern "C"
 #ifndef U_DISABLE_WEBSOCKET
   #include <poll.h>
   #include <zlib.h>
+  #include <pthread.h>
   #ifndef POLLRDHUP
     #define POLLRDHUP 0x2000
   #endif
 #endif
 
-#include <pthread.h>
 #include <microhttpd.h>
 
 #if defined(_WIN32) && !defined(U_DISABLE_WEBSOCKET)
