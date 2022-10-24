@@ -31,13 +31,13 @@
  * str: the string containing the number.
  * len: Number of characters to parse.
  */
-static inline int
+static inline unsigned int
 natoi(const char *str, size_t len)
 {
 	unsigned int i, r = 0;
 	for (i = 0; i < len; i++) {
 		r *= 10;
-		r += str[i] - '0';
+		r += (unsigned int)(str[i] - '0');
 	}
 
 	return r;
@@ -203,7 +203,7 @@ yuarel_parse(struct yuarel *url, char *u)
 			}
 
 			if (url->path) {
-				url->port = natoi(u, url->path - u - 1);
+				url->port = (int)natoi(u, (size_t)(url->path - u - 1));
 			} else {
 				url->port = atoi(u);
 			}

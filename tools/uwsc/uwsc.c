@@ -74,13 +74,13 @@ struct _config {
 
 static char * read_file(const char * filename, size_t * filesize) {
   char * buffer = NULL;
-  long length;
+  size_t length;
   FILE * f;
   if (filename != NULL) {
     f = fopen (filename, "rb");
     if (f) {
       fseek (f, 0, SEEK_END);
-      length = ftell (f);
+      length = (size_t)ftell (f);
       if (filesize != NULL) {
         *filesize = length;
       }
@@ -105,6 +105,7 @@ static void uwsc_manager_callback (const struct _u_request * request, struct _we
   struct _config * config = (struct _config *)websocket_manager_user_data;
   char * file_content;
   size_t file_len;
+  (void)(request);
 
   if (config->text_file_send != NULL) {
     file_content = read_file(config->text_file_send, &file_len);
@@ -171,6 +172,7 @@ static void uwsc_manager_callback (const struct _u_request * request, struct _we
 static void uwsc_manager_incoming (const struct _u_request * request, struct _websocket_manager * websocket_manager, const struct _websocket_message * message, void * websocket_incoming_user_data) {
   struct _websocket_message * last_message;
   struct _config * config = (struct _config *)websocket_incoming_user_data;
+  (void)(request);
 
   if (!config->non_listening) {
     if (message->opcode == U_WEBSOCKET_OPCODE_TEXT) {
@@ -320,7 +322,7 @@ int main (int argc, char ** argv) {
         break;
       case 'x':
         if (NULL != (value = o_strchr(optarg, ':'))) {
-          key = o_strndup(optarg, (value-optarg));
+          key = o_strndup(optarg, (size_t)(value-optarg));
           u_map_put(config->request->map_header, key, value+1);
           o_free(key);
         } else {
@@ -350,7 +352,7 @@ int main (int argc, char ** argv) {
         config->non_listening = 1;
         break;
       case 'f':
-        config->fragmentation = strtol(optarg, NULL, 10);
+        config->fragmentation = (unsigned int)strtol(optarg, NULL, 10);
         break;
       case 'p':
         config->protocol = o_strdup(optarg);
