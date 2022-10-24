@@ -228,7 +228,7 @@ void * ulfius_uri_logger (void * cls, const char * uri) {
     }
     con_info->request->http_url = o_strdup(uri);
     if (o_strchr(uri, '?') != NULL) {
-      con_info->request->url_path = o_strndup(uri, o_strchr(uri, '?') - uri);
+      con_info->request->url_path = o_strndup(uri, (size_t)(o_strchr(uri, '?') - uri));
     } else {
       con_info->request->url_path = o_strdup(uri);
     }
@@ -288,7 +288,7 @@ void mhd_redirect_log(void * arg, const char * fmt, va_list ap) {
   va_copy(args_cpy, ap);
   va_copy(args_cpy2, ap);
   new_fmt = msprintf("MHD - %s", fmt);
-  out_len = vsnprintf(NULL, 0, new_fmt, args_cpy);
+  out_len = (size_t)vsnprintf(NULL, 0, new_fmt, args_cpy);
   out = o_malloc((out_len));
   if (out != NULL) {
     vsnprintf(out, (out_len), new_fmt, args_cpy2);
@@ -342,7 +342,8 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
 #endif
 {
   struct connection_info_struct * con_info = coninfo_cls;
-  size_t data_size = size, cur_size;
+  size_t data_size = size;
+  ssize_t cur_size;
   char * filename_param = NULL, * data_concat = NULL;
   const char * cur_data;
 #if MHD_VERSION >= 0x00097002
@@ -372,7 +373,7 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
       }
       
       if (con_info->max_post_param_size && off + size > con_info->max_post_param_size) {
-        data_size = con_info->max_post_param_size - off;
+        data_size = (size_t)(con_info->max_post_param_size - off);
       }
       
       if (filename != NULL) {
@@ -385,13 +386,13 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
       cur_size = u_map_get_length((struct _u_map *)con_info->request->map_post_body, key);
       if (cur_data != NULL) {
         if (off) {
-          if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data, cur_size, data_size) != U_OK) {
+          if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data, (size_t)cur_size, data_size) != U_OK) {
             ret = MHD_NO;
             break;
           }
         } else {
-          if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, ",", cur_size, 1) != U_OK ||
-              u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data, cur_size+1, data_size) != U_OK) {
+          if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, ",", (size_t)cur_size, 1) != U_OK ||
+              u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data, (size_t)cur_size+1, data_size) != U_OK) {
             ret = MHD_NO;
             break;
           }
@@ -1002,7 +1003,7 @@ static int ulfius_webservice_dispatcher (void * cls,
                                           mhd_response);
 #endif
           } else {
-            mhd_ret = MHD_queue_response (connection, response->status, mhd_response);
+            mhd_ret = MHD_queue_response (connection, (unsigned int)response->status, mhd_response);
           }
           MHD_destroy_response (mhd_response);
           // Free Response parameters
@@ -1128,7 +1129,7 @@ static struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance
     }
     if (u_instance->timeout > 0) {
       mhd_ops[index].option = MHD_OPTION_CONNECTION_TIMEOUT;
-      mhd_ops[index].value = u_instance->timeout;
+      mhd_ops[index].value = (intptr_t)u_instance->timeout;
       mhd_ops[index].ptr_value = NULL;
 
       index++;
@@ -1139,7 +1140,7 @@ static struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance
     mhd_ops[index].ptr_value = NULL;
 
     return MHD_start_daemon (
-      mhd_flags, u_instance->port, NULL, NULL, &ulfius_webservice_dispatcher, (void *)u_instance,
+      mhd_flags, (uint16_t)u_instance->port, NULL, NULL, &ulfius_webservice_dispatcher, (void *)u_instance,
       MHD_OPTION_ARRAY, mhd_ops,
       MHD_OPTION_END
     );
@@ -1291,7 +1292,7 @@ int ulfius_start_framework_with_mhd_options(struct _u_instance * u_instance, uns
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_start_framework_with_mhd_options - Error, mhd_ops is NULL");
     return U_ERROR_PARAMS;
   } else {
-    u_instance->mhd_daemon = MHD_start_daemon (mhd_flags, u_instance->port, NULL, NULL, &ulfius_webservice_dispatcher, (void *)u_instance, MHD_OPTION_ARRAY, mhd_ops, MHD_OPTION_END);
+    u_instance->mhd_daemon = MHD_start_daemon (mhd_flags, (uint16_t)u_instance->port, NULL, NULL, &ulfius_webservice_dispatcher, (void *)u_instance, MHD_OPTION_ARRAY, mhd_ops, MHD_OPTION_END);
     if (u_instance->mhd_daemon != NULL) {
       u_instance->status = U_STATUS_RUNNING;
       return U_OK;
@@ -1318,7 +1319,7 @@ int ulfius_stop_framework(struct _u_instance * u_instance) {
     if (pthread_mutex_lock(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_active_lock)) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error locking websocket websocket_active_lock");
     } else {
-      for (i=((struct _websocket_handler *)u_instance->websocket_handler)->nb_websocket_active-1; i>=0; i--) {
+      for (i=(int)((struct _websocket_handler *)u_instance->websocket_handler)->nb_websocket_active-1; i>=0; i--) {
         ((struct _websocket_handler *)u_instance->websocket_handler)->websocket_active[i]->websocket_manager->close_flag = 1;
       }
       pthread_mutex_unlock(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_active_lock);
@@ -1369,7 +1370,7 @@ int ulfius_copy_endpoint(struct _u_endpoint * dest, const struct _u_endpoint * s
  */
 struct _u_endpoint * ulfius_duplicate_endpoint_list(const struct _u_endpoint * endpoint_list) {
   struct _u_endpoint * to_return = NULL;
-  int i;
+  unsigned int i;
 
   if (endpoint_list != NULL) {
     for (i=0; endpoint_list[i].http_method != NULL; i++) {
@@ -1429,7 +1430,7 @@ int ulfius_add_endpoint(struct _u_instance * u_instance, const struct _u_endpoin
         u_instance->nb_endpoints = 1;
       } else {
         u_instance->nb_endpoints++;
-        u_instance->endpoint_list = o_realloc(u_instance->endpoint_list, (u_instance->nb_endpoints + 1) * sizeof(struct _u_endpoint));
+        u_instance->endpoint_list = o_realloc(u_instance->endpoint_list, ((size_t)u_instance->nb_endpoints + 1) * sizeof(struct _u_endpoint));
         if (u_instance->endpoint_list == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_add_endpoint, Error reallocating memory for u_instance->endpoint_list");
           return U_ERROR_MEMORY;
@@ -1500,7 +1501,7 @@ int ulfius_remove_endpoint(struct _u_instance * u_instance, const struct _u_endp
           u_instance->endpoint_list[j] = u_instance->endpoint_list[j+1];
         }
         u_instance->nb_endpoints--;
-        u_instance->endpoint_list = o_realloc(u_instance->endpoint_list, (u_instance->nb_endpoints + 1)*sizeof(struct _u_endpoint));
+        u_instance->endpoint_list = o_realloc(u_instance->endpoint_list, ((size_t)u_instance->nb_endpoints + 1)*sizeof(struct _u_endpoint));
         if (u_instance->endpoint_list == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_add_endpoint, Error reallocating memory for u_instance->endpoint_list");
           ret = U_ERROR_MEMORY;
@@ -1834,7 +1835,7 @@ const unsigned char * utf8_check(const char * s_orig, size_t len) {
  * Converts a hex character to its integer value
  */
 static char from_hex(char ch) {
-  return isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10;
+  return (char)(isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10);
 }
 
 /**
@@ -1894,7 +1895,7 @@ char * ulfius_url_decode(const char * str) {
       while (* pstr) {
         if (* pstr == '%') {
           if (pstr[1] && pstr[2]) {
-            * pbuf++ = from_hex(pstr[1]) << 4 | from_hex(pstr[2]);
+            * pbuf++ = (char)(from_hex(pstr[1]) << 4 | from_hex(pstr[2]));
             pstr += 2;
           }
         } else if (* pstr == '+') {

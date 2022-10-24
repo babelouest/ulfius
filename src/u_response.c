@@ -171,10 +171,10 @@ int ulfius_set_response_header(struct MHD_Response * response, const struct _u_m
 
 int ulfius_set_response_cookie(struct MHD_Response * mhd_response, const struct _u_response * response) {
   int ret;
-  unsigned int i;
+  int i;
   char * header;
   if (mhd_response != NULL && response != NULL) {
-    for (i=0; i<response->nb_cookies; i++) {
+    for (i=0; i<(int)response->nb_cookies; i++) {
       header = ulfius_generate_cookie_header(&response->map_cookie[i]);
       if (header != NULL) {
         ret = MHD_add_response_header (mhd_response, MHD_HTTP_HEADER_SET_COOKIE, header);
@@ -513,7 +513,7 @@ int ulfius_set_string_body_response(struct _u_response * response, const unsigne
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->binary_body");
       return U_ERROR_MEMORY;
     } else {
-      response->status = status;
+      response->status = (long int)status;
       response->binary_body_length = o_strlen(string_body);
       return U_OK;
     }
@@ -536,7 +536,7 @@ int ulfius_set_binary_body_response(struct _u_response * response, const unsigne
     }
     memcpy(response->binary_body, binary_body, length);
     response->binary_body_length = length;
-    response->status = status;
+    response->status = (long int)status;
     return U_OK;
   } else {
     return U_ERROR_PARAMS;
@@ -550,7 +550,7 @@ int ulfius_set_empty_body_response(struct _u_response * response, const unsigned
     response->binary_body = NULL;
     response->binary_body_length = 0;
 
-    response->status = status;
+    response->status = (long int)status;
     return U_OK;
   } else {
     return U_ERROR_PARAMS;
@@ -570,7 +570,7 @@ int ulfius_set_stream_response(struct _u_response * response,
     response->binary_body = NULL;
     response->binary_body_length = 0;
 
-    response->status = status;
+    response->status = (long int)status;
     response->stream_callback = stream_callback;
     response->stream_callback_free = stream_callback_free;
     response->stream_size = stream_size;
@@ -620,16 +620,16 @@ int ulfius_set_response_properties(struct _u_response * response, ...) {
         case U_OPT_BINARY_BODY:
           str_value = va_arg(vl, const char *);
           size_value = va_arg(vl, size_t);
-          ret = ulfius_set_binary_body_response(response, response->status, str_value, size_value);
+          ret = ulfius_set_binary_body_response(response, (unsigned int)response->status, str_value, size_value);
           break;
         case U_OPT_STRING_BODY:
           str_value = va_arg(vl, const char *);
-          ret = ulfius_set_string_body_response(response, response->status, str_value);
+          ret = ulfius_set_string_body_response(response, (unsigned int)response->status, str_value);
           break;
 #ifndef U_DISABLE_JANSSON
         case U_OPT_JSON_BODY:
           j_value = va_arg(vl, json_t *);
-          ret = ulfius_set_json_body_response(response, response->status, j_value);
+          ret = ulfius_set_json_body_response(response, (unsigned int)response->status, j_value);
           break;
 #endif
         case U_OPT_SHARED_DATA:
@@ -683,7 +683,7 @@ int ulfius_set_json_body_response(struct _u_response * response, const unsigned 
       return U_ERROR_MEMORY;
     }
     response->binary_body_length = o_strlen((char*)response->binary_body);
-    response->status = status;
+    response->status = (long int)status;
     u_map_put(response->map_header, ULFIUS_HTTP_HEADER_CONTENT, ULFIUS_HTTP_ENCODING_JSON);
     return U_OK;
   } else {
