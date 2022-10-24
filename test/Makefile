@@ -36,10 +36,10 @@ $(ULFIUS_LIBRARY): $(ULFIUS_SCRUTINIZE)
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 http_compression_callback.o: $(ULFIUS_EXAMPLE_CALLBACK_COMPRESS)/http_compression_callback.c $(ULFIUS_EXAMPLE_CALLBACK_COMPRESS)/http_compression_callback.h
-	$(CC) -c $(CFLAGS) $(ULFIUS_EXAMPLE_CALLBACK_COMPRESS)/http_compression_callback.c
+	$(CC) -c $(CFLAGS) -Wconversion $(ULFIUS_EXAMPLE_CALLBACK_COMPRESS)/http_compression_callback.c
 
 static_compressed_inmemory_website_callback.o: $(ULFIUS_EXAMPLE_CALLBACK_FILE)/static_compressed_inmemory_website_callback.c $(ULFIUS_EXAMPLE_CALLBACK_FILE)/static_compressed_inmemory_website_callback.h
-	$(CC) -c $(CFLAGS) $(ULFIUS_EXAMPLE_CALLBACK_FILE)/static_compressed_inmemory_website_callback.c
+	$(CC) -c $(CFLAGS) -Wconversion $(ULFIUS_EXAMPLE_CALLBACK_FILE)/static_compressed_inmemory_website_callback.c
 
 example_callbacks: example_callbacks.c http_compression_callback.o static_compressed_inmemory_website_callback.o
 	$(CC) -I$(ULFIUS_EXAMPLE_CALLBACK_COMPRESS) -I$(ULFIUS_EXAMPLE_CALLBACK_FILE) example_callbacks.c http_compression_callback.o static_compressed_inmemory_website_callback.o -o example_callbacks $(LDFLAGS)

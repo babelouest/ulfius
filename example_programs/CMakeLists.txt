@@ -81,57 +81,72 @@ set(HTTP_COMRESSION_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../example_callbacks/http_co
 include_directories(${HTTP_COMRESSION_DIR})
 
 add_executable(simple_example ${CMAKE_CURRENT_SOURCE_DIR}/simple_example/simple_example.c)
+set_target_properties(simple_example PROPERTIES COMPILE_OPTIONS "-Wextra;-Wconversion")
 target_link_libraries(simple_example ${LIBS})
 
 add_executable(multiple_callbacks_example ${CMAKE_CURRENT_SOURCE_DIR}/multiple_callbacks_example/multiple_callbacks_example.c)
+set_target_properties(multiple_callbacks_example PROPERTIES COMPILE_OPTIONS "-Wextra;-Wconversion")
 target_link_libraries(multiple_callbacks_example ${LIBS})
 
 add_executable(stream_example ${CMAKE_CURRENT_SOURCE_DIR}/stream_example/stream_example.c)
+set_target_properties(stream_example PROPERTIES COMPILE_OPTIONS "-Wextra;-Wconversion")
 target_link_libraries(stream_example ${LIBS})
 
 add_executable(test_u_map ${CMAKE_CURRENT_SOURCE_DIR}/test_u_map/test_u_map.c)
+set_target_properties(test_u_map PROPERTIES COMPILE_OPTIONS "-Wextra;-Wconversion")
 target_link_libraries(test_u_map ${LIBS})
 
 if (WITH_CURL)
   add_executable(stream_client ${CMAKE_CURRENT_SOURCE_DIR}/stream_example/stream_client.c)
+  set_target_properties(stream_client PROPERTIES COMPILE_OPTIONS "-Wextra;-Wconversion")
   target_link_libraries(stream_client ${LIBS})
 endif ()
 
 if (WITH_JANSSON)
   add_executable(injection_example ${CMAKE_CURRENT_SOURCE_DIR}/injection_example/injection_example.c)
+  set_target_properties(injection_example PROPERTIES COMPILE_OPTIONS "-Wextra;-Wconversion")
   target_link_libraries(injection_example ${LIBS})
 
   add_executable(sheep_counter ${CMAKE_CURRENT_SOURCE_DIR}/sheep_counter/sheep_counter.c ${STATIC_CALLBACK_DIR}/static_compressed_inmemory_website_callback.c ${HTTP_COMRESSION_DIR}/http_compression_callback.c)
+  set_target_properties(sheep_counter PROPERTIES COMPILE_OPTIONS "-Wextra;-Wconversion")
   target_link_libraries(sheep_counter ${LIBS})
 endif ()
 
 if (WITH_CURL AND WITH_JANSSON)
   add_executable(proxy_example ${CMAKE_CURRENT_SOURCE_DIR}/proxy_example/proxy.c)
+  set_target_properties(proxy_example PROPERTIES COMPILE_OPTIONS "-Wextra;-Wconversion")
   target_link_libraries(proxy_example ${LIBS})
 
   add_executable(request_client ${CMAKE_CURRENT_SOURCE_DIR}/request_example/client.c)
+  set_target_properties(request_client PROPERTIES COMPILE_OPTIONS "-Wextra;-Wconversion")
   target_link_libraries(request_client ${LIBS})
 
   add_executable(request_server ${CMAKE_CURRENT_SOURCE_DIR}/request_example/server.c)
+  set_target_properties(request_server PROPERTIES COMPILE_OPTIONS "-Wextra;-Wconversion")
   target_link_libraries(request_server ${LIBS})
 
   add_executable(request_mail ${CMAKE_CURRENT_SOURCE_DIR}/request_example/mail.c)
+  set_target_properties(request_mail PROPERTIES COMPILE_OPTIONS "-Wextra;-Wconversion")
   target_link_libraries(request_mail ${LIBS})
 endif ()
 
 if (WITH_WEBSOCKET)
   add_executable(websocket_server ${CMAKE_CURRENT_SOURCE_DIR}/websocket_example/websocket_server.c ${STATIC_CALLBACK_DIR}/static_compressed_inmemory_website_callback.c)
+  set_target_properties(websocket_server PROPERTIES COMPILE_OPTIONS "-Wextra;-Wconversion")
   set_target_properties(websocket_server PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/websocket_example/")
   target_link_libraries(websocket_server ${LIBS})
   add_executable(websocket_client ${CMAKE_CURRENT_SOURCE_DIR}/websocket_example/websocket_client.c)
+  set_target_properties(websocket_client PROPERTIES COMPILE_OPTIONS "-Wextra;-Wconversion")
   set_target_properties(websocket_client PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/websocket_example/")
   target_link_libraries(websocket_client ${LIBS})
 
   add_executable(auth_server ${CMAKE_CURRENT_SOURCE_DIR}/auth_example/auth_server.c)
+  set_target_properties(auth_server PROPERTIES COMPILE_OPTIONS "-Wextra;-Wconversion")
   target_link_libraries(auth_server ${LIBS} gnutls)
 
   if (WITH_CURL)
     add_executable(auth_client ${CMAKE_CURRENT_SOURCE_DIR}/auth_example/auth_client.c)
+    set_target_properties(auth_client PROPERTIES COMPILE_OPTIONS "-Wextra;-Wconversion")
     target_link_libraries(auth_client ${LIBS})
   endif ()
 endif ()

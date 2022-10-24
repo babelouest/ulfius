@@ -216,7 +216,7 @@ endif ()
 add_library(ulfius SHARED ${LIB_SRC})
 if (NOT MSVC)
     set_target_properties(ulfius PROPERTIES
-        COMPILE_OPTIONS -Wextra
+        COMPILE_OPTIONS "-Wextra;-Wconversion"
         PUBLIC_HEADER "${INC_DIR}/ulfius.h;${PROJECT_BINARY_DIR}/ulfius-cfg.h"
         VERSION "${LIBRARY_VERSION}"
         SOVERSION "${LIBRARY_SOVERSION}")
@@ -335,7 +335,7 @@ endif ()
 
 if (BUILD_UWSC)
     add_executable(uwsc ${UWSC_DIR}/uwsc.c ${INC_DIR}/ulfius.h ${INC_DIR}/u_private.h ${PROJECT_BINARY_DIR}/ulfius-cfg.h)
-    set_target_properties(uwsc PROPERTIES SKIP_BUILD_RPATH TRUE)
+    set_target_properties(uwsc PROPERTIES SKIP_BUILD_RPATH TRUE COMPILE_OPTIONS "-Wextra;-Wconversion")
     add_dependencies(uwsc ulfius)
     target_link_libraries(uwsc ulfius ${LIBS})
     install(TARGETS uwsc RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
