@@ -103,7 +103,7 @@ int callback_get_audio_stream (const struct _u_request * request, struct _u_resp
       return U_ERROR;
     }
     u_map_put(response->map_header, "Content-Type", "audio/mpeg");
-    ulfius_set_stream_response(response, 200, stream_audio_file, free_stream_audio_file, buf.st_size, 32 * 1024, file);
+    ulfius_set_stream_response(response, 200, stream_audio_file, free_stream_audio_file, (uint64_t)buf.st_size, 32 * 1024, file);
     return U_CALLBACK_CONTINUE;
   } else {
     return U_CALLBACK_ERROR;
@@ -115,17 +115,17 @@ ssize_t stream_data (void * cls, uint64_t pos, char * buf, size_t max) {
   sleep(1);
   if (pos <= 100) {
       snprintf(buf, max, "%s %" PRIu64 "\n", (char *)cls, pos);
-      return o_strlen(buf);
+      return (ssize_t)o_strlen(buf);
   } else {
-    return U_STREAM_END;
+    return (ssize_t)U_STREAM_END;
   }
 }
 
 ssize_t stream_audio_file (void * cls, uint64_t pos, char * buf, size_t max) {
   FILE *file = cls;
 
-  (void) fseek (file, pos, SEEK_SET);
-  return fread (buf, 1, max, file);
+  (void) fseek (file, (long int)pos, SEEK_SET);
+  return (ssize_t)fread (buf, 1, max, file);
 }
 
 void free_stream_data(void * cls) {

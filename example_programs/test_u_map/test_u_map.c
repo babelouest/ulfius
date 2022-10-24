@@ -28,17 +28,17 @@ char * print_map(const struct _u_map * map) {
     keys = u_map_enum_keys(map);
     for (i=0; keys[i] != NULL; i++) {
       value = u_map_get(map, keys[i]);
-      len = snprintf(NULL, 0, "key is %s, length is %zu, value is %.*s", keys[i], u_map_get_length(map, keys[i]), (int)u_map_get_length(map, keys[i]), value);
-      line = o_malloc((len+1)*sizeof(char));
-      snprintf(line, (len+1), "key is %s, length is %zu, value is %.*s", keys[i], u_map_get_length(map, keys[i]), (int)u_map_get_length(map, keys[i]), value);
+      len = snprintf(NULL, 0, "key is %s, value is %s", keys[i], value);
+      line = o_malloc((size_t)(len+1));
+      snprintf(line, (size_t)(len+1), "key is %s, value is %s", keys[i], value);
       if (to_return != NULL) {
-        len = o_strlen(to_return) + o_strlen(line) + 1;
-        to_return = o_realloc(to_return, (len+1)*sizeof(char));
+        len = (int)(o_strlen(to_return) + o_strlen(line) + 1);
+        to_return = o_realloc(to_return, (size_t)(len+1));
         if (o_strlen(to_return) > 0) {
           strcat(to_return, "\n");
         }
       } else {
-        to_return = o_malloc((o_strlen(line) + 1)*sizeof(char));
+        to_return = o_malloc((o_strlen(line) + 1));
         to_return[0] = 0;
       }
       strcat(to_return, line);
@@ -65,14 +65,14 @@ int put_file_content_in_map (struct _u_map * map, const char * file_path, uint64
       fseek (f, 0, SEEK_END);
       length = ftell (f);
       fseek (f, 0, SEEK_SET);
-      buffer = o_malloc(length*sizeof(void));
+      buffer = o_malloc((size_t)length);
       if (buffer) {
-        fread (buffer, 1, length, f);
+        fread (buffer, 1, (size_t)length, f);
       }
       fclose (f);
 
       if (buffer) {
-        res = u_map_put_binary(map,file_path,  (char *)buffer, offset, length);
+        res = u_map_put_binary(map,file_path,  (char *)buffer, offset, (size_t)length);
         o_free(buffer);
       } else {
         res = U_ERROR;
@@ -192,7 +192,7 @@ int main (int argc, char **argv) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "iteration 12, map is\n%s\n", print);
     o_free(print);
     
-    u_map_put_binary(&map, "Makefile", "Append at the end of the value", u_map_get_length(&map, "Makefile"), o_strlen("Append at the end of the value"));
+    u_map_put_binary(&map, "Makefile", "Append at the end of the value", (uint64_t)u_map_get_length(&map, "Makefile"), o_strlen("Append at the end of the value"));
     
     print = print_map(&map);
     y_log_message(Y_LOG_LEVEL_DEBUG, "iteration 12, map is\n%s\n", print);

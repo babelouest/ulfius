@@ -63,16 +63,16 @@ char * print_map(const struct _u_map * map) {
     for (i=0; keys[i] != NULL; i++) {
       value = u_map_get(map, keys[i]);
       len = snprintf(NULL, 0, "key is %s, value is %s", keys[i], value);
-      line = o_malloc((len+1)*sizeof(char));
-      snprintf(line, (len+1), "key is %s, value is %s", keys[i], value);
+      line = o_malloc((size_t)(len+1));
+      snprintf(line, (size_t)(len+1), "key is %s, value is %s", keys[i], value);
       if (to_return != NULL) {
-        len = o_strlen(to_return) + o_strlen(line) + 1;
-        to_return = o_realloc(to_return, (len+1)*sizeof(char));
+        len = (int)(o_strlen(to_return) + o_strlen(line) + 1);
+        to_return = o_realloc(to_return, (size_t)(len+1));
         if (o_strlen(to_return) > 0) {
           strcat(to_return, "\n");
         }
       } else {
-        to_return = o_malloc((o_strlen(line) + 1)*sizeof(char));
+        to_return = o_malloc((o_strlen(line) + 1));
         to_return[0] = 0;
       }
       strcat(to_return, line);
