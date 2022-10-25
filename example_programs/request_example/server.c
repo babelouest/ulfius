@@ -78,7 +78,7 @@ int callback (const struct _u_request * request, struct _u_response * response, 
   return U_CALLBACK_CONTINUE;
 }
 
-int main (int argc, char **argv) {
+int main (void) {
   
   // Initialize the instance
   struct _u_instance instance;

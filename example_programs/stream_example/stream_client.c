@@ -19,12 +19,15 @@
 #define URL "http://localhost:7876/stream"
 
 size_t my_write_body(void * contents, size_t size, size_t nmemb, void * user_data) {
+  (void)(user_data);
   printf("got %s", (char *)contents);
   
   return size * nmemb;
 }
 
 size_t my_write_meta_body(void * contents, size_t size, size_t nmemb, void * user_data) {
+  (void)(contents);
+  (void)(user_data);
   printf("got %zu %zu\n", size, nmemb);
   
   return size * nmemb;

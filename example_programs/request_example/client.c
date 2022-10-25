@@ -64,7 +64,7 @@ void print_response(struct _u_response * response) {
   }
 }
 
-int main (int argc, char **argv) {
+int main (void) {
   
   char * string_body = "param1=one&param2=two";
   json_t * json_body = json_object();

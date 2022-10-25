@@ -86,7 +86,7 @@ int put_file_content_in_map (struct _u_map * map, const char * file_path, uint64
   return res;
 }
 
-int main (int argc, char **argv) {
+int main (void) {
     y_init_logs("test_u_map", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting test_u_map");
     struct _u_map map, * map_copy;
     char * print, * print_copy;

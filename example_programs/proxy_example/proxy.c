@@ -25,7 +25,7 @@
  */
 int callback_get (const struct _u_request * request, struct _u_response * response, void * user_data);
 
-int main (int argc, char **argv) {
+int main (void) {
   
   // Initialize the instance
   struct _u_instance instance;
@@ -64,6 +64,7 @@ int callback_get (const struct _u_request * request, struct _u_response * respon
   struct _u_response * res = o_malloc(sizeof(struct _u_response));
   ulfius_init_response(res);
   int len;
+  (void)(user_data);
 
   o_free(req->http_url);
   u_map_remove_from_key(req->map_header, "Host");

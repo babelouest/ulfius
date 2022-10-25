@@ -165,6 +165,8 @@ int main (int argc, char **argv) {
  * Callback function that put a "Hello World!" string in the response
  */
 int callback_get_test (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  (void)(request);
+  (void)(user_data);
   ulfius_set_string_body_response(response, 200, "Hello World!");
   return U_CALLBACK_CONTINUE;
 }
@@ -173,6 +175,9 @@ int callback_get_test (const struct _u_request * request, struct _u_response * r
  * Callback function that put an empty response and a status 200
  */
 int callback_get_empty_response (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  (void)(request);
+  (void)(user_data);
+  (void)(response);
   return U_CALLBACK_CONTINUE;
 }
 
@@ -182,6 +187,7 @@ int callback_get_empty_response (const struct _u_request * request, struct _u_re
 int callback_post_test (const struct _u_request * request, struct _u_response * response, void * user_data) {
   char * post_params = print_map(request->map_post_body);
   char * response_body = msprintf("Hello World!\n%s", post_params);
+  (void)(user_data);
   ulfius_set_string_body_response(response, 200, response_body);
   o_free(response_body);
   o_free(post_params);
@@ -215,6 +221,7 @@ int callback_all_test_foo (const struct _u_request * request, struct _u_response
  * The counter cookie is incremented every time the client reloads this url
  */
 int callback_get_cookietest (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  (void)(user_data);
   const char * lang = u_map_get(request->map_url, "lang"), * extra = u_map_get(request->map_url, "extra"), 
              * counter = u_map_get(request->map_cookie, "counter");
   char new_counter[8];
@@ -239,6 +246,8 @@ int callback_get_cookietest (const struct _u_request * request, struct _u_respon
  * Default callback function called if no endpoint has a match
  */
 int callback_default (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  (void)(request);
+  (void)(user_data);
   ulfius_set_string_body_response(response, 404, "Page not found, do what you want");
   return U_CALLBACK_CONTINUE;
 }

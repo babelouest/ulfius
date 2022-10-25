@@ -84,7 +84,7 @@ char * print_map(const struct _u_map * map) {
   }
 }
 
-int main (int argc, char **argv) {
+int main (void) {
   int ret;
   
   // Set the framework port number
@@ -145,6 +145,8 @@ int main (int argc, char **argv) {
  * Callback function of level zero
  */
 int callback_multiple_level_zero (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  (void)(request);
+  (void)(user_data);
   ulfius_set_string_body_response(response, 200, "Level zero");
   response->shared_data = o_strdup("shared from level zero");
   return U_CALLBACK_CONTINUE;
@@ -155,6 +157,8 @@ int callback_multiple_level_zero (const struct _u_request * request, struct _u_r
  */
 int callback_multiple_level_one (const struct _u_request * request, struct _u_response * response, void * user_data) {
   char old_body[response->binary_body_length + 1], * new_body;
+  (void)(request);
+  (void)(user_data);
   
   memcpy(old_body, response->binary_body, response->binary_body_length);
   old_body[response->binary_body_length] = '\0';
@@ -170,6 +174,8 @@ int callback_multiple_level_one (const struct _u_request * request, struct _u_re
  */
 int callback_multiple_level_one_complete (const struct _u_request * request, struct _u_response * response, void * user_data) {
   char old_body[response->binary_body_length + 1], * new_body;
+  (void)(request);
+  (void)(user_data);
   
   memcpy(old_body, response->binary_body, response->binary_body_length);
   old_body[response->binary_body_length] = '\0';
@@ -186,6 +192,8 @@ int callback_multiple_level_one_complete (const struct _u_request * request, str
  */
 int callback_multiple_level_two (const struct _u_request * request, struct _u_response * response, void * user_data) {
   char old_body[response->binary_body_length + 1], * new_body;
+  (void)(request);
+  (void)(user_data);
   
   memcpy(old_body, response->binary_body, response->binary_body_length);
   old_body[response->binary_body_length] = '\0';
@@ -201,6 +209,8 @@ int callback_multiple_level_two (const struct _u_request * request, struct _u_re
  */
 int callback_multiple_level_three (const struct _u_request * request, struct _u_response * response, void * user_data) {
   char old_body[response->binary_body_length + 1], * new_body;
+  (void)(request);
+  (void)(user_data);
   
   memcpy(old_body, response->binary_body, response->binary_body_length);
   old_body[response->binary_body_length] = '\0';
@@ -215,6 +225,8 @@ int callback_multiple_level_three (const struct _u_request * request, struct _u_
  * Final callback function called on multiple calls
  */
 int callback_multiple_level_final (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  (void)(request);
+  (void)(user_data);
   o_free(response->shared_data);
   return U_CALLBACK_COMPLETE;
 }
@@ -223,6 +235,7 @@ int callback_multiple_level_final (const struct _u_request * request, struct _u_
  * Check authentication
  */
 int callback_multiple_level_auth_check (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  (void)(user_data);
   y_log_message(Y_LOG_LEVEL_DEBUG, "basic auth user: %s", request->auth_basic_user);
   y_log_message(Y_LOG_LEVEL_DEBUG, "basic auth password: %s", request->auth_basic_password);
   if (request->auth_basic_user != NULL && request->auth_basic_password != NULL && 
@@ -241,6 +254,8 @@ int callback_multiple_level_auth_check (const struct _u_request * request, struc
  * Send Hello World!
  */
 int callback_multiple_level_auth_data (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  (void)(request);
+  (void)(user_data);
   ulfius_set_string_body_response(response, 200, "Hello World!");
   return U_CALLBACK_CONTINUE;
 }
@@ -249,6 +264,8 @@ int callback_multiple_level_auth_data (const struct _u_request * request, struct
  * Default callback function called if no endpoint has a match
  */
 int callback_default (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  (void)(request);
+  (void)(user_data);
   ulfius_set_string_body_response(response, 404, "Page not found, do what you want");
   return U_CALLBACK_CONTINUE;
 }
