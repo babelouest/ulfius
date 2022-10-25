@@ -208,6 +208,7 @@ if (BUILD_STATIC)
     add_library(ulfius_static STATIC ${LIB_SRC})
     target_compile_definitions(ulfius_static PUBLIC -DO_STATIC_LIBRARY)
     set_target_properties(ulfius_static PROPERTIES
+                          COMPILE_OPTIONS "-Wextra;-Wconversion"
                           OUTPUT_NAME ulfius)
 endif ()
 
