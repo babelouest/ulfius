@@ -42,22 +42,27 @@
 #define USER "test"
 #define PASSWORD "testpassword"
 
-char * read_file(const char * filename) {
+static char * read_file(const char * filename) {
   char * buffer = NULL;
   long length;
-  FILE * f = fopen (filename, "rb");
-  if (f != NULL) {
-    fseek (f, 0, SEEK_END);
-    length = ftell (f);
-    fseek (f, 0, SEEK_SET);
-    buffer = o_malloc (length + 1);
-    if (buffer != NULL) {
-      fread (buffer, 1, length, f);
-      buffer[length] = '\0';
+  FILE * f;
+  if (filename != NULL) {
+    f = fopen (filename, "rb");
+    if (f) {
+      fseek (f, 0, SEEK_END);
+      length = ftell (f);
+      fseek (f, 0, SEEK_SET);
+      buffer = o_malloc ((size_t)(length + 1));
+      if (buffer != NULL) {
+        fread (buffer, 1, (size_t)length, f);
+        buffer[length] = '\0';
+      }
+      fclose (f);
     }
-    fclose (f);
+    return buffer;
+  } else {
+    return NULL;
   }
-  return buffer;
 }
 
 /**
@@ -80,6 +85,8 @@ int callback_auth_basic_body (const struct _u_request * request, struct _u_respo
  * Callback function for basic authentication
  */
 int callback_auth_basic (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  (void)(request);
+  (void)(user_data);
   ulfius_set_string_body_response(response, 200, "Basic auth callback");
   return U_CALLBACK_CONTINUE;
 }
@@ -91,6 +98,7 @@ int callback_auth_basic (const struct _u_request * request, struct _u_response *
 int callback_auth_client_cert (const struct _u_request * request, struct _u_response * response, void * user_data) {
   char * dn = NULL, * issuer_dn = NULL, * response_message;
   size_t lbuf = 0, libuf = 0;
+  (void)(user_data);
 
   if (request->client_cert != NULL) {
     gnutls_x509_crt_get_dn(request->client_cert, NULL, &lbuf);

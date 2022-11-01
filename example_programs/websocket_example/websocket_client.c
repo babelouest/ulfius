@@ -35,6 +35,7 @@ int main() {
 void websocket_manager_callback(const struct _u_request * request,
                                struct _websocket_manager * websocket_manager,
                                void * websocket_manager_user_data) {
+  (void)(request);
 
   websocket_manager->keep_messages = U_WEBSOCKET_KEEP_INCOMING;
 
@@ -92,6 +93,8 @@ void websocket_incoming_message_callback (const struct _u_request * request,
                                          struct _websocket_manager * websocket_manager,
                                          const struct _websocket_message * last_message,
                                          void * websocket_incoming_message_user_data) {
+  (void)(request);
+  (void)(websocket_manager);
   if (websocket_incoming_message_user_data != NULL) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_incoming_message_user_data is %s", websocket_incoming_message_user_data);
   }
@@ -106,6 +109,8 @@ void websocket_incoming_message_callback (const struct _u_request * request,
 void websocket_onclose_callback (const struct _u_request * request,
                                 struct _websocket_manager * websocket_manager,
                                 void * websocket_onclose_user_data) {
+  (void)(request);
+  (void)(websocket_manager);
   if (websocket_onclose_user_data != NULL) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_onclose_user_data is %s", websocket_onclose_user_data);
     o_free(websocket_onclose_user_data);

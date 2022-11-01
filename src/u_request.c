@@ -40,7 +40,7 @@
  */
 static char ** ulfius_split_url(const char * prefix, const char * url) {
   char * saveptr = NULL, * cur_word = NULL, ** to_return = o_malloc(sizeof(char*)), * url_cpy = NULL, * url_cpy_addr = NULL;
-  int counter = 1;
+  size_t counter = 1;
 
   if (to_return != NULL) {
     to_return[0] = NULL;
@@ -130,42 +130,6 @@ static int ulfius_url_format_match(const char ** splitted_url, const char ** spl
 }
 
 /**
- * Converts a hex character to its integer value
- */
-static char from_hex(char ch) {
-  return isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10;
-}
-
-/**
- * Returns a url-decoded version of str
- * IMPORTANT: be sure to free() the returned string after use
- * Thanks Geek Hideout!
- * http://www.geekhideout.com/urlcode.shtml
- */
-static char * url_decode(const char * str) {
-  if (str != NULL) {
-    char * pstr = (char*)str, * buf = o_malloc(o_strlen(str) + 1), * pbuf = buf;
-    while (* pstr) {
-      if (* pstr == '%') {
-        if (pstr[1] && pstr[2]) {
-          * pbuf++ = from_hex(pstr[1]) << 4 | from_hex(pstr[2]);
-          pstr += 2;
-        }
-      } else if (* pstr == '+') {
-        * pbuf++ = ' ';
-      } else {
-        * pbuf++ = * pstr;
-      }
-      pstr++;
-    }
-    * pbuf = '\0';
-    return buf;
-  } else {
-    return NULL;
-  }
-}
-
-/**
  * ulfius_endpoint_match
  * return the endpoint array matching the url called with the proper http method
  * the returned array always has its last value to NULL
@@ -236,7 +200,7 @@ int ulfius_parse_url(const char * url, const struct _u_endpoint * endpoint, stru
   if (map != NULL && endpoint != NULL) {
     url_cpy = url_cpy_addr = o_strdup(url);
     url_format_cpy = url_format_cpy_addr = o_strdup(endpoint->url_prefix);
-    cur_word = url_decode(strtok_r( url_cpy, ULFIUS_URL_SEPARATOR, &saveptr ));
+    cur_word = ulfius_url_decode(strtok_r( url_cpy, ULFIUS_URL_SEPARATOR, &saveptr ));
     if (endpoint->url_prefix != NULL && url_format_cpy == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for url_format_cpy");
     } else if (url_format_cpy != NULL) {
@@ -245,7 +209,7 @@ int ulfius_parse_url(const char * url, const struct _u_endpoint * endpoint, stru
     while (cur_word_format != NULL && cur_word != NULL) {
       // Ignoring url_prefix words
       o_free(cur_word);
-      cur_word = url_decode(strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr ));
+      cur_word = ulfius_url_decode(strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr ));
       cur_word_format = strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr_prefix );
     }
     o_free(url_format_cpy_addr);
@@ -281,7 +245,7 @@ int ulfius_parse_url(const char * url, const struct _u_endpoint * endpoint, stru
         }
       }
       o_free(cur_word);
-      cur_word = url_decode(strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr ));
+      cur_word = ulfius_url_decode(strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr ));
       cur_word_format = strtok_r( NULL, ULFIUS_URL_SEPARATOR, &saveptr_format );
     }
     o_free(cur_word);
@@ -831,7 +795,7 @@ char * ulfius_export_request_http(const struct _u_request * request) {
   struct yuarel y_url;
   int has_params = 0, i;
   struct _o_datum dat = {0, NULL};
-  size_t len = 0;
+  ssize_t len = 0;
 
   if (request != NULL && request->http_url != NULL) {
     if (!yuarel_parse(&y_url, request->http_url)) {
@@ -953,7 +917,7 @@ char * ulfius_export_request_http(const struct _u_request * request) {
             if (key_esc) {
               value = u_map_get(request->map_post_body, keys[i]);
               len = u_map_get_length(request->map_post_body, keys[i]);
-              if (value != NULL && utf8_check(value, len) == NULL) {
+              if (value != NULL && utf8_check(value, (size_t)len) == NULL) {
                 value_esc = ulfius_url_encode(value);
                 if (value_esc != NULL) {
                   body = mstrcatf(body, "%s=%s", key_esc, value_esc);
@@ -1071,7 +1035,7 @@ int ulfius_import_client_certificate_pem(struct _u_request * request, const char
 
   if (request != NULL && str_cert != NULL) {
     g_cert.data = (unsigned char *)str_cert;
-    g_cert.size = o_strlen(str_cert);
+    g_cert.size = (unsigned int)o_strlen(str_cert);
     if ((res = gnutls_x509_crt_init(&request->client_cert))) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error gnutls_x509_crt_init: %s", gnutls_strerror(res));
       ret = U_ERROR;

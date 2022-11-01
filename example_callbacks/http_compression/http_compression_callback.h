@@ -2,9 +2,9 @@
  *
  * Response body compression callback function for Ulfius Framework
  *
- * Copyright 2020 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2020-2022 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20201213
+ * Version 20221024
  *
  * Compress the response body using `deflate` or `gzip` depending on the request header `Accept-Encoding` and the callback configuration.
  * The rest of the response, status, headers, cookies won't change.

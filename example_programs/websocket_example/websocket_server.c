@@ -49,9 +49,9 @@ static char * read_file(const char * filename) {
       fseek (f, 0, SEEK_END);
       length = ftell (f);
       fseek (f, 0, SEEK_SET);
-      buffer = o_malloc (length + 1);
-      if (buffer) {
-        fread (buffer, 1, length, f);
+      buffer = o_malloc ((size_t)(length + 1));
+      if (buffer != NULL) {
+        fread (buffer, 1, (size_t)length, f);
         buffer[length] = '\0';
       }
       fclose (f);
@@ -148,6 +148,8 @@ int main(int argc, char ** argv) {
 void websocket_onclose_callback (const struct _u_request * request,
                                 struct _websocket_manager * websocket_manager,
                                 void * websocket_onclose_user_data) {
+  (void)(request);
+  (void)(websocket_manager);
   if (websocket_onclose_user_data != NULL) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_onclose_user_data is %s", websocket_onclose_user_data);
     o_free(websocket_onclose_user_data);
@@ -157,6 +159,9 @@ void websocket_onclose_callback (const struct _u_request * request,
 void websocket_onclose_file_callback (const struct _u_request * request,
                                 struct _websocket_manager * websocket_manager,
                                 void * websocket_onclose_user_data) {
+  (void)(request);
+  (void)(websocket_manager);
+  (void)(websocket_onclose_user_data);
   y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_onclose_file_callback");
 }
 
@@ -219,6 +224,8 @@ void websocket_manager_callback(const struct _u_request * request,
 void websocket_manager_file_callback(const struct _u_request * request,
                                struct _websocket_manager * websocket_manager,
                                void * websocket_manager_user_data) {
+  (void)(request);
+  (void)(websocket_manager_user_data);
   y_log_message(Y_LOG_LEVEL_DEBUG, "Opening websocket_manager_file_callback");
   for (;;) {
     sleep(1);
@@ -237,6 +244,8 @@ void websocket_incoming_message_callback (const struct _u_request * request,
                                          struct _websocket_manager * websocket_manager,
                                          const struct _websocket_message * last_message,
                                          void * websocket_incoming_message_user_data) {
+  (void)(request);
+  (void)(websocket_manager);
   if (websocket_incoming_message_user_data != NULL) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_incoming_message_user_data is %s", websocket_incoming_message_user_data);
   }
@@ -252,6 +261,8 @@ void websocket_echo_message_callback (const struct _u_request * request,
                                          struct _websocket_manager * websocket_manager,
                                          const struct _websocket_message * last_message,
                                          void * websocket_incoming_message_user_data) {
+  (void)(request);
+  (void)(websocket_incoming_message_user_data);
   y_log_message(Y_LOG_LEVEL_DEBUG, "Incoming message, rsv: 0x%02x, opcode: 0x%02x, mask: %d, len: %zu, text payload '%.*s'", last_message->rsv, last_message->opcode, last_message->has_mask, last_message->data_len, last_message->data_len, last_message->data);
   if (ulfius_websocket_send_message(websocket_manager, last_message->opcode, last_message->data_len, last_message->data) != U_OK) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_websocket_send_message");
@@ -262,6 +273,8 @@ void websocket_incoming_file_callback (const struct _u_request * request,
                                          struct _websocket_manager * websocket_manager,
                                          const struct _websocket_message * last_message,
                                          void * websocket_incoming_message_user_data) {
+  (void)(request);
+  (void)(websocket_incoming_message_user_data);
   char * my_message = msprintf("Incoming file %p, rsv: 0x%02x, opcode: 0x%02x, mask: %d, len: %zu", last_message, last_message->rsv, last_message->opcode, last_message->has_mask, last_message->data_len);
   y_log_message(Y_LOG_LEVEL_DEBUG, my_message);
   ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(my_message), my_message);
@@ -274,6 +287,8 @@ void websocket_incoming_file_callback (const struct _u_request * request,
 int callback_websocket (const struct _u_request * request, struct _u_response * response, void * user_data) {
   char * websocket_user_data = o_strdup("my_user_data");
   int ret;
+  (void)(request);
+  (void)(user_data);
 
   if ((ret = ulfius_set_websocket_response(response, NULL, NULL, &websocket_manager_callback, websocket_user_data, &websocket_incoming_message_callback, websocket_user_data, &websocket_onclose_callback, websocket_user_data)) == U_OK) {
     ulfius_add_websocket_deflate_extension(response);
@@ -286,6 +301,8 @@ int callback_websocket (const struct _u_request * request, struct _u_response * 
 int callback_websocket_echo (const struct _u_request * request, struct _u_response * response, void * user_data) {
   char * websocket_user_data = o_strdup("my_user_data");
   int ret;
+  (void)(request);
+  (void)(user_data);
 
   y_log_message(Y_LOG_LEVEL_DEBUG, "Client connected to echo websocket");
   if ((ret = ulfius_set_websocket_response(response, NULL, NULL, NULL, NULL, &websocket_echo_message_callback, websocket_user_data, &websocket_onclose_callback, websocket_user_data)) == U_OK) {
@@ -298,6 +315,8 @@ int callback_websocket_echo (const struct _u_request * request, struct _u_respon
 
 int callback_websocket_file (const struct _u_request * request, struct _u_response * response, void * user_data) {
   int ret;
+  (void)(request);
+  (void)(user_data);
 
   if ((ret = ulfius_set_websocket_response(response, NULL, NULL, &websocket_manager_file_callback, NULL, &websocket_incoming_file_callback, NULL, &websocket_onclose_file_callback, NULL)) == U_OK) {
     ulfius_add_websocket_deflate_extension(response);

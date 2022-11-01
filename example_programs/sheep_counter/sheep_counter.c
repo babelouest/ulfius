@@ -37,17 +37,17 @@ char * print_map(const struct _u_map * map) {
     keys = u_map_enum_keys(map);
     for (i=0; keys[i] != NULL; i++) {
       value = u_map_get(map, keys[i]);
-      len = snprintf(NULL, 0, "key is %s, length is %zu, value is %.*s", keys[i], u_map_get_length(map, keys[i]), (int)u_map_get_length(map, keys[i]), value);
-      line = o_malloc((len+1)*sizeof(char));
-      snprintf(line, (len+1), "key is %s, length is %zu, value is %.*s", keys[i], u_map_get_length(map, keys[i]), (int)u_map_get_length(map, keys[i]), value);
+      len = snprintf(NULL, 0, "key is %s, value is %s", keys[i], value);
+      line = o_malloc((size_t)(len+1));
+      snprintf(line, (size_t)(len+1), "key is %s, value is %s", keys[i], value);
       if (to_return != NULL) {
-        len = o_strlen(to_return) + o_strlen(line) + 1;
-        to_return = o_realloc(to_return, (len+1)*sizeof(char));
+        len = (int)(o_strlen(to_return) + o_strlen(line) + 1);
+        to_return = o_realloc(to_return, (size_t)(len+1));
         if (o_strlen(to_return) > 0) {
           strcat(to_return, "\n");
         }
       } else {
-        to_return = o_malloc((o_strlen(line) + 1)*sizeof(char));
+        to_return = o_malloc((o_strlen(line) + 1));
         to_return[0] = 0;
       }
       strcat(to_return, line);
@@ -90,6 +90,7 @@ static int callback_sheep_counter_reset (const struct _u_request * request, stru
   json_t * json_body = NULL;
   json_int_t * nb_sheep = user_data;
   * nb_sheep = 0;
+  (void)(request);
   
   json_body = json_object();
   json_object_set_new(json_body, "nbsheep", json_integer(0));
@@ -106,6 +107,7 @@ static int callback_sheep_counter_reset (const struct _u_request * request, stru
 static int callback_sheep_counter_add (const struct _u_request * request, struct _u_response * response, void * user_data) {
   json_t * json_body = NULL;
   json_int_t * nb_sheep = user_data;
+  (void)(request);
   
   (*nb_sheep)++;
   
@@ -126,6 +128,9 @@ static int callback_upload_file (const struct _u_request * request, struct _u_re
 
   char * string_body = msprintf("Upload file\n\n  method is %s\n  url is %s\n\n  parameters from the url are \n%s\n\n  cookies are \n%s\n\n  headers are \n%s\n\n  post parameters are \n%s\n\n",
                                   request->http_verb, request->http_url, url_params, cookies, headers, post_params);
+  (void)(response);
+  (void)(user_data);
+
   y_log_message(Y_LOG_LEVEL_DEBUG, "Post parameters:\n%s", post_params);
   y_log_message(Y_LOG_LEVEL_DEBUG, "URL parameters:\n%s", url_params);
   o_free(url_params);
@@ -142,6 +147,7 @@ static int callback_upload_file (const struct _u_request * request, struct _u_re
 static int callback_form_submit (const struct _u_request * request, struct _u_response * response, void * user_data) {
   char * post_params = print_map(request->map_post_body),
        * url_params = print_map(request->map_url);
+  (void)(user_data);
   y_log_message(Y_LOG_LEVEL_DEBUG, "Post parameters:\n%s", post_params);
   y_log_message(Y_LOG_LEVEL_DEBUG, "URL parameters:\n%s", url_params);
   o_free(post_params);
@@ -162,6 +168,10 @@ static int file_upload_callback (const struct _u_request * request,
                           uint64_t off, 
                           size_t size, 
                           void * cls) {
+  (void)(request);
+  (void)(content_type);
+  (void)(transfer_encoding);
+  (void)(data);
   y_log_message(Y_LOG_LEVEL_DEBUG, "Got from file '%s' of the key '%s', offset %llu, size %zu, cls is '%s'", filename, key, off, size, cls);
   return U_OK;
 }
@@ -169,7 +179,7 @@ static int file_upload_callback (const struct _u_request * request,
 /**
  * Main function
  */
-int main (int argc, char **argv) {
+int main (void) {
   
   struct _u_compressed_inmemory_website_config file_config;
   json_int_t nb_sheep = 0;
