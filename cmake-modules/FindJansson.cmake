@@ -61,6 +61,12 @@ find_package_handle_standard_args(Jansson
 if (JANSSON_FOUND)
     set(JANSSON_LIBRARIES ${JANSSON_LIBRARY})
     set(JANSSON_INCLUDE_DIRS ${JANSSON_INCLUDE_DIR})
+    if (NOT TARGET Jansson::Jansson)
+        add_library(Jansson::Jansson UNKNOWN IMPORTED)
+        set_target_properties(Jansson::Jansson PROPERTIES
+                IMPORTED_LOCATION "${JANSSON_LIBRARY}"
+                INTERFACE_INCLUDE_DIRECTORIES "${JANSSON_INCLUDE_DIR}")
+    endif ()
 endif ()
 
 mark_as_advanced(JANSSON_INCLUDE_DIR JANSSON_LIBRARY)

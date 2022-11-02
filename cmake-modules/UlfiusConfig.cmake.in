@@ -1,0 +1,55 @@
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/UlfiusTargets.cmake")
+
+set(ULFIUS_GNUTLS       @WITH_GNUTLS@)
+set(ULFIUS_WEBSOCKET    @WITH_WEBSOCKET@)
+set(ULFIUS_YDER         @WITH_YDER@)
+set(ULFIUS_JANSSON      @WITH_JANSSON@)
+set(ULFIUS_CURL         @WITH_CURL@)
+
+set(CMAKE_CURRENT_LIST_DIR ${_original_cmake_module_path})
+
+if(TARGET Yder::Yder-static)
+    set(ORCANIA_INCLUDE_DIRS $<TARGET_PROPERTY:Yder::Yder-static,INTERFACE_INCLUDE_DIRECTORIES>)
+    set(ORCANIA_LIBRARIES Yder::Yder-static)
+endif()
+
+if(TARGET Yder::Yder)
+    set(ORCANIA_INCLUDE_DIRS $<TARGET_PROPERTY:Yder::Yder,INTERFACE_INCLUDE_DIRECTORIES>)
+    set(ORCANIA_LIBRARIES Yder::Yder)
+endif()
+
+include(CMakeFindDependencyMacro)
+
+set(_original_cmake_module_path ${CMAKE_MODULE_PATH})
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
+
+find_dependency(Orcania)
+find_dependency(MHD)
+if(ULFIUS_WEBSOCKET)
+    find_dependency(ZLIB)
+endif()
+if(ULFIUS_GNUTLS)
+    find_dependency(GnuTLS)
+endif()
+if(ULFIUS_YDER)
+    find_dependency(Yder)
+endif()
+if(ULFIUS_JANSSON)
+    find_dependency(Jansson)
+endif()
+if(ULFIUS_CURL)
+    find_dependency(CURL)
+    if(CURL_FOUND AND NOT TARGET CURL::libcurl)
+        add_library(CURL::libcurl UNKNOWN IMPORTED)
+        set_target_properties(CURL::libcurl PROPERTIES
+            INTERFACE_LINK_LIBRARIES "${CURL_LIBRARIES}"
+            INTERFACE_INCLUDE_DIRECTORIES "${CURL_INCLUDE_DIRS}")
+    endif()
+endif()
+
+set(CMAKE_MODULE_PATH ${_original_cmake_module_path})
+
+set(ULFIUS_VERSION_STRING "@PROJECT_VERSION@")
+set(Ulfius_FOUND TRUE)

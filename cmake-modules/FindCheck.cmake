@@ -68,6 +68,12 @@ find_package_handle_standard_args(Check
 if (CHECK_FOUND)
     set(CHECK_LIBRARIES ${CHECK_LIBRARY})
     set(CHECK_INCLUDE_DIRS ${CHECK_INCLUDE_DIR})
+    if (NOT TARGET Check::Check)
+        add_library(Check::Check UNKNOWN IMPORTED)
+        set_target_properties(Check::Check PROPERTIES
+                IMPORTED_LOCATION "${CHECK_LIBRARY}"
+                INTERFACE_INCLUDE_DIRECTORIES "${CHECK_INCLUDE_DIR}")
+    endif ()
 endif ()
 
 mark_as_advanced(CHECK_INCLUDE_DIR CHECK_LIBRARY)
