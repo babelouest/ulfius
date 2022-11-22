@@ -421,6 +421,7 @@ if (BUILD_ULFIUS_TESTING)
     find_package(Check REQUIRED)
     if (CHECK_FOUND)
         if (NOT WIN32 AND NOT APPLE)
+            include(FindSubunit)
             find_package(Subunit REQUIRED)
         endif ()
 
