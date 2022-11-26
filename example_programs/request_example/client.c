@@ -19,6 +19,10 @@
 
 #define SERVER_URL_PREFIX "http://localhost:7778/curl"
 
+#if defined(U_DISABLE_CURL) || defined(U_DISABLE_JANSSON)
+#error You must build ulfius with libcurl and jansson support enabled to compile this example, check the install documentation
+#else
+
 /**
  * decode a u_map into a string
  */
@@ -274,3 +278,4 @@ int main (void) {
   
   return 0;
 }
+#endif

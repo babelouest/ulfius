@@ -27,12 +27,7 @@
 #define PREFIX_STATIC "/static"
 
 #if defined(U_DISABLE_WEBSOCKET)
-
-int main() {
-  fprintf(stderr, "Websocket not supported, please recompile ulfius with websocket support\n");
-  return 1;
-}
-
+#error You must build ulfius with websocket support enabled to compile this example, check the install documentation
 #else
 
 int callback_websocket (const struct _u_request * request, struct _u_response * response, void * user_data);

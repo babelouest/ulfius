@@ -16,6 +16,10 @@
 
 #include "u_example.h"
 
+#if defined(U_DISABLE_CURL)
+#error You must build ulfius with libcurl support enabled to compile this example, check the install documentation
+#else
+
 #define URL "http://localhost:7876/stream"
 
 size_t my_write_body(void * contents, size_t size, size_t nmemb, void * user_data) {
@@ -90,3 +94,4 @@ int main(void) {
   
   return 0;
 }
+#endif

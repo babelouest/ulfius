@@ -19,7 +19,12 @@
 #define MAIL_SENDER "test@example.org"
 #define MAIL_RECIPIENT "test@example.com"
 
+#if defined(U_DISABLE_CURL)
+#error You must build ulfius with libcurl and jansson support enabled to compile this example, check the install documentation
+#else
+
 int main(void) {
   printf("Send mail: %d\n", ulfius_send_smtp_email(MAIL_SERVER, 0, 0, 0, NULL, NULL, MAIL_SENDER, MAIL_RECIPIENT, NULL, NULL, "test", "This is a test\nHello!!!"));
   return 0;
 }
+#endif

@@ -20,6 +20,10 @@
 #define PORT 7799
 #define PROXY_DEST "https://www.wikipedia.org"
 
+#if defined(U_DISABLE_CURL)
+#error You must build ulfius with libcurl support enabled to compile this example, check the install documentation
+#else
+
 /**
  * callback function declaration
  */
@@ -79,3 +83,4 @@ int callback_get (const struct _u_request * request, struct _u_response * respon
   ulfius_clean_request_full(req);
   return U_CALLBACK_CONTINUE;
 }
+#endif

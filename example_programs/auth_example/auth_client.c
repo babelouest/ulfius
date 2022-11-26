@@ -37,6 +37,10 @@
 
 #include "u_example.h"
 
+#if defined(U_DISABLE_CURL)
+#error You must build ulfius with libcurl support enabled to compile this example, check the install documentation
+#else
+
 #define SERVER_URL "http://localhost:2884/auth/basic"
 #define SERVER_URL_DEFAULT "http://localhost:2884/auth/default"
 #define SERVER_URL_CLIENT_CERT "https://localhost:2884/auth/client_cert"
@@ -207,3 +211,4 @@ int main (int argc, char **argv) {
   y_close_logs();
   return 0;
 }
+#endif

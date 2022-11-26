@@ -42,6 +42,7 @@
 #define USER "test"
 #define PASSWORD "testpassword"
 
+#ifndef U_DISABLE_GNUTLS
 static char * read_file(const char * filename) {
   char * buffer = NULL;
   long length;
@@ -64,6 +65,7 @@ static char * read_file(const char * filename) {
     return NULL;
   }
 }
+#endif
 
 /**
  * Auth function for basic authentication

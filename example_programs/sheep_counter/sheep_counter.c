@@ -26,6 +26,10 @@
 #define FILE_PREFIX "/upload"
 #define STATIC_FOLDER "static"
 
+#if defined(U_DISABLE_JANSSON)
+#error You must build ulfius with jansson support enabled to compile this example, check the install documentation
+#else
+
 /**
  * decode a u_map into a string
  */
@@ -249,3 +253,4 @@ int main (void) {
   
   return 0;
 }
+#endif
