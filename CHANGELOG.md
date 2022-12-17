@@ -1,5 +1,11 @@
 # Ulfius Changelog
 
+## 2.7.12
+
+- Improve cmake script and build for Visual Studio integration
+- Minor bugfixes
+- Build with flag `-Wconversion`
+
 ## 2.7.11
 
 - Add `ulfius_websocket_parse_json_message` for incoming websocket messages

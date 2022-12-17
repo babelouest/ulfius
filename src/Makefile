@@ -30,7 +30,7 @@ PKGCONFIG_FILE=../libulfius.pc
 PKGCONFIG_TEMPLATE=../libulfius.pc.in
 DESTDIR=/usr/local
 CC=gcc
-CFLAGS+=-c -pedantic -std=gnu99 -fPIC -Wall -Werror -Wextra -Wconversion -D_REENTRANT -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS) $(CPPFLAGS)
+CFLAGS+=-c -pedantic -std=gnu99 -fPIC -Wall -Werror -Wextra -Wconversion -Werror=sign-conversion -D_REENTRANT -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS) $(CPPFLAGS)
 LIBSDEP=-lmicrohttpd -lpthread -lz
 LIBS=-L$(DESTDIR)/lib -lc $(LDFLAGS)
 LIB_STATIC=
@@ -43,7 +43,7 @@ OBJECTS=ulfius.o u_map.o u_request.o u_response.o u_send_request.o u_websocket.o
 OUTPUT=libulfius.so
 VERSION_MAJOR=2
 VERSION_MINOR=7
-VERSION_PATCH=11
+VERSION_PATCH=12
 
 ifndef JANSSONFLAG
 DISABLE_JANSSON=0
