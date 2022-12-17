@@ -587,6 +587,7 @@ static int ulfius_webservice_dispatcher (void * cls,
         current_endpoint_list[1] = NULL;
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for current_endpoint_list of default endpoint");
+        return MHD_NO;
       }
     }
 
