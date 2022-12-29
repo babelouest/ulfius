@@ -146,6 +146,7 @@ int ulfius_check_list_match(const char * source, const char * match, const char 
  */
 int ulfius_check_first_match(const char * source, const char * match, const char * separator, char ** result);
 
+#ifndef U_DISABLE_WS_MESSAGE_LIST
 /**
  * Initialize a websocket message list
  * Return U_OK on success
@@ -162,6 +163,7 @@ void ulfius_clear_websocket_message_list(struct _websocket_message_list * messag
  * Return U_OK on success
  */
 int ulfius_push_websocket_message(struct _websocket_message_list * message_list, struct _websocket_message * message);
+#endif
 
 /**
  * Clear data of a websocket

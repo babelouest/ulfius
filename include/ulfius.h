@@ -1587,9 +1587,11 @@ struct _websocket_extension {
  * Used on public callback functions
  */
 struct _websocket_manager {
+#ifndef U_DISABLE_WS_MESSAGE_LIST
   struct _websocket_message_list * message_list_incoming; /* !< list of incoming messages */
   struct _websocket_message_list * message_list_outcoming; /* !< list of outcoming messages */
   int                              keep_messages; /* !< keep incoming and/or outcoming messages, flags available are U_WEBSOCKET_KEEP_INCOMING, U_WEBSOCKET_KEEP_OUTCOMING, U_WEBSOCKET_KEEP_NONE, default is U_WEBSOCKET_KEEP_INCOMING|U_WEBSOCKET_KEEP_OUTCOMING */
+#endif
   int                              connected; /* !< flag to know if the websocket is connected or not */
   int                              ping_sent; /* !< flag to know if the websocket has sent a ping frame or not, before receiving a pong */
   int                              close_flag; /* !< flag to set before closing a websocket */
@@ -1628,6 +1630,7 @@ struct _websocket_message {
   uint8_t fin;  /* !< flag fin (end of fragmented message) */
 };
 
+#ifndef U_DISABLE_WS_MESSAGE_LIST
 /**
  * @struct _websocket_message_list List of websocket messages
  */
@@ -1635,6 +1638,7 @@ struct _websocket_message_list {
   struct _websocket_message ** list; /* !< messages list */
   size_t len; /* !< message list length */
 };
+#endif
 
 /**
  * @struct _websocket websocket structure
@@ -1722,6 +1726,7 @@ int ulfius_websocket_send_json_message(struct _websocket_manager * websocket_man
 json_t * ulfius_websocket_parse_json_message(const struct _websocket_message * message, json_error_t * json_error);
 #endif
 
+#ifndef U_DISABLE_WS_MESSAGE_LIST
 /**
  * Return the first message of the message list
  * Return NULL if message_list has no message
@@ -1732,6 +1737,7 @@ json_t * ulfius_websocket_parse_json_message(const struct _websocket_message * m
  * Returned value must be cleared after use
  */
 struct _websocket_message * ulfius_websocket_pop_first_message(struct _websocket_message_list * message_list);
+#endif
 
 /**
  * Clear data of a websocket message

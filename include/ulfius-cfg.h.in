@@ -44,6 +44,7 @@
 #cmakedefine U_DISABLE_CURL
 #cmakedefine U_DISABLE_GNUTLS
 #cmakedefine U_DISABLE_WEBSOCKET
+#cmakedefine U_DISABLE_WS_MESSAGE_LIST
 #cmakedefine U_DISABLE_YDER
 #cmakedefine U_WITH_FREERTOS
 #cmakedefine U_WITH_LWIP
