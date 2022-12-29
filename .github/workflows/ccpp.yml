@@ -56,7 +56,7 @@ jobs:
         # test build options
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=off ..
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -66,7 +66,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=on ..
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -76,7 +76,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=off ..
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -86,7 +86,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=on ..
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -96,7 +96,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=off ..
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -106,7 +106,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=on ..
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -116,7 +116,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=off ..
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -126,7 +126,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=on ..
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -136,7 +136,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=off ..
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -146,7 +146,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=on ..
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -156,7 +156,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=off ..
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -166,7 +166,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=on ..
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -176,7 +176,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=off ..
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -186,7 +186,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=on ..
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -196,7 +196,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=off ..
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -206,7 +206,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=on ..
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -216,7 +216,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=off ..
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -226,7 +226,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=on ..
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -236,7 +236,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=off ..
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -246,7 +246,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=on ..
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -256,7 +256,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=off ..
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -266,7 +266,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=on ..
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -276,7 +276,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=off ..
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -286,7 +286,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=on ..
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -296,7 +296,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=off ..
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -306,7 +306,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=on ..
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -316,7 +316,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=off ..
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -326,7 +326,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=on ..
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -336,7 +336,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=off ..
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -346,7 +346,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=on ..
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -356,7 +356,7 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=off ..
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -366,7 +366,327 @@ jobs:
 
         cd ../../build
         sudo make uninstall && rm -rf *
-        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=on ..
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=off ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=off -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=off -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=off -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=off -DWITH_JANSSON=on -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=off -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=off -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
+        make package
+        sudo make install
+        cd ../example_programs/build
+        rm -rf *
+        cmake ..
+        make
+
+        cd ../../build
+        sudo make uninstall && rm -rf *
+        cmake -DWITH_GNUTLS=on -DWITH_JOURNALD=off -DWITH_YDER=on -DBUILD_ULFIUS_TESTING=on -DWITH_WEBSOCKET=on -DWITH_JANSSON=on -DWITH_CURL=on -DWITH_WEBSOCKET_MESSAGE_LIST=on ..
         make package
         sudo make install
         cd ../example_programs/build
@@ -414,6 +734,43 @@ jobs:
         make clean debug UWSCFLAG=1 CURLFLAG=1 WEBSOCKETFLAG=1
         make clean debug UWSCFLAG=1 CURLFLAG=1 JANSSONFLAG=1
         make clean debug UWSCFLAG=1 CURLFLAG=1 YDERFLAG=1
+        make clean debug CURLFLAG=1 JANSSONFLAG=1 WEBSOCKETFLAG=1 YDERFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug CURLFLAG=1 JANSSONFLAG=1 YDERFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug CURLFLAG=1 WEBSOCKETFLAG=1 YDERFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug CURLFLAG=1 YDERFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug JANSSONFLAG=1 WEBSOCKETFLAG=1 YDERFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug CURLFLAG=1 JANSSONFLAG=1 YDERFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug CURLFLAG=1 WEBSOCKETFLAG=1 YDERFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug CURLFLAG=1 YDERFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug CURLFLAG=1 JANSSONFLAG=1 WEBSOCKETFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug CURLFLAG=1 JANSSONFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug CURLFLAG=1 WEBSOCKETFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug CURLFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug JANSSONFLAG=1 WEBSOCKETFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug CURLFLAG=1 JANSSONFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug CURLFLAG=1 WEBSOCKETFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug CURLFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug GNUTLSFLAG=1 CURLFLAG=1 JANSSONFLAG=1 WEBSOCKETFLAG=1 YDERFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug GNUTLSFLAG=1 CURLFLAG=1 JANSSONFLAG=1 YDERFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug GNUTLSFLAG=1 CURLFLAG=1 WEBSOCKETFLAG=1 YDERFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug GNUTLSFLAG=1 CURLFLAG=1 YDERFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug GNUTLSFLAG=1 JANSSONFLAG=1 WEBSOCKETFLAG=1 YDERFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug GNUTLSFLAG=1 CURLFLAG=1 JANSSONFLAG=1 YDERFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug GNUTLSFLAG=1 CURLFLAG=1 WEBSOCKETFLAG=1 YDERFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug GNUTLSFLAG=1 CURLFLAG=1 YDERFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug GNUTLSFLAG=1 CURLFLAG=1 JANSSONFLAG=1 WEBSOCKETFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug GNUTLSFLAG=1 CURLFLAG=1 JANSSONFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug GNUTLSFLAG=1 CURLFLAG=1 WEBSOCKETFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug GNUTLSFLAG=1 CURLFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug GNUTLSFLAG=1 JANSSONFLAG=1 WEBSOCKETFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug GNUTLSFLAG=1 CURLFLAG=1 JANSSONFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug GNUTLSFLAG=1 CURLFLAG=1 WEBSOCKETFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug GNUTLSFLAG=1 CURLFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug UWSCFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug UWSCFLAG=1 CURLFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug UWSCFLAG=1 CURLFLAG=1 WEBSOCKETFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug UWSCFLAG=1 CURLFLAG=1 JANSSONFLAG=1 WEBSOCKETMESSAGEFLAG=1
+        make clean debug UWSCFLAG=1 CURLFLAG=1 YDERFLAG=1 WEBSOCKETMESSAGEFLAG=1
 
         # run tests with Makefile
         sudo ldconfig
