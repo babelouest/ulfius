@@ -245,6 +245,7 @@ void websocket_incoming_extension_deflate_server_callback_disabled (const struct
   ck_assert_int_eq(last_message->rsv&U_WEBSOCKET_RSV1, 0);
 }
 
+#ifndef U_DISABLE_WS_MESSAGE_LIST
 void websocket_manager_callback_keep_messages (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_manager_user_data) {
   if (websocket_manager_user_data != NULL) {
     websocket_manager->keep_messages = *((int*)(websocket_manager_user_data));
@@ -281,6 +282,7 @@ void websocket_onclose_callback_keep_messages (const struct _u_request * request
     ck_assert_int_eq(websocket_manager->message_list_outcoming->len, 0);
   }
 }
+#endif
 
 void websocket_origin_onclose_callback (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_onclose_user_data) {
   o_free(websocket_onclose_user_data);
@@ -417,6 +419,7 @@ int callback_websocket_json_empty_messages (const struct _u_request * request, s
   return (ret == U_OK)?U_CALLBACK_CONTINUE:U_CALLBACK_ERROR;
 }
 
+#ifndef U_DISABLE_WS_MESSAGE_LIST
 int callback_websocket_keep_messages (const struct _u_request * request, struct _u_response * response, void * user_data) {
   int ret;
   
@@ -424,6 +427,7 @@ int callback_websocket_keep_messages (const struct _u_request * request, struct 
   ck_assert_int_eq(ret, U_OK);
   return (ret == U_OK)?U_CALLBACK_CONTINUE:U_CALLBACK_ERROR;
 }
+#endif
 
 int callback_websocket_onclose (const struct _u_request * request, struct _u_response * response, void * user_data) {
   int ret;
@@ -984,6 +988,7 @@ START_TEST(test_ulfius_websocket_extension_deflate_error_params)
 }
 END_TEST
 
+#ifndef U_DISABLE_WS_MESSAGE_LIST
 START_TEST(test_ulfius_websocket_keep_messages)
 {
   struct _u_instance instance;
@@ -1044,6 +1049,7 @@ START_TEST(test_ulfius_websocket_keep_messages)
   ulfius_clean_instance(&instance);
 }
 END_TEST
+#endif
 
 START_TEST(test_ulfius_websocket_origin)
 {
@@ -1160,7 +1166,9 @@ static Suite *ulfius_suite(void)
 	tcase_add_test(tc_websocket, test_ulfius_websocket_extension_deflate);
 	tcase_add_test(tc_websocket, test_ulfius_websocket_extension_deflate_with_all_params);
 	tcase_add_test(tc_websocket, test_ulfius_websocket_extension_deflate_error_params);
+#ifndef U_DISABLE_WS_MESSAGE_LIST
 	tcase_add_test(tc_websocket, test_ulfius_websocket_keep_messages);
+#endif
 	tcase_add_test(tc_websocket, test_ulfius_websocket_origin);
 	tcase_add_test(tc_websocket, test_ulfius_websocket_json_messages);
 #endif
