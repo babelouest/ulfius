@@ -5,6 +5,7 @@
 - Improve cmake script and build for Visual Studio integration
 - Minor bugfixes
 - Build with flag `-Wconversion`
+- Add cmake build flag `WITH_WEBSOCKET_MESSAGE_LIST` to completely disable message lists storage in websockets
 
 ## 2.7.11
 
