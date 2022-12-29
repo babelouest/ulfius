@@ -69,8 +69,15 @@ endif
 
 ifndef WEBSOCKETFLAG
 DISABLE_WEBSOCKET=0
+DISABLE_WEBSOCKET_MESSAGE=0
 else
 DISABLE_WEBSOCKET=1
+endif
+
+ifndef WEBSOCKETMESSAGEFLAG
+DISABLE_WEBSOCKET_MESSAGE=0
+else
+DISABLE_WEBSOCKET_MESSAGE=1
 endif
 
 ifndef YDERFLAG
@@ -139,6 +146,13 @@ $(CONFIG_FILE):
 	else \
 		sed -i -e 's/\#cmakedefine U_DISABLE_WEBSOCKET/\/* #undef U_DISABLE_WEBSOCKET *\//g' $(CONFIG_FILE); \
 		echo "WEBSOCKET SUPPORT  ENABLED"; \
+	fi
+	@if [ $$? -ne 0 ] || [ "$(DISABLE_WEBSOCKET_MESSAGE)" = "1" ]; then \
+		sed -i -e 's/\#cmakedefine U_DISABLE_WS_MESSAGE_LIST/\#define U_DISABLE_WS_MESSAGE_LIST/g' $(CONFIG_FILE); \
+		echo "WS MESSAGE LIST    DISABLED"; \
+	else \
+		sed -i -e 's/\#cmakedefine U_DISABLE_WS_MESSAGE_LIST/\/* #undef U_DISABLE_WS_MESSAGE_LIST *\//g' $(CONFIG_FILE); \
+		echo "WS MESSAGE LIST    ENABLED"; \
 	fi
 	@if [ "$(DISABLE_YDER)" = "1" ]; then \
 		sed -i -e 's/\#cmakedefine U_DISABLE_YDER/\#define U_DISABLE_YDER/g' $(CONFIG_FILE); \
