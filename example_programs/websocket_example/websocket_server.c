@@ -171,7 +171,9 @@ void websocket_manager_callback(const struct _u_request * request,
     y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_manager_user_data is %s", websocket_manager_user_data);
   }
 
+#ifndef U_DISABLE_WS_MESSAGE_LIST
   websocket_manager->keep_messages = U_WEBSOCKET_KEEP_OUTCOMING;
+#endif
 
   // Send text message without fragmentation
   if (ulfius_websocket_wait_close(websocket_manager, 2000) == U_WEBSOCKET_STATUS_OPEN) {

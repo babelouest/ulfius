@@ -32,7 +32,9 @@ void websocket_manager_callback(const struct _u_request * request,
                                void * websocket_manager_user_data) {
   (void)(request);
 
+#ifndef U_DISABLE_WS_MESSAGE_LIST
   websocket_manager->keep_messages = U_WEBSOCKET_KEEP_INCOMING;
+#endif
 
   if (websocket_manager_user_data != NULL) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "websocket_manager_user_data is %s", websocket_manager_user_data);
