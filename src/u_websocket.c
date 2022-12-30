@@ -1372,7 +1372,9 @@ int ulfius_check_first_match(const char * source, const char * match, const char
 int ulfius_close_websocket(struct _websocket * websocket) {
   if (websocket != NULL && websocket->websocket_manager != NULL) {
     if (websocket->websocket_manager->type == U_WEBSOCKET_CLIENT && websocket->websocket_manager->tls) {
-      gnutls_bye(websocket->websocket_manager->gnutls_session, GNUTLS_SHUT_RDWR);
+      if (gnutls_bye(websocket->websocket_manager->gnutls_session, GNUTLS_SHUT_RDWR) != GNUTLS_E_SUCCESS) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "ulfius_close_websocket - Error gnutls_bye");
+      }
       gnutls_deinit(websocket->websocket_manager->gnutls_session);
       gnutls_certificate_free_credentials(websocket->websocket_manager->xcred);
       gnutls_global_deinit();
@@ -1554,6 +1556,7 @@ int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websock
       o_free(data_in);
     }
   } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_websocket_send_fragmented_message - Error websocket invalid or disconnected");
     ret = U_ERROR_PARAMS;
   }
   return ret;
