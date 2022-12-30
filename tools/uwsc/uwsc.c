@@ -22,8 +22,10 @@
  */
 
 #include <getopt.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <ulfius.h>
 
 /** Define mock yder functions when yder is disabled **/
@@ -54,7 +56,7 @@ int y_close_logs() {
 }
 #endif
 
-#define _UWSC_VERSION_ "0.11"
+#define _UWSC_VERSION_ "0.12"
 
 #ifndef U_DISABLE_WEBSOCKET
 
@@ -102,7 +104,7 @@ static char * read_file(const char * filename, size_t * filesize) {
 static void uwsc_manager_callback (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_manager_user_data) {
   char message[257] = {0};
 #ifndef U_DISABLE_WS_MESSAGE_LIST
-  struct _websocket_message * last_message;
+  websocket_manager->keep_messages = U_WEBSOCKET_KEEP_NONE;
 #endif
   struct _config * config = (struct _config *)websocket_manager_user_data;
   char * file_content;
@@ -114,13 +116,6 @@ static void uwsc_manager_callback (const struct _u_request * request, struct _we
     if (file_content != NULL && file_len > 0) {
       if (ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, file_len, file_content) != U_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Error sending text file");
-#ifndef U_DISABLE_WS_MESSAGE_LIST
-      } else {
-        last_message = ulfius_websocket_pop_first_message(websocket_manager->message_list_outcoming);
-        if (last_message != NULL) {
-          ulfius_clear_websocket_message(last_message);
-        }
-#endif
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error reading file %s", config->text_file_send);
@@ -131,13 +126,6 @@ static void uwsc_manager_callback (const struct _u_request * request, struct _we
     if (file_content != NULL && file_len > 0) {
       if (ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_BINARY, file_len, file_content) != U_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Error sending binary file");
-#ifndef U_DISABLE_WS_MESSAGE_LIST
-      } else {
-        last_message = ulfius_websocket_pop_first_message(websocket_manager->message_list_outcoming);
-        if (last_message != NULL) {
-          ulfius_clear_websocket_message(last_message);
-        }
-#endif
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error reading file %s", config->binary_file_send);
@@ -162,13 +150,6 @@ static void uwsc_manager_callback (const struct _u_request * request, struct _we
             }
             if (ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(message)-1, message) != U_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "Error sending message '%.*s'", (int)(o_strlen(message)-1), message);
-#ifndef U_DISABLE_WS_MESSAGE_LIST
-            } else {
-              last_message = ulfius_websocket_pop_first_message(websocket_manager->message_list_outcoming);
-              if (last_message != NULL) {
-                ulfius_clear_websocket_message(last_message);
-              }
-#endif
             }
           }
         }
@@ -180,11 +161,7 @@ static void uwsc_manager_callback (const struct _u_request * request, struct _we
 }
 
 static void uwsc_manager_incoming (const struct _u_request * request, struct _websocket_manager * websocket_manager, const struct _websocket_message * message, void * websocket_incoming_user_data) {
-#ifndef U_DISABLE_WS_MESSAGE_LIST
-  struct _websocket_message * last_message;
-#else
   (void)(websocket_manager);
-#endif
   struct _config * config = (struct _config *)websocket_incoming_user_data;
   (void)(request);
 
@@ -205,12 +182,6 @@ static void uwsc_manager_incoming (const struct _u_request * request, struct _we
       }
     }
   }
-#ifndef U_DISABLE_WS_MESSAGE_LIST
-  last_message = ulfius_websocket_pop_first_message(websocket_manager->message_list_incoming);
-  if (last_message != NULL) {
-    ulfius_clear_websocket_message(last_message);
-  }
-#endif
 }
 
 static void print_help(FILE * output) {
@@ -321,6 +292,12 @@ int main (int argc, char ** argv) {
   char * url = NULL, * extensions = NULL;
   struct _websocket_client_handler websocket_client_handler = {NULL, NULL};
 
+  struct sigaction my_ignorance;
+  memset(&my_ignorance, 0, sizeof(my_ignorance));
+  my_ignorance.sa_handler = SIG_IGN;
+  my_ignorance.sa_flags = SA_RESTART;
+
+  sigaction(SIGPIPE, &my_ignorance, NULL);
   config = o_malloc(sizeof(struct _config));
   if (config == NULL || !init_config(config)) {
     fprintf(stderr, "Error initialize configuration\n");
