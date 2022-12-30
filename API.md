@@ -1742,6 +1742,19 @@ To close a websocket communication, you can do one of the following:
 - Call the function `ulfius_websocket_wait_close` described below, this function will return U_OK when the websocket is closed
 - Call the function `ulfius_websocket_client_connection_send_close_signal` described below, this function is non-blocking, it will send a closing signal to the websocket and will return even if the websocket is still open. You can use `ulfius_websocket_wait_close` or `ulfius_websocket_client_connection_status` to check if the websocket is closed.
 
+*Note - broken pipe*
+
+In some cases, when the client websocket connection is secured via TLS. If the connection is already closed, or broken, a `SIGPIPE` signal can occur, leading to a program crash. To avoid this issue, you can handle `SIGPIPE` signals using sigaction.
+
+The following code is a simple example where all SIGPIPE signals are simplky ignored:
+
+```C
+#include <signal.h>
+sigaction(SIGPIPE, &(struct sigaction){SIG_IGN}, NULL);
+```
+
+Check the `sigaction` documentation for more details.
+
 ### Websocket status <a name="websocket-status-1"></a>
 
 The following functions allow the application to know if the the websocket is still open, to enforce closing the websocket or to wait until the websocket is closed by the server:
