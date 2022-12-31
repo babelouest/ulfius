@@ -41,7 +41,7 @@
       - [Prepare the request](#prepare-the-request)
       - [Built-in client extension permessage-deflate](#built-in-client-extension-permessage-deflate)
       - [Open the websocket](#open-the-websocket)
-      - [Websocket status](#websocket-status-1)
+      - [Client Websocket status](#client-websocket-status)
 - [Outgoing request functions](#outgoing-request-functions)
   - [Send HTTP request API](#send-http-request-api)
   - [Send SMTP request API](#send-http-request-api)
@@ -1744,9 +1744,9 @@ To close a websocket communication, you can do one of the following:
 
 *Note - broken pipe*
 
-In some cases, when the client websocket connection is secured via TLS. If the connection is already closed, or broken, a `SIGPIPE` signal can occur, leading to a program crash. To avoid this issue, you can handle `SIGPIPE` signals using sigaction.
+In some cases, when the client websocket connection is secured via TLS. If the connection is already closed, or broken, a `SIGPIPE` signal can occur, leading to a program crash. To avoid this issue, you can handle `SIGPIPE` signals using `sigaction`.
 
-The following code is a simple example where all SIGPIPE signals are simplky ignored:
+The following code is a simple example where all SIGPIPE signals are simply ignored:
 
 ```C
 #include <signal.h>
@@ -1755,7 +1755,7 @@ sigaction(SIGPIPE, &(struct sigaction){SIG_IGN}, NULL);
 
 Check the `sigaction` documentation for more details.
 
-### Websocket status <a name="websocket-status-1"></a>
+### Client Websocket status <a name="client-websocket-status"></a>
 
 The following functions allow the application to know if the the websocket is still open, to enforce closing the websocket or to wait until the websocket is closed by the server:
 
