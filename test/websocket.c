@@ -8,6 +8,7 @@
 #include <time.h>
 #include <ulfius.h>
 #include <zlib.h>
+#include <curl/curl.h>
 
 #define MIN(A, B) ((A)>(B)?(B):(A))
 
@@ -759,7 +760,8 @@ START_TEST(test_ulfius_websocket_client)
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
   
-  // Test incorrect websocket connection on correct websocket service
+#if LIBCURL_VERSION_NUM < 0x075600
+  // Test incorrect websocket connection on correct websocket service for libcurl < 7.86.0
   ulfius_init_request(&request);
   ulfius_init_response(&response);
   request.http_verb = o_strdup("GET");
@@ -767,6 +769,7 @@ START_TEST(test_ulfius_websocket_client)
   ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_ERROR_LIBCURL); // On a websocket connection attempt, libcurl return 'Unsupported protocol'
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
+#endif
   
   // Test incorrect websocket connection on correct websocket service
   ulfius_init_request(&request);
@@ -807,7 +810,8 @@ START_TEST(test_ulfius_websocket_client_no_onclose)
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
   
-  // Test incorrect websocket connection on correct websocket service
+#if LIBCURL_VERSION_NUM < 0x075600
+  // Test incorrect websocket connection on correct websocket service for libcurl < 7.86.0
   ulfius_init_request(&request);
   ulfius_init_response(&response);
   request.http_verb = o_strdup("GET");
@@ -815,6 +819,7 @@ START_TEST(test_ulfius_websocket_client_no_onclose)
   ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_ERROR_LIBCURL); // On a websocket connection attempt, libcurl return 'Unsupported protocol'
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
+#endif
   
   // Test incorrect websocket connection on correct websocket service
   ulfius_init_request(&request);
