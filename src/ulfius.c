@@ -1267,24 +1267,6 @@ int ulfius_start_secure_ca_trust_framework(struct _u_instance * u_instance, cons
 }
 #endif
 
-/**
- * ulfius_start_framework_with_mhd_options
- * Initializes the framework and run the webservice based on the specified MHD options table given in parameter
- * Read https://www.gnu.org/software/libmicrohttpd/tutorial.html for more information
- * This is for user who know what they do, Ulfius' options used in other `ulfius_start_framework_*`
- * are good for most use cases where you need a multi-threaded HTTP webservice
- * Some struct MHD_OptionItem may cause unexpected problems with Ulfius API
- * If you find an unresolved issue with this function you can open an issue in GitHub
- * But some issues may not be solvable if fixing them would break Ulfius API or philosophy
- * i.e.: you're on your own
- * @param u_instance pointer to a struct _u_instance that describe its port and bind address
- * @param mhd_flags OR-ed combination of MHD_FLAG values
- * @param mhd_ops struct MHD_OptionItem * options table
- * - MUST contain an option with the fllowing value: {.option = MHD_OPTION_NOTIFY_COMPLETED; .value = (intptr_t)mhd_request_completed; .ptr_value = NULL;}
- * - MUST contain an option with the fllowing value: {.option = MHD_OPTION_URI_LOG_CALLBACK; .value = (intptr_t)ulfius_uri_logger; .ptr_value = NULL;}
- * - MUST end with a terminal struct MHD_OptionItem: {.option = MHD_OPTION_END; .value = 0; .ptr_value = NULL;}
- * @return U_OK on success
- */
 int ulfius_start_framework_with_mhd_options(struct _u_instance * u_instance, unsigned int mhd_flags, struct MHD_OptionItem * mhd_ops) {
   if (u_instance == NULL) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - ulfius_start_framework_with_mhd_options - Error, u_instance is NULL");

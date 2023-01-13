@@ -495,7 +495,7 @@ int ulfius_start_secure_ca_trust_framework(struct _u_instance * u_instance, cons
  * - MUST end with a terminal struct MHD_OptionItem: {.option = MHD_OPTION_END; .value = 0; .ptr_value = NULL;}
  * @return U_OK on success
  */
-int ulfius_start_framework_with_mhd_options(struct _u_instance * u_instance, unsigned int mhd_flags, struct MHD_OptionItem * options);
+int ulfius_start_framework_with_mhd_options(struct _u_instance * u_instance, unsigned int mhd_flags, struct MHD_OptionItem * mhd_ops);
 
 /**
  * Internal functions externalized to use ulfius_start_framework_with_mhd_options
@@ -1010,15 +1010,15 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
  * Exports a struct _u_request * into a readable HTTP request
  * This function is for debug or educational purpose
  * And the output is probably incomplete for some edge cases
- * So don't think this is the right way
- * Example:
- * PUT /api/write HTTP/1.1\r\n
- * Host: domain.tld\r\n
- * Accept: gzip\r\n
- * Content-Type: application/x-www-form-urlencoded\r\n
- * Content-length: 4321\r\n
- * \r\n
- * key1=value1&key2=value2[...]
+ * So don't think this is the right way.
+ * Example:\n 
+ * PUT /api/write HTTP/1.1\n 
+ * Host: domain.tld\n 
+ * Accept: gzip\n 
+ * Content-Type: application/x-www-form-urlencoded\n 
+ * Content-length: 432\n 
+ * \n 
+ * key1=value1&key2=value2[...]\n 
  * 
  * @param request the request to export
  * returned value must be u_free'd after use
@@ -1102,19 +1102,19 @@ int ulfius_set_response_shared_data(struct _u_response * response, void * shared
  * Exports a struct _u_response * into a readable HTTP response
  * This function is for debug or educational purpose
  * And the output is probably incomplete for some edge cases
- * So don't think this is the right way
- * Example:
- * HTTP/1.1 200 OK\r\n
- * Content-type: text/html; charset=utf-8\r\n
- * Set-Cookie: cookieXyz1234...\r\n
- * Content-length: 1234\r\n
- * \r\n
- * <html>\r\n
- * <head>\r\n
- * <title>Hello World!</title>\r\n
- * </head>\r\n
- * <body>\r\n
- * <h2>Welcome</h2>\r\n
+ * So don't think this is the right way.
+ * Example:\n 
+ * HTTP/1.1 200 OK\n 
+ * Content-type: text/html; charset=utf-8\n 
+ * Set-Cookie: cookieXyz1234...\n 
+ * Content-length: 1234\n 
+ * \n 
+ * \<html\>\n 
+ * \<head>\n 
+ * \<title\>Hello World!\</title\>\n 
+ * \</head\>\n 
+ * \<body\>\n 
+ * \<h2\>Welcome\</h2\>\n 
  * ....
  * 
  * @param response the response to export
