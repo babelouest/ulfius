@@ -1011,15 +1011,15 @@ struct _u_request * ulfius_duplicate_request(const struct _u_request * request);
  * This function is for debug or educational purpose
  * And the output is probably incomplete for some edge cases
  * So don't think this is the right way.
- * Example:\n 
- * PUT /api/write HTTP/1.1\n 
- * Host: domain.tld\n 
- * Accept: gzip\n 
- * Content-Type: application/x-www-form-urlencoded\n 
- * Content-length: 432\n 
- * \n 
- * key1=value1&key2=value2[...]\n 
- * 
+ * Example:\n
+ * PUT /api/write HTTP/1.1\n
+ * Host: domain.tld\n
+ * Accept: gzip\n
+ * Content-Type: application/x-www-form-urlencoded\n
+ * Content-length: 432\n
+ * \n
+ * key1=value1&key2=value2[...]\n
+ *
  * @param request the request to export
  * returned value must be u_free'd after use
  */
@@ -1103,20 +1103,20 @@ int ulfius_set_response_shared_data(struct _u_response * response, void * shared
  * This function is for debug or educational purpose
  * And the output is probably incomplete for some edge cases
  * So don't think this is the right way.
- * Example:\n 
- * HTTP/1.1 200 OK\n 
- * Content-type: text/html; charset=utf-8\n 
- * Set-Cookie: cookieXyz1234...\n 
- * Content-length: 1234\n 
- * \n 
- * \<html\>\n 
- * \<head>\n 
- * \<title\>Hello World!\</title\>\n 
- * \</head\>\n 
- * \<body\>\n 
- * \<h2\>Welcome\</h2\>\n 
+ * Example:\n
+ * HTTP/1.1 200 OK\n
+ * Content-type: text/html; charset=utf-8\n
+ * Set-Cookie: cookieXyz1234...\n
+ * Content-length: 1234\n
+ * \n
+ * \<html\>\n
+ * \<head>\n
+ * \<title\>Hello World!\</title\>\n
+ * \</head\>\n
+ * \<body\>\n
+ * \<h2\>Welcome\</h2\>\n
  * ....
- * 
+ *
  * @param response the response to export
  * returned value must be u_free'd after use
  */
