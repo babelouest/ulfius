@@ -814,16 +814,16 @@ static int ulfius_get_next_line_from_http_response(struct _websocket * websocket
   do {
     if (read_data_from_socket(websocket->websocket_manager, &car, 1) == 1) {
       buffer[offset] = (char)car;
-    }
 
-    if (offset > 0 && buffer[offset-1] == '\r' && buffer[offset] == '\n') {
-      eol = 1;
-      buffer[offset-1] = '\0';
-      *line_len = offset - 1;
-      ret = U_OK;
-    }
+      if (offset > 0 && buffer[offset-1] == '\r' && buffer[offset] == '\n') {
+        eol = 1;
+        buffer[offset-1] = '\0';
+        *line_len = offset - 1;
+        ret = U_OK;
+      }
 
-    offset++;
+      offset++;
+    }
   } while (websocket->websocket_manager->connected && !eol && offset < buffer_len);
 
   if (!websocket->websocket_manager->connected && !eol && offset < buffer_len) {
