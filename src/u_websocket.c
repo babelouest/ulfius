@@ -905,6 +905,7 @@ static int ulfius_websocket_connection_handshake(struct _u_request * request, st
   }
   if (websocket_response_http && response->status == 101) {
     do {
+      memset(buffer, 0, buffer_len);
       if (ulfius_get_next_line_from_http_response(websocket, buffer, buffer_len, &line_len) == U_OK) {
         if (!o_strnullempty(buffer) && (separator = o_strchr(buffer, ':')) != NULL) {
           key = o_strndup(buffer, (size_t)(separator - buffer));
