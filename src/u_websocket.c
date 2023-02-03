@@ -817,9 +817,11 @@ static int ulfius_get_next_line_from_http_response(struct _websocket * websocket
 
       if (offset > 0 && buffer[offset-1] == '\r' && buffer[offset] == '\n') {
         eol = 1;
-        buffer[offset-1] = '\0';
-        *line_len = offset - 1;
-        ret = U_OK;
+        if (utf8_check(buffer, offset-1) == NULL) {
+          buffer[offset-1] = '\0';
+          *line_len = offset - 1;
+          ret = U_OK;
+        }
       }
 
       offset++;
