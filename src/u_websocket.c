@@ -299,7 +299,7 @@ static struct _websocket_message * ulfius_build_message (const uint8_t opcode,
           new_message->has_mask = 0;
           memset(new_message->mask, 0, 4);
         } else {
-          if (gnutls_rnd(GNUTLS_RND_NONCE, &new_message->mask, 4*sizeof(uint8_t))) {
+          if (gnutls_rnd(GNUTLS_RND_NONCE, &new_message->mask, 4*sizeof(uint8_t)) != GNUTLS_E_SUCCESS) {
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error gnutls_rnd");
             o_free(new_message->data);
             o_free(new_message);
@@ -2349,7 +2349,7 @@ static long random_at_most(long max, int * res) {
   unsigned char x[1];
   * res = 1;
   do {
-    if (gnutls_rnd(GNUTLS_RND_KEY, x, sizeof(x)) < 0) {
+    if (gnutls_rnd(GNUTLS_RND_KEY, x, sizeof(x)) != GNUTLS_E_SUCCESS) {
       * res = 0;
     }
   }
