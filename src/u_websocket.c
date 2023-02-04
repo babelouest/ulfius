@@ -54,6 +54,8 @@
 
 #define U_WEBSOCKET_DEFAULT_MEMORY_LEVEL 4
 #define U_WEBSOCKET_DEFAULT_WINDOWS_BITS 15
+#define U_WEBSOCKET_SEC_KEY_LEN          16
+#define U_WEBSOCKET_RESPONSE_BUFFER_LEN  4096
 
 /**********************************/
 /** Internal websocket functions **/
@@ -297,13 +299,21 @@ static struct _websocket_message * ulfius_build_message (const uint8_t opcode,
           new_message->has_mask = 0;
           memset(new_message->mask, 0, 4);
         } else {
-          gnutls_rnd(GNUTLS_RND_NONCE, &new_message->mask, 4*sizeof(uint8_t));
-          new_message->has_mask = 1;
+          if (gnutls_rnd(GNUTLS_RND_NONCE, &new_message->mask, 4*sizeof(uint8_t))) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error gnutls_rnd");
+            o_free(new_message->data);
+            o_free(new_message);
+            new_message = NULL;
+          } else {
+            new_message->has_mask = 1;
+          }
         }
-        if (data_len > 0) {
-          memcpy(new_message->data, data, (size_t)data_len);
+        if (new_message != NULL) {
+          if (data_len > 0) {
+            memcpy(new_message->data, data, (size_t)data_len);
+          }
+          time(&new_message->datestamp);
         }
-        time(&new_message->datestamp);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for new_message->data");
         o_free(new_message);
@@ -846,9 +856,9 @@ static int ulfius_websocket_connection_handshake(struct _u_request * request, st
   int websocket_response_http = 0, ret, extension_enabled;
   unsigned int websocket_response = 0, check_websocket = WEBSOCKET_RESPONSE_UPGRADE | WEBSOCKET_RESPONSE_CONNECTION | WEBSOCKET_RESPONSE_ACCEPT;
   char * http_line, ** split_line = NULL, * key, * value, * separator, ** extension_list = NULL;
-  char buffer[4096] = {0};
+  char buffer[U_WEBSOCKET_RESPONSE_BUFFER_LEN+1] = {0};
   const char ** keys;
-  size_t buffer_len = 4096, line_len, extension_len, i, j;
+  size_t buffer_len = U_WEBSOCKET_RESPONSE_BUFFER_LEN, line_len, extension_len, i, j;
   struct _websocket_extension * w_extension;
 
   // Send HTTP Request
@@ -907,7 +917,7 @@ static int ulfius_websocket_connection_handshake(struct _u_request * request, st
   }
   if (websocket_response_http && response->status == 101) {
     do {
-      memset(buffer, 0, buffer_len);
+      memset(buffer, 0, buffer_len+1);
       if (ulfius_get_next_line_from_http_response(websocket, buffer, buffer_len, &line_len) == U_OK) {
         if (!o_strnullempty(buffer) && (separator = o_strchr(buffer, ':')) != NULL) {
           key = o_strndup(buffer, (size_t)(separator - buffer));
@@ -2329,7 +2339,7 @@ int ulfius_websocket_wait_close(struct _websocket_manager * websocket_manager, u
 /** Client websocket functions **/
 /********************************/
 
-static long random_at_most(long max) {
+static long random_at_most(long max, int * res) {
   unsigned char
   num_bins = (unsigned char) (max + 1),
   num_rand = (unsigned char) 0xff,
@@ -2337,14 +2347,21 @@ static long random_at_most(long max) {
   defect   = num_rand % num_bins;
 
   unsigned char x[1];
+  * res = 1;
   do {
-    gnutls_rnd(GNUTLS_RND_KEY, x, sizeof(x));
+    if (gnutls_rnd(GNUTLS_RND_KEY, x, sizeof(x)) < 0) {
+      * res = 0;
+    }
   }
   // This is carefully written not to overflow
-  while (num_rand - defect <= (unsigned char)x[0]);
+  while (*res && num_rand - defect <= (unsigned char)x[0]);
 
   // Truncated division is intentional
-  return x[0]/bin_size;
+  if (*res) {
+    return x[0]/bin_size;
+  } else {
+    return 0;
+  }
 }
 
 /**
@@ -2353,10 +2370,14 @@ static long random_at_most(long max) {
 static char * rand_string(char * str, size_t str_size) {
   const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   size_t n;
+  int res = 0;
 
   if (str_size > 0 && str != NULL) {
     for (n = 0; n < str_size; n++) {
-      long key = random_at_most((sizeof(charset)) - 2);
+      long key = random_at_most((sizeof(charset)) - 2, &res);
+      if (!res) {
+        return NULL;
+      }
       str[n] = charset[key];
     }
     str[str_size] = '\0';
@@ -2376,8 +2397,8 @@ int ulfius_set_websocket_request(struct _u_request * request,
                                   const char * websocket_protocol,
                                   const char * websocket_extensions) {
   int ret;
-  char rand_str[17] = {0}, rand_str_base64[25] = {0};
-  size_t out_len;
+  char rand_str[U_WEBSOCKET_SEC_KEY_LEN+1] = {0}, rand_str_base64[(U_WEBSOCKET_SEC_KEY_LEN*2)+1] = {0};
+  size_t out_len = 0;
 
   if (request != NULL && url != NULL) {
     o_free(request->http_protocol);
@@ -2394,13 +2415,17 @@ int ulfius_set_websocket_request(struct _u_request * request,
     }
     u_map_put(request->map_header, "Sec-WebSocket-Version", "13");
     u_map_put(request->map_header, "User-Agent", U_WEBSOCKET_USER_AGENT "/" STR(ULFIUS_VERSION));
-    rand_string(rand_str, 16);
-    if (!o_base64_encode((unsigned char *)rand_str, 16, (unsigned char *)rand_str_base64, &out_len)) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error o_base64_encode with the input string %s", rand_str);
-      ret = U_ERROR;
+    if (rand_string(rand_str, U_WEBSOCKET_SEC_KEY_LEN) != NULL) {
+      if (!o_base64_encode((unsigned char *)rand_str, U_WEBSOCKET_SEC_KEY_LEN, (unsigned char *)rand_str_base64, &out_len)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error o_base64_encode with the input string %s", rand_str);
+        ret = U_ERROR;
+      } else {
+        u_map_put(request->map_header, "Sec-WebSocket-Key", rand_str_base64);
+        ret = U_OK;
+      }
     } else {
-      u_map_put(request->map_header, "Sec-WebSocket-Key", rand_str_base64);
-      ret = U_OK;
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error rand_string");
+      ret = U_ERROR;
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_set_websocket_request input parameters");
