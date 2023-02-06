@@ -1082,7 +1082,7 @@ static int ulfius_open_websocket_tls(struct _u_request * request, struct yuarel 
   struct sockaddr_in server;
   struct hostent * he;
   gnutls_datum_t out;
-  int type;
+  gnutls_certificate_type_t type;
   unsigned status;
 
   if (gnutls_global_init() >= 0) {

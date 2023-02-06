@@ -153,7 +153,12 @@ static char * ulfius_generate_cookie_header(const struct _u_cookie * cookie) {
 int ulfius_set_response_header(struct MHD_Response * response, const struct _u_map * response_map_header) {
   const char ** header_keys = u_map_enum_keys(response_map_header);
   const char * header_value;
-  int i = -1, ret;
+  int i = -1;
+#if MHD_VERSION >= 0x00097002
+  enum MHD_Result ret = MHD_NO;
+#else
+  int ret = MHD_NO;
+#endif
   if (header_keys != NULL && response != NULL && response_map_header != NULL) {
     for (i=0; header_keys != NULL && header_keys[i] != NULL; i++) {
       header_value = u_map_get(response_map_header, header_keys[i]);
@@ -170,7 +175,11 @@ int ulfius_set_response_header(struct MHD_Response * response, const struct _u_m
 }
 
 int ulfius_set_response_cookie(struct MHD_Response * mhd_response, const struct _u_response * response) {
-  int ret;
+#if MHD_VERSION >= 0x00097002
+  enum MHD_Result ret = MHD_NO;
+#else
+  int ret = MHD_NO;
+#endif
   int i;
   char * header;
   if (mhd_response != NULL && response != NULL) {

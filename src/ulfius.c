@@ -444,7 +444,12 @@ static int ulfius_webservice_dispatcher (void * cls,
 {
   struct _u_endpoint * endpoint_list = ((struct _u_instance *)cls)->endpoint_list, ** current_endpoint_list = NULL, * current_endpoint = NULL;
   struct connection_info_struct * con_info = * con_cls;
-  int mhd_ret = MHD_NO, callback_ret = U_OK, i, close_loop = 0, inner_error = U_OK, mhd_response_flag;
+#if MHD_VERSION >= 0x00097002
+  enum MHD_Result mhd_ret = MHD_NO;
+#else
+  int mhd_ret = MHD_NO;
+#endif
+  int callback_ret = U_OK, i, close_loop = 0, inner_error = U_OK, mhd_response_flag;
 #ifndef U_DISABLE_WEBSOCKET
   // Websocket variables
   int upgrade_protocol = 0;
