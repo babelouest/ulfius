@@ -2349,7 +2349,7 @@ static long random_at_most(long max, int * res) {
   unsigned char x[1];
   * res = 1;
   do {
-    if (gnutls_rnd(GNUTLS_RND_KEY, x, sizeof(x)) != GNUTLS_E_SUCCESS) {
+    if (gnutls_rnd(GNUTLS_RND_NONCE, x, sizeof(x)) != GNUTLS_E_SUCCESS) {
       * res = 0;
     }
   }
