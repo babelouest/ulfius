@@ -1,5 +1,10 @@
 # Ulfius Changelog
 
+## 2.7.13
+
+- Websockets client: fix case where server sends a 0-length packet (#245)
+- Minor improvements
+
 ## 2.7.12
 
 - Improve cmake script and build for Visual Studio integration
