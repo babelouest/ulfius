@@ -625,7 +625,6 @@ static int ulfius_webservice_dispatcher (void * cls,
           u_map_empty(con_info->request->map_url);
           u_map_copy_into(con_info->request->map_url, &con_info->map_url_initial);
           if (ulfius_parse_url(con_info->request->url_path, current_endpoint, con_info->request->map_url, con_info->u_instance->check_utf8) != U_OK) {
-            o_free(response);
             y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error parsing url: ", con_info->request->url_path);
             mhd_ret = MHD_NO;
           }
