@@ -1676,6 +1676,8 @@ UNUSED(network_type);
     u_instance->default_auth_realm = o_strdup(default_auth_realm);
     u_instance->nb_endpoints = 0;
     u_instance->endpoint_list = NULL;
+    u_instance->websocket_handler = NULL;
+    u_instance->default_endpoint = NULL;
     u_instance->default_headers = o_malloc(sizeof(struct _u_map));
     u_instance->mhd_response_copy_data = 0;
     u_instance->check_utf8 = 1;
@@ -1685,7 +1687,6 @@ UNUSED(network_type);
       return U_ERROR_MEMORY;
     }
     u_map_init(u_instance->default_headers);
-    u_instance->default_endpoint = NULL;
     u_instance->max_post_param_size = 0;
     u_instance->max_post_body_size = 0;
     u_instance->file_upload_callback = NULL;
