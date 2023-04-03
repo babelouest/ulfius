@@ -1727,6 +1727,7 @@ int ulfius_init_websocket(struct _websocket * websocket) {
       websocket->websocket_manager->tls = 0;
       if (ulfius_init_websocket_manager(websocket->websocket_manager) != U_OK) {
         o_free(websocket->websocket_manager);
+        websocket->websocket_manager = NULL;
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error ulfius_init_websocket_manager");
         return U_ERROR;
       } else {
