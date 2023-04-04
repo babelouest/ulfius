@@ -32,6 +32,8 @@
 int u_map_init(struct _u_map * u_map) {
   if (u_map != NULL) {
     u_map->nb_values = 0;
+    u_map->values = NULL;
+    u_map->lengths = NULL;
     u_map->keys = o_malloc(sizeof(char *));
     if (u_map->keys == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for u_map->keys");
@@ -43,6 +45,7 @@ int u_map_init(struct _u_map * u_map) {
     if (u_map->values == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for u_map->values");
       o_free(u_map->keys);
+      u_map->keys = NULL;
       return U_ERROR_MEMORY;
     }
     u_map->values[0] = NULL;
@@ -52,6 +55,8 @@ int u_map_init(struct _u_map * u_map) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for u_map->lengths");
       o_free(u_map->keys);
       o_free(u_map->values);
+      u_map->keys = NULL;
+      u_map->values = NULL;
       return U_ERROR_MEMORY;
     }
     u_map->lengths[0] = 0;
@@ -72,6 +77,9 @@ int u_map_clean(struct _u_map * u_map) {
     o_free(u_map->keys);
     o_free(u_map->values);
     o_free(u_map->lengths);
+    u_map->keys = NULL;
+    u_map->values = NULL;
+    u_map->lengths = NULL;
     return U_OK;
   } else {
     return U_ERROR_PARAMS;
