@@ -1,0 +1,5 @@
+<map id="_u_instance" name="_u_instance">
+<area shape="rect" id="node1" title="Contains the needed data for an ulfius instance to work." alt="" coords="62,109,161,136"/>
+<area shape="rect" id="node2" href="$struct__u__map.html" title=" " alt="" coords="5,5,79,32"/>
+<area shape="rect" id="node3" href="$struct__u__endpoint.html" title="Contains all informations needed for an endpoint." alt="" coords="131,5,233,32"/>
+</map>

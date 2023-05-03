@@ -1,0 +1,9 @@
+<map id="include/u_private.h" name="include/u_private.h">
+<area shape="rect" id="node1" title=" " alt="" coords="350,5,497,32"/>
+<area shape="rect" id="node2" href="$u__map_8c.html" title=" " alt="" coords="5,80,105,107"/>
+<area shape="rect" id="node3" href="$u__request_8c.html" title=" " alt="" coords="130,80,250,107"/>
+<area shape="rect" id="node4" href="$u__response_8c.html" title=" " alt="" coords="274,80,405,107"/>
+<area shape="rect" id="node5" href="$u__send__request_8c.html" title=" " alt="" coords="429,80,588,107"/>
+<area shape="rect" id="node6" href="$u__websocket_8c.html" title=" " alt="" coords="612,80,752,107"/>
+<area shape="rect" id="node7" href="$ulfius_8c.html" title=" " alt="" coords="776,80,868,107"/>
+</map>

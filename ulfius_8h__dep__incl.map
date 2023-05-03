@@ -1,0 +1,10 @@
+<map id="include/ulfius.h" name="include/ulfius.h">
+<area shape="rect" id="node1" title="Ulfius framework." alt="" coords="363,5,484,32"/>
+<area shape="rect" id="node2" href="$u__map_8c.html" title=" " alt="" coords="5,155,105,181"/>
+<area shape="rect" id="node3" href="$u__request_8c.html" title=" " alt="" coords="130,155,250,181"/>
+<area shape="rect" id="node4" href="$u__response_8c.html" title=" " alt="" coords="274,155,405,181"/>
+<area shape="rect" id="node5" href="$u__send__request_8c.html" title=" " alt="" coords="429,155,588,181"/>
+<area shape="rect" id="node6" href="$u__websocket_8c.html" title=" " alt="" coords="612,155,752,181"/>
+<area shape="rect" id="node7" href="$ulfius_8c.html" title=" " alt="" coords="776,155,868,181"/>
+<area shape="rect" id="node8" href="$u__private_8h.html" title=" " alt="" coords="350,80,497,107"/>
+</map>

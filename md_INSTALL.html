@@ -86,14 +86,13 @@ $(function() {
 <div class="fragment"><div class="line"># apt install -y libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev libgnutls28-dev libgcrypt20-dev zlib1g-dev</div>
 </div><!-- fragment --><h2>Good ol' Makefile</h2>
 <p>Download Orcania, Yder and Ulfius source code from GitHub, compile and install Orcania, then Yder, then compile and install Ulfius:</p>
-<div class="fragment"><div class="line">$ git clone https://github.com/babelouest/orcania.git</div>
-<div class="line">$ git clone https://github.com/babelouest/yder.git</div>
-<div class="line">$ git clone https://github.com/babelouest/ulfius.git</div>
-<div class="line">$ cd orcania/</div>
+<p>Last Orcania release: <a href="https://github.com/babelouest/orcania/releases/latest/">https://github.com/babelouest/orcania/releases/latest/</a> Last Yder release: [<a href="https://github.com/babelouest/yder/releases/latest/">https://github.com/babelouest/yder/releases/latest/</a>](t/](<a href="https://github.com/babelouest/orcania/releases/latest/">https://github.com/babelouest/orcania/releases/latest/</a>) Last Ulfius release: <a href="https://github.com/babelouest/ulfius/releases/latest/">https://github.com/babelouest/ulfius/releases/latest/</a></p>
+<p><b>Note: Make sure all the previous installed version of those libraries, via a package manager for example, are removed.</b></p>
+<div class="fragment"><div class="line">$ cd &lt;orcania_source&gt;</div>
 <div class="line">$ make &amp;&amp; sudo make install</div>
-<div class="line">$ cd ../yder/</div>
+<div class="line">$ cd &lt;yder_source&gt;</div>
 <div class="line">$ make &amp;&amp; sudo make install</div>
-<div class="line">$ cd ../ulfius/</div>
+<div class="line">$ cd &lt;ulfius_source&gt;</div>
 <div class="line">$ make &amp;&amp; sudo make install</div>
 </div><!-- fragment --><h3>Disable Ulfius dependencies</h3>
 <p>To disable libcurl functions, append the option <code>CURLFLAG=1</code> to the make command when you build Ulfius:</p>

@@ -1,0 +1,7 @@
+<map id="connection_info_struct" name="connection_info_struct">
+<area shape="rect" id="node1" title=" " alt="" coords="257,228,426,255"/>
+<area shape="rect" id="node2" href="$struct__u__map.html" title=" " alt="" coords="305,5,378,32"/>
+<area shape="rect" id="node3" href="$struct__u__instance.html" title="Contains the needed data for an ulfius instance to work." alt="" coords="152,139,251,165"/>
+<area shape="rect" id="node5" href="$struct__u__request.html" title="definition of the parameters available in a struct _u_request" alt="" coords="295,139,388,165"/>
+<area shape="rect" id="node4" href="$struct__u__endpoint.html" title="Contains all informations needed for an endpoint." alt="" coords="5,5,107,32"/>
+</map>
