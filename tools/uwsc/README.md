@@ -10,6 +10,8 @@ This program is free software; you can redistribute it and/or modify it under th
 
 Can connect to websocket services, both ws:// (http) or wss:// (https). When the websocket is connected, messages from the server are displayed in the terminal and messages can be sent to the service via a prompt `> `.
 
+This program is intended to debug websocket connections, so its functionalities and options are limited.
+
 To quit uwsc during connection, enter the message `!q`.
 
 ## Options
@@ -37,12 +39,10 @@ Options available:
 	Specify the Websocket extensions values, default none
 -s --non-secure
 	Do not check server certificate
--s --non-secure
-	Do not check server certificate
 -q --quiet
 	Quiet mode, show only websocket messages
 -v --version
-	Print Glewlwyd's current version
+	Print uwsc's current version
 
 -h --help
 	Print this message
