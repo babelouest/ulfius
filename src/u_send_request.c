@@ -220,6 +220,30 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
               break;
             }
           }
+          // Set protocols to http and https only
+#if CURL_AT_LEAST_VERSION(7,85,0)
+          if (curl_easy_setopt(curl_handle, CURLOPT_REDIR_PROTOCOLS_STR, "http,https") != CURLE_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting curl redirection protocols");
+            ret = U_ERROR_LIBCURL;
+            break;
+          }
+          if (curl_easy_setopt(curl_handle, CURLOPT_PROTOCOLS_STR, "http,https") != CURLE_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting curl protocols");
+            ret = U_ERROR_LIBCURL;
+            break;
+          }
+#else
+          if (curl_easy_setopt(curl_handle, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS) != CURLE_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting curl redirection protocols");
+            ret = U_ERROR_LIBCURL;
+            break;
+          }
+          if (curl_easy_setopt(curl_handle, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS) != CURLE_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting curl protocols");
+            ret = U_ERROR_LIBCURL;
+            break;
+          }
+#endif
 
           // Set basic auth if defined
           if (copy_request->auth_basic_user != NULL && copy_request->auth_basic_password != NULL) {
