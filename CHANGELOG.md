@@ -1,5 +1,12 @@
 # Ulfius Changelog
 
+## 2.7.14
+
+- Set protocols to http and https only in send requests
+- Fix static analyzer warnings
+- Minor improvements
+- cmake: remove `DownloadProject` feature, now dependencies must be previously installed
+
 ## 2.7.13
 
 - Websockets client: fix case where server sends a 0-length packet (#245)

@@ -32,7 +32,7 @@ set(PROJECT_HOMEPAGE_URL "https://github.com/babelouest/ulfius/")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/ulfius/issues")
 set(LIBRARY_VERSION_MAJOR "2")
 set(LIBRARY_VERSION_MINOR "7")
-set(LIBRARY_VERSION_PATCH "13")
+set(LIBRARY_VERSION_PATCH "14")
 
 set(PROJECT_VERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}.${LIBRARY_VERSION_PATCH}")
 set(PROJECT_VERSION_MAJOR ${LIBRARY_VERSION_MAJOR})
@@ -58,7 +58,7 @@ set(PROJECT_VERSION_NUMBER "${LIBRARY_VERSION_MAJOR_PAD}${LIBRARY_VERSION_MINOR_
 
 set(LIBRARY_VERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}.${LIBRARY_VERSION_PATCH}")
 set(LIBRARY_SOVERSION "${LIBRARY_VERSION_MAJOR}.${LIBRARY_VERSION_MINOR}")
-set(ORCANIA_VERSION_REQUIRED "2.3.2")
+set(ORCANIA_VERSION_REQUIRED "2.3.3")
 set(YDER_VERSION_REQUIRED "1.4.19")
 set(JANSSON_VERSION_REQUIRED "2.1")
 
@@ -272,46 +272,11 @@ endif ()
 
 # dependencies
 
-option(DOWNLOAD_DEPENDENCIES "Download required dependencies" ON)
-
-option(SEARCH_ORCANIA_U "Search for ORCANIA library" ON)
-if (SEARCH_ORCANIA_U)
-    set(Orcania_FIND_QUIETLY ON) # force to find Orcania quietly
-    find_package(Orcania ${ORCANIA_VERSION_REQUIRED} QUIET) # try to find orcania
-    if (NOT Orcania_FOUND)
-        if (DOWNLOAD_DEPENDENCIES)
-            include(DownloadProject)
-            download_project(PROJ orcania # ... otherwise, download archive
-                             URL "https://github.com/babelouest/orcania/archive/v${ORCANIA_VERSION_REQUIRED}.tar.gz"
-                             QUIET)
-            add_subdirectory(${orcania_SOURCE_DIR} ${orcania_BINARY_DIR})
-            # The following lines can be removed once Orcania has full target support
-            if (TARGET orcania)
-                if (NOT TARGET Orcania::Orcania)
-                    add_library(Orcania::Orcania INTERFACE IMPORTED)
-                    set_target_properties(Orcania::Orcania PROPERTIES
-                            INTERFACE_INCLUDE_DIRECTORIES "${orcania_SOURCE_DIR};${orcania_SOURCE_DIR}/include;${orcania_BINARY_DIR}"
-                            INTERFACE_LINK_LIBRARIES orcania)
-                endif ()
-            endif ()
-            if (TARGET orcania_static)
-                if (NOT TARGET Orcania::Orcania-static)
-                    add_library(Orcania::Orcania-static INTERFACE IMPORTED)
-                    set_target_properties(Orcania::Orcania-static PROPERTIES
-                        INTERFACE_INCLUDE_DIRECTORIES "${orcania_SOURCE_DIR};${orcania_SOURCE_DIR}/include;${orcania_BINARY_DIR}"
-                        INTERFACE_LINK_LIBRARIES orcania-_static)
-                endif ()
-            endif ()
-        else ()
-            message( FATAL_ERROR "Orcania not found")
-        endif ()
-    else()
-        if ("${ORCANIA_VERSION_STRING}" VERSION_GREATER_EQUAL "${ORCANIA_VERSION_REQUIRED}")
-            message(STATUS "Orcania found: ${ORCANIA_VERSION_STRING}")
-        else ()
-            message( FATAL_ERROR "Orcania version required: ${ORCANIA_VERSION_REQUIRED} - version installed: ${ORCANIA_VERSION_STRING}")
-        endif ()
-    endif ()
+find_package(Orcania ${ORCANIA_VERSION_REQUIRED} REQUIRED)
+if ("${ORCANIA_VERSION_STRING}" VERSION_GREATER_EQUAL "${ORCANIA_VERSION_REQUIRED}")
+    message(STATUS "Orcania found: ${ORCANIA_VERSION_STRING}")
+else ()
+    message( FATAL_ERROR "Orcania version required: ${ORCANIA_VERSION_REQUIRED} - version installed: ${ORCANIA_VERSION_STRING}")
 endif ()
 
 if (BUILD_SHARED)
@@ -325,65 +290,22 @@ if (BUILD_STATIC)
     endif()
 endif ()
 
-option(WITH_YDER "Use Yder library to log messages" ON)
-option(SEARCH_YDER "Search for Yder library" ON)
-
-if (WITH_YDER)
-    set(U_DISABLE_YDER OFF)
-    set(SEARCH_ORCANIA OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during yder search and download
-
-    if (SEARCH_YDER)
-        set(Yder_FIND_QUIETLY ON) # force to find Yder quietly
-        find_package(Yder ${YDER_VERSION_REQUIRED} QUIET) # try to find Yder
-        if (NOT Yder_FOUND)
-            if (DOWNLOAD_DEPENDENCIES)
-                include(DownloadProject)
-                download_project(PROJ yder # ... otherwise, download archive
-                                  URL "https://github.com/babelouest/yder/archive/v${YDER_VERSION_REQUIRED}.tar.gz"
-                                  QUIET)
-                add_subdirectory(${yder_SOURCE_DIR} ${yder_BINARY_DIR})
-                # The following lines can be removed once Yver has full target support
-                if (TARGET yder)
-                    target_include_directories(yder PRIVATE "${orcania_SOURCE_DIR};${orcania_SOURCE_DIR}/include;${orcania_BINARY_DIR}")
-                    if (NOT TARGET Yder::Yder)
-                        add_library(Yder::Yder INTERFACE IMPORTED)
-                        set_target_properties(Yder::Yder PROPERTIES
-                            INTERFACE_INCLUDE_DIRECTORIES "${yder_SOURCE_DIR};${yder_SOURCE_DIR}/include;${yder_BINARY_DIR}"
-                            INTERFACE_LINK_LIBRARIES yder)
-                    endif ()
-                endif ()
-                if (TARGET yder_static)
-                    target_include_directories(yder_static PRIVATE "${orcania_SOURCE_DIR};${orcania_SOURCE_DIR}/include;${orcania_BINARY_DIR}")
-                    if (NOT TARGET Yder::Yder-static)
-                        add_library(Yder::Yder-static INTERFACE IMPORTED)
-                        set_target_properties(Yder::Yder-static PROPERTIES
-                            INTERFACE_INCLUDE_DIRECTORIES "${yder_SOURCE_DIR};${yder_SOURCE_DIR}/include;${yder_BINARY_DIR}"
-                            INTERFACE_LINK_LIBRARIES yder_static)
-                    endif ()
-                endif ()
-            else ()
-                message( FATAL_ERROR "Yder not found")
-            endif ()
-        else()
-            if ("${YDER_VERSION_STRING}" VERSION_GREATER_EQUAL "${YDER_VERSION_REQUIRED}")
-                message(STATUS "Yder found: ${YDER_VERSION_STRING}")
-            else ()
-                message( FATAL_ERROR "Yder version required: ${YDER_VERSION_REQUIRED} - version installed: ${YDER_VERSION_STRING}")
-            endif ()
-        endif ()
-        if (BUILD_SHARED)
-            target_link_libraries(ulfius PUBLIC $<TARGET_NAME:Yder::Yder>)
-        endif ()
-        if (BUILD_STATIC)
-            if(TARGET Yder::Yder-static)
-                target_link_libraries(ulfius_static PUBLIC $<TARGET_NAME:Yder::Yder-static>)
-            else()
-                target_link_libraries(ulfius_static PUBLIC $<TARGET_NAME:Yder::Yder>)
-            endif()
-        endif ()
-    endif ()
+find_package(Yder ${YDER_VERSION_REQUIRED} REQUIRED)
+if ("${YDER_VERSION_STRING}" VERSION_GREATER_EQUAL "${YDER_VERSION_REQUIRED}")
+    message(STATUS "Yder found: ${YDER_VERSION_STRING}")
 else ()
-    set(U_DISABLE_YDER ON)
+    message( FATAL_ERROR "Yder version required: ${YDER_VERSION_REQUIRED} - version installed: ${YDER_VERSION_STRING}")
+endif ()
+
+if (BUILD_SHARED)
+    target_link_libraries(ulfius PUBLIC $<TARGET_NAME:Yder::Yder>)
+endif ()
+if (BUILD_STATIC)
+    if(TARGET Yder::Yder-static)
+        target_link_libraries(ulfius_static PUBLIC $<TARGET_NAME:Yder::Yder-static>)
+    else()
+        target_link_libraries(ulfius_static PUBLIC $<TARGET_NAME:Yder::Yder>)
+    endif()
 endif ()
 
 # build uwsc
