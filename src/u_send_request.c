@@ -59,13 +59,13 @@ struct tm * gmtime_r(const time_t* t, struct tm* r) {
 }
 #endif
 
-
 /**
  * Internal structure used to store temporarily the response body
  */
 struct _u_body {
   char * data;
   size_t size;
+  size_t size_limit;
 };
 
 /**
@@ -77,23 +77,43 @@ struct _u_smtp_payload {
   char * data;
 };
 
+struct _u_response_header {
+  struct _u_response * response;
+  size_t max_header;
+  size_t counter;
+};
+
 /**
  * ulfius_write_body
  * Internal function used to write the body response into a _body structure
  */
 static size_t ulfius_write_body(void * contents, size_t size, size_t nmemb, void * user_data) {
-  size_t realsize = size * nmemb;
+  size_t realsize = size * nmemb, cur_size = realsize;
   struct _u_body * body_data = (struct _u_body *) user_data;
 
-  body_data->data = o_realloc(body_data->data, body_data->size + realsize + 1);
-  if(body_data->data == NULL) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for body_data->data");
-    return 0;
+  if (body_data->size_limit) {
+    if (body_data->size < body_data->size_limit) {
+      if ((body_data->size + realsize + 1) > body_data->size_limit) {
+        cur_size = body_data->size_limit - body_data->size;
+      }
+    } else {
+      cur_size = 0;
+    }
   }
+  if (cur_size) {
+    body_data->data = o_realloc(body_data->data, body_data->size + cur_size + 1);
+    if(body_data->data == NULL) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for body_data->data");
+      return 0;
+    }
 
-  memcpy(&(body_data->data[body_data->size]), contents, realsize);
-  body_data->size += realsize;
-  body_data->data[body_data->size] = 0;
+    memcpy(&(body_data->data[body_data->size]), contents, cur_size);
+    body_data->size += cur_size;
+    body_data->data[body_data->size] = 0;
+  } else if (body_data->size_limit && !cur_size) {
+    // size_limit reached, ignoring the rest of the response body
+    return realsize;
+  }
 
   return realsize;
 }
@@ -104,34 +124,34 @@ static size_t ulfius_write_body(void * contents, size_t size, size_t nmemb, void
  * return the size_t of the header written
  */
 static size_t write_header(void * buffer, size_t size, size_t nitems, void * user_data) {
-
-  struct _u_response * response = (struct _u_response *) user_data;
+  struct _u_response_header * response_header = (struct _u_response_header *)user_data;
   char * header = (char *)buffer, * saveptr, * tmp;
   const char * key, * value;
 
   if (o_strchr(header, ':') != NULL) {
-    if (response->map_header != NULL) {
+    if (!response_header->max_header || response_header->counter < response_header->max_header) {
       // Expecting a header (key: value)
       key = trimwhitespace(strtok_r(header, ":", &saveptr));
       value = trimwhitespace(strtok_r(NULL, "", &saveptr));
 
-      if (!u_map_has_key_case(response->map_header, key)) {
-        u_map_put(response->map_header, key, value);
+      if (!u_map_has_key_case(response_header->response->map_header, key)) {
+        u_map_put(response_header->response->map_header, key, value);
       } else {
-        tmp = msprintf("%s, %s", u_map_get_case(response->map_header, key), value);
-        if (u_map_remove_from_key_case(response->map_header, key) != U_OK || u_map_put(response->map_header, key, tmp)) {
+        tmp = msprintf("%s, %s", u_map_get_case(response_header->response->map_header, key), value);
+        if (u_map_remove_from_key_case(response_header->response->map_header, key) != U_OK || u_map_put(response_header->response->map_header, key, tmp)) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting header value for name %s", key);
         }
         o_free(tmp);
       }
+      response_header->counter++;
     }
   } else if (!o_strnullempty(trimwhitespace(header))) {
     // Expecting the HTTP/x.x header
-    if (response->protocol != NULL) {
-      o_free(response->protocol);
+    if (response_header->response->protocol != NULL) {
+      o_free(response_header->response->protocol);
     }
-    response->protocol = o_strdup(header);
-    if (response->protocol == NULL) {
+    response_header->response->protocol = o_strdup(header);
+    if (response_header->response->protocol == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->protocol");
       return 0;
     }
@@ -162,10 +182,45 @@ static size_t smtp_payload_source(void * ptr, size_t size, size_t nmemb, void * 
 int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response) {
   struct _u_body body_data;
   body_data.size = 0;
+  body_data.size_limit = 0;
   body_data.data = NULL;
   int res;
 
   res = ulfius_send_http_streaming_request(request, response, ulfius_write_body, (void *)&body_data);
+  if (res == U_OK && response != NULL) {
+    if (body_data.data != NULL && body_data.size) {
+      response->binary_body = o_malloc(body_data.size);
+      if (response->binary_body == NULL) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->binary_body");
+        o_free(body_data.data);
+        return U_ERROR_MEMORY;
+      }
+      memcpy(response->binary_body, body_data.data, body_data.size);
+      response->binary_body_length = body_data.size;
+    }
+    o_free(body_data.data);
+    return U_OK;
+  } else {
+    o_free(body_data.data);
+    return res;
+  }
+}
+
+/**
+ * ulfius_send_http_request_with_limit
+ * Send a HTTP request and store the result into a _u_response
+ * The number of headers parsed can be limited by max_header, if max_header is 0, the number of headers parsed is unlimited
+ * The size of the response body can be limited by response_body_limit, if response_body_limit is 0, no limit to the response body size
+ * return U_OK on success
+ */
+int ulfius_send_http_request_with_limit(const struct _u_request * request, struct _u_response * response, size_t response_body_limit, size_t max_header) {
+  struct _u_body body_data;
+  body_data.size = 0;
+  body_data.size_limit = response_body_limit;
+  body_data.data = NULL;
+  int res;
+
+  res = ulfius_send_http_streaming_request_max_header(request, response, ulfius_write_body, (void *)&body_data, max_header);
   if (res == U_OK && response != NULL) {
     if (body_data.data != NULL && body_data.size) {
       response->binary_body = o_malloc(body_data.size);
@@ -195,6 +250,21 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
                                        struct _u_response * response,
                                        size_t (* write_body_function)(void * contents, size_t size, size_t nmemb, void * user_data),
                                        void * write_body_data) {
+  return ulfius_send_http_streaming_request_max_header(request, response, write_body_function, write_body_data, 0);
+}
+
+/**
+ * ulfius_send_http_streaming_request_max_header
+ * Send a HTTP request and store the result into a _u_response
+ * Except for the body which will be available using write_body_function in the write_body_data
+ * The number of headers parsed can be limited by max_header, if max_header is 0, the number of headers parsed is unlimited
+ * return U_OK on success
+ */
+int ulfius_send_http_streaming_request_max_header(const struct _u_request * request,
+                                                  struct _u_response * response,
+                                                  size_t (* write_body_function)(void * contents, size_t size, size_t nmemb, void * user_data),
+                                                  void * write_body_data,
+                                                  size_t max_header) {
   CURLcode res;
   CURL * curl_handle = NULL;
   struct curl_slist * header_list = NULL, * cookies_list = NULL;
@@ -202,6 +272,7 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
   const char * value = NULL, ** keys = NULL;
   int i, has_params = 0, ret, exit_loop;
   struct _u_request * copy_request = NULL;
+  struct _u_response_header u_response_header = {NULL, 0, 0};
 
   if (request != NULL) {
     // Duplicate the request and work on it
@@ -602,8 +673,10 @@ int ulfius_send_http_streaming_request(const struct _u_request * request,
           // Response parameters
           if (response != NULL) {
             if (response->map_header != NULL) {
+              u_response_header.response = response;
+              u_response_header.max_header = max_header;
               if (curl_easy_setopt(curl_handle, CURLOPT_HEADERFUNCTION, write_header) != CURLE_OK ||
-                  curl_easy_setopt(curl_handle, CURLOPT_WRITEHEADER, response) != CURLE_OK) {
+                  curl_easy_setopt(curl_handle, CURLOPT_WRITEHEADER, &u_response_header) != CURLE_OK) {
                 y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers");
                 ret = U_ERROR_LIBCURL;
                 break;

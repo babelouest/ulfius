@@ -715,6 +715,18 @@ int ulfius_equals_endpoints(const struct _u_endpoint * endpoint1, const struct _
 int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response);
 
 /**
+ * ulfius_send_http_request_with_limit
+ * Send a HTTP request and store the result into a _u_response
+ * The response body lenght and number of parsed headers can be limited
+ * @param request the struct _u_request that contains all the input parameters to perform the HTTP request
+ * @param response the struct _u_response that will be filled with all response parameter values, optional, may be NULL
+ * @param response_body_limit the maximum size of the response body to retrieve, 0 means no limit
+ * @param max_header maximum number of headers to parse in the response, 0 means no limit
+ * @return U_OK on success
+ */
+int ulfius_send_http_request_with_limit(const struct _u_request * request, struct _u_response * response, size_t response_body_limit, size_t max_header);
+
+/**
  * ulfius_send_http_streaming_request
  * Send a HTTP request and store the result into a _u_response
  * Except for the body which will be available using write_body_function in the write_body_data
@@ -725,6 +737,20 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
  * @return U_OK on success
  */
 int ulfius_send_http_streaming_request(const struct _u_request * request, struct _u_response * response, size_t (* write_body_function)(void * contents, size_t size, size_t nmemb, void * user_data), void * write_body_data);
+
+/**
+ * ulfius_send_http_streaming_request_max_header
+ * Send a HTTP request and store the result into a _u_response
+ * Except for the body which will be available using write_body_function in the write_body_data
+ * The number of parsed headers in the response can be limited by max_header
+ * @param request the struct _u_request that contains all the input parameters to perform the HTTP request
+ * @param response the struct _u_response that will be filled with all response parameter values, optional, may be NULL
+ * @param write_body_function a pointer to a function that will be used to receive response body in chunks
+ * @param write_body_data a user-defined poitner that will be passed in parameter to write_body_function
+ * @param max_header maximum number of headers to parse in the response, 0 means no limit
+ * @return U_OK on success
+ */
+int ulfius_send_http_streaming_request_max_header(const struct _u_request * request, struct _u_response * response, size_t (* write_body_function)(void * contents, size_t size, size_t nmemb, void * user_data), void * write_body_data, size_t max_header);
 
 /**
  * ulfius_send_smtp_email
