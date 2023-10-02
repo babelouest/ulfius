@@ -5231,6 +5231,27 @@ int callback_function_post_params_not_processed(const struct _u_request * reques
   return U_CALLBACK_CONTINUE;
 }
 
+int callback_send_request_with_limit(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  char body[65535] = {0};
+  
+  memset(body, '4', 65535);
+  ulfius_set_response_properties(response,
+                                 U_OPT_HEADER_PARAMETER, "header1", "value",
+                                 U_OPT_HEADER_PARAMETER, "header2", "value",
+                                 U_OPT_HEADER_PARAMETER, "header3", "value",
+                                 U_OPT_HEADER_PARAMETER, "header4", "value",
+                                 U_OPT_HEADER_PARAMETER, "header5", "value",
+                                 U_OPT_HEADER_PARAMETER, "header6", "value",
+                                 U_OPT_HEADER_PARAMETER, "header7", "value",
+                                 U_OPT_HEADER_PARAMETER, "header8", "value",
+                                 U_OPT_HEADER_PARAMETER, "header9", "value",
+                                 U_OPT_HEADER_PARAMETER, "header10", "value",
+                                 U_OPT_NONE);
+  ulfius_set_binary_body_response(response, 208, body, 65535);
+
+  return U_CALLBACK_CONTINUE;
+}
+
 int socket_connect_localhost(in_port_t port) {
   struct sockaddr_in server;
   struct hostent * he;
@@ -6583,6 +6604,43 @@ START_TEST(test_ulfius_send_http_request)
 }
 END_TEST
 
+START_TEST(test_ulfius_send_http_request_with_limit)
+{
+  struct _u_instance u_instance;
+  struct _u_request request;
+  struct _u_response response;
+
+  ck_assert_int_eq(ulfius_init_request(&request), U_OK);
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "/limit", "*", 0, &callback_send_request_with_limit, &request), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
+
+  ck_assert_int_eq(ulfius_init_response(&response), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&request, U_OPT_HTTP_URL, "http://localhost:8080/limit/",
+                                                           U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request_with_limit(&request, &response, 16384, 5), U_OK);
+  ck_assert_int_eq(208, response.status);
+  ck_assert_int_eq(5, u_map_count(response.map_header));
+  ck_assert_int_eq(16384, response.binary_body_length);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+
+  ck_assert_int_eq(ulfius_init_request(&request), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&response), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&request, U_OPT_HTTP_URL, "http://localhost:8080/limit/",
+                                                           U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request_with_limit(&request, &response, 0, 0), U_OK);
+  ck_assert_int_eq(208, response.status);
+  ck_assert_int_ge(u_map_count(response.map_header), 10);
+  ck_assert_int_eq(65535, response.binary_body_length);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+
+  ulfius_stop_framework(&u_instance);
+  ulfius_clean_instance(&u_instance);
+}
+END_TEST
+
 #ifndef U_DISABLE_GNUTLS
 START_TEST(test_ulfius_server_ca_trust)
 {
@@ -6714,6 +6772,7 @@ static Suite *ulfius_suite(void)
   tcase_add_test(tc_core, test_ulfius_large_posts_check_utf8_yes);
   tcase_add_test(tc_core, test_ulfius_post_processor_flag);
   tcase_add_test(tc_core, test_ulfius_send_http_request);
+  tcase_add_test(tc_core, test_ulfius_send_http_request_with_limit);
 #ifndef U_DISABLE_GNUTLS
   tcase_add_test(tc_core, test_ulfius_server_ca_trust);
   tcase_add_test(tc_core, test_ulfius_client_certificate);
