@@ -68,6 +68,18 @@ void print_response(struct _u_response * response) {
   }
 }
 
+void print_response_limit(struct _u_response * response) {
+  if (response != NULL) {
+    char * headers = print_map(response->map_header);
+    char response_body[response->binary_body_length + 1];
+    o_strncpy(response_body, response->binary_body, response->binary_body_length);
+    response_body[response->binary_body_length] = '\0';
+    printf("protocol is\n%s\n\n  headers (%u) are \n%s\n\n  body (%zu) is \n'%s'\n\n",
+           response->protocol, u_map_count(response->map_header), headers, response->binary_body_length, response_body);
+    o_free(headers);
+  }
+}
+
 int main (void) {
   
   char * string_body = "param1=one&param2=two";
@@ -75,10 +87,11 @@ int main (void) {
   struct _u_response response;
   int res;
   
+  y_init_logs("Ulfius request", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Ulfius framework request tests");
   json_object_set_new(json_body, "param1", json_string("one"));
   json_object_set_new(json_body, "param2", json_string("two"));
   
-  struct _u_request req_list[8];
+  struct _u_request req_list[9];
   ulfius_init_request(&req_list[0]);
   ulfius_init_request(&req_list[1]);
   ulfius_init_request(&req_list[2]);
@@ -87,6 +100,7 @@ int main (void) {
   ulfius_init_request(&req_list[5]);
   ulfius_init_request(&req_list[6]);
   ulfius_init_request(&req_list[7]);
+  ulfius_init_request(&req_list[8]);
   
   // Parameters in url
   ulfius_set_request_properties(&req_list[0],
@@ -171,7 +185,17 @@ int main (void) {
                                 U_OPT_POST_BODY_PARAMETER, "extreme_test", "Here ! are %9_ some $ ö\\)]= special châraçters",
                                 U_OPT_NONE); // Required to close the parameters list
   
-  printf("Press <enter> to run get test\n");
+  // Limit in response
+  ulfius_set_request_properties(&req_list[8],
+                                U_OPT_HTTP_VERB, "GET",
+                                U_OPT_HTTP_URL, SERVER_URL_PREFIX,
+                                U_OPT_HTTP_URL_APPEND, "/limit/",
+                                U_OPT_TIMEOUT, 20,
+                                U_OPT_URL_PARAMETER, "test", "one",
+                                U_OPT_URL_PARAMETER, "other_test", "two",
+                                U_OPT_NONE); // Required to close the parameters list
+
+  /*printf("Press <enter> to run get test\n");
   getchar();
   ulfius_init_response(&response);
   res = ulfius_send_http_request(&req_list[0], &response);
@@ -261,6 +285,17 @@ int main (void) {
   } else {
     printf("Error in http request: %d\n", res);
   }
+  ulfius_clean_response(&response);*/
+  
+  printf("Press <enter> to run response limit test\n");
+  getchar();
+  ulfius_init_response(&response);
+  res = ulfius_send_http_request_with_limit(&req_list[8], &response, 32, 2);
+  if (res == U_OK) {
+    print_response_limit(&response);
+  } else {
+    printf("Error in http request: %d\n", res);
+  }
   ulfius_clean_response(&response);
   
   // Wait for the user to press <enter> on the console to quit the application
@@ -275,6 +310,8 @@ int main (void) {
   ulfius_clean_request(&req_list[5]);
   ulfius_clean_request(&req_list[6]);
   ulfius_clean_request(&req_list[7]);
+  ulfius_clean_request(&req_list[8]);
+  y_close_logs();
   
   return 0;
 }
