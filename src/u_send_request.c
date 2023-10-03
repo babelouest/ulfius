@@ -119,6 +119,16 @@ static size_t ulfius_write_body(void * contents, size_t size, size_t nmemb, void
 }
 
 /**
+ * ulfius_ignore_body
+ * Internal function used to ignore the body response
+ */
+static size_t ulfius_ignore_body(void * contents, size_t size, size_t nmemb, void * user_data) {
+  UNUSED(contents);
+  UNUSED(user_data);
+  return size * nmemb;
+}
+
+/**
  * write_header
  * Write the header value into the response map_header structure
  * return the size_t of the header written
@@ -181,12 +191,16 @@ static size_t smtp_payload_source(void * ptr, size_t size, size_t nmemb, void * 
  */
 int ulfius_send_http_request(const struct _u_request * request, struct _u_response * response) {
   struct _u_body body_data;
+  int res;
+
   body_data.size = 0;
   body_data.size_limit = 0;
   body_data.data = NULL;
-  int res;
-
-  res = ulfius_send_http_streaming_request(request, response, ulfius_write_body, (void *)&body_data);
+  if (response != NULL) {
+    res = ulfius_send_http_streaming_request_max_header(request, response, ulfius_write_body, (void *)&body_data, 0);
+  } else {
+    res = ulfius_send_http_streaming_request_max_header(request, response, ulfius_ignore_body, NULL, 0);
+  }
   if (res == U_OK && response != NULL) {
     if (body_data.data != NULL && body_data.size) {
       response->binary_body = o_malloc(body_data.size);
@@ -215,12 +229,16 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
  */
 int ulfius_send_http_request_with_limit(const struct _u_request * request, struct _u_response * response, size_t response_body_limit, size_t max_header) {
   struct _u_body body_data;
+  int res;
+
   body_data.size = 0;
   body_data.size_limit = response_body_limit;
   body_data.data = NULL;
-  int res;
-
-  res = ulfius_send_http_streaming_request_max_header(request, response, ulfius_write_body, (void *)&body_data, max_header);
+  if (response != NULL) {
+    res = ulfius_send_http_streaming_request_max_header(request, response, ulfius_write_body, (void *)&body_data, max_header);
+  } else {
+    res = ulfius_send_http_streaming_request_max_header(request, response, ulfius_ignore_body, NULL, max_header);
+  }
   if (res == U_OK && response != NULL) {
     if (body_data.data != NULL && body_data.size) {
       response->binary_body = o_malloc(body_data.size);
