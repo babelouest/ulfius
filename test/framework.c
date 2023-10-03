@@ -6599,6 +6599,16 @@ START_TEST(test_ulfius_send_http_request)
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
 
+  ck_assert_int_eq(ulfius_init_request(&request), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&request, U_OPT_HTTP_URL, "http://localhost:8080/rest/" VALUE1 "/" VALUE3 "/" VALUE4,
+                                                           U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&request, NULL), U_OK);
+  ulfius_clean_request(&request);
+
+  ck_assert_int_eq(ulfius_init_response(&response), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(NULL, &response), U_ERROR_PARAMS);
+  ulfius_clean_response(&response);
+
   ulfius_stop_framework(&u_instance);
   ulfius_clean_instance(&u_instance);
 }
@@ -6610,11 +6620,11 @@ START_TEST(test_ulfius_send_http_request_with_limit)
   struct _u_request request;
   struct _u_response response;
 
-  ck_assert_int_eq(ulfius_init_request(&request), U_OK);
   ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "/limit", "*", 0, &callback_send_request_with_limit, &request), U_OK);
   ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
 
+  ck_assert_int_eq(ulfius_init_request(&request), U_OK);
   ck_assert_int_eq(ulfius_init_response(&response), U_OK);
   ck_assert_int_eq(ulfius_set_request_properties(&request, U_OPT_HTTP_URL, "http://localhost:8080/limit/",
                                                            U_OPT_NONE), U_OK);
@@ -6634,6 +6644,16 @@ START_TEST(test_ulfius_send_http_request_with_limit)
   ck_assert_int_ge(u_map_count(response.map_header), 10);
   ck_assert_int_eq(65535, response.binary_body_length);
   ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+
+  ck_assert_int_eq(ulfius_init_request(&request), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&request, U_OPT_HTTP_URL, "http://localhost:8080/limit/",
+                                                           U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request_with_limit(&request, NULL, 16384, 5), U_OK);
+  ulfius_clean_request(&request);
+
+  ck_assert_int_eq(ulfius_init_response(&response), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request_with_limit(NULL, &response, 16384, 5), U_ERROR_PARAMS);
   ulfius_clean_response(&response);
 
   ulfius_stop_framework(&u_instance);
