@@ -5252,6 +5252,59 @@ int callback_send_request_with_limit(const struct _u_request * request, struct _
   return U_CALLBACK_CONTINUE;
 }
 
+int callback_function_multiple_with_unauthorized(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  int * counter = (int *)user_data;
+  (*counter)++;
+  return U_CALLBACK_UNAUTHORIZED;
+}
+
+int callback_function_multiple_with_error(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  int * counter = (int *)user_data;
+  (*counter)++;
+  return U_CALLBACK_ERROR;
+}
+
+int callback_function_multiple_with_complete(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  int * counter = (int *)user_data;
+  (*counter)++;
+  return U_CALLBACK_COMPLETE;
+}
+
+int callback_function_multiple_with_continue(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  int * counter = (int *)user_data;
+  (*counter)++;
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_function_multiple_with_ignore(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  int * counter = (int *)user_data;
+  (*counter)++;
+  return U_CALLBACK_IGNORE;
+}
+
+int callback_function_continue_but_no(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  int * counter = (int *)user_data;
+  (*counter)++;
+  ulfius_set_string_body_response(response, 208, "Grut!");
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_function_continue_from_continue(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  int * counter = (int *)user_data;
+  (*counter)++;
+  ulfius_set_string_body_response(response, 208, "Grut!");
+  ck_assert_int_eq(1, request->callback_position);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_function_continue_from_ignore(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  int * counter = (int *)user_data;
+  (*counter)++;
+  ulfius_set_string_body_response(response, 208, "Grut!");
+  ck_assert_int_eq(0, request->callback_position);
+  return U_CALLBACK_CONTINUE;
+}
+
 int socket_connect_localhost(in_port_t port) {
   struct sockaddr_in server;
   struct hostent * he;
@@ -5817,6 +5870,142 @@ START_TEST(test_ulfius_endpoint_multiple)
   ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
   ck_assert_int_eq(response.status, 200);
   ck_assert_int_eq(o_strncmp(response.binary_body, "/multiple_complete/value1/value2/value3\n/multiple_complete/value1/value2/value3", o_strlen("/multiple_complete/value1/value2/value3\n/multiple_complete/value1/value2/value3")), 0);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+
+  ulfius_stop_framework(&u_instance);
+  ulfius_clean_instance(&u_instance);
+}
+END_TEST
+
+START_TEST(test_ulfius_endpoint_multiple_with_unauthorized)
+{
+  struct _u_instance u_instance;
+  struct _u_request request;
+  struct _u_response response;
+  int counter = 0;
+
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "multiple", "*", 0, &callback_function_multiple_with_unauthorized, &counter), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "multiple", "/:param1/*", 1, &callback_function_continue_but_no, &counter), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
+
+  ulfius_init_request(&request);
+  request.http_url = o_strdup("http://localhost:8080/multiple/value");
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 401);
+  ck_assert_int_eq(response.binary_body_length, 0);
+  ck_assert_int_eq(counter, 1);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+
+  ulfius_stop_framework(&u_instance);
+  ulfius_clean_instance(&u_instance);
+}
+END_TEST
+
+START_TEST(test_ulfius_endpoint_multiple_with_error)
+{
+  struct _u_instance u_instance;
+  struct _u_request request;
+  struct _u_response response;
+  int counter = 0;
+
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "multiple", "*", 0, &callback_function_multiple_with_error, &counter), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "multiple", "/:param1/*", 1, &callback_function_continue_but_no, &counter), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
+
+  ulfius_init_request(&request);
+  request.http_url = o_strdup("http://localhost:8080/multiple/value");
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 500);
+  ck_assert_int_eq(response.binary_body_length, o_strlen(ULFIUS_HTTP_ERROR_BODY));
+  ck_assert_int_eq(0, memcmp(response.binary_body, ULFIUS_HTTP_ERROR_BODY, response.binary_body_length));
+  ck_assert_int_eq(counter, 1);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+
+  ulfius_stop_framework(&u_instance);
+  ulfius_clean_instance(&u_instance);
+}
+END_TEST
+
+START_TEST(test_ulfius_endpoint_multiple_with_complete)
+{
+  struct _u_instance u_instance;
+  struct _u_request request;
+  struct _u_response response;
+  int counter = 0;
+
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "multiple", "*", 0, &callback_function_multiple_with_complete, &counter), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "multiple", "/:param1/*", 1, &callback_function_continue_but_no, &counter), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
+
+  ulfius_init_request(&request);
+  request.http_url = o_strdup("http://localhost:8080/multiple/value");
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 200);
+  ck_assert_int_eq(response.binary_body_length, 0);
+  ck_assert_int_eq(counter, 1);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+
+  ulfius_stop_framework(&u_instance);
+  ulfius_clean_instance(&u_instance);
+}
+END_TEST
+
+START_TEST(test_ulfius_endpoint_multiple_with_continue)
+{
+  struct _u_instance u_instance;
+  struct _u_request request;
+  struct _u_response response;
+  int counter = 0;
+
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "multiple", "*", 0, &callback_function_multiple_with_continue, &counter), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "multiple", "/:param1/*", 1, &callback_function_continue_from_continue, &counter), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
+
+  ulfius_init_request(&request);
+  request.http_url = o_strdup("http://localhost:8080/multiple/value");
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 208);
+  ck_assert_int_eq(response.binary_body_length, 5);
+  ck_assert_int_eq(counter, 2);
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+
+  ulfius_stop_framework(&u_instance);
+  ulfius_clean_instance(&u_instance);
+}
+END_TEST
+
+START_TEST(test_ulfius_endpoint_multiple_with_ignore)
+{
+  struct _u_instance u_instance;
+  struct _u_request request;
+  struct _u_response response;
+  int counter = 0;
+
+  ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "multiple", "*", 0, &callback_function_multiple_with_ignore, &counter), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "GET", "multiple", "/:param1/*", 1, &callback_function_continue_from_ignore, &counter), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
+
+  ulfius_init_request(&request);
+  request.http_url = o_strdup("http://localhost:8080/multiple/value");
+  ulfius_init_response(&response);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(response.status, 208);
+  ck_assert_int_eq(response.binary_body_length, 5);
+  ck_assert_int_eq(counter, 2);
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
 
@@ -6777,6 +6966,11 @@ static Suite *ulfius_suite(void)
   tcase_add_test(tc_core, test_ulfius_endpoint_parameters);
   tcase_add_test(tc_core, test_ulfius_endpoint_injection);
   tcase_add_test(tc_core, test_ulfius_endpoint_multiple);
+  tcase_add_test(tc_core, test_ulfius_endpoint_multiple_with_unauthorized);
+  tcase_add_test(tc_core, test_ulfius_endpoint_multiple_with_error);
+  tcase_add_test(tc_core, test_ulfius_endpoint_multiple_with_complete);
+  tcase_add_test(tc_core, test_ulfius_endpoint_multiple_with_continue);
+  tcase_add_test(tc_core, test_ulfius_endpoint_multiple_with_ignore);
   tcase_add_test(tc_core, test_ulfius_endpoint_stream);
   tcase_add_test(tc_core, test_ulfius_endpoint_ignored);
   tcase_add_test(tc_core, test_ulfius_utf8_not_ignored);
