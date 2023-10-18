@@ -1,5 +1,9 @@
 # Ulfius Changelog
 
+## 2.7.15
+
+- Add functions `ulfius_send_http_request_with_limit` and `ulfius_send_http_streaming_request_max_header`
+
 ## 2.7.14
 
 - Set protocols to http and https only in send requests
