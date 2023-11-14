@@ -310,6 +310,9 @@ if (WITH_YDER)
             target_link_libraries(ulfius_static PUBLIC $<TARGET_NAME:Yder::Yder>)
         endif()
     endif ()
+    set(U_DISABLE_YDER OFF)
+else ()
+    set(U_DISABLE_YDER ON)
 endif ()
 
 # build uwsc
