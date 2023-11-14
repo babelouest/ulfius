@@ -1,7 +1,6 @@
 # Install Ulfius
 
 - [Distribution packages](#distribution-packages)
-- [Pre-compiled packages](#pre-compiled-packages)
 - [Manual install](#manual-install)
   - [Prerequisites](#prerequisites)
   - [CMake - Multi architecture](#cmake---multi-architecture)
@@ -19,23 +18,6 @@ $ sudo apt install libulfius-dev uwsc
 $ # Example for Debian testing, install uwsc only
 $ sudo apt install uwsc
 ```
-
-## Pre-compiled packages
-
-You can install Ulfius with a pre-compiled package available in the [release pages](https://github.com/babelouest/ulfius/releases/latest/). `jansson`, `libmicrohttpd`, `gnutls`, `libcurl-gnutls` and `zlib` development files packages are required to install Ulfius. The packages files `ulfius-dev-full_*` contain the libraries `orcania`, `yder` and `ulfius`.
-
-For example, to install Ulfius with the `ulfius-dev-full_2.7.0_Debian_stretch_x86_64.tar.gz` package downloaded on the `releases` page, you must execute the following commands:
-
-```shell
-$ sudo apt install -y libmicrohttpd-dev libjansson-dev libcurl4-gnutls-dev libgnutls28-dev libgcrypt20-dev libsystemd-dev
-$ wget https://github.com/babelouest/ulfius/releases/download/v2.7.0/ulfius-dev-full_2.7.0_debian_buster_x86_64.tar.gz
-$ tar xf ulfius-dev-full_2.7.0_debian_buster_x86_64.tar.gz
-$ sudo dpkg -i liborcania-dev_2.1.1_Debian_stretch_x86_64.deb
-$ sudo dpkg -i libyder-dev_1.4.12_Debian_stretch_x86_64.deb
-$ sudo dpkg -i libulfius-dev_2.7.0_Debian_stretch_x86_64.deb
-```
-
-If there's no package available for your distribution, you can recompile it manually using `CMake` or `Makefile`.
 
 ## Manual install
 
@@ -196,7 +178,9 @@ The available options for CMake are:
 - `-DBUILD_UWSC=[on|off]` (default `on`): Build uwsc
 - `-DBUILD_STATIC=[on|off]` (default `off`): Build the static archive in addition to the shared library
 - `-DBUILD_ULFIUS_TESTING=[on|off]` (default `off`): Build unit tests
-- `-DBUILD_ULFIUS_DOCUMENTATION=[on|off]` (default `off`): Build the documentation, doxygen is required
+- `-DBUILD_ULFIUS_DOCUMENTATION=[on|off]` (default `off`): Build the documentation when running `make doc`, doxygen is required
 - `-DINSTALL_HEADER=[on|off]` (default `on`): Install header file `ulfius.h`
+- `-DBUILD_TGZ=[on|off]` (default `off`): Build tar.gz package when running `make package`
+- `-DBUILD_DEB=[on|off]` (default `off`): Build DEB package when running `make package`
 - `-DBUILD_RPM=[on|off]` (default `off`): Build RPM package when running `make package`
 - `-DCMAKE_BUILD_TYPE=[Debug|Release]` (default `Release`): Compile with debugging symbols or not
