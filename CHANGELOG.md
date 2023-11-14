@@ -3,6 +3,8 @@
 ## 2.7.15
 
 - Add functions `ulfius_send_http_request_with_limit` and `ulfius_send_http_streaming_request_max_header`
+- cmake: restore option `WITH_YDER` which was forgotten in last release refactor
+- cmake: split package build options in 3 (tar.gz, deb and rpm), and set all packages build to off by default
 
 ## 2.7.14
 
