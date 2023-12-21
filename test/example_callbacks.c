@@ -204,7 +204,7 @@ int callback_function_large_text_data(const struct _u_request * request, struct 
 }
 
 int callback_function_binary_data(const struct _u_request * request, struct _u_response * response, void * user_data) {
-  ulfius_set_binary_body_response(response, 200, (const char*)binary_data, sizeof(binary_data));
+  ulfius_set_binary_body_response(response, 200, binary_data, sizeof(binary_data));
   return U_CALLBACK_CONTINUE;
 }
 
