@@ -517,7 +517,7 @@ int ulfius_set_string_body_response(struct _u_response * response, const unsigne
   if (response != NULL && string_body != NULL) {
     // Free all the bodies available
     o_free(response->binary_body);
-    response->binary_body = o_strdup(string_body);
+    response->binary_body = (unsigned char *)o_strdup(string_body);
     if (response->binary_body == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->binary_body");
       return U_ERROR_MEMORY;
@@ -531,7 +531,7 @@ int ulfius_set_string_body_response(struct _u_response * response, const unsigne
   }
 }
 
-int ulfius_set_binary_body_response(struct _u_response * response, const unsigned int status, const char * binary_body, const size_t length) {
+int ulfius_set_binary_body_response(struct _u_response * response, const unsigned int status, const unsigned char * binary_body, const size_t length) {
   if (response != NULL && binary_body != NULL && length) {
     // Free all the bodies available
     o_free(response->binary_body);
@@ -595,6 +595,7 @@ int ulfius_set_response_properties(struct _u_response * response, ...) {
   u_option option;
   int ret = U_OK;
   const char * str_key, * str_value;
+  const unsigned char * ustr_value;
   size_t size_value;
 #ifndef U_DISABLE_JANSSON
   json_t * j_value;
@@ -627,9 +628,9 @@ int ulfius_set_response_properties(struct _u_response * response, ...) {
           }
           break;
         case U_OPT_BINARY_BODY:
-          str_value = va_arg(vl, const char *);
+          ustr_value = va_arg(vl, const unsigned char *);
           size_value = va_arg(vl, size_t);
-          ret = ulfius_set_binary_body_response(response, (unsigned int)response->status, str_value, size_value);
+          ret = ulfius_set_binary_body_response(response, (unsigned int)response->status, ustr_value, size_value);
           break;
         case U_OPT_STRING_BODY:
           str_value = va_arg(vl, const char *);
@@ -702,13 +703,13 @@ int ulfius_set_json_body_response(struct _u_response * response, const unsigned 
 
 /**
  * ulfius_get_json_body_response
- * Get JSON structure from the request body if the request is valid
- * request: struct _u_request used
+ * Get JSON structure from the response body if the response is valid
+ * response: struct _u_request used
  * json_error: structure to store json_error_t if specified
  */
 json_t * ulfius_get_json_body_response(struct _u_response * response, json_error_t * json_error) {
-  if (response != NULL && response->map_header != NULL && NULL != o_strstr(u_map_get_case(response->map_header, ULFIUS_HTTP_HEADER_CONTENT), ULFIUS_HTTP_ENCODING_JSON)) {
-    return json_loadb(response->binary_body, response->binary_body_length, JSON_DECODE_ANY, json_error);
+  if (response != NULL && response->map_header != NULL && 1 == u_map_count_keys_case(response->map_header, ULFIUS_HTTP_HEADER_CONTENT) && NULL != o_strstr(u_map_get_case(response->map_header, ULFIUS_HTTP_HEADER_CONTENT), ULFIUS_HTTP_ENCODING_JSON)) {
+    return json_loadb((char *)response->binary_body, response->binary_body_length, JSON_DECODE_ANY, json_error);
   }
   return NULL;
 }

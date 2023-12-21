@@ -513,6 +513,18 @@ int u_map_count(const struct _u_map * source) {
   return -1;
 }
 
+int u_map_count_keys_case(const struct _u_map * u_map, const char * key) {
+  int i, count = 0;
+  if (u_map != NULL && key != NULL) {
+    for (i=0; u_map->keys[i] != NULL; i++) {
+      if (0 == o_strcasecmp(u_map->keys[i], key)) {
+        count++;
+      }
+    }
+  }
+  return count;
+}
+
 int u_map_empty(struct _u_map * u_map) {
   int ret = u_map_clean(u_map);
   if (ret == U_OK) {

@@ -478,11 +478,11 @@ int ulfius_send_http_streaming_request_max_header(const struct _u_request * requ
                   value_esc = curl_easy_escape(curl_handle, value, 0);
                   if (value_esc != NULL) {
                     if (!i) {
-                      copy_request->binary_body = mstrcatf(copy_request->binary_body, "%s=%s", key_esc, value_esc);
+                      copy_request->binary_body = (unsigned char *)mstrcatf((char *)copy_request->binary_body, "%s=%s", key_esc, value_esc);
                     } else {
-                      copy_request->binary_body = mstrcatf(copy_request->binary_body, "%c%s=%s", np, key_esc, value_esc);
+                      copy_request->binary_body = (unsigned char *)mstrcatf((char *)copy_request->binary_body, "%c%s=%s", np, key_esc, value_esc);
                     }
-                    copy_request->binary_body_length = o_strlen(copy_request->binary_body);
+                    copy_request->binary_body_length = o_strlen((const char *)copy_request->binary_body);
                   } else {
                     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error curl_easy_escape for body parameter value %s=%s", keys[i], value);
                     exit_loop = 1;
@@ -490,11 +490,11 @@ int ulfius_send_http_streaming_request_max_header(const struct _u_request * requ
                   o_free(value_esc);
                 } else {
                   if (!i) {
-                    copy_request->binary_body = mstrcatf(copy_request->binary_body, "%s", key_esc);
+                    copy_request->binary_body = (unsigned char *)mstrcatf((char *)copy_request->binary_body, "%s", key_esc);
                   } else {
-                    copy_request->binary_body = mstrcatf(copy_request->binary_body, "%c%s", np, key_esc);
+                    copy_request->binary_body = (unsigned char *)mstrcatf((char *)copy_request->binary_body, "%c%s", np, key_esc);
                   }
-                  copy_request->binary_body_length = o_strlen(copy_request->binary_body);
+                  copy_request->binary_body_length = o_strlen((const char *)copy_request->binary_body);
                 }
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error curl_easy_escape for body key %s", keys[i]);

@@ -495,6 +495,7 @@ int ulfius_set_request_properties(struct _u_request * request, ...) {
   u_option option;
   int ret = U_OK;
   const char * str_key, * str_value;
+  const unsigned char * ustr_value;
   size_t size_value;
 #ifndef U_DISABLE_JANSSON
   json_t * j_value;
@@ -639,9 +640,9 @@ int ulfius_set_request_properties(struct _u_request * request, ...) {
           ret = u_map_remove_from_key(request->map_post_body, str_value);
           break;
         case U_OPT_BINARY_BODY:
-          str_value = va_arg(vl, const char *);
+          ustr_value = va_arg(vl, const unsigned char *);
           size_value = va_arg(vl, size_t);
-          ret = ulfius_set_binary_body_request(request, str_value, size_value);
+          ret = ulfius_set_binary_body_request(request, ustr_value, size_value);
           break;
         case U_OPT_STRING_BODY:
           str_value = va_arg(vl, const char *);
@@ -705,7 +706,7 @@ int ulfius_set_string_body_request(struct _u_request * request, const char * str
   if (request != NULL && string_body != NULL) {
     // Free all the bodies available
     o_free(request->binary_body);
-    request->binary_body = o_strdup(string_body);
+    request->binary_body = (unsigned char *)o_strdup(string_body);
     if (request->binary_body == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for request->binary_body");
       return U_ERROR_MEMORY;
@@ -723,7 +724,7 @@ int ulfius_set_string_body_request(struct _u_request * request, const char * str
  * Add a binary binary_body to a request
  * return U_OK on success
  */
-int ulfius_set_binary_body_request(struct _u_request * request, const char * binary_body, const size_t length) {
+int ulfius_set_binary_body_request(struct _u_request * request, const unsigned char * binary_body, const size_t length) {
   if (request != NULL && binary_body != NULL && length) {
     // Free all the bodies available
     o_free(request->binary_body);
@@ -977,8 +978,8 @@ int ulfius_set_json_body_request(struct _u_request * request, json_t * j_body) {
  * json_error: structure to store json_error_t if specified
  */
 json_t * ulfius_get_json_body_request(const struct _u_request * request, json_error_t * json_error) {
-  if (request != NULL && request->map_header != NULL && NULL != o_strstr(u_map_get_case(request->map_header, ULFIUS_HTTP_HEADER_CONTENT), ULFIUS_HTTP_ENCODING_JSON)) {
-    return json_loadb(request->binary_body, request->binary_body_length, JSON_DECODE_ANY, json_error);
+  if (request != NULL && request->map_header != NULL && 1 == u_map_count_keys_case(request->map_header, ULFIUS_HTTP_HEADER_CONTENT) && NULL != o_strstr(u_map_get_case(request->map_header, ULFIUS_HTTP_HEADER_CONTENT), ULFIUS_HTTP_ENCODING_JSON)) {
+    return json_loadb((const char*)request->binary_body, request->binary_body_length, JSON_DECODE_ANY, json_error);
   } else if (json_error != NULL) {
     json_error->line     = 1;
     json_error->position = 1;

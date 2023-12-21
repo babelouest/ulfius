@@ -261,7 +261,7 @@ static int ulfius_get_body_from_response(struct _u_response * response, void ** 
       if (*response_buffer == NULL) {
         y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response_buffer");
         response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
-        response->binary_body = o_strdup(ULFIUS_HTTP_ERROR_BODY);
+        response->binary_body = (unsigned char *)o_strdup(ULFIUS_HTTP_ERROR_BODY);
         response->binary_body_length = o_strlen(ULFIUS_HTTP_ERROR_BODY);
         if (response->binary_body == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating memory for response->binary_body");
@@ -470,7 +470,7 @@ static int ulfius_webservice_dispatcher (void * cls,
   struct sockaddr * so_client;
 
   void * response_buffer = NULL;
-  size_t response_buffer_len = 0;
+  size_t response_buffer_len = 0, body_len = 0, upload_data_size_current = 0;
 
   // Response variables
   struct MHD_Response * mhd_response = NULL;
@@ -547,7 +547,8 @@ static int ulfius_webservice_dispatcher (void * cls,
     }
     return MHD_YES;
   } else if (*upload_data_size != 0) {
-    size_t body_len = con_info->request->binary_body_length + *upload_data_size, upload_data_size_current = *upload_data_size;
+    body_len = con_info->request->binary_body_length + *upload_data_size;
+    upload_data_size_current = *upload_data_size;
 
     if (((struct _u_instance *)cls)->max_post_body_size > 0 && con_info->request->binary_body_length + *upload_data_size > ((struct _u_instance *)cls)->max_post_body_size) {
       body_len = ((struct _u_instance *)cls)->max_post_body_size;
@@ -563,7 +564,7 @@ static int ulfius_webservice_dispatcher (void * cls,
         memcpy((char*)con_info->request->binary_body + con_info->request->binary_body_length, upload_data, upload_data_size_current);
         con_info->request->binary_body_length += upload_data_size_current;
         // Handles request binary_body
-        const char * content_type = u_map_get_case(con_info->request->map_header, ULFIUS_HTTP_HEADER_CONTENT);
+        content_type = (char*)u_map_get_case(con_info->request->map_header, ULFIUS_HTTP_HEADER_CONTENT);
         if (0 == o_strncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, o_strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) ||
             0 == o_strncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, o_strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA))) {
           MHD_post_process (con_info->post_processor, upload_data, *upload_data_size);
@@ -658,10 +659,14 @@ static int ulfius_webservice_dispatcher (void * cls,
               // Initiate an UPGRADE session,
               // then run the websocket callback functions with initialized data
               if (NULL != o_strcasestr(u_map_get_case(con_info->request->map_header, "upgrade"), U_WEBSOCKET_UPGRADE_VALUE) &&
+                  1 == u_map_count_keys_case(con_info->request->map_header, "upgrade") &&
                   NULL != u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Key") &&
+                  1 == u_map_count_keys_case(con_info->request->map_header, "Sec-WebSocket-Key") &&
                   NULL != o_strcasestr(u_map_get_case(con_info->request->map_header, "Connection"), "Upgrade") &&
+                  1 == u_map_count_keys_case(con_info->request->map_header, "Connection") &&
                   0 == o_strcmp(con_info->request->http_protocol, "HTTP/1.1") &&
                   0 == o_strcmp(u_map_get_case(con_info->request->map_header, "Sec-WebSocket-Version"), "13") &&
+                  1 == u_map_count_keys_case(con_info->request->map_header, "Sec-WebSocket-Version") &&
                   0 == o_strcmp(con_info->request->http_verb, "GET")) {
                 int ret_protocol = U_ERROR, ret_extensions = U_OK;
                 // Check websocket_protocol and websocket_extensions to match ours
@@ -866,7 +871,7 @@ static int ulfius_webservice_dispatcher (void * cls,
                     inner_error = U_ERROR_PARAMS;
                     y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
                     response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
-                    response->binary_body = o_strdup(ULFIUS_HTTP_ERROR_BODY);
+                    response->binary_body = (unsigned char *)o_strdup(ULFIUS_HTTP_ERROR_BODY);
                     response->binary_body_length = o_strlen(ULFIUS_HTTP_ERROR_BODY);
                     if (response->binary_body == NULL) {
                       inner_error = U_ERROR_MEMORY;
@@ -924,7 +929,7 @@ static int ulfius_webservice_dispatcher (void * cls,
                   inner_error = U_ERROR_PARAMS;
                   y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error setting headers or cookies");
                   response->status = MHD_HTTP_INTERNAL_SERVER_ERROR;
-                  response->binary_body = o_strdup(ULFIUS_HTTP_ERROR_BODY);
+                  response->binary_body = (unsigned char *)o_strdup(ULFIUS_HTTP_ERROR_BODY);
                   response->binary_body_length = o_strlen(ULFIUS_HTTP_ERROR_BODY);
                   if (response->binary_body == NULL) {
                     inner_error = U_ERROR_MEMORY;
