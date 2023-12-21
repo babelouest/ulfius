@@ -48,7 +48,7 @@
 void print_response(struct _u_response * response) {
   if (response != NULL) {
     char response_body[response->binary_body_length + 1];
-    o_strncpy(response_body, response->binary_body, response->binary_body_length);
+    o_strncpy(response_body, (const char *)response->binary_body, response->binary_body_length);
     response_body[response->binary_body_length] = '\0';
     printf("status is\n%ld\n\nstring body is \n%s\n\n",
            response->status, response_body);

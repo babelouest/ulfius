@@ -224,7 +224,7 @@ int callback_get_cookietest (const struct _u_request * request, struct _u_respon
   (void)(user_data);
   const char * lang = u_map_get(request->map_url, "lang"), * extra = u_map_get(request->map_url, "extra"), 
              * counter = u_map_get(request->map_cookie, "counter");
-  char new_counter[8];
+  char new_counter[33] = {0};
   int i_counter;
   
   if (counter == NULL) {
@@ -233,7 +233,7 @@ int callback_get_cookietest (const struct _u_request * request, struct _u_respon
     i_counter = (int)strtol(counter, NULL, 10);
     i_counter++;
   }
-  snprintf(new_counter, 7, "%d", i_counter);
+  snprintf(new_counter, 32, "%d", i_counter);
   ulfius_add_cookie_to_response(response, "lang", lang, NULL, 0, NULL, NULL, 0, 0);
   ulfius_add_cookie_to_response(response, "extra", extra, NULL, 0, NULL, NULL, 0, 0);
   ulfius_add_cookie_to_response(response, "counter", new_counter, NULL, 0, NULL, NULL, 0, 0);

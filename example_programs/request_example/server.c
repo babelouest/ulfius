@@ -60,7 +60,7 @@ int callback (const struct _u_request * request, struct _u_response * response, 
   char * url_params = print_map(request->map_url), * headers = print_map(request->map_header), * cookies = print_map(request->map_cookie), 
         * post_params = print_map(request->map_post_body);
   char request_body[request->binary_body_length + 1];
-  o_strncpy(request_body, request->binary_body, request->binary_body_length);
+  o_strncpy(request_body, (const char *)request->binary_body, request->binary_body_length);
   request_body[request->binary_body_length] = '\0';
   if (o_strstr(request->http_url, "limit") != NULL) {
     ulfius_set_string_body_response(response, 200, "This is a large body response that should be truncated by the client");

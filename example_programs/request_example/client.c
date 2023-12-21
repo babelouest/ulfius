@@ -60,7 +60,7 @@ void print_response(struct _u_response * response) {
   if (response != NULL) {
     char * headers = print_map(response->map_header);
     char response_body[response->binary_body_length + 1];
-    o_strncpy(response_body, response->binary_body, response->binary_body_length);
+    o_strncpy(response_body, (const char *)response->binary_body, response->binary_body_length);
     response_body[response->binary_body_length] = '\0';
     printf("protocol is\n%s\n\n  headers are \n%s\n\n  body is \n%s\n\n",
            response->protocol, headers, response_body);
@@ -72,7 +72,7 @@ void print_response_limit(struct _u_response * response) {
   if (response != NULL) {
     char * headers = print_map(response->map_header);
     char response_body[response->binary_body_length + 1];
-    o_strncpy(response_body, response->binary_body, response->binary_body_length);
+    o_strncpy(response_body, (const char *)response->binary_body, response->binary_body_length);
     response_body[response->binary_body_length] = '\0';
     printf("protocol is\n%s\n\n  headers (%u) are \n%s\n\n  body (%zu) is \n'%s'\n\n",
            response->protocol, u_map_count(response->map_header), headers, response->binary_body_length, response_body);
