@@ -205,6 +205,33 @@ START_TEST(test_u_map_copy)
 }
 END_TEST
 
+START_TEST(test_u_map_count)
+{
+  struct _u_map map;
+  u_map_init(&map);
+  ck_assert_int_eq(u_map_count_keys_case(&map, "key3"), 0);
+  ck_assert_int_eq(u_map_put(&map, "key1", "value1"), U_OK);
+  ck_assert_int_eq(u_map_put(&map, "key2", "value2"), U_OK);
+  ck_assert_int_eq(u_map_put(&map, "key3", "value3"), U_OK);
+  ck_assert_int_eq(u_map_count(&map), 3);
+  ck_assert_int_eq(u_map_count_keys_case(&map, "key3"), 1);
+  ck_assert_int_eq(u_map_put(&map, "Key3", "value4"), U_OK);
+  ck_assert_int_eq(u_map_count(&map), 4);
+  ck_assert_int_eq(u_map_count_keys_case(&map, "key3"), 2);
+  ck_assert_int_eq(u_map_put(&map, "KEY3", "value5"), U_OK);
+  ck_assert_int_eq(u_map_put(&map, "KEy3", "value6"), U_OK);
+  ck_assert_int_eq(u_map_count_keys_case(&map, "key3"), 4);
+  ck_assert_int_eq(u_map_count_keys_case(&map, "KEY3"), 4);
+  ck_assert_int_eq(u_map_remove_from_key(&map, "KEY3"), U_OK);
+  ck_assert_int_eq(u_map_count_keys_case(&map, "key3"), 3);
+  ck_assert_int_eq(u_map_count_keys_case(&map, "KEY3"), 3);
+  ck_assert_int_eq(u_map_count_keys_case(&map, "key3e"), 0);
+  ck_assert_int_eq(u_map_count_keys_case(&map, "key3 "), 0);
+  ck_assert_int_eq(u_map_count_keys_case(&map, " key3"), 0);
+  u_map_clean(&map);
+}
+END_TEST
+
 static Suite *ulfius_suite(void)
 {
 	Suite *s;
@@ -221,6 +248,7 @@ static Suite *ulfius_suite(void)
 	tcase_add_test(tc_core, test_u_map_remove);
 	tcase_add_test(tc_core, test_u_map_copy_empty);
 	tcase_add_test(tc_core, test_u_map_copy);
+	tcase_add_test(tc_core, test_u_map_count);
 	tcase_set_timeout(tc_core, 30);
 	suite_add_tcase(s, tc_core);
 

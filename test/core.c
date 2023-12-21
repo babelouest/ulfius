@@ -203,7 +203,7 @@ START_TEST(test_ulfius_request)
   u_map_put(req1.map_header, MAP_HEADER_KEY, MAP_HEADER_VALUE);
   u_map_put(req1.map_cookie, MAP_COOKIE_KEY, MAP_COOKIE_VALUE);
   u_map_put(req1.map_post_body, MAP_POST_BODY_KEY, MAP_POST_BODY_VALUE);
-  req1.binary_body = o_strdup(BINARY_BODY);
+  req1.binary_body = (unsigned char *)o_strdup(BINARY_BODY);
   req1.binary_body_length = o_strlen(BINARY_BODY) + sizeof(char);
   req1.callback_position = CALLBACK_POSITION;
 #ifndef U_DISABLE_GNUTLS
@@ -294,25 +294,27 @@ START_TEST(test_ulfius_request)
   ulfius_clean_request(&req1);
   ulfius_init_request(&req1);
   ck_assert_int_eq(ulfius_set_string_body_request(&req1, STRING_BODY), U_OK);
-  ck_assert_str_eq(req1.binary_body, STRING_BODY);
+  ck_assert_str_eq((char *)req1.binary_body, STRING_BODY);
   ck_assert_int_eq(req1.binary_body_length, o_strlen(STRING_BODY));
   
   ck_assert_int_eq(ulfius_set_empty_body_request(&req1), U_OK);
   ck_assert_int_eq(req1.binary_body_length, 0);
   ck_assert_ptr_eq(req1.binary_body, NULL);
   
-  ck_assert_int_eq(ulfius_set_binary_body_request(&req1, BINARY_BODY, BINARY_BODY_LEN), U_OK);
+  ck_assert_int_eq(ulfius_set_binary_body_request(&req1, (unsigned char *)BINARY_BODY, BINARY_BODY_LEN), U_OK);
   ck_assert_ptr_ne(req1.binary_body, NULL);
   ck_assert_int_eq(req1.binary_body_length, BINARY_BODY_LEN);
 
 #ifndef U_DISABLE_JANSSON
   ck_assert_int_eq(ulfius_set_json_body_request(&req1, j_body), U_OK);
-  ck_assert_str_eq(req1.binary_body, str_body);
+  ck_assert_str_eq((char *)req1.binary_body, str_body);
   j_body2 = ulfius_get_json_body_request(&req1, NULL);
   ck_assert_int_eq(json_equal(j_body, j_body2), 1);
   o_free(str_body);
   json_decref(j_body);
   json_decref(j_body2);
+  ck_assert_int_eq(u_map_put(req1.map_header, "ContenT-Type", "error"), U_OK);
+  ck_assert_ptr_eq(NULL, ulfius_get_json_body_request(&req1, NULL));
 #endif
 
   ulfius_clean_request(&req1);
@@ -601,7 +603,7 @@ START_TEST(test_ulfius_set_request_properties)
 #ifndef U_DISABLE_JANSSON
   json_t * j_body = json_pack("{ss}", "result", "body");
   ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_JSON_BODY, j_body, U_OPT_NONE), U_OK);
-  ck_assert_str_eq(req.binary_body, "{\"result\":\"body\"}");
+  ck_assert_str_eq((char *)req.binary_body, "{\"result\":\"body\"}");
   json_decref(j_body);
 #endif
 
@@ -843,7 +845,7 @@ START_TEST(test_ulfius_response)
   ck_assert_ptr_ne(((struct _websocket_handle *)resp1.websocket_handle)->websocket_onclose_user_data, NULL);
 #endif
   
-  resp1.binary_body = o_strdup(BINARY_BODY);
+  resp1.binary_body = (unsigned char *)o_strdup(BINARY_BODY);
   resp1.binary_body_length = BINARY_BODY_LEN;
   resp1.shared_data = (void *)SHARED_DATA;
   resp1.timeout = TIMEOUT;
@@ -912,18 +914,20 @@ START_TEST(test_ulfius_response)
   ck_assert_int_eq(resp1.binary_body_length, 0);
   ck_assert_ptr_eq(resp1.binary_body, NULL);
   
-  ck_assert_int_eq(ulfius_set_binary_body_response(&resp1, STATUS, BINARY_BODY, BINARY_BODY_LEN), U_OK);
+  ck_assert_int_eq(ulfius_set_binary_body_response(&resp1, STATUS, (unsigned char *)BINARY_BODY, BINARY_BODY_LEN), U_OK);
   ck_assert_ptr_ne(resp1.binary_body, NULL);
   ck_assert_int_eq(resp1.binary_body_length, BINARY_BODY_LEN);
 
 #ifndef U_DISABLE_JANSSON
   ck_assert_int_eq(ulfius_set_json_body_response(&resp1, STATUS, j_body), U_OK);
-  ck_assert_str_eq(resp1.binary_body, str_body);
+  ck_assert_str_eq((const char *)resp1.binary_body, str_body);
   j_body2 = ulfius_get_json_body_response(&resp1, NULL);
   ck_assert_int_eq(json_equal(j_body, j_body2), 1);
   o_free(str_body);
   json_decref(j_body);
   json_decref(j_body2);
+  ck_assert_int_eq(u_map_put(resp1.map_header, "ContenT-Type", "error"), U_OK);
+  ck_assert_ptr_eq(NULL, ulfius_get_json_body_response(&resp1, NULL));
 #endif
 
   ulfius_clean_response(&resp1);
@@ -1056,7 +1060,7 @@ START_TEST(test_ulfius_set_response_properties)
 #ifndef U_DISABLE_JANSSON
   json_t * j_body = json_pack("{ss}", "result", "body");
   ck_assert_int_eq(ulfius_set_response_properties(&resp, U_OPT_JSON_BODY, j_body, U_OPT_NONE), U_OK);
-  ck_assert_str_eq(resp.binary_body, "{\"result\":\"body\"}");
+  ck_assert_str_eq((const char *)resp.binary_body, "{\"result\":\"body\"}");
   json_decref(j_body);
 #endif
 
