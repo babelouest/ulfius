@@ -253,7 +253,7 @@ struct _u_request {
   struct _u_map *      map_header; /* !< map containing the header variables */
   struct _u_map *      map_cookie; /* !< map containing the cookie variables */
   struct _u_map *      map_post_body; /* !< map containing the post body variables (if available) */
-  void *               binary_body; /* !< raw body */
+  unsigned char *      binary_body; /* !< raw body */
   size_t               binary_body_length; /* !< length of raw body */
   unsigned int         callback_position; /* !< position of the current callback function in the callback list, starts at 0 */
 #ifndef U_DISABLE_GNUTLS
@@ -277,7 +277,7 @@ struct _u_response {
   unsigned int       nb_cookies; /* !< number of cookies sent */
   struct _u_cookie * map_cookie; /* !< array of cookies sent */
   char             * auth_realm; /* !< realm to send to the client on authenticationb failed */
-  void             * binary_body; /* !< raw binary content */
+  unsigned char    * binary_body; /* !< raw binary content */
   size_t             binary_body_length; /* !< length of the binary_body */
   ssize_t         (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max); /* !< callback function to stream data in response body */
   void            (* stream_callback_free) (void * stream_user_data); /* !< callback function to free data allocated for streaming */
@@ -902,7 +902,7 @@ int ulfius_set_string_body_request(struct _u_request * request, const char * str
  * @param length the length of binary_body to set to the request body
  * return U_OK on success
  */
-int ulfius_set_binary_body_request(struct _u_request * request, const char * binary_body, const size_t length);
+int ulfius_set_binary_body_request(struct _u_request * request, const unsigned char * binary_body, const size_t length);
 
 /**
  * ulfius_set_empty_body_request
@@ -931,7 +931,7 @@ int ulfius_set_string_body_response(struct _u_response * response, const unsigne
  * @param length the length of body to set to the request body
  * @return U_OK on success
  */
-int ulfius_set_binary_body_response(struct _u_response * response, const unsigned int status, const char * body, const size_t length);
+int ulfius_set_binary_body_response(struct _u_response * response, const unsigned int status, const unsigned char * body, const size_t length);
 
 /**
  * ulfius_set_empty_body_response
@@ -1473,11 +1473,20 @@ int u_map_copy_into(struct _u_map * dest, const struct _u_map * source);
 
 /**
  * Count the number of elements in the _u_map
+ * @param u_map the _u_map to analyze
+ * @return the number of key/values pair in the specified struct _u_map
+ * Return -1 on error
+ */
+int u_map_count(const struct _u_map * u_map);
+
+/**
+ * Count the number of elements if the key exists in the _u_map
+ * search is case insensitive
  * @param source the _u_map to analyze
  * @return the number of key/values pair in the specified struct _u_map
  * Return -1 on error
  */
-int u_map_count(const struct _u_map * source);
+int u_map_count_keys_case(const struct _u_map * source, const char * key);
 
 /**
  * Empty a struct u_map of all its elements
