@@ -2,9 +2,9 @@
  *
  * Iddawc OIDC Access Token token check
  *
- * Copyright 2021-2022 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2020-2023 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20221024
+ * Version 20231201
  *
  * The MIT License (MIT)
  * 
@@ -52,7 +52,7 @@ static const char * get_ip_source(const struct _u_request * request) {
   }
   
   return ip_source;
-};
+}
 
 static const char * get_auth_header_token(const char * auth_header, int * is_header_dpop) {
   if (0 == o_strncmp(HEADER_PREFIX_BEARER, auth_header, HEADER_PREFIX_BEARER_LEN)) {
@@ -119,11 +119,12 @@ int callback_check_jwt_profile_access_token (const struct _u_request * request, 
   int res = U_CALLBACK_UNAUTHORIZED, res_validity, is_header_dpop = 0;
   const char * token_value = NULL, * dpop = u_map_get_case(request->map_header, HEADER_DPOP);
   char * response_value = NULL, * htu;
+  int count_dpop = u_map_count_keys_case(request->map_header, HEADER_DPOP);
   
   if (config != NULL) {
     switch (config->method) {
       case I_METHOD_HEADER:
-        if (u_map_get_case(request->map_header, HEADER_AUTHORIZATION) != NULL) {
+        if (u_map_count_keys_case(request->map_header, HEADER_AUTHORIZATION) == 1) {
           token_value = get_auth_header_token(u_map_get_case(request->map_header, HEADER_AUTHORIZATION), &is_header_dpop);
         }
         break;
@@ -150,9 +151,9 @@ int callback_check_jwt_profile_access_token (const struct _u_request * request, 
             u_map_put(response->map_header, HEADER_RESPONSE, response_value);
             o_free(response_value);
           } else {
-            if (is_header_dpop && json_object_get(json_object_get(j_access_token, "cnf"), "jkt") != NULL && dpop != NULL) {
+            if (is_header_dpop && json_object_get(json_object_get(j_access_token, "cnf"), "jkt") != NULL && dpop != NULL && count_dpop == 1) {
               htu = msprintf("%s%s", config->resource_url_root, request->url_path+1);
-              if (i_verify_dpop_proof(u_map_get(request->map_header, I_HEADER_DPOP), request->http_verb, htu, config->dpop_max_iat, json_string_value(json_object_get(json_object_get(j_access_token, "cnf"), "jkt")), token_value) == I_OK) {
+              if (i_verify_dpop_proof(u_map_get_case(request->map_header, I_HEADER_DPOP), request->http_verb, htu, config->dpop_max_iat, json_string_value(json_object_get(json_object_get(j_access_token, "cnf"), "jkt")), token_value) == I_OK) {
                 res = U_CALLBACK_CONTINUE;
                 if (ulfius_set_response_shared_data(response, json_deep_copy(j_access_token), (void (*)(void *))&json_decref) != U_OK) {
                   res = U_CALLBACK_ERROR;

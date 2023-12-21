@@ -4,7 +4,7 @@
  *
  * Copyright 2020-2022 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20221024
+ * Version 20231201
  *
  * The MIT License (MIT)
  *
@@ -303,7 +303,8 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
   unsigned char * file_content, * file_content_orig = NULL;
   size_t length, read_length, offset, data_zip_len = 0;
   FILE * f;
-  char * file_requested, * file_path, * url_dup_save, * data_zip = NULL, * real_path = NULL;
+  char * file_requested, * file_path, * url_dup_save, * real_path = NULL;
+  unsigned char * data_zip = NULL;
   const char * content_type;
 
   /*
@@ -343,7 +344,7 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
 
         if (compress_mode != U_COMPRESS_NONE) {
           if (compress_mode == U_COMPRESS_GZIP && config->allow_cache_compressed && u_map_has_key(&config->gzip_files, file_requested)) {
-            ulfius_set_binary_body_response(response, 200, u_map_get(&config->gzip_files, file_requested), (size_t)u_map_get_length(&config->gzip_files, file_requested));
+            ulfius_set_binary_body_response(response, 200, (const unsigned char *)u_map_get(&config->gzip_files, file_requested), (size_t)u_map_get_length(&config->gzip_files, file_requested));
             u_map_put(response->map_header, U_CONTENT_HEADER, U_ACCEPT_GZIP);
 
             content_type = u_map_get_case(&config->mime_types, get_filename_ext(file_requested));
@@ -353,7 +354,7 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
             u_map_put(response->map_header, "Content-Type", content_type);
             u_map_copy_into(response->map_header, &config->map_header);
           } else if (compress_mode == U_COMPRESS_DEFL && config->allow_cache_compressed && u_map_has_key(&config->deflate_files, file_requested)) {
-            ulfius_set_binary_body_response(response, 200, u_map_get(&config->deflate_files, file_requested), (size_t)u_map_get_length(&config->deflate_files, file_requested));
+            ulfius_set_binary_body_response(response, 200, (const unsigned char *)u_map_get(&config->deflate_files, file_requested), (size_t)u_map_get_length(&config->deflate_files, file_requested));
             u_map_put(response->map_header, U_CONTENT_HEADER, U_ACCEPT_DEFLATE);
 
             content_type = u_map_get_case(&config->mime_types, get_filename_ext(file_requested));
@@ -437,15 +438,15 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
                           if (ret == U_CALLBACK_CONTINUE) {
                             if (compress_mode == U_COMPRESS_GZIP) {
                               if (config->allow_cache_compressed) {
-                                u_map_put_binary(&config->gzip_files, file_requested, data_zip, 0, defstream.total_out);
-                                ulfius_set_binary_body_response(response, 200, u_map_get(&config->gzip_files, file_requested), (size_t)u_map_get_length(&config->gzip_files, file_requested));
+                                u_map_put_binary(&config->gzip_files, file_requested, (const char *)data_zip, 0, defstream.total_out);
+                                ulfius_set_binary_body_response(response, 200, (const unsigned char *)u_map_get(&config->gzip_files, file_requested), (size_t)u_map_get_length(&config->gzip_files, file_requested));
                               } else {
                                 ulfius_set_binary_body_response(response, 200, data_zip, defstream.total_out);
                               }
                             } else {
                               if (config->allow_cache_compressed) {
-                                u_map_put_binary(&config->deflate_files, file_requested, data_zip, 0, defstream.total_out);
-                                ulfius_set_binary_body_response(response, 200, u_map_get(&config->deflate_files, file_requested), (size_t)u_map_get_length(&config->deflate_files, file_requested));
+                                u_map_put_binary(&config->deflate_files, file_requested, (const char *)data_zip, 0, defstream.total_out);
+                                ulfius_set_binary_body_response(response, 200, (const unsigned char *)u_map_get(&config->deflate_files, file_requested), (size_t)u_map_get_length(&config->deflate_files, file_requested));
                               } else {
                                 ulfius_set_binary_body_response(response, 200, data_zip, defstream.total_out);
                               }
