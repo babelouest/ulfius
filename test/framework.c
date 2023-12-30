@@ -4982,27 +4982,35 @@ size_t my_write_body(void * contents, size_t size, size_t nmemb, void * user_dat
   return size * nmemb;
 }
 
-int callback_check_utf8_ignored(const struct _u_request * request, struct _u_response * response, void * user_data) {
-  ck_assert_int_eq(u_map_has_key(request->map_header, "utf8_param"), 0);
-  ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param1"), 0);
-  ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param2"), 0);
-  ck_assert_int_eq(u_map_has_key(request->map_post_body, "utf8_param"), 0);
-  ck_assert_int_eq(u_map_has_key(request->map_header, "utf8_param_valid"), 1);
-  ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param_valid1"), 1);
-  ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param_valid2"), 1);
-  ck_assert_int_eq(u_map_has_key(request->map_post_body, "utf8_param_valid"), 1);
-  return U_CALLBACK_CONTINUE;
-}
-
 int callback_check_utf8_not_ignored(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  int * i = (int *)user_data;
   ck_assert_int_eq(u_map_has_key(request->map_header, "utf8_param"), 1);
   ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param1"), 1);
   ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param2"), 1);
   ck_assert_int_eq(u_map_has_key(request->map_post_body, "utf8_param"), 1);
+  ck_assert_int_eq(u_map_has_key(request->map_cookie, "utf8_param"), 1);
   ck_assert_int_eq(u_map_has_key(request->map_header, "utf8_param_valid"), 1);
   ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param_valid1"), 1);
   ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param_valid2"), 1);
   ck_assert_int_eq(u_map_has_key(request->map_post_body, "utf8_param_valid"), 1);
+  ck_assert_int_eq(u_map_has_key(request->map_cookie, "utf8_param_valid"), 1);
+  (*i)++;
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_check_utf8_ignored(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  int * i = (int *)user_data;
+  ck_assert_int_eq(u_map_has_key(request->map_header, "utf8_param"), 0);
+  ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param1"), 0);
+  ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param_invalid_url1"), 0);
+  ck_assert_int_eq(u_map_has_key(request->map_post_body, "utf8_param"), 0);
+  ck_assert_int_eq(u_map_has_key(request->map_cookie, "utf8_param"), 0);
+  ck_assert_int_eq(u_map_has_key(request->map_header, "utf8_param_valid"), 1);
+  ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param_valid"), 1);
+  ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param_valid_url2"), 1);
+  ck_assert_int_eq(u_map_has_key(request->map_post_body, "utf8_param_valid"), 1);
+  ck_assert_int_eq(u_map_has_key(request->map_cookie, "utf8_param_valid"), 1);
+  (*i)++;
   return U_CALLBACK_CONTINUE;
 }
 
@@ -6073,29 +6081,41 @@ END_TEST
 
 START_TEST(test_ulfius_utf8_not_ignored)
 {
+  char * utf8_cookie = msprintf("utf8_param=%c%c,utf8_param_valid=value ȸ Ɇ  ɤ ¯\\_(ツ)_/¯", 0xC3, 0x28);
   char * invalid_utf8_seq2 = msprintf("value %c%c", 0xC3, 0x28);
   char * invalid_utf8_seq3 = msprintf("value %c%c%c", 0xE2, 0x28, 0xA1);
   char * invalid_utf8_seq4 = msprintf("value %c%c%c%c", 0xF0, 0x90, 0x28, 0xBC);
-  char * valid_utf8 = "valid value ȸ Ɇ  ɤ ¯\\_(ツ)_/¯";
+  char * valid_utf8 = "valid value ȸ Ɇ  ɤ ¯\\_(ツ)_¯";
   struct _u_instance u_instance;
   struct _u_request request;
+  struct _u_response response;
+  int i = 0;
 
   ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
   u_instance.check_utf8 = 0;
-  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "POST", "utf8", ":utf8_param1/:utf8_param_valid", 0, &callback_check_utf8_not_ignored, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "POST", NULL, "/utf8/:utf8_param1/:utf8_param2", 0, &callback_check_utf8_not_ignored, &i), U_OK);
   ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
 
   ulfius_init_request(&request);
-  request.http_url = msprintf("http://localhost:8080/utf8/%s/%s/?utf8_param3=%s&utf8_param_valid2=%s&utf8_param_empty=&utf8_param_null", invalid_utf8_seq3, valid_utf8, invalid_utf8_seq2, valid_utf8);
+  ulfius_init_response(&response);
+  request.http_url = msprintf("http://localhost:8080/utf8/%s/%s/?utf8_param_valid1=%s&utf8_param_valid2=%s&utf8_param_empty=&utf8_param_null",
+                              invalid_utf8_seq3,
+                              valid_utf8,
+                              invalid_utf8_seq2,
+                              valid_utf8);
   request.http_verb = o_strdup("POST");
   u_map_put(request.map_header, "utf8_param", invalid_utf8_seq3);
   u_map_put(request.map_header, "utf8_param_valid", valid_utf8);
+  u_map_put(request.map_header, "Cookie", utf8_cookie);
   u_map_put(request.map_post_body, "utf8_param", invalid_utf8_seq4);
   u_map_put(request.map_post_body, "utf8_param_valid", valid_utf8);
   u_map_put(request.map_post_body, "utf8_param_empty", "");
-  ck_assert_int_eq(ulfius_send_http_request(&request, NULL), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(200, response.status);
+  ck_assert_int_eq(i, 1);
   ulfius_clean_request(&request);
-
+  ulfius_clean_response(&response);
+  o_free(utf8_cookie);
   o_free(invalid_utf8_seq2);
   o_free(invalid_utf8_seq3);
   o_free(invalid_utf8_seq4);
@@ -6106,28 +6126,41 @@ END_TEST
 
 START_TEST(test_ulfius_utf8_ignored)
 {
+  char * utf8_cookie = msprintf("utf8_param=%c%c,utf8_param_valid=value ȸ Ɇ  ɤ ¯\\_(ツ)_/¯", 0xC3, 0x28);
   char * invalid_utf8_seq2 = msprintf("invalid value %c%c", 0xC3, 0x28);
   char * invalid_utf8_seq3 = msprintf("invalid value %c%c%c", 0xE2, 0x28, 0xA1);
   char * invalid_utf8_seq4 = msprintf("invalid value %c%c%c%c", 0xF0, 0x90, 0x28, 0xBC);
-  char * valid_utf8 = "valid value ȸ Ɇ  ɤ ¯\\_(ツ)_/¯";
+  char * valid_utf8 = "valid value ȸ Ɇ  ɤ ¯\\_(ツ)_¯";
   struct _u_instance u_instance;
   struct _u_request request;
+  struct _u_response response;
+  int i = 0;
 
   ck_assert_int_eq(ulfius_init_instance(&u_instance, 8080, NULL, NULL), U_OK);
   ck_assert_int_eq(u_instance.check_utf8, 1);
-  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "POST", "utf8", ":utf8_param1/:utf8_param_valid", 0, &callback_check_utf8_ignored, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&u_instance, "POST", "utf8", ":utf8_param1/:utf8_param_valid", 0, &callback_check_utf8_ignored, &i), U_OK);
   ck_assert_int_eq(ulfius_start_framework(&u_instance), U_OK);
 
   ulfius_init_request(&request);
-  request.http_url = msprintf("http://localhost:8080/utf8/%s/%s/?utf8_param3=%s&utf8_param_valid2=%s", invalid_utf8_seq3, valid_utf8, invalid_utf8_seq2, valid_utf8);
+  ulfius_init_response(&response);
+  request.http_url = msprintf("http://localhost:8080/utf8/%s/%s/?utf8_param_invalid_url1=%s&utf8_param_valid_url2=%s&utf8_param_empty=&utf8_param_null",
+                              invalid_utf8_seq3,
+                              valid_utf8,
+                              invalid_utf8_seq2,
+                              valid_utf8);
   request.http_verb = o_strdup("POST");
   u_map_put(request.map_header, "utf8_param", invalid_utf8_seq3);
   u_map_put(request.map_header, "utf8_param_valid", valid_utf8);
+  u_map_put(request.map_header, "Cookie", utf8_cookie);
   u_map_put(request.map_post_body, "utf8_param", invalid_utf8_seq4);
   u_map_put(request.map_post_body, "utf8_param_valid", valid_utf8);
-  ck_assert_int_eq(ulfius_send_http_request(&request, NULL), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
+  ck_assert_int_eq(200, response.status);
+  ck_assert_int_eq(i, 1);
   ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
 
+  o_free(utf8_cookie);
   o_free(invalid_utf8_seq2);
   o_free(invalid_utf8_seq3);
   o_free(invalid_utf8_seq4);
