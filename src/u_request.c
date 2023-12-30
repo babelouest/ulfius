@@ -918,7 +918,7 @@ char * ulfius_export_request_http(const struct _u_request * request) {
             if (key_esc) {
               value = u_map_get(request->map_post_body, keys[i]);
               len = u_map_get_length(request->map_post_body, keys[i]);
-              if (value != NULL && utf8_check(value, (size_t)len) == NULL) {
+              if (value != NULL && len > 0 && utf8_check(value, (size_t)len) == NULL) {
                 value_esc = ulfius_url_encode(value);
                 if (value_esc != NULL) {
                   body = mstrcatf(body, "%s=%s", key_esc, value_esc);

@@ -309,7 +309,7 @@ static struct _websocket_message * ulfius_build_message (const uint8_t opcode,
           }
         }
         if (new_message != NULL) {
-          if (data_len > 0) {
+          if (data_len > 0 && data_len <= SIZE_MAX) {
             memcpy(new_message->data, data, (size_t)data_len);
           }
           time(&new_message->datestamp);
@@ -599,44 +599,49 @@ static int ulfius_websocket_extension_message_in_perform_apply(struct _websocket
         memcpy(data_in, message->data, message->data_len);
       }
       data_in_len = message->data_len;
-      for (i=0; i<len && ret == U_OK; i++) {
-        extension = pointer_list_get_at(websocket->websocket_manager->websocket_extension_list, (len-i-1));
-        if (extension != NULL &&
-            extension->enabled &&
-            extension->websocket_extension_message_in_perform != NULL &&
-            (message->rsv & extension->rsv)) {
-          if (extension->websocket_extension_message_in_perform(message->opcode,
-                                                                data_in_len,
-                                                                data_in,
-                                                                &data_out_len,
-                                                                &data_out,
-                                                                0,
-                                                                extension->websocket_extension_message_out_perform_user_data,
-                                                                extension->context) != U_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error performing websocket_extension_message_in_perform at index %zu", i);
-            ret = U_ERROR;
-          } else {
-            o_free(data_in);
-            data_in = NULL;
-            data_in_len = 0;
-            if (data_out_len) {
-              if ((data_in = o_malloc((size_t)data_out_len)) != NULL) {
-                memcpy(data_in, data_out, (size_t)data_out_len);
-                data_in_len = data_out_len;
-              } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for data_in (%zu) (incoming)", i);
-                ret = U_ERROR_MEMORY;
+      if (data_in_len <= SIZE_MAX) {
+        for (i=0; i<len && ret == U_OK; i++) {
+          extension = pointer_list_get_at(websocket->websocket_manager->websocket_extension_list, (len-i-1));
+          if (extension != NULL &&
+              extension->enabled &&
+              extension->websocket_extension_message_in_perform != NULL &&
+              (message->rsv & extension->rsv)) {
+            if (extension->websocket_extension_message_in_perform(message->opcode,
+                                                                  data_in_len,
+                                                                  data_in,
+                                                                  &data_out_len,
+                                                                  &data_out,
+                                                                  0,
+                                                                  extension->websocket_extension_message_out_perform_user_data,
+                                                                  extension->context) != U_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error performing websocket_extension_message_in_perform at index %zu", i);
+              ret = U_ERROR;
+            } else {
+              o_free(data_in);
+              data_in = NULL;
+              data_in_len = 0;
+              if (data_out_len) {
+                if ((data_in = o_malloc((size_t)data_out_len)) != NULL) {
+                  memcpy(data_in, data_out, (size_t)data_out_len);
+                  data_in_len = data_out_len;
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for data_in (%zu) (incoming)", i);
+                  ret = U_ERROR_MEMORY;
+                }
               }
+              o_free(data_out);
+              data_out = NULL;
+              data_out_len = 0;
             }
-            o_free(data_out);
-            data_out = NULL;
-            data_out_len = 0;
           }
         }
+        o_free(message->data);
+        message->data = data_in;
+        message->data_len = (size_t)data_in_len;
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for data_in (incoming) - size too large %zu", message->data_len);
+        ret = U_ERROR_MEMORY;
       }
-      o_free(message->data);
-      message->data = data_in;
-      message->data_len = (size_t)data_in_len;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for data_in (incoming) %zu", message->data_len);
       ret = U_ERROR_MEMORY;
@@ -855,11 +860,12 @@ static int ulfius_get_next_line_from_http_response(struct _websocket * websocket
 static int ulfius_websocket_connection_handshake(struct _u_request * request, struct yuarel * y_url, struct _websocket * websocket, struct _u_response * response) {
   int websocket_response_http = 0, ret, extension_enabled;
   unsigned int websocket_response = 0, check_websocket = WEBSOCKET_RESPONSE_UPGRADE | WEBSOCKET_RESPONSE_CONNECTION | WEBSOCKET_RESPONSE_ACCEPT;
-  char * http_line, ** split_line = NULL, * key, * value, * separator, ** extension_list = NULL;
+  char * http_line, ** split_line = NULL, * key, * value, * separator, ** extension_list = NULL, * endptr = NULL;
   char buffer[U_WEBSOCKET_RESPONSE_BUFFER_LEN+1] = {0};
   const char ** keys;
   size_t buffer_len = U_WEBSOCKET_RESPONSE_BUFFER_LEN, line_len, extension_len, i, j;
   struct _websocket_extension * w_extension;
+  long int content_length;
 
   // Send HTTP Request
   http_line = msprintf("%s /%s%s%s HTTP/%s\r\n", request->http_verb, o_strlen(y_url->path)?y_url->path:"", y_url->query!=NULL?"?":"", y_url->query!=NULL?y_url->query:"", request->http_protocol);
@@ -955,18 +961,21 @@ static int ulfius_websocket_connection_handshake(struct _u_request * request, st
 
   if (!websocket_response_http || !(websocket_response & check_websocket) || response->status != 101) {
     if (u_map_has_key(response->map_header, "Content-Length")) {
-      response->binary_body_length = (size_t)strtol(u_map_get(response->map_header, "Content-Length"), NULL, 10);
-      if (response->binary_body) {
-        response->binary_body = o_malloc(response->binary_body_length);
-        if (response->binary_body != NULL) {
-          if (read_data_from_socket(websocket->websocket_manager, response->binary_body, response->binary_body_length) != (ssize_t)response->binary_body_length) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error read_data_from_socket for response->binary_body");
+      content_length = strtol(u_map_get(response->map_header, "Content-Length"), &endptr, 10);
+      if (content_length >= 0) {
+        response->binary_body_length = (size_t)content_length;
+        if (response->binary_body) {
+          response->binary_body = o_malloc(response->binary_body_length);
+          if (response->binary_body != NULL) {
+            if (read_data_from_socket(websocket->websocket_manager, response->binary_body, response->binary_body_length) != (ssize_t)response->binary_body_length) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error read_data_from_socket for response->binary_body");
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for response->binary_body");
           }
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error allocating resources for response->binary_body");
+          y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error invalid response->binary_body_length");
         }
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error invalid response->binary_body_length");
       }
     }
     close(websocket->websocket_manager->tcp_sock);
@@ -1042,7 +1051,7 @@ static int ulfius_open_websocket(struct _u_request * request, struct yuarel * y_
 
   websocket->websocket_manager->tcp_sock = socket(AF_INET, SOCK_STREAM, 0);
   if (websocket->websocket_manager->tcp_sock != -1) {
-    if ((he = gethostbyname(y_url->host)) != NULL) {
+    if ((he = gethostbyname(y_url->host)) != NULL && he->h_length > 0) {
       memcpy(&server.sin_addr, he->h_addr_list[0], (size_t)he->h_length);
       server.sin_family = AF_INET;
       server.sin_port = htons((uint16_t)y_url->port);
@@ -1098,7 +1107,7 @@ static int ulfius_open_websocket_tls(struct _u_request * request, struct yuarel 
       }
       websocket->websocket_manager->tcp_sock = socket(AF_INET, SOCK_STREAM, 0);
       if (websocket->websocket_manager->tcp_sock != -1) {
-        if ((he = gethostbyname(y_url->host)) != NULL) {
+        if ((he = gethostbyname(y_url->host)) != NULL && he->h_length > 0) {
           memset(&server, '\0', sizeof(server));
           memcpy(&server.sin_addr, he->h_addr_list[0], (size_t)he->h_length);
           server.sin_family = AF_INET;
@@ -1530,7 +1539,7 @@ int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websock
       ret = U_OK;
     } else {
       ret = U_OK;
-      if ((data_len && (data_in = o_malloc((size_t)data_len)) != NULL) || !data_len) {
+      if ((data_len && data_len <= SIZE_MAX && (data_in = o_malloc((size_t)data_len)) != NULL) || !data_len) {
         if (data != NULL) {
           memcpy(data_in, data, (size_t)data_len);
         } else {
@@ -1545,7 +1554,7 @@ int ulfius_websocket_send_fragmented_message(struct _websocket_manager * websock
               } else {
                 rsv |= extension->rsv;
                 o_free(data_in);
-                if ((data_in = o_malloc((size_t)data_out_len)) != NULL) {
+                if (data_out_len <= SIZE_MAX && (data_in = o_malloc((size_t)data_out_len)) != NULL) {
                   memcpy(data_in, data_out, (size_t)data_out_len);
                   data_in_len = data_out_len;
                 } else {
@@ -1971,7 +1980,7 @@ int websocket_extension_message_out_deflate(const uint8_t opcode,
 
       ret = U_OK;
       do {
-        if ((*data_out = o_realloc(*data_out, (size_t)(*data_len_out)+_U_W_BUFF_LEN)) != NULL) {
+        if ((*data_len_out)+_U_W_BUFF_LEN <= SIZE_MAX && (*data_out = o_realloc(*data_out, (size_t)(*data_len_out)+_U_W_BUFF_LEN)) != NULL) {
           deflate_context->defstream.avail_out = _U_W_BUFF_LEN;
           deflate_context->defstream.next_out = ((Bytef *)*data_out)+(*data_len_out);
           int res;
@@ -1988,7 +1997,7 @@ int websocket_extension_message_out_deflate(const uint8_t opcode,
           (*data_len_out) += _U_W_BUFF_LEN - deflate_context->defstream.avail_out;
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "websocket_extension_message_out_deflate - Error allocating resources for data_in_suffix");
-          ret = U_ERROR;
+          ret = U_ERROR_MEMORY;
         }
       } while (U_OK == ret && deflate_context->defstream.avail_out == 0);
 
@@ -2053,7 +2062,7 @@ int websocket_extension_message_in_inflate(const uint8_t opcode,
   (void)fragment_len;
   (void)user_data;
 
-  if (data_len_in) {
+  if (data_len_in && data_len_in <= (SIZE_MAX-4)) {
     if (deflate_context != NULL) {
       *data_out = NULL;
       *data_len_out = 0;

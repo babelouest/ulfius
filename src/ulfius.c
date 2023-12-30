@@ -284,16 +284,19 @@ void mhd_redirect_log(void * arg, const char * fmt, va_list ap) {
   va_list args_cpy, args_cpy2;
   size_t out_len = 0;
   char * out = NULL, * new_fmt;
+  int v_out = 0;
 
   va_copy(args_cpy, ap);
   va_copy(args_cpy2, ap);
   new_fmt = msprintf("MHD - %s", fmt);
-  out_len = (size_t)vsnprintf(NULL, 0, new_fmt, args_cpy);
-  out = o_malloc((out_len));
-  if (out != NULL) {
-    vsnprintf(out, (out_len), new_fmt, args_cpy2);
-    y_log_message(Y_LOG_LEVEL_ERROR, out);
-    o_free(out);
+  if ((v_out = vsnprintf(NULL, 0, new_fmt, args_cpy)) > 0) {
+    out_len = (size_t)v_out;
+    out = o_malloc((out_len));
+    if (out != NULL) {
+      vsnprintf(out, (out_len), new_fmt, args_cpy2);
+      y_log_message(Y_LOG_LEVEL_ERROR, out);
+      o_free(out);
+    }
   }
   o_free(new_fmt);
   va_end(args_cpy);
@@ -360,22 +363,27 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
       ret = MHD_NO;
     }
   } else {
-    
+
     do {
       if (con_info->u_instance->check_utf8) {
         if (utf8_check(key, o_strlen(key)) != NULL || data == NULL || utf8_check(data, size) != NULL || (filename != NULL && utf8_check(filename, o_strlen(filename)) != NULL)) {
           break;
         }
       }
-      
+
       if (con_info->max_post_param_size && off > con_info->max_post_param_size) {
         break;
       }
-      
-      if (con_info->max_post_param_size && off + size > con_info->max_post_param_size) {
-        data_size = (size_t)(con_info->max_post_param_size - off);
+
+      if (off > SIZE_MAX) {
+        ret = MHD_NO;
+        break;
       }
-      
+
+      if (con_info->max_post_param_size && off + size > con_info->max_post_param_size) {
+        data_size = (con_info->max_post_param_size - (size_t)off);
+      }
+
       if (filename != NULL) {
         filename_param = msprintf("%s_filename", key);
         if (!u_map_has_key((struct _u_map *)con_info->request->map_post_body, filename_param) && u_map_put((struct _u_map *)con_info->request->map_post_body, filename_param, filename) != U_OK) {
@@ -383,19 +391,23 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
         }
       }
       cur_data = u_map_get((struct _u_map *)con_info->request->map_post_body, key);
-      cur_size = u_map_get_length((struct _u_map *)con_info->request->map_post_body, key);
       if (cur_data != NULL) {
-        if (off) {
-          if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data, (size_t)cur_size, data_size) != U_OK) {
-            ret = MHD_NO;
-            break;
+        if ((cur_size = u_map_get_length((struct _u_map *)con_info->request->map_post_body, key)) >= 0) {
+          if (off) {
+            if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data, (size_t)cur_size, data_size) != U_OK) {
+              ret = MHD_NO;
+              break;
+            }
+          } else {
+            if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, ",", (size_t)cur_size, 1) != U_OK ||
+                u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data, (size_t)cur_size+1, data_size) != U_OK) {
+              ret = MHD_NO;
+              break;
+            }
           }
         } else {
-          if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, ",", (size_t)cur_size, 1) != U_OK ||
-              u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data, (size_t)cur_size+1, data_size) != U_OK) {
-            ret = MHD_NO;
-            break;
-          }
+          ret = MHD_NO;
+          break;
         }
       } else {
         if (u_map_put_binary((struct _u_map *)con_info->request->map_post_body, key, data, 0, data_size) != U_OK) {
@@ -403,7 +415,7 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
           break;
         }
       }
-      
+
     } while (0);
     o_free(data_concat);
     o_free(filename_param);
@@ -533,7 +545,7 @@ static int ulfius_webservice_dispatcher (void * cls,
     content_type = (char*)u_map_get_case(con_info->request->map_header, ULFIUS_HTTP_HEADER_CONTENT);
 
     // Set POST Processor if content-type is properly set
-    if (content_type != NULL && 
+    if (content_type != NULL &&
        ((con_info->u_instance->allowed_post_processor&U_POST_PROCESS_URL_ENCODED && 0 == o_strncmp(MHD_HTTP_POST_ENCODING_FORM_URLENCODED, content_type, o_strlen(MHD_HTTP_POST_ENCODING_FORM_URLENCODED))) ||
         (con_info->u_instance->allowed_post_processor&U_POST_PROCESS_MULTIPART_FORMDATA && 0 == o_strncmp(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA, content_type, o_strlen(MHD_HTTP_POST_ENCODING_MULTIPART_FORMDATA))))) {
       con_info->has_post_processor = 1;

@@ -156,7 +156,7 @@ int u_map_put(struct _u_map * u_map, const char * key, const char * value) {
 int u_map_put_binary(struct _u_map * u_map, const char * key, const char * value, uint64_t offset, size_t length) {
   size_t i;
   char * dup_key, * dup_value;
-  if (u_map != NULL && key != NULL && !o_strnullempty(key)) {
+  if (u_map != NULL && key != NULL && !o_strnullempty(key) && (offset+length+1) <= SIZE_MAX) {
     for (i=0; i < (size_t)u_map->nb_values; i++) {
       if (0 == o_strcmp(u_map->keys[i], key)) {
         // Key already exist, extend and/or replace value
