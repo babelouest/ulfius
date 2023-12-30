@@ -293,7 +293,7 @@ void mhd_redirect_log(void * arg, const char * fmt, va_list ap) {
     out_len = (size_t)v_out;
     out = o_malloc((out_len+1));
     if (out != NULL) {
-      vsnprintf(out, (out_len), new_fmt, args_cpy2);
+      vsnprintf(out, (out_len+1), new_fmt, args_cpy2);
       y_log_message(Y_LOG_LEVEL_ERROR, out);
       o_free(out);
     }
