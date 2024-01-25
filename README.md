@@ -125,5 +125,3 @@ Example callback functions are available in the folder [example_callbacks](https
 ## Questions, problems ?
 
 I'm open for questions and suggestions, feel free to open an [issue](https://github.com/babelouest/ulfius/issues), a [pull request](https://github.com/babelouest/ulfius/pulls) or send me an [e-mail](mailto:mail@babelouest.io) if you feel like it!
-
-You can visit the IRC channel #ulfius on the [Libera.​Chat](https://libera.chat/) network.
