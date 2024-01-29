@@ -640,7 +640,7 @@ struct _u_request {
   struct _u_map *      map_header;
   struct _u_map *      map_cookie;
   struct _u_map *      map_post_body;
-  void *               binary_body;
+  unsigned char *      binary_body;
   size_t               binary_body_length;
   unsigned int         callback_position;
 #ifndef U_DISABLE_GNUTLS
@@ -665,10 +665,13 @@ int ulfius_set_string_body_request(struct _u_response * request, const char * st
 
 /**
  * ulfius_set_binary_body_request
- * Add a binary binary_body to a request
+ * Set a binary binary_body to a request, replace any existing body in the request
+ * @param request the request to be updated
+ * @param binary_body an array of char to set to the body response
+ * @param length the length of binary_body to set to the request body
  * return U_OK on success
  */
-int ulfius_set_binary_body_request(struct _u_response * request, const char * binary_body, const size_t length);
+int ulfius_set_binary_body_request(struct _u_request * request, const unsigned char * binary_body, const size_t length);
 
 /**
  * ulfius_set_empty_body_request
@@ -767,7 +770,7 @@ struct _u_response {
   unsigned int       nb_cookies;
   struct _u_cookie * map_cookie;
   char             * auth_realm;
-  void             * binary_body;
+  unsigned char    * binary_body;
   size_t             binary_body_length;
   ssize_t         (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max);
   void            (* stream_callback_free) (void * stream_user_data);
@@ -791,40 +794,58 @@ Some functions are dedicated to handle the response:
 /**
  * ulfius_add_header_to_response
  * add a header to the response
- * return U_OK on success
+ * @param response the response to be updated
+ * @param key the key of the header
+ * @param value the value of the header
+ * @return U_OK on success
  */
 int ulfius_add_header_to_response(struct _u_response * response, const char * key, const char * value);
 
 /**
  * ulfius_set_string_body_response
- * Add a string body to a response
- * body must end with a '\0' character
- * return U_OK on success
+ * Add a string body to a response, replace any existing body in the response
+ * @param response the response to be updated
+ * @param status the http status code to set to the response
+ * @param body the string body to set, must end with a '\0' character
+ * @return U_OK on success
  */
 int ulfius_set_string_body_response(struct _u_response * response, const unsigned int status, const char * body);
 
 /**
- * ulfius_set_binary_response
- * Add a binary body to a response
- * return U_OK on success
+ * ulfius_set_binary_body_response
+ * Add a binary body to a response, replace any existing body in the response
+ * @param response the response to be updated
+ * @param status the http status code to set to the response
+ * @param body the array of char to set
+ * @param length the length of body to set to the request body
+ * @return U_OK on success
  */
-int ulfius_set_binary_response(struct _u_response * response, const unsigned int status, const char * body, const size_t length);
+int ulfius_set_binary_body_response(struct _u_response * response, const unsigned int status, const unsigned char * body, const size_t length);
 
 /**
  * ulfius_set_empty_body_response
  * Set an empty response with only a status
- * return U_OK on success
+ * @param response the response to be updated
+ * @param status the http status code to set to the response
+ * @return U_OK on success
  */
 int ulfius_set_empty_body_response(struct _u_response * response, const unsigned int status);
 
 /**
  * ulfius_set_stream_response
  * Set an stream response with a status
- * return U_OK on success
+ * @param response the response to be updated
+ * @param status the http status code to set to the response
+ * @param stream_callback a pointer to a function that will handle the response stream
+ * @param stream_callback_free a pointer to a function that will free its allocated resources during stream_callback
+ * @param stream_size size of the streamed data (U_STREAM_SIZE_UNKNOWN if unknown)
+ * @param stream_block_size preferred size of each stream chunk, may be overwritten by the system if necessary
+ * @param stream_user_data a user-defined pointer that will be available in stream_callback and stream_callback_free
+ * @return U_OK on success
  */
-int ulfius_set_stream_response(struct _u_response * response, 
+int ulfius_set_stream_response(struct _u_response * response,
                                 const unsigned int status,
-                                ssize_t (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max);
+                                ssize_t (* stream_callback) (void * stream_user_data, uint64_t offset, char * out_buf, size_t max),
                                 void (* stream_callback_free) (void * stream_user_data),
                                 uint64_t stream_size,
                                 size_t stream_block_size,
