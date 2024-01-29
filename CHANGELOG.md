@@ -1,5 +1,12 @@
 # Ulfius Changelog
 
+## 2.7.16
+
+- Add function `u_map_count_keys_case`
+- Change `binary_body` type to `uchar *` in `struct _u_request` and `struct _u_response`
+- Minor bugfixes
+- Build with flag `-Wpedantic`
+
 ## 2.7.15
 
 - Add functions `ulfius_send_http_request_with_limit` and `ulfius_send_http_streaming_request_max_header`
