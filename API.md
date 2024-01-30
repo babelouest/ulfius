@@ -671,7 +671,7 @@ int ulfius_set_string_body_request(struct _u_response * request, const char * st
  * @param length the length of binary_body to set to the request body
  * return U_OK on success
  */
-int ulfius_set_binary_body_request(struct _u_request * request, const unsigned char * binary_body, const size_t length);
+int ulfius_set_binary_body_request(struct _u_request * request, const char * binary_body, const size_t length);
 
 /**
  * ulfius_set_empty_body_request
@@ -820,7 +820,7 @@ int ulfius_set_string_body_response(struct _u_response * response, const unsigne
  * @param length the length of body to set to the request body
  * @return U_OK on success
  */
-int ulfius_set_binary_body_response(struct _u_response * response, const unsigned int status, const unsigned char * body, const size_t length);
+int ulfius_set_binary_body_response(struct _u_response * response, const unsigned int status, const char * body, const size_t length);
 
 /**
  * ulfius_set_empty_body_response
@@ -2486,6 +2486,10 @@ $ sudo make install
 ### Ready-to-use callback functions <a name="ready-to-use-callback-functions"></a>
 
 You can find some ready-to-use callback functions in the folder [example_callbacks](https://github.com/babelouest/ulfius/blob/master/example_callbacks).
+
+## Update existing programs to 2.7.16 <a name="update-existing-programs-to-276"></a>
+
+The `binary_body` type in `struct _u_request` and `struct _u_response` were changed from `void *` to `unsigned char *`. This change doesn't affect the set request body or set response body functions.
 
 ## Update existing programs from Ulfius 2.0 to 2.1 <a name="update-existing-programs-from-ulfius-20-to-21"></a>
 
