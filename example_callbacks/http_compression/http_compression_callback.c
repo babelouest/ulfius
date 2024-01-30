@@ -2,9 +2,9 @@
  *
  * Response body compression callback function for Ulfius Framework
  *
- * Copyright 2020-2023 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2020-2024 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20231201
+ * Version 20240130
  *
  * Compress the response body using `deflate` or `gzip` depending on the request header `Accept-Encoding` and the callback configuration.
  * The rest of the response, status, headers, cookies won't change.
@@ -68,7 +68,7 @@ int callback_http_compression (const struct _u_request * request, struct _u_resp
   char ** accept_list = NULL;
   int ret = U_CALLBACK_IGNORE, compress_mode = U_COMPRESS_NONE, res;
   z_stream defstream;
-  unsigned char * data_zip = NULL;
+  char * data_zip = NULL;
   size_t data_zip_len = 0;
 
   if (response->binary_body_length && u_map_count_keys_case(request->map_header, U_ACCEPT_HEADER) == 1) {
@@ -125,7 +125,7 @@ int callback_http_compression (const struct _u_request * request, struct _u_resp
           } while (U_CALLBACK_IGNORE == ret && defstream.avail_out == 0);
 
           if (ret == U_CALLBACK_IGNORE) {
-            ulfius_set_binary_body_response(response, (unsigned int)response->status, (const unsigned char *)data_zip, defstream.total_out);
+            ulfius_set_binary_body_response(response, (unsigned int)response->status, data_zip, defstream.total_out);
             u_map_put(response->map_header, U_CONTENT_HEADER, compress_mode==U_COMPRESS_GZIP?U_ACCEPT_GZIP:U_ACCEPT_DEFLATE);
           }
           deflateEnd(&defstream);
