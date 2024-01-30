@@ -495,7 +495,6 @@ int ulfius_set_request_properties(struct _u_request * request, ...) {
   u_option option;
   int ret = U_OK;
   const char * str_key, * str_value;
-  const unsigned char * ustr_value;
   size_t size_value;
 #ifndef U_DISABLE_JANSSON
   json_t * j_value;
@@ -640,9 +639,9 @@ int ulfius_set_request_properties(struct _u_request * request, ...) {
           ret = u_map_remove_from_key(request->map_post_body, str_value);
           break;
         case U_OPT_BINARY_BODY:
-          ustr_value = va_arg(vl, const unsigned char *);
+          str_value = va_arg(vl, const char *);
           size_value = va_arg(vl, size_t);
-          ret = ulfius_set_binary_body_request(request, ustr_value, size_value);
+          ret = ulfius_set_binary_body_request(request, str_value, size_value);
           break;
         case U_OPT_STRING_BODY:
           str_value = va_arg(vl, const char *);
@@ -724,7 +723,7 @@ int ulfius_set_string_body_request(struct _u_request * request, const char * str
  * Add a binary binary_body to a request
  * return U_OK on success
  */
-int ulfius_set_binary_body_request(struct _u_request * request, const unsigned char * binary_body, const size_t length) {
+int ulfius_set_binary_body_request(struct _u_request * request, const char * binary_body, const size_t length) {
   if (request != NULL && binary_body != NULL && length) {
     // Free all the bodies available
     o_free(request->binary_body);
