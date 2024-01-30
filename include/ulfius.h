@@ -902,7 +902,7 @@ int ulfius_set_string_body_request(struct _u_request * request, const char * str
  * @param length the length of binary_body to set to the request body
  * return U_OK on success
  */
-int ulfius_set_binary_body_request(struct _u_request * request, const unsigned char * binary_body, const size_t length);
+int ulfius_set_binary_body_request(struct _u_request * request, const char * binary_body, const size_t length);
 
 /**
  * ulfius_set_empty_body_request
@@ -931,7 +931,7 @@ int ulfius_set_string_body_response(struct _u_response * response, const unsigne
  * @param length the length of body to set to the request body
  * @return U_OK on success
  */
-int ulfius_set_binary_body_response(struct _u_response * response, const unsigned int status, const unsigned char * body, const size_t length);
+int ulfius_set_binary_body_response(struct _u_response * response, const unsigned int status, const char * body, const size_t length);
 
 /**
  * ulfius_set_empty_body_response
