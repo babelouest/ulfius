@@ -62,7 +62,7 @@ int callback_function_empty(const struct _u_request * request, struct _u_respons
 }
 
 int callback_function_return_request_body(const struct _u_request * request, struct _u_response * response, void * user_data) {
-  ulfius_set_binary_body_response(response, 200, request->binary_body, request->binary_body_length);
+  ulfius_set_binary_body_response(response, 200, (const char *)request->binary_body, request->binary_body_length);
   return U_CALLBACK_CONTINUE;
 }
 
@@ -301,7 +301,7 @@ START_TEST(test_ulfius_request)
   ck_assert_int_eq(req1.binary_body_length, 0);
   ck_assert_ptr_eq(req1.binary_body, NULL);
   
-  ck_assert_int_eq(ulfius_set_binary_body_request(&req1, (unsigned char *)BINARY_BODY, BINARY_BODY_LEN), U_OK);
+  ck_assert_int_eq(ulfius_set_binary_body_request(&req1, BINARY_BODY, BINARY_BODY_LEN), U_OK);
   ck_assert_ptr_ne(req1.binary_body, NULL);
   ck_assert_int_eq(req1.binary_body_length, BINARY_BODY_LEN);
 
@@ -914,7 +914,7 @@ START_TEST(test_ulfius_response)
   ck_assert_int_eq(resp1.binary_body_length, 0);
   ck_assert_ptr_eq(resp1.binary_body, NULL);
   
-  ck_assert_int_eq(ulfius_set_binary_body_response(&resp1, STATUS, (unsigned char *)BINARY_BODY, BINARY_BODY_LEN), U_OK);
+  ck_assert_int_eq(ulfius_set_binary_body_response(&resp1, STATUS, BINARY_BODY, BINARY_BODY_LEN), U_OK);
   ck_assert_ptr_ne(resp1.binary_body, NULL);
   ck_assert_int_eq(resp1.binary_body_length, BINARY_BODY_LEN);
 

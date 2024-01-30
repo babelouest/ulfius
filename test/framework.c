@@ -5240,7 +5240,7 @@ int callback_function_post_params_not_processed(const struct _u_request * reques
 }
 
 int callback_send_request_with_limit(const struct _u_request * request, struct _u_response * response, void * user_data) {
-  unsigned char body[65535] = {0};
+  char body[65535] = {0};
   
   memset(body, '4', 65535);
   ulfius_set_response_properties(response,
