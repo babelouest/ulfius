@@ -6,6 +6,7 @@
 - Change `binary_body` type to `uchar *` in `struct _u_request` and `struct _u_response`
 - Minor bugfixes
 - Build with flag `-Wpedantic`
+- Fix tests to comply with libmicrohttpd 1.0.0 cookie parsing
 
 ## 2.7.15
 
