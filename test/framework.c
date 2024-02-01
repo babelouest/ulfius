@@ -4988,7 +4988,9 @@ int callback_check_utf8_not_ignored(const struct _u_request * request, struct _u
   ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param1"), 1);
   ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param2"), 1);
   ck_assert_int_eq(u_map_has_key(request->map_post_body, "utf8_param"), 1);
+#if MHD_VERSION < 0x01000000
   ck_assert_int_eq(u_map_has_key(request->map_cookie, "utf8_param"), 1);
+#endif
   ck_assert_int_eq(u_map_has_key(request->map_header, "utf8_param_valid"), 1);
   ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param_valid1"), 1);
   ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param_valid2"), 1);
@@ -5004,7 +5006,9 @@ int callback_check_utf8_ignored(const struct _u_request * request, struct _u_res
   ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param1"), 0);
   ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param_invalid_url1"), 0);
   ck_assert_int_eq(u_map_has_key(request->map_post_body, "utf8_param"), 0);
+#if MHD_VERSION < 0x01000000
   ck_assert_int_eq(u_map_has_key(request->map_cookie, "utf8_param"), 0);
+#endif
   ck_assert_int_eq(u_map_has_key(request->map_header, "utf8_param_valid"), 1);
   ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param_valid"), 1);
   ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param_valid_url2"), 1);
@@ -6081,11 +6085,11 @@ END_TEST
 
 START_TEST(test_ulfius_utf8_not_ignored)
 {
-  char * utf8_cookie = msprintf("utf8_param=%c%c,utf8_param_valid=value ȸ Ɇ  ɤ ¯\\_(ツ)_/¯", 0xC3, 0x28);
   char * invalid_utf8_seq2 = msprintf("value %c%c", 0xC3, 0x28);
   char * invalid_utf8_seq3 = msprintf("value %c%c%c", 0xE2, 0x28, 0xA1);
   char * invalid_utf8_seq4 = msprintf("value %c%c%c%c", 0xF0, 0x90, 0x28, 0xBC);
   char * valid_utf8 = "valid value ȸ Ɇ  ɤ ¯\\_(ツ)_¯";
+  char * valid_utf8_cookie = "valid-value-ȸ-Ɇ-ɤ-¯_(ツ)_¯";
   struct _u_instance u_instance;
   struct _u_request request;
   struct _u_response response;
@@ -6106,7 +6110,8 @@ START_TEST(test_ulfius_utf8_not_ignored)
   request.http_verb = o_strdup("POST");
   u_map_put(request.map_header, "utf8_param", invalid_utf8_seq3);
   u_map_put(request.map_header, "utf8_param_valid", valid_utf8);
-  u_map_put(request.map_header, "Cookie", utf8_cookie);
+  u_map_put(request.map_cookie, "utf8_param_valid", valid_utf8_cookie);
+  u_map_put(request.map_cookie, "utf8_param", invalid_utf8_seq2);
   u_map_put(request.map_post_body, "utf8_param", invalid_utf8_seq4);
   u_map_put(request.map_post_body, "utf8_param_valid", valid_utf8);
   u_map_put(request.map_post_body, "utf8_param_empty", "");
@@ -6115,7 +6120,6 @@ START_TEST(test_ulfius_utf8_not_ignored)
   ck_assert_int_eq(i, 1);
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
-  o_free(utf8_cookie);
   o_free(invalid_utf8_seq2);
   o_free(invalid_utf8_seq3);
   o_free(invalid_utf8_seq4);
@@ -6126,11 +6130,11 @@ END_TEST
 
 START_TEST(test_ulfius_utf8_ignored)
 {
-  char * utf8_cookie = msprintf("utf8_param=%c%c,utf8_param_valid=value ȸ Ɇ  ɤ ¯\\_(ツ)_/¯", 0xC3, 0x28);
   char * invalid_utf8_seq2 = msprintf("invalid value %c%c", 0xC3, 0x28);
   char * invalid_utf8_seq3 = msprintf("invalid value %c%c%c", 0xE2, 0x28, 0xA1);
   char * invalid_utf8_seq4 = msprintf("invalid value %c%c%c%c", 0xF0, 0x90, 0x28, 0xBC);
   char * valid_utf8 = "valid value ȸ Ɇ  ɤ ¯\\_(ツ)_¯";
+  char * valid_utf8_cookie = "valid-value-ȸ-Ɇ-ɤ-¯_(ツ)_¯";
   struct _u_instance u_instance;
   struct _u_request request;
   struct _u_response response;
@@ -6151,7 +6155,8 @@ START_TEST(test_ulfius_utf8_ignored)
   request.http_verb = o_strdup("POST");
   u_map_put(request.map_header, "utf8_param", invalid_utf8_seq3);
   u_map_put(request.map_header, "utf8_param_valid", valid_utf8);
-  u_map_put(request.map_header, "Cookie", utf8_cookie);
+  u_map_put(request.map_cookie, "utf8_param_valid", valid_utf8_cookie);
+  u_map_put(request.map_cookie, "utf8_param", invalid_utf8_seq2);
   u_map_put(request.map_post_body, "utf8_param", invalid_utf8_seq4);
   u_map_put(request.map_post_body, "utf8_param_valid", valid_utf8);
   ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
@@ -6160,7 +6165,6 @@ START_TEST(test_ulfius_utf8_ignored)
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
 
-  o_free(utf8_cookie);
   o_free(invalid_utf8_seq2);
   o_free(invalid_utf8_seq3);
   o_free(invalid_utf8_seq4);
