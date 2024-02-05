@@ -3,7 +3,7 @@
 ## 2.7.16
 
 - Add function `u_map_count_keys_case`
-- Change `binary_body` type to `uchar *` in `struct _u_request` and `struct _u_response`
+- Breaking: Change `binary_body` type to `uchar *` in `struct _u_request` and `struct _u_response`
 - Minor bugfixes
 - Build with flag `-Wpedantic`
 - Fix tests to comply with libmicrohttpd 1.0.0 cookie parsing
