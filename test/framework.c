@@ -6344,6 +6344,7 @@ START_TEST(test_ulfius_shared_data)
 }
 END_TEST
 
+#if MHD_VERSION < 0x01000000
 START_TEST(test_ulfius_malformed_requests)
 {
   struct _u_instance u_instance;
@@ -6405,6 +6406,7 @@ START_TEST(test_ulfius_malformed_requests)
   ulfius_clean_instance(&u_instance);
 }
 END_TEST
+#endif
 
 START_TEST(test_ulfius_large_posts_check_utf8_no)
 {
@@ -7018,7 +7020,9 @@ static Suite *ulfius_suite(void)
   tcase_add_test(tc_core, test_ulfius_send_rich_smtp);
   tcase_add_test(tc_core, test_ulfius_follow_redirect);
   tcase_add_test(tc_core, test_ulfius_shared_data);
+#if MHD_VERSION < 0x01000000
   tcase_add_test(tc_core, test_ulfius_malformed_requests);
+#endif
   tcase_add_test(tc_core, test_ulfius_large_posts_check_utf8_no);
   tcase_add_test(tc_core, test_ulfius_large_posts_check_utf8_yes);
   tcase_add_test(tc_core, test_ulfius_post_processor_flag);
