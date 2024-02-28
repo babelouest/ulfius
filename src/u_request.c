@@ -902,7 +902,7 @@ char * ulfius_export_request_http(const struct _u_request * request) {
       
       if (request->binary_body_length) {
         out = mstrcatf(out, "\r\n");
-        out = mstrcatf(out, "%.*s\r\n", request->binary_body_length, request->binary_body);
+        out = mstrcatf(out, "%.*s\r\n", (int)request->binary_body_length, request->binary_body);
       } else if (u_map_count(request->map_post_body)) {
         if (NULL == u_map_get(request->map_header, ULFIUS_HTTP_HEADER_CONTENT) ||
             NULL != o_strstr(u_map_get(request->map_header, ULFIUS_HTTP_HEADER_CONTENT), MHD_HTTP_POST_ENCODING_FORM_URLENCODED)) {

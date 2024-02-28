@@ -4937,7 +4937,7 @@ int callback_function_cookie_param(const struct _u_request * request, struct _u_
 
 int callback_function_multiple_continue(const struct _u_request * request, struct _u_response * response, void * user_data) {
   if (response->binary_body != NULL) {
-    char * body = msprintf("%.*s\n%s", response->binary_body_length, (char*)response->binary_body, request->http_url);
+    char * body = msprintf("%.*s\n%s", (int)response->binary_body_length, (char*)response->binary_body, request->http_url);
     ulfius_set_string_body_response(response, 200, body);
     o_free(body);
   } else {
@@ -4948,7 +4948,7 @@ int callback_function_multiple_continue(const struct _u_request * request, struc
 
 int callback_function_multiple_complete(const struct _u_request * request, struct _u_response * response, void * user_data) {
   if (response->binary_body != NULL) {
-    char * body = msprintf("%.*s\n%s", response->binary_body_length, (char*)response->binary_body, request->http_url);
+    char * body = msprintf("%.*s\n%s", (int)response->binary_body_length, (char*)response->binary_body, request->http_url);
     ulfius_set_string_body_response(response, 200, body);
     o_free(body);
   } else {

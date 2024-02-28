@@ -294,7 +294,7 @@ int websocket_extension1_message_out_perform(const uint8_t opcode, const uint64_
   if (((uintptr_t)user_data)&U_W_FLAG_CONTEXT) {
     ck_assert_ptr_ne(context, NULL);
   }
-  *data_out = msprintf("%.*s%s", (size_t)data_len_in, data_in, MESSAGE_EXT1);
+  *data_out = msprintf("%.*s%s", (int)data_len_in, data_in, MESSAGE_EXT1);
   ck_assert_ptr_ne(*data_out, NULL);
   *data_len_out = o_strlen(*data_out);
   y_log_message(Y_LOG_LEVEL_DEBUG, "inside websocket_extension1_message_out_perform");
@@ -306,9 +306,9 @@ int websocket_extension1_message_in_perform(const uint8_t opcode, const uint64_t
   if (((uintptr_t)user_data)&U_W_FLAG_CONTEXT) {
     ck_assert_ptr_ne(context, NULL);
   }
-  *data_out = msprintf("%.*s%s", (size_t)data_len_in, data_in, MESSAGE_EXT1);
+  *data_out = msprintf("%.*s%s", (int)data_len_in, data_in, MESSAGE_EXT1);
   *data_len_out = o_strlen(*data_out);
-  y_log_message(Y_LOG_LEVEL_DEBUG, "inside websocket_extension1_message_in_perform: '%.*s'", (size_t)data_len_in, data_in);
+  y_log_message(Y_LOG_LEVEL_DEBUG, "inside websocket_extension1_message_in_perform: '%.*s'", (int)data_len_in, data_in);
   return U_OK;
 }
 
@@ -317,7 +317,7 @@ int websocket_extension2_message_out_perform(const uint8_t opcode, const uint64_
   if (((uintptr_t)user_data)&U_W_FLAG_CONTEXT) {
     ck_assert_ptr_ne(context, NULL);
   }
-  *data_out = msprintf("%.*s%s", (size_t)data_len_in, data_in, MESSAGE_EXT2);
+  *data_out = msprintf("%.*s%s", (int)data_len_in, data_in, MESSAGE_EXT2);
   *data_len_out = o_strlen(*data_out);
   y_log_message(Y_LOG_LEVEL_DEBUG, "inside websocket_extension2_message_out_perform");
   return U_OK;
@@ -328,7 +328,7 @@ int websocket_extension2_message_in_perform(const uint8_t opcode, const uint64_t
   if (((uintptr_t)user_data)&U_W_FLAG_CONTEXT) {
     ck_assert_ptr_ne(context, NULL);
   }
-  *data_out = msprintf("%.*s%s", (size_t)data_len_in, data_in, MESSAGE_EXT2);
+  *data_out = msprintf("%.*s%s", (int)data_len_in, data_in, MESSAGE_EXT2);
   *data_len_out = o_strlen(*data_out);
   y_log_message(Y_LOG_LEVEL_DEBUG, "inside websocket_extension2_message_in_perform");
   return U_OK;

@@ -2568,7 +2568,7 @@ int ulfius_open_websocket_client_connection(struct _u_request * request,
         if (y_url.username != NULL && y_url.password != NULL) {
           basic_auth = msprintf("%s:%s", y_url.username, y_url.password);
           if (o_base64_encode_alloc((const unsigned char *)basic_auth, o_strlen(basic_auth), &dat)) {
-            basic_auth_encoded_header = msprintf("Basic: %.*s", dat.size, dat.data);
+            basic_auth_encoded_header = msprintf("Basic: %.*s", (int)dat.size, dat.data);
             u_map_remove_from_key(request->map_header, "Authorization");
             u_map_put(request->map_header, "Authorization", basic_auth_encoded_header);
             o_free(basic_auth_encoded_header);

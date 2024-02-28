@@ -753,7 +753,7 @@ char * ulfius_export_response_http(const struct _u_response * response) {
     out = mstrcatf(out, "\r\n");
       
     if (response->binary_body_length) {
-      out = mstrcatf(out, "%.*s\r\n", response->binary_body_length, response->binary_body);
+      out = mstrcatf(out, "%.*s\r\n", (int)response->binary_body_length, response->binary_body);
     }
   }
   return out;

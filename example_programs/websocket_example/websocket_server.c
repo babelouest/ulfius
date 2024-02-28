@@ -248,7 +248,7 @@ void websocket_incoming_message_callback (const struct _u_request * request,
   }
   y_log_message(Y_LOG_LEVEL_DEBUG, "Incoming message, rsv: 0x%02x, opcode: 0x%02x, mask: %d, len: %zu", last_message->rsv, last_message->opcode, last_message->has_mask, last_message->data_len);
   if (last_message->opcode == U_WEBSOCKET_OPCODE_TEXT) {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "text payload '%.*s'", last_message->data_len, last_message->data);
+    y_log_message(Y_LOG_LEVEL_DEBUG, "text payload '%.*s'", (int)last_message->data_len, last_message->data);
   } else if (last_message->opcode == U_WEBSOCKET_OPCODE_BINARY) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "binary payload");
   }
@@ -261,7 +261,7 @@ void websocket_echo_message_callback (const struct _u_request * request,
   (void)(request);
   (void)(websocket_incoming_message_user_data);
   y_log_message(Y_LOG_LEVEL_DEBUG, "Incoming message, rsv: 0x%02x, opcode: 0x%02x, mask: %d, len: %zu, text payload '%.*s'", last_message->rsv, last_message->opcode, last_message->has_mask, last_message->data_len, last_message->data_len, last_message->data);
-  if (ulfius_websocket_send_message(websocket_manager, last_message->opcode, last_message->data_len, last_message->data) != U_OK) {
+  if (ulfius_websocket_send_message(websocket_manager, last_message->opcode, (int)last_message->data_len, last_message->data) != U_OK) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error ulfius_websocket_send_message");
   }
 }
