@@ -6344,7 +6344,7 @@ START_TEST(test_ulfius_shared_data)
 }
 END_TEST
 
-#if MHD_VERSION < 0x01000000
+#if MHD_VERSION != 0x01000000
 START_TEST(test_ulfius_malformed_requests)
 {
   struct _u_instance u_instance;
@@ -6398,6 +6398,41 @@ START_TEST(test_ulfius_malformed_requests)
 
   ck_assert_int_gt(socket = socket_connect_localhost(8080), -1);
   send(socket, request_7, sizeof(request_7), MSG_NOSIGNAL);
+  shutdown(socket, SHUT_WR);
+  close(socket);
+
+  ck_assert_int_gt(socket = socket_connect_localhost(8080), -1);
+  send(socket, request_1, o_strlen(request_1), MSG_NOSIGNAL);
+  shutdown(socket, SHUT_WR);
+  close(socket);
+
+  ck_assert_int_gt(socket = socket_connect_localhost(8080), -1);
+  send(socket, request_2, o_strlen(request_2), MSG_NOSIGNAL);
+  shutdown(socket, SHUT_WR);
+  close(socket);
+
+  ck_assert_int_gt(socket = socket_connect_localhost(8080), -1);
+  send(socket, request_3, o_strlen(request_3), MSG_NOSIGNAL);
+  shutdown(socket, SHUT_WR);
+  close(socket);
+
+  ck_assert_int_gt(socket = socket_connect_localhost(8080), -1);
+  send(socket, request_4, o_strlen(request_4), MSG_NOSIGNAL);
+  shutdown(socket, SHUT_WR);
+  close(socket);
+
+  ck_assert_int_gt(socket = socket_connect_localhost(8080), -1);
+  send(socket, request_5, o_strlen(request_5), MSG_NOSIGNAL);
+  shutdown(socket, SHUT_WR);
+  close(socket);
+
+  ck_assert_int_gt(socket = socket_connect_localhost(8080), -1);
+  send(socket, request_6, o_strlen(request_6), MSG_NOSIGNAL);
+  shutdown(socket, SHUT_WR);
+  close(socket);
+
+  ck_assert_int_gt(socket = socket_connect_localhost(8080), -1);
+  send(socket, request_7, o_strlen(request_7), MSG_NOSIGNAL);
   shutdown(socket, SHUT_WR);
   close(socket);
 
@@ -7020,7 +7055,7 @@ static Suite *ulfius_suite(void)
   tcase_add_test(tc_core, test_ulfius_send_rich_smtp);
   tcase_add_test(tc_core, test_ulfius_follow_redirect);
   tcase_add_test(tc_core, test_ulfius_shared_data);
-#if MHD_VERSION < 0x01000000
+#if MHD_VERSION != 0x01000000
   tcase_add_test(tc_core, test_ulfius_malformed_requests);
 #endif
   tcase_add_test(tc_core, test_ulfius_large_posts_check_utf8_no);
