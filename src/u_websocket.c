@@ -2322,7 +2322,7 @@ int ulfius_websocket_wait_close(struct _websocket_manager * websocket_manager, u
       if (timeout) {
         clock_gettime(CLOCK_REALTIME, &abstime);
         abstime.tv_sec += ((time_t)timeout / 1000);
-        abstime.tv_nsec += (((time_t)timeout%1000) * 1000000);
+        abstime.tv_nsec += ((((long int)timeout)%1000) * 1000000);
         if (abstime.tv_nsec > 999999999) {
           abstime.tv_nsec %= 1000000000;
           abstime.tv_sec ++;
