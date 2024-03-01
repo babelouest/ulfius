@@ -10,6 +10,8 @@
 #include <time.h>
 #include <ulfius.h>
 
+#define UNUSED(x) (void)(x)
+
 #include "static_compressed_inmemory_website_callback.h"
 #include "http_compression_callback.h"
 
@@ -187,16 +189,23 @@ unsigned char binary_data[] = {0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0
 ]"
 
 static int callback_function_empty(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(response);
+  UNUSED(user_data);
   return U_CALLBACK_CONTINUE;
 }
 
 int callback_function_text_data(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(user_data);
   ulfius_set_string_body_response(response, 200, "Hello World!");
   return U_CALLBACK_CONTINUE;
 }
 
 int callback_function_large_text_data(const struct _u_request * request, struct _u_response * response, void * user_data) {
   json_t * j_res;
+  UNUSED(request);
+  UNUSED(user_data);
   ck_assert_ptr_ne(NULL, j_res = json_loads(VALUE_JSON_NEWLINES, JSON_DECODE_ANY, NULL));
   ulfius_set_json_body_response(response, 200, j_res);
   json_decref(j_res);
@@ -204,6 +213,8 @@ int callback_function_large_text_data(const struct _u_request * request, struct 
 }
 
 int callback_function_binary_data(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(user_data);
   ulfius_set_binary_body_response(response, 200, (const char *)binary_data, sizeof(binary_data));
   return U_CALLBACK_CONTINUE;
 }
@@ -2482,7 +2493,7 @@ static Suite *ulfius_suite(void)
   return s;
 }
 
-int main(int argc, char *argv[])
+int main(void)
 {
   int number_failed;
   Suite *s;

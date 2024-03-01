@@ -28,6 +28,8 @@
 
 #include <curl/curl.h>
 
+#define UNUSED(x) (void)(x)
+
 #define SMTP_FROM "sender@localhost"
 #define SMTP_TO "recipient@localhost"
 #define SMTP_HOST "localhost"
@@ -4857,23 +4859,35 @@ static int has_ipv6() {
 }
 
 int callback_function_empty(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(response);
+  UNUSED(user_data);
   return U_CALLBACK_CONTINUE;
 }
 
 int callback_function_return_url(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(user_data);
   ulfius_set_string_body_response(response, 200, request->http_url);
   return U_CALLBACK_CONTINUE;
 }
 
 int callback_function_error(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(response);
+  UNUSED(user_data);
   return U_CALLBACK_ERROR;
 }
 
 int callback_function_unauthorized(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(response);
+  UNUSED(user_data);
   return U_CALLBACK_UNAUTHORIZED;
 }
 
 int callback_function_check_auth(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(response);
+  UNUSED(user_data);
   if (o_strcmp("user", request->auth_basic_user) == 0 && o_strcmp("password", request->auth_basic_password) == 0) {
     return U_CALLBACK_CONTINUE;
   } else {
@@ -4883,6 +4897,7 @@ int callback_function_check_auth(const struct _u_request * request, struct _u_re
 
 int callback_function_param(const struct _u_request * request, struct _u_response * response, void * user_data) {
   char * param3, * param4, * body;
+  UNUSED(user_data);
 
   if (u_map_has_key(request->map_url, "param3")) {
     param3 = msprintf(", param3 is %s", u_map_get(request->map_url, "param3"));
@@ -4904,6 +4919,7 @@ int callback_function_param(const struct _u_request * request, struct _u_respons
 
 int callback_function_body_param(const struct _u_request * request, struct _u_response * response, void * user_data) {
   char * body;
+  UNUSED(user_data);
 
   body = msprintf("param1 is %s, param2 is %s", u_map_get(request->map_post_body, "param1"), u_map_get(request->map_post_body, "param2"));
   ulfius_set_string_body_response(response, 200, body);
@@ -4913,6 +4929,7 @@ int callback_function_body_param(const struct _u_request * request, struct _u_re
 
 int callback_function_header_param(const struct _u_request * request, struct _u_response * response, void * user_data) {
   char * body;
+  UNUSED(user_data);
 
   body = msprintf("param1 is %s, param2 is %s", u_map_get(request->map_header, "param1"), u_map_get(request->map_header, "param2"));
   ulfius_set_string_body_response(response, 200, body);
@@ -4922,6 +4939,7 @@ int callback_function_header_param(const struct _u_request * request, struct _u_
 
 int callback_function_cookie_param(const struct _u_request * request, struct _u_response * response, void * user_data) {
   char * body;
+  UNUSED(user_data);
 
   body = msprintf("param1 is %s", u_map_get(request->map_cookie, "param1"));
   ck_assert_int_eq(ulfius_set_string_body_response(response, 200, body), U_OK);
@@ -4936,6 +4954,7 @@ int callback_function_cookie_param(const struct _u_request * request, struct _u_
 }
 
 int callback_function_multiple_continue(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(user_data);
   if (response->binary_body != NULL) {
     char * body = msprintf("%.*s\n%s", (int)response->binary_body_length, (char*)response->binary_body, request->http_url);
     ulfius_set_string_body_response(response, 200, body);
@@ -4947,6 +4966,7 @@ int callback_function_multiple_continue(const struct _u_request * request, struc
 }
 
 int callback_function_multiple_complete(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(user_data);
   if (response->binary_body != NULL) {
     char * body = msprintf("%.*s\n%s", (int)response->binary_body_length, (char*)response->binary_body, request->http_url);
     ulfius_set_string_body_response(response, 200, body);
@@ -4972,11 +4992,14 @@ void free_stream_data(void * cls) {
 }
 
 int callback_function_stream (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(user_data);
   ulfius_set_stream_response(response, 200, stream_data, free_stream_data, U_STREAM_SIZE_UNKNOWN, 32 * 1024, o_strdup("stream test"));
   return U_CALLBACK_CONTINUE;
 }
 
 size_t my_write_body(void * contents, size_t size, size_t nmemb, void * user_data) {
+  UNUSED(user_data);
   ck_assert_int_eq(o_strncmp((char *)contents, "stream test ", o_strlen("stream test ")), 0);
   ck_assert_int_ne(strtol((char *)contents + o_strlen("stream test "), NULL, 10), 0);
   return size * nmemb;
@@ -4984,6 +5007,7 @@ size_t my_write_body(void * contents, size_t size, size_t nmemb, void * user_dat
 
 int callback_check_utf8_not_ignored(const struct _u_request * request, struct _u_response * response, void * user_data) {
   int * i = (int *)user_data;
+  UNUSED(response);
   ck_assert_int_eq(u_map_has_key(request->map_header, "utf8_param"), 1);
   ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param1"), 1);
   ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param2"), 1);
@@ -5002,6 +5026,7 @@ int callback_check_utf8_not_ignored(const struct _u_request * request, struct _u
 
 int callback_check_utf8_ignored(const struct _u_request * request, struct _u_response * response, void * user_data) {
   int * i = (int *)user_data;
+  UNUSED(response);
   ck_assert_int_eq(u_map_has_key(request->map_header, "utf8_param"), 0);
   ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param1"), 0);
   ck_assert_int_eq(u_map_has_key(request->map_url, "utf8_param_invalid_url1"), 0);
@@ -5019,45 +5044,64 @@ int callback_check_utf8_ignored(const struct _u_request * request, struct _u_res
 }
 
 int callback_function_position_0(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(response);
+  UNUSED(user_data);
   ck_assert_int_eq(request->callback_position, 0);
   return U_CALLBACK_CONTINUE;
 }
 
 int callback_function_position_1(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(response);
+  UNUSED(user_data);
   ck_assert_int_eq(request->callback_position, 1);
   return U_CALLBACK_CONTINUE;
 }
 
 int callback_function_position_2(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(response);
+  UNUSED(user_data);
   ck_assert_int_eq(request->callback_position, 2);
   return U_CALLBACK_CONTINUE;
 }
 
 int callback_function_redirect_first(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(user_data);
   u_map_put(response->map_header, "Location", "/last");
   ulfius_set_string_body_response(response, 302, BODY_NOT_REDIRECTED);
   return U_CALLBACK_CONTINUE;
 }
 
 int callback_function_redirect_last(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(user_data);
   ulfius_set_string_body_response(response, 200, BODY_REDIRECTED);
   return U_CALLBACK_CONTINUE;
 }
 
 int callback_function_continue(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(response);
+  UNUSED(user_data);
   return U_CALLBACK_CONTINUE;
 }
 
 int callback_function_ignore(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(response);
+  UNUSED(user_data);
   return U_CALLBACK_IGNORE;
 }
 
 int callback_function_default_because_ignore(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(user_data);
   response->status = 205;
   return U_CALLBACK_CONTINUE;
 }
 
 int callback_function_complete_after_flow(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(user_data);
   response->status = 200 + request->callback_position;
   return U_CALLBACK_CONTINUE;
 }
@@ -5075,6 +5119,8 @@ static void free_json_with_counter(json_t * ptr) {
 }
 
 int callback_function_shared_data_1(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(user_data);
   ck_assert_int_eq(ulfius_set_response_shared_data(response, o_strdup("grut"), &free_with_counter), U_OK);
   ck_assert_ptr_eq(response->free_shared_data, &free_with_counter);
   ck_assert_int_eq(0, o_strncmp((const char *)response->shared_data, "grut", o_strlen("grut")));
@@ -5082,6 +5128,8 @@ int callback_function_shared_data_1(const struct _u_request * request, struct _u
 }
 
 int callback_function_shared_data_2(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(user_data);
   ck_assert_ptr_eq(response->free_shared_data, &free_with_counter);
   ck_assert_int_eq(0, o_strncmp((const char *)response->shared_data, "grut", o_strlen("grut")));
   ck_assert_int_eq(ulfius_set_response_shared_data(response, json_string("grut"), (void (*)(void *))&free_json_with_counter), U_OK);
@@ -5108,6 +5156,7 @@ int callback_send_request_no_rest(const struct _u_request * request, struct _u_r
 }
 
 int callback_send_request_rest(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(user_data);
   ck_assert_int_eq(u_map_count(request->map_url), 3);
   ck_assert_str_eq(VALUE1, u_map_get(request->map_url, KEY1));
   ck_assert_str_eq(VALUE3, u_map_get(request->map_url, KEY2));
@@ -5125,11 +5174,15 @@ void free_with_test(void * ptr) {
 }
 
 int callback_function_simple(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(user_data);
   ulfius_set_response_properties(response, U_OPT_STATUS, 200, U_OPT_STRING_BODY, "Hello World!", U_OPT_NONE);
   return U_CALLBACK_CONTINUE;
 }
 
 int callback_function_large_post_urlencoded_check_utf8_no(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(response);
+  UNUSED(user_data);
   ck_assert_int_eq(u_map_get_length(request->map_post_body, "VALUE1024"), 1024);
   ck_assert_int_eq(u_map_get_length(request->map_post_body, "VALUE2048"), 2048);
   ck_assert_int_eq(u_map_get_length(request->map_post_body, "VALUE4096"), 4096);
@@ -5156,6 +5209,8 @@ int callback_function_large_post_urlencoded_check_utf8_no(const struct _u_reques
 }
 
 int callback_function_large_post_multipart_check_utf8_no(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(response);
+  UNUSED(user_data);
   ck_assert_int_eq(u_map_get_length(request->map_post_body, "VALUE1024"), 1024);
   ck_assert_int_eq(u_map_get_length(request->map_post_body, "VALUE2048"), 2048);
   ck_assert_int_eq(u_map_get_length(request->map_post_body, "VALUE4096"), 4096);
@@ -5195,6 +5250,8 @@ int callback_function_large_post_multipart_check_utf8_no(const struct _u_request
 }
 
 int callback_function_large_post_multipart_check_utf8_yes(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(response);
+  UNUSED(user_data);
   ck_assert_int_eq(u_map_get_length(request->map_post_body, "VALUE1024"), 1024);
   ck_assert_int_eq(u_map_get_length(request->map_post_body, "VALUE2048"), 2048);
   ck_assert_int_eq(u_map_get_length(request->map_post_body, "VALUE4096"), 4096);
@@ -5231,6 +5288,8 @@ int callback_function_large_post_multipart_check_utf8_yes(const struct _u_reques
 }
 
 int callback_function_post_params_processed(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(response);
+  UNUSED(user_data);
   ck_assert_int_eq(u_map_count(request->map_post_body), 3);
   ck_assert_str_eq("value1", u_map_get(request->map_post_body, "param1"));
   ck_assert_str_eq("valueé2", u_map_get(request->map_post_body, "param2"));
@@ -5239,12 +5298,16 @@ int callback_function_post_params_processed(const struct _u_request * request, s
 }
 
 int callback_function_post_params_not_processed(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(response);
+  UNUSED(user_data);
   ck_assert_int_eq(u_map_count(request->map_post_body), 0);
   return U_CALLBACK_CONTINUE;
 }
 
 int callback_send_request_with_limit(const struct _u_request * request, struct _u_response * response, void * user_data) {
   char body[65535] = {0};
+  UNUSED(request);
+  UNUSED(user_data);
   
   memset(body, '4', 65535);
   ulfius_set_response_properties(response,
@@ -5265,36 +5328,47 @@ int callback_send_request_with_limit(const struct _u_request * request, struct _
 }
 
 int callback_function_multiple_with_unauthorized(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(response);
   int * counter = (int *)user_data;
   (*counter)++;
   return U_CALLBACK_UNAUTHORIZED;
 }
 
 int callback_function_multiple_with_error(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(response);
   int * counter = (int *)user_data;
   (*counter)++;
   return U_CALLBACK_ERROR;
 }
 
 int callback_function_multiple_with_complete(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(response);
   int * counter = (int *)user_data;
   (*counter)++;
   return U_CALLBACK_COMPLETE;
 }
 
 int callback_function_multiple_with_continue(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(response);
   int * counter = (int *)user_data;
   (*counter)++;
   return U_CALLBACK_CONTINUE;
 }
 
 int callback_function_multiple_with_ignore(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(response);
   int * counter = (int *)user_data;
   (*counter)++;
   return U_CALLBACK_IGNORE;
 }
 
 int callback_function_continue_but_no(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
   int * counter = (int *)user_data;
   (*counter)++;
   ulfius_set_string_body_response(response, 208, "Grut!");
@@ -5310,6 +5384,7 @@ int callback_function_continue_from_continue(const struct _u_request * request, 
 }
 
 int callback_function_continue_from_ignore(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(user_data);
   int * counter = (int *)user_data;
   (*counter)++;
   ulfius_set_string_body_response(response, 208, "Grut!");
@@ -5343,6 +5418,7 @@ int socket_connect_localhost(in_port_t port) {
 int callback_auth_client_cert (const struct _u_request * request, struct _u_response * response, void * user_data) {
   char * dn;
   size_t lbuf = 0;
+  UNUSED(user_data);
 
   ck_assert_ptr_ne(request->client_cert, NULL);
   gnutls_x509_crt_get_dn(request->client_cert, NULL, &lbuf);
@@ -5363,6 +5439,8 @@ int callback_auth_client_cert (const struct _u_request * request, struct _u_resp
 }
 
 int callback_no_auth_client_cert (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(response);
+  UNUSED(user_data);
   ck_assert_ptr_eq(request->client_cert, NULL);
 
   return U_CALLBACK_CONTINUE;
@@ -7073,7 +7151,7 @@ static Suite *ulfius_suite(void)
   return s;
 }
 
-int main(int argc, char *argv[])
+int main(void)
 {
   int number_failed;
   Suite *s;

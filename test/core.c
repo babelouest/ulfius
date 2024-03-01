@@ -56,32 +56,52 @@
 #define WEBSOCKET_MANAGER_USER_DATA 0x10
 #define WEBSOCKET_INCOMING_USER_DATA 0x11
 #define WEBSOCKET_ONCLOSE_USER_DATA 0x12
+#define UNUSED(x) (void)(x)
 
 int callback_function_empty(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(response);
+  UNUSED(user_data);
   return U_CALLBACK_CONTINUE;
 }
 
 int callback_function_return_request_body(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(user_data);
   ulfius_set_binary_body_response(response, 200, (const char *)request->binary_body, request->binary_body_length);
   return U_CALLBACK_CONTINUE;
 }
 
 ssize_t stream_callback_empty (void * stream_user_data, uint64_t offset, char * out_buf, size_t max) {
+  UNUSED(stream_user_data);
+  UNUSED(offset);
+  UNUSED(out_buf);
+  UNUSED(max);
   return 0;
 }
 
 #ifndef U_DISABLE_WEBSOCKET
 void websocket_manager_callback_empty (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_manager_user_data) {
+  UNUSED(request);
+  UNUSED(websocket_manager);
+  UNUSED(websocket_manager_user_data);
 }
 
 void websocket_incoming_message_callback_empty (const struct _u_request * request, struct _websocket_manager * websocket_manager, const struct _websocket_message * message, void * websocket_incoming_user_data) {
+  UNUSED(request);
+  UNUSED(websocket_manager);
+  UNUSED(message);
+  UNUSED(websocket_incoming_user_data);
 }
 
 void websocket_onclose_callback_empty (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_onclose_user_data) {
+  UNUSED(request);
+  UNUSED(websocket_manager);
+  UNUSED(websocket_onclose_user_data);
 }
 #endif
 
 void stream_callback_empty_free (void * stream_user_data) {
+  UNUSED(stream_user_data);
 }
 
 #ifndef _WIN32
@@ -1342,7 +1362,7 @@ static Suite *ulfius_suite(void)
 	return s;
 }
 
-int main(int argc, char *argv[])
+int main(void)
 {
   int number_failed;
   Suite *s;

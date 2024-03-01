@@ -9,7 +9,7 @@ ULFIUS_EXAMPLE_CALLBACK_FILE=../example_callbacks/static_compressed_inmemory_web
 ULFIUS_LIBRARY=$(ULFIUS_LOCATION)/libulfius.so
 ULFIUS_SCRUTINIZE=$(ULFIUS_INCLUDE)/ulfius.h $(ULFIUS_INCLUDE)/u_private.h $(ULFIUS_INCLUDE)/yuarel.h $(ULFIUS_LOCATION)/ulfius.c $(ULFIUS_LOCATION)/u_map.c $(ULFIUS_LOCATION)/u_request.c $(ULFIUS_LOCATION)/u_response.c $(ULFIUS_LOCATION)/u_send_request.c $(ULFIUS_LOCATION)/u_websocket.c $(ULFIUS_LOCATION)/yuarel.c
 CC=gcc
-CFLAGS+=-Wall -D_REENTRANT -I$(ULFIUS_INCLUDE) -DDEBUG -g -O0 $(CPPFLAGS)
+CFLAGS+=-Wall -Werror -Wextra -D_REENTRANT -I$(ULFIUS_INCLUDE) -DDEBUG -g -O0 $(CPPFLAGS)
 LDFLAGS=-lc -L$(ULFIUS_LOCATION) -lulfius $(shell pkg-config --libs liborcania) $(shell pkg-config --libs libyder) $(shell pkg-config --libs check) $(shell pkg-config --libs gnutls) $(shell pkg-config --libs libcurl) $(shell pkg-config --libs jansson) -lz -lpthread
 # Use this LDFLAGS below if you don't have/need gnutls
 #LDFLAGS=-lc -lorcania -lyder -lulfius -lcheck -lpthread -lm -lrt -lsubunit -L$(ULFIUS_LOCATION)
@@ -42,7 +42,7 @@ static_compressed_inmemory_website_callback.o: $(ULFIUS_EXAMPLE_CALLBACK_FILE)/s
 	$(CC) -c $(CFLAGS) -Wconversion $(ULFIUS_EXAMPLE_CALLBACK_FILE)/static_compressed_inmemory_website_callback.c
 
 example_callbacks: example_callbacks.c http_compression_callback.o static_compressed_inmemory_website_callback.o
-	$(CC) -I$(ULFIUS_EXAMPLE_CALLBACK_COMPRESS) -I$(ULFIUS_EXAMPLE_CALLBACK_FILE) example_callbacks.c http_compression_callback.o static_compressed_inmemory_website_callback.o -o example_callbacks $(LDFLAGS)
+	$(CC) -I$(ULFIUS_EXAMPLE_CALLBACK_COMPRESS) -I$(ULFIUS_EXAMPLE_CALLBACK_FILE) example_callbacks.c http_compression_callback.o static_compressed_inmemory_website_callback.o -o example_callbacks $(LDFLAGS) $(CFLAGS)
 
 test: $(ULFIUS_LIBRARY) $(CERT)/server.key $(TARGET) test_u_map test_core test_framework test_websocket test_example_callbacks
 

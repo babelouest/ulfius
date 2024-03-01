@@ -42,21 +42,35 @@
 #define U_W_FLAG_SERVER  0x00000001
 #define U_W_FLAG_CONTEXT 0x00000010
 
+#define UNUSED(x) (void)(x)
+
 static pthread_mutex_t ws_lock;
 static pthread_cond_t  ws_cond;
 
 #ifndef U_DISABLE_WEBSOCKET
 
 void websocket_manager_callback_empty (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_manager_user_data) {
+  UNUSED(request);
+  UNUSED(websocket_manager);
+  UNUSED(websocket_manager_user_data);
 }
 
 void websocket_incoming_message_callback_empty (const struct _u_request * request, struct _websocket_manager * websocket_manager, const struct _websocket_message * message, void * websocket_incoming_user_data) {
+  UNUSED(request);
+  UNUSED(websocket_manager);
+  UNUSED(message);
+  UNUSED(websocket_incoming_user_data);
 }
 
 void websocket_onclose_callback_empty (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_onclose_user_data) {
+  UNUSED(request);
+  UNUSED(websocket_manager);
+  UNUSED(websocket_onclose_user_data);
 }
 
 void websocket_onclose_callback_client (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_onclose_user_data) {
+  UNUSED(request);
+  UNUSED(websocket_manager);
   ck_assert_ptr_ne(websocket_onclose_user_data, NULL);
 }
 
@@ -64,6 +78,8 @@ void websocket_echo_message_callback (const struct _u_request * request,
                                        struct _websocket_manager * websocket_manager,
                                        const struct _websocket_message * last_message,
                                        void * websocket_incoming_message_user_data) {
+  UNUSED(request);
+  UNUSED(websocket_incoming_message_user_data);
   if (last_message->opcode == U_WEBSOCKET_OPCODE_TEXT) {
     ck_assert_int_eq(ulfius_websocket_send_fragmented_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, last_message->data_len, last_message->data, last_message->fragment_len), U_OK);
   }
@@ -72,6 +88,7 @@ void websocket_echo_message_callback (const struct _u_request * request,
 void websocket_origin_callback (const struct _u_request * request,
                                    struct _websocket_manager * websocket_manager,
                                    void * websocket_incoming_message_user_data) {
+  UNUSED(request);
   if (websocket_incoming_message_user_data != NULL) {
     ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen((char *)websocket_incoming_message_user_data), (char *)websocket_incoming_message_user_data);
   } else {
@@ -80,11 +97,15 @@ void websocket_origin_callback (const struct _u_request * request,
 }
 
 void websocket_onclose_message_callback (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_onclose_user_data) {
+  UNUSED(request);
+  UNUSED(websocket_manager);
   o_free(websocket_onclose_user_data);
 }
 
 void websocket_manager_callback_client (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_manager_user_data) {
   int i;
+  UNUSED(request);
+  UNUSED(websocket_manager_user_data);
   
   for (i=0; i<4; i++) {
     if (ulfius_websocket_wait_close(websocket_manager, 50) == U_WEBSOCKET_STATUS_OPEN) {
@@ -98,6 +119,8 @@ void websocket_manager_callback_client (const struct _u_request * request, struc
 }
 
 void websocket_extension_callback_client (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_manager_user_data) {
+  UNUSED(request);
+  UNUSED(websocket_manager_user_data);
   ck_assert_int_eq(ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(MESSAGE_CLIENT), MESSAGE_CLIENT), U_OK);
   y_log_message(Y_LOG_LEVEL_DEBUG, "client message 1 '%s' sent", MESSAGE_CLIENT);
   ck_assert_int_eq(ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(MESSAGE_CLIENT), MESSAGE_CLIENT), U_OK);
@@ -108,11 +131,17 @@ void websocket_extension_callback_client (const struct _u_request * request, str
 }
 
 void websocket_incoming_message_callback_client (const struct _u_request * request, struct _websocket_manager * websocket_manager, const struct _websocket_message * message, void * websocket_incoming_user_data) {
+  UNUSED(request);
+  UNUSED(websocket_manager);
+  UNUSED(websocket_incoming_user_data);
   ck_assert_int_eq(0, o_strncmp(message->data, DEFAULT_MESSAGE, message->data_len));
 }
 
 void websocket_incoming_json_valid_messages (const struct _u_request * request, struct _websocket_manager * websocket_manager, const struct _websocket_message * message, void * websocket_incoming_user_data) {
   json_t * j_message = ulfius_websocket_parse_json_message(message, NULL), * j_expected_message = json_pack("{ss}", "message", "Hello World!");
+  UNUSED(request);
+  UNUSED(websocket_manager);
+  UNUSED(websocket_incoming_user_data);
   
   // Valid JSON
   ck_assert_ptr_ne(j_message, NULL);
@@ -125,6 +154,9 @@ void websocket_incoming_json_valid_messages (const struct _u_request * request, 
 
 void websocket_incoming_json_invalid_messages (const struct _u_request * request, struct _websocket_manager * websocket_manager, const struct _websocket_message * message, void * websocket_incoming_user_data) {
   json_t * j_message = ulfius_websocket_parse_json_message(message, NULL);
+  UNUSED(request);
+  UNUSED(websocket_manager);
+  UNUSED(websocket_incoming_user_data);
   
   // Invalid JSON
   ck_assert_ptr_eq(j_message, NULL);
@@ -135,6 +167,9 @@ void websocket_incoming_json_invalid_messages (const struct _u_request * request
 
 void websocket_incoming_json_empty_messages (const struct _u_request * request, struct _websocket_manager * websocket_manager, const struct _websocket_message * message, void * websocket_incoming_user_data) {
   json_t * j_message = ulfius_websocket_parse_json_message(message, NULL);
+  UNUSED(request);
+  UNUSED(websocket_manager);
+  UNUSED(websocket_incoming_user_data);
   
   // Empty payload
   ck_assert_ptr_eq(j_message, NULL);
@@ -146,6 +181,8 @@ void websocket_manager_json_valid_callback(const struct _u_request * request, st
   json_t * j_message = json_pack("{ss}", "message", "Hello World!");
   ck_assert_ptr_ne(j_message, NULL);
   const char str_message[] = "{\"message\":\"Hello World!\"}";
+  UNUSED(request);
+  UNUSED(websocket_manager_user_data);
   
   ck_assert_int_eq(ulfius_websocket_send_json_message(websocket_manager, j_message), U_OK);
   ck_assert_int_eq(ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(str_message), str_message), U_OK);
@@ -155,31 +192,45 @@ void websocket_manager_json_valid_callback(const struct _u_request * request, st
 }
 
 void websocket_manager_json_invalid_callback(const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_manager_user_data) {
+  UNUSED(request);
+  UNUSED(websocket_manager_user_data);
   ck_assert_int_eq(ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(DEFAULT_MESSAGE), DEFAULT_MESSAGE), U_OK);
   ck_assert_int_eq(ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_BINARY, o_strlen(DEFAULT_MESSAGE), DEFAULT_MESSAGE), U_OK);
 }
 
 void websocket_manager_json_empty_callback(const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_manager_user_data) {
+  UNUSED(request);
+  UNUSED(websocket_manager_user_data);
   ck_assert_int_eq(ulfius_websocket_send_json_message(websocket_manager, NULL), U_ERROR_PARAMS);
   ck_assert_int_eq(ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, 0, NULL), U_OK);
   ck_assert_int_eq(ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_BINARY, 0, NULL), U_OK);
 }
 
 void websocket_incoming_message_without_origin_callback_client (const struct _u_request * request, struct _websocket_manager * websocket_manager, const struct _websocket_message * message, void * websocket_incoming_user_data) {
+  UNUSED(request);
+  UNUSED(websocket_manager);
+  UNUSED(websocket_incoming_user_data);
   ck_assert_int_eq(0, o_strncmp(message->data, NO_ORIGIN, message->data_len));
 }
 
 void websocket_incoming_message_with_origin_callback_client (const struct _u_request * request, struct _websocket_manager * websocket_manager, const struct _websocket_message * message, void * websocket_incoming_user_data) {
+  UNUSED(request);
+  UNUSED(websocket_manager);
+  UNUSED(websocket_incoming_user_data);
   ck_assert_int_eq(0, o_strncmp(message->data, ORIGIN, message->data_len));
 }
 
 void websocket_manager_extension_callback (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_manager_user_data) {
+  UNUSED(request);
+  UNUSED(websocket_manager_user_data);
   y_log_message(Y_LOG_LEVEL_DEBUG, "server message '%s' sent", MESSAGE_SERVER);
   ck_assert_int_eq(ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(MESSAGE_SERVER), MESSAGE_SERVER), U_OK);
   while (ulfius_websocket_wait_close(websocket_manager, 50) == U_WEBSOCKET_STATUS_OPEN);
 }
 
 void websocket_manager_extension_deflate_callback (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_manager_user_data) {
+  UNUSED(request);
+  UNUSED(websocket_manager_user_data);
   ck_assert_int_eq(ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(MESSAGE_SERVER), MESSAGE_SERVER), U_OK);
   y_log_message(Y_LOG_LEVEL_DEBUG, "server message 1 sent");
   ck_assert_int_eq(ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(MESSAGE_SERVER), MESSAGE_SERVER), U_OK);
@@ -192,6 +243,8 @@ void websocket_incoming_extension_callback (const struct _u_request * request,
                                             const struct _websocket_message * last_message,
                                             void * user_data) {
   int * rsv = (int *)user_data;
+  UNUSED(request);
+  UNUSED(websocket_manager);
   
   if (last_message->opcode == U_WEBSOCKET_OPCODE_TEXT || last_message->opcode == U_WEBSOCKET_OPCODE_BINARY) {
     ck_assert_ptr_ne(NULL, o_strnstr(last_message->data, MESSAGE, last_message->data_len));
@@ -214,6 +267,9 @@ void websocket_incoming_extension_deflate_client_callback (const struct _u_reque
                                                     struct _websocket_manager * websocket_manager,
                                                     const struct _websocket_message * last_message,
                                                     void * user_data) {
+  UNUSED(request);
+  UNUSED(websocket_manager);
+  UNUSED(user_data);
   ck_assert_int_eq(0, o_strncmp(last_message->data, MESSAGE_SERVER, last_message->data_len));
   if (last_message->opcode == U_WEBSOCKET_OPCODE_TEXT || last_message->opcode == U_WEBSOCKET_OPCODE_BINARY) {
     ck_assert_int_ne(last_message->rsv&U_WEBSOCKET_RSV1, 0);
@@ -224,6 +280,9 @@ void websocket_incoming_extension_deflate_client_callback_disabled (const struct
                                                     struct _websocket_manager * websocket_manager,
                                                     const struct _websocket_message * last_message,
                                                     void * user_data) {
+  UNUSED(request);
+  UNUSED(websocket_manager);
+  UNUSED(user_data);
   ck_assert_int_eq(0, o_strncmp(last_message->data, MESSAGE_SERVER, last_message->data_len));
   ck_assert_int_eq(last_message->rsv&U_WEBSOCKET_RSV1, 0);
 }
@@ -232,6 +291,9 @@ void websocket_incoming_extension_deflate_server_callback (const struct _u_reque
                                                     struct _websocket_manager * websocket_manager,
                                                     const struct _websocket_message * last_message,
                                                     void * user_data) {
+  UNUSED(request);
+  UNUSED(websocket_manager);
+  UNUSED(user_data);
   ck_assert_int_eq(0, o_strncmp(last_message->data, MESSAGE_CLIENT, last_message->data_len));
   if (last_message->opcode == U_WEBSOCKET_OPCODE_TEXT || last_message->opcode == U_WEBSOCKET_OPCODE_BINARY) {
     ck_assert_int_ne(last_message->rsv&U_WEBSOCKET_RSV1, 0);
@@ -242,12 +304,16 @@ void websocket_incoming_extension_deflate_server_callback_disabled (const struct
                                                     struct _websocket_manager * websocket_manager,
                                                     const struct _websocket_message * last_message,
                                                     void * user_data) {
+  UNUSED(request);
+  UNUSED(websocket_manager);
+  UNUSED(user_data);
   ck_assert_int_eq(0, o_strncmp(last_message->data, MESSAGE_CLIENT, last_message->data_len));
   ck_assert_int_eq(last_message->rsv&U_WEBSOCKET_RSV1, 0);
 }
 
 #ifndef U_DISABLE_WS_MESSAGE_LIST
 void websocket_manager_callback_keep_messages (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_manager_user_data) {
+  UNUSED(request);
   if (websocket_manager_user_data != NULL) {
     websocket_manager->keep_messages = *((int*)(websocket_manager_user_data));
   }
@@ -260,6 +326,8 @@ void websocket_incoming_keep_messages (const struct _u_request * request,
                                        struct _websocket_manager * websocket_manager,
                                        const struct _websocket_message * last_message,
                                        void * user_data) {
+  UNUSED(request);
+  UNUSED(user_data);
   if (0 == o_strncmp(MESSAGE_EXT1, last_message->data, last_message->data_len)) {
     ck_assert_int_eq(ulfius_websocket_send_message(websocket_manager, U_WEBSOCKET_OPCODE_TEXT, o_strlen(MESSAGE_EXT2), MESSAGE_EXT2), U_OK);
   } else if (0 == o_strncmp(MESSAGE_EXT2, last_message->data, last_message->data_len)) {
@@ -272,6 +340,8 @@ void websocket_incoming_keep_messages (const struct _u_request * request,
 }
 
 void websocket_onclose_callback_keep_messages (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_onclose_user_data) {
+  UNUSED(request);
+  UNUSED(websocket_onclose_user_data);
   if (websocket_manager->keep_messages & U_WEBSOCKET_KEEP_INCOMING) {
     ck_assert_int_gt(websocket_manager->message_list_incoming->len, 0);
   } else {
@@ -286,10 +356,16 @@ void websocket_onclose_callback_keep_messages (const struct _u_request * request
 #endif
 
 void websocket_origin_onclose_callback (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_onclose_user_data) {
+  UNUSED(request);
+  UNUSED(websocket_manager);
   o_free(websocket_onclose_user_data);
 }
 
 int websocket_extension1_message_out_perform(const uint8_t opcode, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data, void * context) {
+  UNUSED(opcode);
+  UNUSED(fragment_len);
+  UNUSED(user_data);
+  UNUSED(context);
   ck_assert_int_eq(opcode, U_WEBSOCKET_OPCODE_TEXT);
   if (((uintptr_t)user_data)&U_W_FLAG_CONTEXT) {
     ck_assert_ptr_ne(context, NULL);
@@ -302,6 +378,10 @@ int websocket_extension1_message_out_perform(const uint8_t opcode, const uint64_
 }
 
 int websocket_extension1_message_in_perform(const uint8_t opcode, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data, void * context) {
+  UNUSED(opcode);
+  UNUSED(fragment_len);
+  UNUSED(user_data);
+  UNUSED(context);
   ck_assert_int_eq(opcode, U_WEBSOCKET_OPCODE_TEXT);
   if (((uintptr_t)user_data)&U_W_FLAG_CONTEXT) {
     ck_assert_ptr_ne(context, NULL);
@@ -313,6 +393,10 @@ int websocket_extension1_message_in_perform(const uint8_t opcode, const uint64_t
 }
 
 int websocket_extension2_message_out_perform(const uint8_t opcode, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data, void * context) {
+  UNUSED(opcode);
+  UNUSED(fragment_len);
+  UNUSED(user_data);
+  UNUSED(context);
   ck_assert_int_eq(opcode, U_WEBSOCKET_OPCODE_TEXT);
   if (((uintptr_t)user_data)&U_W_FLAG_CONTEXT) {
     ck_assert_ptr_ne(context, NULL);
@@ -324,6 +408,10 @@ int websocket_extension2_message_out_perform(const uint8_t opcode, const uint64_
 }
 
 int websocket_extension2_message_in_perform(const uint8_t opcode, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data, void * context) {
+  UNUSED(opcode);
+  UNUSED(fragment_len);
+  UNUSED(user_data);
+  UNUSED(context);
   ck_assert_int_eq(opcode, U_WEBSOCKET_OPCODE_TEXT);
   if (((uintptr_t)user_data)&U_W_FLAG_CONTEXT) {
     ck_assert_ptr_ne(context, NULL);
@@ -335,6 +423,10 @@ int websocket_extension2_message_in_perform(const uint8_t opcode, const uint64_t
 }
 
 int websocket_extension3_message_out_perform(const uint8_t opcode, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data, void * context) {
+  UNUSED(opcode);
+  UNUSED(fragment_len);
+  UNUSED(user_data);
+  UNUSED(context);
   if (o_strlen(MESSAGE_SERVER) == data_len_in) {
     ck_assert_int_ne(0, memcmp(MESSAGE_SERVER, data_in, MIN(data_len_in, o_strlen(MESSAGE_SERVER))));
   }
@@ -345,6 +437,10 @@ int websocket_extension3_message_out_perform(const uint8_t opcode, const uint64_
 }
 
 int websocket_extension3_message_in_perform(const uint8_t opcode, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data, void * context) {
+  UNUSED(opcode);
+  UNUSED(fragment_len);
+  UNUSED(user_data);
+  UNUSED(context);
   if (o_strlen(MESSAGE_SERVER) == data_len_in) {
     ck_assert_int_ne(0, memcmp(MESSAGE_SERVER, data_in, MIN(data_len_in, o_strlen(MESSAGE_SERVER))));
   }
@@ -355,6 +451,10 @@ int websocket_extension3_message_in_perform(const uint8_t opcode, const uint64_t
 }
 
 int websocket_extension4_message_out_perform(const uint8_t opcode, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data, void * context) {
+  UNUSED(opcode);
+  UNUSED(fragment_len);
+  UNUSED(user_data);
+  UNUSED(context);
   ck_assert_int_eq(o_strlen(MESSAGE_SERVER), data_len_in);
   ck_assert_int_eq(0, memcmp(MESSAGE_SERVER, data_in, MIN(data_len_in, o_strlen(MESSAGE_SERVER))));
   *data_out = o_malloc(data_len_in);
@@ -364,6 +464,10 @@ int websocket_extension4_message_out_perform(const uint8_t opcode, const uint64_
 }
 
 int websocket_extension4_message_in_perform(const uint8_t opcode, const uint64_t data_len_in, const char * data_in, uint64_t * data_len_out, char ** data_out, const uint64_t fragment_len, void * user_data, void * context) {
+  UNUSED(opcode);
+  UNUSED(fragment_len);
+  UNUSED(user_data);
+  UNUSED(context);
   ck_assert_int_eq(o_strlen(MESSAGE_SERVER), data_len_in);
   ck_assert_int_eq(0, memcmp(MESSAGE_SERVER, data_in, MIN(data_len_in, o_strlen(MESSAGE_SERVER))));
   *data_out = o_malloc(data_len_in);
@@ -375,6 +479,8 @@ int websocket_extension4_message_in_perform(const uint8_t opcode, const uint64_t
 int callback_websocket (const struct _u_request * request, struct _u_response * response, void * user_data) {
   int ret;
   char * websocket_allocated_data = o_strdup("grut");
+  UNUSED(request);
+  UNUSED(user_data);
   
   ret = ulfius_set_websocket_response(response, NULL, NULL, NULL, NULL, &websocket_echo_message_callback, websocket_allocated_data, &websocket_onclose_message_callback, websocket_allocated_data);
   ck_assert_int_eq(ret, U_OK);
@@ -384,6 +490,7 @@ int callback_websocket (const struct _u_request * request, struct _u_response * 
 int callback_websocket_with_origin (const struct _u_request * request, struct _u_response * response, void * user_data) {
   int ret;
   char * origin = o_strdup(u_map_get_case(request->map_header, "Origin"));
+  UNUSED(user_data);
 
   if (u_map_get_case(request->map_header, "Origin") != NULL) {
     ulfius_set_string_body_response(response, 400, u_map_get_case(request->map_header, "Origin"));
@@ -398,6 +505,8 @@ int callback_websocket_with_origin (const struct _u_request * request, struct _u
 
 int callback_websocket_json_valid_messages (const struct _u_request * request, struct _u_response * response, void * user_data) {
   int ret;
+  UNUSED(request);
+  UNUSED(user_data);
   
   ret = ulfius_set_websocket_response(response, NULL, NULL, NULL, NULL, websocket_incoming_json_valid_messages, user_data, NULL, NULL);
   ck_assert_int_eq(ret, U_OK);
@@ -406,6 +515,8 @@ int callback_websocket_json_valid_messages (const struct _u_request * request, s
 
 int callback_websocket_json_invalid_messages (const struct _u_request * request, struct _u_response * response, void * user_data) {
   int ret;
+  UNUSED(request);
+  UNUSED(user_data);
   
   ret = ulfius_set_websocket_response(response, NULL, NULL, NULL, NULL, websocket_incoming_json_invalid_messages, user_data, NULL, NULL);
   ck_assert_int_eq(ret, U_OK);
@@ -414,6 +525,7 @@ int callback_websocket_json_invalid_messages (const struct _u_request * request,
 
 int callback_websocket_json_empty_messages (const struct _u_request * request, struct _u_response * response, void * user_data) {
   int ret;
+  UNUSED(request);
   
   ret = ulfius_set_websocket_response(response, NULL, NULL, NULL, NULL, websocket_incoming_json_empty_messages, user_data, NULL, NULL);
   ck_assert_int_eq(ret, U_OK);
@@ -423,6 +535,7 @@ int callback_websocket_json_empty_messages (const struct _u_request * request, s
 #ifndef U_DISABLE_WS_MESSAGE_LIST
 int callback_websocket_keep_messages (const struct _u_request * request, struct _u_response * response, void * user_data) {
   int ret;
+  UNUSED(request);
   
   ret = ulfius_set_websocket_response(response, NULL, NULL, &websocket_manager_callback_keep_messages, user_data, websocket_incoming_keep_messages, NULL, &websocket_onclose_callback_keep_messages, user_data);
   ck_assert_int_eq(ret, U_OK);
@@ -432,6 +545,8 @@ int callback_websocket_keep_messages (const struct _u_request * request, struct 
 
 int callback_websocket_onclose (const struct _u_request * request, struct _u_response * response, void * user_data) {
   int ret;
+  UNUSED(request);
+  UNUSED(user_data);
   
   ret = ulfius_set_websocket_response(response, NULL, NULL, NULL, NULL, &websocket_echo_message_callback, NULL, NULL, NULL);
   ck_assert_int_eq(ret, U_OK);
@@ -439,6 +554,7 @@ int callback_websocket_onclose (const struct _u_request * request, struct _u_res
 }
 
 int callback_websocket_extension_no_match (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
   ck_assert_int_eq(ulfius_set_websocket_response(response, NULL, NULL, &websocket_manager_extension_callback, NULL, &websocket_incoming_extension_callback, user_data, NULL, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_websocket_extension_message_perform(response, MESSAGE_EXT1, U_WEBSOCKET_RSV1, &websocket_extension1_message_out_perform, (void *)U_W_FLAG_SERVER, &websocket_extension1_message_in_perform, (void *)U_W_FLAG_SERVER, NULL, NULL, NULL, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_websocket_extension_message_perform(response, MESSAGE_EXT2, U_WEBSOCKET_RSV2, &websocket_extension2_message_out_perform, (void *)U_W_FLAG_SERVER, &websocket_extension2_message_in_perform, (void *)U_W_FLAG_SERVER, NULL, NULL, NULL, NULL), U_OK);
@@ -446,13 +562,15 @@ int callback_websocket_extension_no_match (const struct _u_request * request, st
 }
 
 void websocket_extension_match_free_context(void * user_data, void * context) {
-  (void)user_data;
+  UNUSED(user_data);
   y_log_message(Y_LOG_LEVEL_DEBUG, "inside websocket_extension_match_free_context");
   ck_assert_ptr_ne(context, NULL);
   o_free(context);
 }
 
 int websocket_extension_server_match_ext1(const char * extension_server, const char ** extension_client_list, char ** extension_client, void * user_data, void ** context) {
+  UNUSED(extension_client_list);
+  UNUSED(user_data);
   y_log_message(Y_LOG_LEVEL_DEBUG, "check match server extension "MESSAGE_EXT1" with extension '%s'", extension_server);
   if (0 == o_strncmp(extension_server, MESSAGE_EXT1, o_strlen(MESSAGE_EXT1))) {
     *extension_client = o_strdup(MESSAGE_EXT1);
@@ -464,6 +582,8 @@ int websocket_extension_server_match_ext1(const char * extension_server, const c
 }
 
 int websocket_extension_server_match_ext2(const char * extension_server, const char ** extension_client_list, char ** extension_client, void * user_data, void ** context) {
+  UNUSED(extension_client_list);
+  UNUSED(user_data);
   y_log_message(Y_LOG_LEVEL_DEBUG, "check match server extension "MESSAGE_EXT2" with extension '%s'", extension_server);
   if (0 == o_strncmp(extension_server, MESSAGE_EXT2, o_strlen(MESSAGE_EXT2))) {
     *extension_client = o_strdup(MESSAGE_EXT2);
@@ -475,6 +595,7 @@ int websocket_extension_server_match_ext2(const char * extension_server, const c
 }
 
 int websocket_extension_client_match_ext1(const char * extension_server, void * user_data, void ** context) {
+  UNUSED(user_data);
   y_log_message(Y_LOG_LEVEL_DEBUG, "check match client extension "MESSAGE_EXT1" with extension '%s'", extension_server);
   if (0 == o_strncmp(extension_server, MESSAGE_EXT1, o_strlen(MESSAGE_EXT1))) {
     *context = o_strdup("context for " MESSAGE_EXT1);
@@ -485,6 +606,7 @@ int websocket_extension_client_match_ext1(const char * extension_server, void * 
 }
 
 int websocket_extension_client_match_ext2(const char * extension_server, void * user_data, void ** context) {
+  UNUSED(user_data);
   y_log_message(Y_LOG_LEVEL_DEBUG, "check match client extension "MESSAGE_EXT2" with extension '%s'", extension_server);
   if (0 == o_strncmp(extension_server, MESSAGE_EXT2, o_strlen(MESSAGE_EXT2))) {
     *context = o_strdup("context for " MESSAGE_EXT2);
@@ -495,6 +617,7 @@ int websocket_extension_client_match_ext2(const char * extension_server, void * 
 }
 
 int callback_websocket_extension_match (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
   ck_assert_int_eq(ulfius_set_websocket_response(response, NULL, NULL, &websocket_manager_extension_callback, NULL, &websocket_incoming_extension_callback, user_data, NULL, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_websocket_extension_message_perform(response, MESSAGE_EXT1, U_WEBSOCKET_RSV1, &websocket_extension1_message_out_perform, (void *)(U_W_FLAG_SERVER|U_W_FLAG_CONTEXT), &websocket_extension1_message_in_perform, (void *)(U_W_FLAG_SERVER|U_W_FLAG_CONTEXT), &websocket_extension_server_match_ext1, NULL, &websocket_extension_match_free_context, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_websocket_extension_message_perform(response, MESSAGE_EXT2, U_WEBSOCKET_RSV2, &websocket_extension2_message_out_perform, (void *)(U_W_FLAG_SERVER|U_W_FLAG_CONTEXT), &websocket_extension2_message_in_perform, (void *)(U_W_FLAG_SERVER|U_W_FLAG_CONTEXT), &websocket_extension_server_match_ext2, NULL, &websocket_extension_match_free_context, NULL), U_OK);
@@ -675,6 +798,8 @@ int websocket_extension_message_in_inflate_test(const uint8_t opcode,
 }
 
 int callback_websocket_extension_deflate (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(user_data);
   ck_assert_int_eq(ulfius_set_websocket_response(response, NULL, NULL, &websocket_manager_extension_deflate_callback, NULL, &websocket_incoming_extension_deflate_server_callback, NULL, NULL, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_websocket_deflate_extension(response), U_OK);
   ck_assert_int_eq(ulfius_add_websocket_extension_message_perform(response, MESSAGE_EXT3, U_WEBSOCKET_RSV3, websocket_extension3_message_out_perform, NULL, websocket_extension3_message_in_perform, NULL, NULL, NULL, NULL, NULL), U_OK);
@@ -682,6 +807,8 @@ int callback_websocket_extension_deflate (const struct _u_request * request, str
 }
 
 int callback_websocket_extension_deflate_disabled (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(user_data);
   ck_assert_int_eq(ulfius_set_websocket_response(response, NULL, NULL, &websocket_manager_extension_deflate_callback, NULL, &websocket_incoming_extension_deflate_server_callback_disabled, NULL, NULL, NULL), U_OK);
   ck_assert_int_eq(ulfius_add_websocket_deflate_extension(response), U_OK);
   ck_assert_int_eq(ulfius_add_websocket_extension_message_perform(response, MESSAGE_EXT4, U_WEBSOCKET_RSV3, websocket_extension4_message_out_perform, NULL, websocket_extension4_message_in_perform, NULL, NULL, NULL, NULL, NULL), U_OK);
@@ -1183,7 +1310,7 @@ static Suite *ulfius_suite(void)
 	return s;
 }
 
-int main(int argc, char *argv[])
+int main(void)
 {
   int number_failed;
   Suite *s;
