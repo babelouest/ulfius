@@ -284,7 +284,7 @@ int main (int argc, char ** argv) {
     {"protocol", required_argument, NULL, 'p'},         // Websocket protocol
     {"extensions", required_argument, NULL, 'e'},       // Websocket extensions
     {"non-secure", no_argument, NULL, 's'},             // Do not check server certificate
-    {"quiet", no_argument, NULL, 'v'},                  // Quiet mode
+    {"quiet", no_argument, NULL, 'q'},                  // Quiet mode
     {"version", no_argument, NULL, 'v'},                // Show version
     {"help", no_argument, NULL, 'h'},                   // print help
     {NULL, 0, NULL, 0}
