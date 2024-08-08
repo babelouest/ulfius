@@ -6167,7 +6167,7 @@ START_TEST(test_ulfius_utf8_not_ignored)
   char * invalid_utf8_seq3 = msprintf("value %c%c%c", 0xE2, 0x28, 0xA1);
   char * invalid_utf8_seq4 = msprintf("value %c%c%c%c", 0xF0, 0x90, 0x28, 0xBC);
   char * valid_utf8 = "valid value ȸ Ɇ  ɤ ¯\\_(ツ)_¯";
-  char * valid_utf8_cookie = "validvalue";
+  char * valid_utf8_cookie = "va-lid=value";
   struct _u_instance u_instance;
   struct _u_request request;
   struct _u_response response;
@@ -6212,7 +6212,7 @@ START_TEST(test_ulfius_utf8_ignored)
   char * invalid_utf8_seq3 = msprintf("invalid value %c%c%c", 0xE2, 0x28, 0xA1);
   char * invalid_utf8_seq4 = msprintf("invalid value %c%c%c%c", 0xF0, 0x90, 0x28, 0xBC);
   char * valid_utf8 = "valid value ȸ Ɇ  ɤ ¯\\_(ツ)_¯";
-  char * valid_utf8_cookie = "validvalue";
+  char * valid_utf8_cookie = "va-lid=value";
   struct _u_instance u_instance;
   struct _u_request request;
   struct _u_response response;
