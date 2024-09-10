@@ -46,6 +46,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <zlib.h>
+#include <limits.h>
 
 #include "yuarel.h"
 
@@ -2062,7 +2063,7 @@ int websocket_extension_message_in_inflate(const uint8_t opcode,
   (void)fragment_len;
   (void)user_data;
 
-  if (data_len_in && data_len_in <= (SIZE_MAX-4)) {
+  if (data_len_in && data_len_in <= (SSIZE_MAX-4)) {
     if (deflate_context != NULL) {
       *data_out = NULL;
       *data_len_out = 0;
