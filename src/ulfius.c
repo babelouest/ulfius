@@ -929,7 +929,11 @@ static int ulfius_webservice_dispatcher (void * cls,
           }
         }
 
-        if (!con_info->request->callback_position && ((struct _u_instance *)cls)->default_endpoint != NULL && ((struct _u_instance *)cls)->default_endpoint->callback_function != NULL && mhd_response == NULL) {
+        if (!con_info->request->callback_position && ((struct _u_instance *)cls)->default_endpoint != NULL && ((struct _u_instance *)cls)->default_endpoint->callback_function != NULL) {
+          if (mhd_response != NULL) {
+            MHD_destroy_response(mhd_response);
+            mhd_response = NULL;
+          }
           callback_ret = ((struct _u_instance *)cls)->default_endpoint->callback_function(con_info->request, response, ((struct _u_instance *)cls)->default_endpoint->user_data);
           // Test callback_ret to know what to do
           switch (callback_ret) {
