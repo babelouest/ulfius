@@ -6144,7 +6144,7 @@ START_TEST(test_ulfius_endpoint_ignored)
   ulfius_init_response(&response);
   ck_assert_int_eq(ulfius_set_request_properties(&request, U_OPT_HTTP_VERB, "GET", U_OPT_HTTP_URL, "http://localhost:8080/ignore", U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&request, &response), U_OK);
-  ck_assert_int_eq(response.status, 200);
+  ck_assert_int_eq(response.status, 205);
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
 
