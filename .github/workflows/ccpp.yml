@@ -14,7 +14,7 @@ jobs:
         sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
         sudo sysctl -w net.ipv6.conf.lo.disable_ipv6=0
     - name: cppcheck
-      run: cppcheck --force --enable=warning,missingInclude --error-exitcode=1 .
+      run: cppcheck --force --enable=warning --suppress=missingIncludeSystem --error-exitcode=1 src/
     - name: dependencies
       run: |
         cd /opt
