@@ -861,7 +861,8 @@ static int ulfius_get_next_line_from_http_response(struct _websocket * websocket
 static int ulfius_websocket_connection_handshake(struct _u_request * request, struct yuarel * y_url, struct _websocket * websocket, struct _u_response * response) {
   int websocket_response_http = 0, ret, extension_enabled;
   unsigned int websocket_response = 0, check_websocket = WEBSOCKET_RESPONSE_UPGRADE | WEBSOCKET_RESPONSE_CONNECTION | WEBSOCKET_RESPONSE_ACCEPT;
-  char * http_line, ** split_line = NULL, * key, * value, * separator, ** extension_list = NULL, * endptr = NULL;
+  char * http_line, ** split_line = NULL, * key, * value, ** extension_list = NULL, * endptr = NULL;
+  const char * separator;
   char buffer[U_WEBSOCKET_RESPONSE_BUFFER_LEN+1] = {0};
   const char ** keys;
   size_t buffer_len = U_WEBSOCKET_RESPONSE_BUFFER_LEN, line_len, extension_len, i, j;

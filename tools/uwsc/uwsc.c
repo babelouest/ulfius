@@ -306,7 +306,8 @@ int main (int argc, char ** argv) {
 
   // TODO: Complete option manager
   do {
-    char * key, * value;
+    char * key;
+    const char * value;
     next_option = getopt_long(argc, argv, short_options, long_options, NULL);
 
     switch (next_option) {
