@@ -128,7 +128,7 @@ static const char * get_filename_ext(const char *path) {
     const char *dot = strrchr(path, '.');
     if(!dot || dot == path) return "*";
     if (strchr(dot, '?') != NULL) {
-      *strchr(dot, '?') = '\0';
+      *((char *)strchr(dot, '?')) = '\0';
     }
     return dot;
 }
