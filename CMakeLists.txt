@@ -14,7 +14,7 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 
 project(ulfius C)
 
@@ -546,9 +546,9 @@ if (BUILD_DEB)
         set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libgnutls28-dev|libgnutls-dev|libgnutls30 (>= 3.5.0)")
     endif ()
     if (WITH_WEBSOCKET)
-        set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libmicrohttpd-dev|libmicrohttpd12 (>= 0.9.53)")
+        set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libmicrohttpd-dev|libmicrohttpd12|libmicrohttpd12t64 (>= 0.9.53)")
     else ()
-        set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libmicrohttpd-dev|libmicrohttpd12 (>= 0.9.51)")
+        set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libmicrohttpd-dev|libmicrohttpd12|libmicrohttpd12t64 (>= 0.9.51)")
     endif ()
 endif ()
 
