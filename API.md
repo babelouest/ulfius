@@ -1596,7 +1596,7 @@ int websocket_extension_server_match(const char * extension_client,
 int websocket_extension_client_match(const char * extension_server, void * user_data, void ** context);
 ```
 
-The callback function `websocket_extension_message_out_perform` can modify the message data and data lenght and the RSV flags. The callback function `websocket_extension_message_in_perform` can modify the message data only. Inside these functions, `data_in` and `data_len_in` are the current data, your extension callback function must update `data_out` with a `o_malloc`'ed data and set the new data length using `data_len_out` and return `U_OK` on success.
+The callback function `websocket_extension_message_out_perform` can modify the message data and data length and the RSV flags. The callback function `websocket_extension_message_in_perform` can modify the message data only. Inside these functions, `data_in` and `data_len_in` are the current data, your extension callback function must update `data_out` with a `o_malloc`'ed data and set the new data length using `data_len_out` and return `U_OK` on success.
 If your function doesn't return `U_OK`, the message data won't be updated and `data_out` won't be free'd if set.
 
 You can call `ulfius_add_websocket_extension_message_perform` or `ulfius_add_websocket_client_extension_message_perform` multiple times for a websocket definition. In that case the extension callbacks function will be called in the same order for the `websocket_extension_message_out_perform` callbacks, and in reverse order for the `websocket_extension_message_in_perform` callbacks.
@@ -1652,7 +1652,7 @@ int ulfius_websocket_send_close_signal(struct _websocket_manager * websocket_man
 /**
  * Returns the status of the websocket connection
  * Returned values can be U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
- * wether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
+ * whether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
  */
 int ulfius_websocket_status(struct _websocket_manager * websocket_manager);
 
@@ -1660,7 +1660,7 @@ int ulfius_websocket_status(struct _websocket_manager * websocket_manager);
  * Wait until the websocket connection is closed or the timeout in milliseconds is reached
  * if timeout is 0, no timeout is set
  * Returned values can be U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
- * wether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
+ * whether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
  */
 int ulfius_websocket_wait_close(struct _websocket_manager * websocket_manager, unsigned int timeout);
 ```
@@ -1798,7 +1798,7 @@ int ulfius_websocket_client_connection_close(struct _websocket_client_handler * 
 /**
  * Returns the status of the websocket client connection
  * Returned values can be U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
- * wether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
+ * whether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
  */
 int ulfius_websocket_client_connection_status(struct _websocket_client_handler * websocket_client_handler);
 
@@ -1806,7 +1806,7 @@ int ulfius_websocket_client_connection_status(struct _websocket_client_handler *
  * Wait until the websocket client connection is closed or the timeout in milliseconds is reached
  * if timeout is 0, no timeout is set
  * Returned values can be U_WEBSOCKET_STATUS_OPEN or U_WEBSOCKET_STATUS_CLOSE
- * wether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
+ * whether the websocket is open or closed, or U_WEBSOCKET_STATUS_ERROR on error
  */
 int ulfius_websocket_client_connection_wait_close(struct _websocket_client_handler * websocket_client_handler, unsigned int timeout);
 ```
@@ -1849,7 +1849,7 @@ int ulfius_send_http_request(const struct _u_request * request, struct _u_respon
 /**
  * ulfius_send_http_request_with_limit
  * Send a HTTP request and store the result into a _u_response
- * The response body lenght and number of parsed headers can be limited
+ * The response body length and number of parsed headers can be limited
  * @param request the struct _u_request that contains all the input parameters to perform the HTTP request
  * @param response the struct _u_response that will be filled with all response parameter values, optional, may be NULL
  * @param response_body_limit the maximum size of the response body to retrieve, 0 means no limit
