@@ -126,6 +126,9 @@ int y_close_logs();
 #define U_COOKIE_SAME_SITE_STRICT 1 ///< Set same_site cookie property to strict
 #define U_COOKIE_SAME_SITE_LAX    2 ///< Set same_site cookie property to lax
 #define U_COOKIE_SAME_SITE_NONE   3 ///< Set same_site cookie property to none
+#define U_DEFAULT_THREAD_POOL_SIZE 5 // Default no.of threads for Thread POOL Type Fixed
+#define U_THREAD_POOL_TYPE_FIXED 1 // Thread pool type to use Fixed no.of threads in pool
+#define U_THREAD_POOL_TYPE_DYNAMIC 0 // Thread pool type to use one thread per conn.
 
 #define U_USE_IPV4 0x0001 ///< Use instance in IPV4 mode only
 #define U_USE_IPV6 0x0010 ///< Use instance in IPV6 mode only
@@ -347,6 +350,8 @@ struct _u_instance {
   int                           use_client_cert_auth; /* !< Internal variable use to indicate if the instance uses client certificate authentication, Do not change this value, available only if websocket support is enabled */
 #endif
   int                           allowed_post_processor; /* !< Specifies which content-type are allowed to process in the request->map_post_body parameters list, default value is U_POST_PROCESS_URL_ENCODED|U_POST_PROCESS_MULTIPART_FORMDATA, to disable all, use U_POST_PROCESS_NONE */
+  int                           thread_pool_type;
+  size_t                        max_thread_pool_size;
 };
 
 /**
