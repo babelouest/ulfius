@@ -111,14 +111,6 @@ set(LIB_SRC
 find_package (Threads)
 list(APPEND ULFIUS_LIBS ${CMAKE_THREAD_LIBS_INIT})
 
-# GNU TLS support
-option(WITH_GNUTLS "GNU TLS support" ON)
-
-if (WITH_GNUTLS)
-    find_package(GnuTLS REQUIRED)
-    list(APPEND ULFIUS_LIBS GnuTLS::GnuTLS)
-endif ()
-
 # websocket support
 
 # current websocket implementation depends on GNU TLS, and is not supported on Windows
@@ -184,6 +176,19 @@ if (WITH_JANSSON)
     set(U_DISABLE_JANSSON OFF)
 else ()
     set(U_DISABLE_JANSSON ON)
+endif ()
+
+# GNU TLS support
+option(WITH_GNUTLS "GNU TLS support" ON)
+
+if (WITH_GNUTLS)
+    find_package(GnuTLS REQUIRED)
+    list(APPEND ULFIUS_LIBS GnuTLS::GnuTLS)
+endif ()
+
+# Required for MHD Linking in Windows with MinGW
+if (WIN32 AND MINGW)
+    list(APPEND ULFIUS_LIBS ws2_32)
 endif ()
 
 option(BUILD_SHARED "Build shared library." ON)
