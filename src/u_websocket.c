@@ -1646,7 +1646,7 @@ struct _websocket_message * ulfius_websocket_pop_first_message(struct _websocket
       message_list->list[len] = message_list->list[len+1];
     }
     if (message_list->len > 1) {
-      message_list->list = o_realloc(message_list->list, (message_list->len-1));
+      message_list->list = o_realloc(message_list->list, (message_list->len-1)*sizeof(struct _websocket_message *));
     } else {
       o_free(message_list->list);
       message_list->list = NULL;
