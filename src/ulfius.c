@@ -1075,15 +1075,21 @@ static int ulfius_webservice_dispatcher (void * cls,
  *
  */
 static struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance, const char * key_pem, const char * cert_pem, const char * root_ca_perm) {
-  unsigned int mhd_flags = MHD_USE_THREAD_PER_CONNECTION | MHD_USE_ERROR_LOG;
+  unsigned int mhd_flags = MHD_USE_ERROR_LOG;
   int index;
+  if(u_instance->thread_pool_type == U_THREAD_POOL_TYPE_FIXED)
+        mhd_flags |= MHD_USE_INTERNAL_POLLING_THREAD;
+  else
+        mhd_flags |= MHD_USE_THREAD_PER_CONNECTION;
 
 #ifdef DEBUG
   mhd_flags |= MHD_USE_DEBUG;
 #endif
+if(u_instance->thread_pool_type != U_THREAD_POOL_TYPE_FIXED) {
 #if MHD_VERSION >= 0x00095300
   mhd_flags |= MHD_USE_INTERNAL_POLLING_THREAD;
 #endif
+}     
 #ifndef U_DISABLE_WEBSOCKET
   mhd_flags |= MHD_ALLOW_UPGRADE;
 #endif
@@ -1158,6 +1164,15 @@ static struct MHD_Daemon * ulfius_run_mhd_daemon(struct _u_instance * u_instance
       mhd_ops[index].value = (intptr_t)u_instance->timeout;
       mhd_ops[index].ptr_value = NULL;
 
+      index++;
+    }
+    if(u_instance->thread_pool_type == U_THREAD_POOL_TYPE_FIXED) {
+      // Make sure thread pool size is > 1
+      if(u_instance->max_thread_pool_size <= 0)
+        u_instance->max_thread_pool_size = U_DEFAULT_THREAD_POOL_SIZE;
+      mhd_ops[index].option = MHD_OPTION_THREAD_POOL_SIZE;
+      mhd_ops[index].value = u_instance->max_thread_pool_size;
+      mhd_ops[index].ptr_value = NULL;
       index++;
     }
 
