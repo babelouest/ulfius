@@ -1,10 +1,11 @@
 # Install Ulfius
 
-- [Distribution packages](#distribution-packages)
-- [Manual install](#manual-install)
-  - [Prerequisites](#prerequisites)
-  - [CMake - Multi architecture](#cmake---multi-architecture)
-  - [Good ol' Makefile](#good-ol-makefile)
+- [Install Ulfius](#install-ulfius)
+  - [Distribution packages](#distribution-packages)
+  - [Manual install](#manual-install)
+    - [Prerequisites](#prerequisites)
+    - [CMake - Multi architecture](#cmake---multi-architecture)
+      - [CMake / Win32 / MinGW Quickstart](#cmake--win32--mingw-quickstart)
 
 ## Distribution packages
 
@@ -184,3 +185,46 @@ The available options for CMake are:
 - `-DBUILD_DEB=[on|off]` (default `off`): Build DEB package when running `make package`
 - `-DBUILD_RPM=[on|off]` (default `off`): Build RPM package when running `make package`
 - `-DCMAKE_BUILD_TYPE=[Debug|Release]` (default `Release`): Compile with debugging symbols or not
+
+#### CMake / Win32 / MinGW Quickstart
+
+1. Install [MSYS2](https://www.msys2.org/) and start your preferred environment (ucrt64.exe is suggested and used in this example)
+2. Install the required libraries
+
+```shell
+pacman -S mingw-w64-ucrt-x86_64-gcc
+pacman -S mingw-w64-ucrt-x86_64-libmicrohttpd
+pacman -S mingw-w64-ucrt-x86_64-curl
+pacman -S mingw-w64-ucrt-x86_64-jansson
+```
+
+3. Build and install orcania into your MSYS environment:
+
+```shell
+git clone https://github.com/babelouest/orcania.git
+cmake -G Ninja -DCMAKE_C_COMPILER=C:/msys64/ucrt64/bin/gcc.exe -DCMAKE_CXX_COMPILER=C:/msys64/ucrt64/bin/g++.exe -DBUILD_STATIC=ON -DBUILD_BASE64URL=OFF -DCMAKE_INSTALL_PREFIX=C:/msys64/ucrt64/ -B ./orcania/build orcania
+cmake --build ./orcania/build
+cmake --install ./orcania/build
+```
+
+4. Build and install yder into your MSYS environment:
+
+```shell
+git clone https://github.com/babelouest/yder.git
+cmake -G Ninja -DCMAKE_C_COMPILER=C:/msys64/ucrt64/bin/gcc.exe -DCMAKE_CXX_COMPILER=C:/msys64/ucrt64/bin/g++.exe -DBUILD_STATIC=ON -DCMAKE_INSTALL_PREFIX=C:/msys64/ucrt64/ -B ./yder/build yder
+cmake --build ./yder/build
+cmake --install ./yder/build
+```
+
+5.  Add ulfius to your application CMakeLists.txt, make sure to replace YOUR_ULFIUS_SRC_PATH
+
+```CMake
+# Adjust these and other option flags as you desire
+option(BUILD_STATIC "..." ON)
+option(BUILD_SHARED "..." OFF)
+option(BUILD_UWSC "..." OFF)
+add_subdirectory(../extra/ulfius ulfius)
+target_link_libraries(app PRIVATE ulfius_static)
+target_link_libraries(app PRIVATE ${MHD_LIBRARY})
+target_link_libraries(app PRIVATE ws2_32)
+```
