@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <ulfius.h>
+#include <u_private.h>
 #include <zlib.h>
 #include <curl/curl.h>
 
@@ -42,12 +42,60 @@
 #define U_W_FLAG_SERVER  0x00000001
 #define U_W_FLAG_CONTEXT 0x00000010
 
-#define UNUSED(x) (void)(x)
-
 static pthread_mutex_t ws_lock;
 static pthread_cond_t  ws_cond;
 
 #ifndef U_DISABLE_WEBSOCKET
+
+static pthread_mutex_t * registry_lock;
+
+static void * fail_registry_resize(void * ptr, size_t size) {
+  UNUSED(ptr);
+  UNUSED(size);
+  ck_assert_int_eq(pthread_mutex_trylock(registry_lock), EBUSY);
+  return NULL;
+}
+
+START_TEST(test_ulfius_websocket_registry_allocation_failure)
+{
+  // A nonrecursive mutex makes the locking contract observable from the allocator.
+  struct _websocket_handler handler = {.websocket_active_lock = PTHREAD_MUTEX_INITIALIZER,
+                                       .websocket_close_cond = PTHREAD_COND_INITIALIZER};
+  struct _u_instance instance = {.websocket_handler = &handler};
+  struct _websocket first = {0}, second = {0};
+  o_malloc_t malloc_fn;
+  o_realloc_t realloc_fn;
+  o_free_t free_fn;
+  int ret;
+
+  registry_lock = &handler.websocket_active_lock;
+  ck_assert_int_eq(ulfius_instance_add_websocket_active(&instance, &first), U_OK);
+  o_get_alloc_funcs(&malloc_fn, &realloc_fn, &free_fn);
+  o_set_alloc_funcs(malloc_fn, fail_registry_resize, free_fn);
+  ret = ulfius_instance_add_websocket_active(&instance, &second);
+  o_set_alloc_funcs(malloc_fn, realloc_fn, free_fn);
+  ck_assert_int_eq(ret, U_ERROR_MEMORY);
+  ck_assert_uint_eq(handler.nb_websocket_active, 1);
+  ck_assert_ptr_nonnull(handler.websocket_active);
+  ck_assert_ptr_eq(handler.websocket_active[0], &first);
+
+  ck_assert_int_eq(ulfius_instance_add_websocket_active(&instance, &second), U_OK);
+  o_set_alloc_funcs(malloc_fn, fail_registry_resize, free_fn);
+  ret = ulfius_instance_remove_websocket_active(&instance, &first);
+  o_set_alloc_funcs(malloc_fn, realloc_fn, free_fn);
+  ck_assert_int_eq(ret, U_OK);
+  ck_assert_uint_eq(handler.nb_websocket_active, 1);
+  ck_assert_ptr_nonnull(handler.websocket_active);
+  ck_assert_ptr_eq(handler.websocket_active[0], &second);
+
+  ck_assert_int_eq(ulfius_instance_remove_websocket_active(&instance, &second), U_OK);
+  ck_assert_uint_eq(handler.nb_websocket_active, 0);
+  ck_assert_ptr_null(handler.websocket_active);
+  registry_lock = NULL;
+  pthread_cond_destroy(&handler.websocket_close_cond);
+  pthread_mutex_destroy(&handler.websocket_active_lock);
+}
+END_TEST
 
 void websocket_manager_callback_empty (const struct _u_request * request, struct _websocket_manager * websocket_manager, void * websocket_manager_user_data) {
   UNUSED(request);
@@ -1288,6 +1336,7 @@ static Suite *ulfius_suite(void)
 	s = suite_create("Ulfius websocket functions tests");
 	tc_websocket = tcase_create("test_ulfius_websocket");
 #ifndef U_DISABLE_WEBSOCKET
+  tcase_add_test(tc_websocket, test_ulfius_websocket_registry_allocation_failure);
   tcase_add_test(tc_websocket, test_ulfius_websocket_set_websocket_response);
 	tcase_add_test(tc_websocket, test_ulfius_websocket_set_websocket_request);
 	tcase_add_test(tc_websocket, test_ulfius_websocket_open_websocket_client_connection_error);
