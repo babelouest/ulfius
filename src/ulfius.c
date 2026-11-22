@@ -464,7 +464,7 @@ static int ulfius_webservice_dispatcher (void * cls,
   int callback_ret = U_OK, i, close_loop = 0, inner_error = U_OK, mhd_response_flag;
 #ifndef U_DISABLE_WEBSOCKET
   // Websocket variables
-  int upgrade_protocol = 0;
+  struct _websocket * upgrade_websocket = NULL;
   char * protocol = NULL, * extension = NULL, ** extension_list = NULL;
   size_t extension_len, x, y;
 #endif
@@ -766,8 +766,7 @@ static int ulfius_webservice_dispatcher (void * cls,
                           mhd_ret = MHD_NO;
                           websocket_has_error = 1;
                         } else {
-                          ulfius_instance_add_websocket_active((struct _u_instance *)cls, websocket);
-                          upgrade_protocol = 1;
+                          upgrade_websocket = websocket;
                         }
                       }
                     } else {
@@ -1023,10 +1022,18 @@ static int ulfius_webservice_dispatcher (void * cls,
           } else if (inner_error == U_CALLBACK_UNAUTHORIZED) {
             mhd_ret = MHD_queue_response (connection, MHD_HTTP_UNAUTHORIZED, mhd_response);
 #ifndef U_DISABLE_WEBSOCKET
-          } else if (upgrade_protocol) {
-            mhd_ret = MHD_queue_response (connection,
-                                          MHD_HTTP_SWITCHING_PROTOCOLS,
-                                          mhd_response);
+          } else if (upgrade_websocket != NULL) {
+            mhd_ret = MHD_NO;
+            if (ulfius_instance_add_websocket_active(upgrade_websocket->instance, upgrade_websocket) == U_OK) {
+              mhd_ret = MHD_queue_response(connection, MHD_HTTP_SWITCHING_PROTOCOLS, mhd_response);
+            }
+            if (mhd_ret != MHD_YES) {
+              if (upgrade_websocket->websocket_onclose_callback != NULL) {
+                upgrade_websocket->websocket_onclose_callback(con_info->request, upgrade_websocket->websocket_manager,
+                                                             upgrade_websocket->websocket_onclose_user_data);
+              }
+              ulfius_clear_websocket(upgrade_websocket);
+            }
 #endif
           } else {
             mhd_ret = MHD_queue_response (connection, (unsigned int)response->status, mhd_response);
@@ -1322,21 +1329,19 @@ int ulfius_start_framework_with_mhd_options(struct _u_instance * u_instance, uns
 int ulfius_stop_framework(struct _u_instance * u_instance) {
   if (u_instance != NULL && u_instance->mhd_daemon != NULL) {
 #ifndef U_DISABLE_WEBSOCKET
-    int i;
-    // Loop in all active websockets and send close signal
-    if (pthread_mutex_lock(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_active_lock)) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error locking websocket websocket_active_lock");
-    } else {
-      for (i=(int)((struct _websocket_handler *)u_instance->websocket_handler)->nb_websocket_active-1; i>=0; i--) {
-        ((struct _websocket_handler *)u_instance->websocket_handler)->websocket_active[i]->websocket_manager->close_flag = 1;
+    struct _websocket_handler * handler = u_instance->websocket_handler;
+    size_t i;
+    if (pthread_mutex_lock(&handler->websocket_active_lock)) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Ulfius - Error locking websocket_active_lock");
+      return U_ERROR;
+    }
+    while (handler->nb_websocket_active > 0) {
+      for (i=0; i<handler->nb_websocket_active; i++) {
+        handler->websocket_active[i]->websocket_manager->close_flag = 1;
       }
-      pthread_mutex_unlock(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_active_lock);
+      pthread_cond_wait(&handler->websocket_close_cond, &handler->websocket_active_lock);
     }
-    pthread_mutex_lock(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_lock);
-    while (((struct _websocket_handler *)u_instance->websocket_handler)->nb_websocket_active > 0) {
-      pthread_cond_wait(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_cond, &((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_lock);
-    }
-    pthread_mutex_unlock(&((struct _websocket_handler *)u_instance->websocket_handler)->websocket_close_lock);
+    pthread_mutex_unlock(&handler->websocket_active_lock);
 #endif
     MHD_stop_daemon (u_instance->mhd_daemon);
     u_instance->mhd_daemon = NULL;
