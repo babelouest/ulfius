@@ -287,6 +287,7 @@ int ulfius_init_request(struct _u_request * request) {
     request->http_url = NULL;
     request->url_path = NULL;
     request->proxy = NULL;
+    request->network_interface = NULL;
 #if MHD_VERSION >= 0x00095208
     request->network_type = U_USE_ALL;
 #endif
@@ -327,6 +328,7 @@ int ulfius_clean_request(struct _u_request * request) {
     o_free(request->http_url);
     o_free(request->url_path);
     o_free(request->proxy);
+    o_free(request->network_interface);
     o_free(request->auth_basic_user);
     o_free(request->auth_basic_password);
     o_free(request->client_address);
@@ -340,6 +342,7 @@ int ulfius_clean_request(struct _u_request * request) {
     request->http_verb = NULL;
     request->http_url = NULL;
     request->proxy = NULL;
+    request->network_interface = NULL;
     request->client_address = NULL;
     request->map_url = NULL;
     request->map_header = NULL;
@@ -385,6 +388,7 @@ int ulfius_copy_request(struct _u_request * dest, const struct _u_request * sour
     dest->http_url = o_strdup(source->http_url);
     dest->url_path = o_strdup(source->url_path);
     dest->proxy = o_strdup(source->proxy);
+    dest->network_interface = o_strdup(source->network_interface);
 #if MHD_VERSION >= 0x00095208
     dest->network_type = source->network_type;
 #endif
