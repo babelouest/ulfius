@@ -1,5 +1,9 @@
 # Ulfius HTTP Framework
 
+## NOTICE: This project is no longer being maintained. ⚠️
+
+This project is now closed for me, I have no time nor motivation to maintain it, so I prefer to close this repository.
+
 ![.github/workflows/ccpp.yml](https://github.com/babelouest/ulfius/workflows/.github/workflows/ccpp.yml/badge.svg)
 ![CodeQL](https://github.com/babelouest/ulfius/workflows/CodeQL/badge.svg)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3195/badge)](https://bestpractices.coreinfrastructure.org/projects/3195)
